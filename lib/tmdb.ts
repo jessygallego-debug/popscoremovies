@@ -16,11 +16,14 @@ export type MovieDetails = MovieSummary & {
 
 type TmdbListResponse = {
   results?: MovieSummary[];
+  total_pages?: number;
   status_message?: string;
 };
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
+const MAX_MOVIE_RESULTS = 300;
+const TMDB_PAGE_SIZE = 20;
 
 function getToken() {
   return process.env.TMDB_API_TOKEN;
@@ -56,17 +59,38 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
   return response.json();
 }
 
-export async function getMovies(query = "") {
+function moviesPath(query: string, page: number) {
   const trimmedQuery = query.trim();
-  const path = trimmedQuery
+
+  return trimmedQuery
     ? `/search/movie?query=${encodeURIComponent(
         trimmedQuery
-      )}&include_adult=false&language=en-US&page=1`
-    : "/trending/movie/week?language=en-US";
+      )}&include_adult=false&language=en-US&page=${page}`
+    : `/trending/movie/week?language=en-US&page=${page}`;
+}
 
-  const data = await tmdbFetch<TmdbListResponse>(path);
+export async function getMovies(query = "", limit = MAX_MOVIE_RESULTS) {
+  const requestedLimit = Math.min(Math.max(limit, 1), MAX_MOVIE_RESULTS);
+  const requestedPages = Math.ceil(requestedLimit / TMDB_PAGE_SIZE);
+  const movies: MovieSummary[] = [];
+  let pageLimit = requestedPages;
 
-  return data?.results ?? [];
+  for (
+    let page = 1;
+    page <= pageLimit && movies.length < requestedLimit;
+    page++
+  ) {
+    const data = await tmdbFetch<TmdbListResponse>(moviesPath(query, page));
+
+    if (!data?.results?.length) {
+      break;
+    }
+
+    movies.push(...data.results);
+    pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
+  }
+
+  return movies.slice(0, requestedLimit);
 }
 
 export async function getMovie(id: string) {

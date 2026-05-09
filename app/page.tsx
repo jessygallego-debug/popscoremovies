@@ -11,7 +11,7 @@ export default async function Home({
 }) {
   const params = await searchParams;
   const query = params.query?.trim() ?? "";
-  const movies = (await getMovies(query)).slice(0, 20);
+  const movies = await getMovies(query, 300);
   const hasMissingToken = !isTmdbConfigured();
 
   return (
