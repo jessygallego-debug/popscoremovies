@@ -19,7 +19,7 @@ export default async function Home({
       <section className="max-w-7xl mx-auto">
         <BrandHomeLink />
 
-        <h1 className="mb-4 max-w-4xl text-4xl font-black sm:text-6xl">
+        <h1 className="mb-4 max-w-4xl text-3xl font-black sm:text-5xl">
           Discover Movies Worth Watching
         </h1>
 
