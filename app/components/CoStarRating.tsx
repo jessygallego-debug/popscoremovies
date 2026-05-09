@@ -5,15 +5,16 @@ import type { ReactNode } from "react";
 
 type CoStarOption = {
   label: string;
+  rating: string;
   score: number;
 };
 
 const coStarOptions: CoStarOption[] = [
-  { label: "Extra Buttery 🧈🧈🍿", score: 100 },
-  { label: "Buttery 🧈🍿", score: 85 },
-  { label: "Fresh Popcorn 🍿", score: 70 },
-  { label: "Salty 🧂", score: 45 },
-  { label: "Burnt 💨", score: 15 },
+  { label: "🧈🧈🍿 Extra Buttery", rating: "Fantastic", score: 100 },
+  { label: "🧈🍿 Buttery", rating: "Great", score: 85 },
+  { label: "🍿 Fresh Popcorn", rating: "Good", score: 70 },
+  { label: "🧂 Salty", rating: "Bad", score: 45 },
+  { label: "💨 Burnt", rating: "Really Bad", score: 15 },
 ];
 
 type CoStarRatingProps = {
@@ -107,7 +108,7 @@ export default function CoStarRating({ children }: CoStarRatingProps) {
                   }`}
                 >
                   <span>{option.label}</span>
-                  <span className="float-right">{option.score}%</span>
+                  <span className="float-right">{option.rating}</span>
                 </button>
               ))}
             </div>

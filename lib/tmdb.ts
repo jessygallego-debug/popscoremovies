@@ -86,6 +86,7 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
 
 function moviesPath(query: string, page: number, genreId = "") {
   const trimmedQuery = query.trim();
+  const today = new Date().toISOString().slice(0, 10);
 
   if (trimmedQuery) {
     return `/search/movie?query=${encodeURIComponent(
@@ -94,10 +95,16 @@ function moviesPath(query: string, page: number, genreId = "") {
   }
 
   if (genreId) {
-    return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc&with_genres=${genreId}`;
+    return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.lte=${today}&sort_by=primary_release_date.desc&with_genres=${genreId}`;
   }
 
-  return `/trending/movie/week?language=en-US&page=${page}`;
+  return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.lte=${today}&sort_by=primary_release_date.desc`;
+}
+
+function releaseTime(movie: MovieSummary) {
+  const time = new Date(movie.release_date).getTime();
+
+  return Number.isNaN(time) ? 0 : time;
 }
 
 export async function getMovies(
@@ -134,7 +141,9 @@ export async function getMovies(
     pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
   }
 
-  return movies.slice(0, requestedLimit);
+  return movies
+    .sort((a, b) => releaseTime(b) - releaseTime(a))
+    .slice(0, requestedLimit);
 }
 
 export async function getMovie(id: string) {

@@ -126,7 +126,7 @@ export default async function MoviePage({
                   {mainActors.length > 0 ? (
                     <div>
                       <h2 className="text-sm font-bold uppercase text-yellow-400">
-                        Main Actors
+                        Actors
                       </h2>
                       <p className="mt-2 leading-7">{mainActors.join(", ")}</p>
                     </div>

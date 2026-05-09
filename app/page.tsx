@@ -147,6 +147,9 @@ export default async function Home({
                     </p>
 
                     <PopScoreDisplay movieId={String(movie.id)} />
+                    <p className="mt-1 text-xs font-bold text-gray-400">
+                      Co-Star Score: Not rated yet
+                    </p>
                   </div>
                 </Link>
               );
