@@ -2,16 +2,24 @@ import Image from "next/image";
 import Link from "next/link";
 import BrandHomeLink from "@/app/components/brand-home-link";
 import PopScoreDisplay from "@/app/components/popscore-display";
-import { getMovies, isTmdbConfigured, posterUrl } from "@/lib/tmdb";
+import {
+  getMovies,
+  isTmdbConfigured,
+  MOVIE_GENRE_FILTERS,
+  posterUrl,
+} from "@/lib/tmdb";
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ query?: string }>;
+  searchParams: Promise<{ genre?: string; query?: string }>;
 }) {
   const params = await searchParams;
   const query = params.query?.trim() ?? "";
-  const movies = await getMovies(query, 300);
+  const activeGenre = MOVIE_GENRE_FILTERS.find(
+    (genre) => genre.id === params.genre
+  );
+  const movies = await getMovies(query, 300, activeGenre?.id);
   const hasMissingToken = !isTmdbConfigured();
 
   return (
@@ -28,7 +36,11 @@ export default async function Home({
           rated like comedy.
         </p>
 
-        <form className="mb-10 flex flex-col gap-3 sm:flex-row" action="/">
+        <form className="mb-6 flex flex-col gap-3 sm:flex-row" action="/">
+          {activeGenre ? (
+            <input type="hidden" name="genre" value={activeGenre.id} />
+          ) : null}
+
           <input
             type="search"
             name="query"
@@ -45,6 +57,42 @@ export default async function Home({
           </button>
         </form>
 
+        <div
+          aria-label="Filter movies by genre"
+          className="mb-10 flex gap-2 overflow-x-auto pb-1"
+        >
+          <Link
+            href={query ? `/?query=${encodeURIComponent(query)}` : "/"}
+            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition ${
+              activeGenre
+                ? "border-gray-700 bg-gray-950 text-gray-300 hover:border-yellow-400 hover:text-yellow-300"
+                : "border-yellow-400 bg-yellow-400 text-black"
+            }`}
+          >
+            All
+          </Link>
+
+          {MOVIE_GENRE_FILTERS.map((genre) => {
+            const href = query
+              ? `/?query=${encodeURIComponent(query)}&genre=${genre.id}`
+              : `/?genre=${genre.id}`;
+
+            return (
+              <Link
+                key={genre.id}
+                href={href}
+                className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition ${
+                  activeGenre?.id === genre.id
+                    ? "border-yellow-400 bg-yellow-400 text-black"
+                    : "border-gray-700 bg-gray-950 text-gray-300 hover:border-yellow-400 hover:text-yellow-300"
+                }`}
+              >
+                {genre.name}
+              </Link>
+            );
+          })}
+        </div>
+
         {hasMissingToken ? (
           <div className="rounded-lg border border-yellow-500/40 bg-yellow-400/10 p-5 text-yellow-100">
             Add `TMDB_API_TOKEN` to your environment to load live movie data.
@@ -52,7 +100,11 @@ export default async function Home({
         ) : null}
 
         <h2 className="mb-6 text-2xl font-bold sm:text-3xl">
-          {query ? `Search Results for "${query}"` : "Trending Movies"}
+          {query
+            ? `${activeGenre ? `${activeGenre.name} ` : ""}Search Results for "${query}"`
+            : activeGenre
+              ? `${activeGenre.name} Movies`
+              : "Trending Movies"}
         </h2>
 
         {movies.length > 0 ? (

@@ -6,12 +6,26 @@ export type MovieSummary = {
   backdrop_path: string | null;
   vote_average: number;
   release_date: string;
+  genre_ids?: number[];
 };
 
 export type MovieDetails = MovieSummary & {
   genres: { id: number; name: string }[];
   runtime: number | null;
   tagline: string;
+  credits?: {
+    cast?: {
+      id: number;
+      name: string;
+      character: string;
+      order: number;
+    }[];
+    crew?: {
+      id: number;
+      name: string;
+      job: string;
+    }[];
+  };
 };
 
 type TmdbListResponse = {
@@ -24,6 +38,17 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const MAX_MOVIE_RESULTS = 300;
 const TMDB_PAGE_SIZE = 20;
+
+export const MOVIE_GENRE_FILTERS = [
+  { id: "28", name: "Action" },
+  { id: "16", name: "Animation" },
+  { id: "35", name: "Comedy" },
+  { id: "18", name: "Drama" },
+  { id: "27", name: "Horror" },
+  { id: "10402", name: "Musical" },
+  { id: "10749", name: "Romance" },
+  { id: "878", name: "Sci-Fi" },
+];
 
 function getToken() {
   return process.env.TMDB_API_TOKEN;
@@ -59,17 +84,27 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
   return response.json();
 }
 
-function moviesPath(query: string, page: number) {
+function moviesPath(query: string, page: number, genreId = "") {
   const trimmedQuery = query.trim();
 
-  return trimmedQuery
-    ? `/search/movie?query=${encodeURIComponent(
+  if (trimmedQuery) {
+    return `/search/movie?query=${encodeURIComponent(
         trimmedQuery
-      )}&include_adult=false&language=en-US&page=${page}`
-    : `/trending/movie/week?language=en-US&page=${page}`;
+      )}&include_adult=false&language=en-US&page=${page}`;
+  }
+
+  if (genreId) {
+    return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc&with_genres=${genreId}`;
+  }
+
+  return `/trending/movie/week?language=en-US&page=${page}`;
 }
 
-export async function getMovies(query = "", limit = MAX_MOVIE_RESULTS) {
+export async function getMovies(
+  query = "",
+  limit = MAX_MOVIE_RESULTS,
+  genreId = ""
+) {
   const requestedLimit = Math.min(Math.max(limit, 1), MAX_MOVIE_RESULTS);
   const requestedPages = Math.ceil(requestedLimit / TMDB_PAGE_SIZE);
   const movies: MovieSummary[] = [];
@@ -80,13 +115,22 @@ export async function getMovies(query = "", limit = MAX_MOVIE_RESULTS) {
     page <= pageLimit && movies.length < requestedLimit;
     page++
   ) {
-    const data = await tmdbFetch<TmdbListResponse>(moviesPath(query, page));
+    const data = await tmdbFetch<TmdbListResponse>(
+      moviesPath(query, page, genreId)
+    );
 
     if (!data?.results?.length) {
       break;
     }
 
-    movies.push(...data.results);
+    const nextMovies =
+      query.trim() && genreId
+        ? data.results.filter((movie) =>
+            movie.genre_ids?.includes(Number(genreId))
+          )
+        : data.results;
+
+    movies.push(...nextMovies);
     pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
   }
 
@@ -94,7 +138,9 @@ export async function getMovies(query = "", limit = MAX_MOVIE_RESULTS) {
 }
 
 export async function getMovie(id: string) {
-  return tmdbFetch<MovieDetails>(`/movie/${id}?language=en-US`);
+  return tmdbFetch<MovieDetails>(
+    `/movie/${id}?language=en-US&append_to_response=credits`
+  );
 }
 
 export function isTmdbConfigured() {

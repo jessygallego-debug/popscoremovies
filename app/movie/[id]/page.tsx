@@ -36,6 +36,18 @@ export default async function MoviePage({
   const runtime = movie.runtime
     ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m`
     : null;
+  const mainActors =
+    movie.credits?.cast
+      ?.sort((a, b) => a.order - b.order)
+      .slice(0, 5)
+      .map((actor) => actor.name) ?? [];
+  const directors = Array.from(
+    new Set(
+      movie.credits?.crew
+        ?.filter((crewMember) => crewMember.job === "Director")
+        .map((crewMember) => crewMember.name) ?? []
+    )
+  );
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -94,10 +106,6 @@ export default async function MoviePage({
                 ))}
               </div>
 
-              <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-200">
-                {movie.overview || "No overview is available for this movie."}
-              </p>
-
               <div className="mt-8">
                 <Link
                   href={`/rate?movie=${movie.id}`}
@@ -106,6 +114,32 @@ export default async function MoviePage({
                   Rate This Movie
                 </Link>
               </div>
+
+              <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-200">
+                {movie.overview || "No overview is available for this movie."}
+              </p>
+
+              {mainActors.length > 0 || directors.length > 0 ? (
+                <div className="mt-8 grid gap-5 text-gray-200 sm:grid-cols-2">
+                  {mainActors.length > 0 ? (
+                    <div>
+                      <h2 className="text-sm font-bold uppercase text-yellow-400">
+                        Main Actors
+                      </h2>
+                      <p className="mt-2 leading-7">{mainActors.join(", ")}</p>
+                    </div>
+                  ) : null}
+
+                  {directors.length > 0 ? (
+                    <div>
+                      <h2 className="text-sm font-bold uppercase text-yellow-400">
+                        Director
+                      </h2>
+                      <p className="mt-2 leading-7">{directors.join(", ")}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
