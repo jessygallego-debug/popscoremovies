@@ -46,7 +46,7 @@ export default function PopScoreDisplay({
   return (
     <p className={className}>
       {score
-        ? `PopScore: ${score.score} (${score.count} ${
+        ? `PopScore: ${score.score}% (${score.count} ${
             score.count === 1 ? "rating" : "ratings"
           })`
         : "PopScore: Not rated yet"}

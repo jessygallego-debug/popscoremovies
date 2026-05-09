@@ -19,6 +19,10 @@ type RatingRow = RatingSubmission & {
   created_at: string;
 };
 
+export function ratingToPercent(rating: number) {
+  return Math.min(Math.max((rating - 1) / 4, 0), 1);
+}
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -126,7 +130,7 @@ export async function getPopScore(movieId: string) {
     (total, question) => {
       const averageRating = question.total / question.count;
 
-      return total + question.weight * (averageRating / 5);
+      return total + question.weight * ratingToPercent(averageRating);
     },
     0
   );

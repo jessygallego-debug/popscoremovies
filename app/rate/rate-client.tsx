@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { savePopScore } from "@/lib/popscore-store";
+import { ratingToPercent, savePopScore } from "@/lib/popscore-store";
 
 const genreConfigs = {
   horror: {
@@ -126,7 +126,7 @@ export default function RateClient({
   const popScore = Math.round(
     currentGenre.questions.reduce((total, question) => {
       const rating = ratings[question.key] || 0;
-      return total + question.weight * (rating / 5);
+      return total + question.weight * ratingToPercent(rating);
     }, 0) * 100
   );
 
@@ -220,7 +220,7 @@ export default function RateClient({
         {allAnswered && (
           <div className="mt-10 rounded-2xl bg-yellow-400 text-black p-8">
             <p className="text-lg font-bold">Your PopScore</p>
-            <h2 className="text-6xl font-black">{popScore}</h2>
+            <h2 className="text-6xl font-black">{popScore}%</h2>
             <p className="text-2xl font-bold mt-2">{getPopRating(popScore)}</p>
 
             {movieId ? (
