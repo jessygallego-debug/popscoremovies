@@ -4,6 +4,7 @@ export type MovieSummary = {
   overview: string;
   poster_path: string | null;
   backdrop_path: string | null;
+  popularity: number;
   vote_average: number;
   release_date: string;
   genre_ids?: number[];
@@ -87,6 +88,9 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
 function moviesPath(query: string, page: number, genreId = "") {
   const trimmedQuery = query.trim();
   const today = new Date().toISOString().slice(0, 10);
+  const recentCutoff = new Date();
+  recentCutoff.setFullYear(recentCutoff.getFullYear() - 2);
+  const recentCutoffDate = recentCutoff.toISOString().slice(0, 10);
 
   if (trimmedQuery) {
     return `/search/movie?query=${encodeURIComponent(
@@ -95,16 +99,26 @@ function moviesPath(query: string, page: number, genreId = "") {
   }
 
   if (genreId) {
-    return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.lte=${today}&sort_by=primary_release_date.desc&with_genres=${genreId}`;
+    return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.gte=${recentCutoffDate}&primary_release_date.lte=${today}&sort_by=popularity.desc&with_genres=${genreId}`;
   }
 
-  return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.lte=${today}&sort_by=primary_release_date.desc`;
+  return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.gte=${recentCutoffDate}&primary_release_date.lte=${today}&sort_by=popularity.desc`;
 }
 
 function releaseTime(movie: MovieSummary) {
   const time = new Date(movie.release_date).getTime();
 
   return Number.isNaN(time) ? 0 : time;
+}
+
+function compareLatestPopular(a: MovieSummary, b: MovieSummary) {
+  const popularityDifference = (b.popularity ?? 0) - (a.popularity ?? 0);
+
+  if (popularityDifference !== 0) {
+    return popularityDifference;
+  }
+
+  return releaseTime(b) - releaseTime(a);
 }
 
 export async function getMovies(
@@ -141,9 +155,7 @@ export async function getMovies(
     pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
   }
 
-  return movies
-    .sort((a, b) => releaseTime(b) - releaseTime(a))
-    .slice(0, requestedLimit);
+  return movies.sort(compareLatestPopular).slice(0, requestedLimit);
 }
 
 export async function getMovie(id: string) {
