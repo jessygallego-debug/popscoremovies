@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BrandHomeLink from "@/app/components/brand-home-link";
+import CoStarRating from "@/app/components/CoStarRating";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import { backdropUrl, getMovie, isTmdbConfigured, posterUrl } from "@/lib/tmdb";
 
@@ -87,11 +88,6 @@ export default async function MoviePage({
             </div>
 
             <div className="flex flex-col justify-center">
-              <PopScoreDisplay
-                movieId={String(movie.id)}
-                className="mb-3 font-bold text-yellow-400"
-              />
-
               <h1 className="text-4xl font-black sm:text-6xl">{movie.title}</h1>
 
               {movie.tagline ? (
@@ -106,13 +102,19 @@ export default async function MoviePage({
                 ))}
               </div>
 
-              <div className="mt-8">
-                <Link
-                  href={`/rate?movie=${movie.id}`}
-                  className="inline-flex min-h-12 items-center rounded-lg bg-yellow-400 px-6 font-bold text-black hover:bg-yellow-300"
-                >
-                  Rate This Movie
-                </Link>
+              <div className="mt-8 space-y-1">
+                <PopScoreDisplay
+                  movieId={String(movie.id)}
+                  className="font-bold text-yellow-400"
+                />
+                <CoStarRating>
+                  <Link
+                    href={`/rate?movie=${movie.id}`}
+                    className="inline-flex min-h-12 items-center justify-center rounded-lg bg-yellow-400 px-6 font-bold text-black hover:bg-yellow-300"
+                  >
+                    Rate This Movie
+                  </Link>
+                </CoStarRating>
               </div>
 
               <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-200">
