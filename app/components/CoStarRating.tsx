@@ -64,7 +64,7 @@ export default function CoStarRating({ children }: CoStarRatingProps) {
           onClick={() => setIsOpen(true)}
           className="inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400 px-6 font-bold text-yellow-400 hover:bg-yellow-400 hover:text-black"
         >
-          Co-Star This Movie
+          Co-Star Rate
         </button>
       </div>
 
@@ -120,7 +120,7 @@ export default function CoStarRating({ children }: CoStarRatingProps) {
                 disabled={!selectedOption}
                 className="min-h-12 rounded-lg bg-yellow-400 px-6 font-bold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-400"
               >
-                Submit Co-Star
+                Submit
               </button>
 
               <button
