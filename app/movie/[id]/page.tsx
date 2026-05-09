@@ -1,93 +1,111 @@
-async function getMovies(query?: string) {
-  const url = query
-    ? `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(
-        query
-      )}&include_adult=false&language=en-US&page=1`
-    : "https://api.themoviedb.org/3/trending/movie/week?language=en-US";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import BrandHomeLink from "@/app/components/brand-home-link";
+import { backdropUrl, getMovie, isTmdbConfigured, posterUrl } from "@/lib/tmdb";
 
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
-    },
-    cache: "no-store",
-  });
-
-  return response.json();
-}
-
-export default async function Home({
-  searchParams,
+export default async function MoviePage({
+  params,
 }: {
-  searchParams: Promise<{ query?: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const params = await searchParams;
-  const query = params.query || "";
+  const { id } = await params;
+  const movie = await getMovie(id);
 
-  const data = await getMovies(query);
-  const movies = data.results?.slice(0, 30) || [];
+  if (!movie && isTmdbConfigured()) {
+    notFound();
+  }
+
+  if (!movie) {
+    return (
+      <main className="min-h-screen bg-black px-5 py-8 text-white sm:px-8 sm:py-12">
+        <section className="mx-auto max-w-4xl">
+          <BrandHomeLink />
+          <div className="mt-8 rounded-lg border border-yellow-500/40 bg-yellow-400/10 p-5 text-yellow-100">
+            Add `TMDB_API_TOKEN` to your environment to load movie details.
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  const poster = posterUrl(movie.poster_path);
+  const backdrop = backdropUrl(movie.backdrop_path);
+  const year = movie.release_date ? new Date(movie.release_date).getFullYear() : null;
+  const runtime = movie.runtime
+    ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m`
+    : null;
 
   return (
-    <main className="min-h-screen bg-black text-white px-8 py-12">
-      <section className="max-w-7xl mx-auto">
-        <p className="text-yellow-400 font-bold mb-3">🍿 PopScore Movies</p>
-
-        <h1 className="text-6xl font-black mb-4">
-          Discover Movies Worth Watching
-        </h1>
-
-        <p className="text-gray-300 text-xl mb-8">
-          Genre-weighted movie ratings built for real fans.
-        </p>
-
-        <form className="mb-12 flex gap-3" action="/">
-          <input
-            type="text"
-            name="query"
-            defaultValue={query}
-            placeholder="Search for a movie..."
-            className="w-full rounded-xl bg-gray-900 border border-gray-700 px-5 py-4 text-white outline-none focus:border-yellow-400"
+    <main className="min-h-screen bg-black text-white">
+      <section className="relative overflow-hidden px-5 py-8 sm:px-8 sm:py-12">
+        {backdrop ? (
+          <Image
+            src={backdrop}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-25"
           />
+        ) : null}
 
-          <button
-            type="submit"
-            className="bg-yellow-400 text-black px-6 py-4 rounded-xl font-bold hover:bg-yellow-300"
-          >
-            Search
-          </button>
-        </form>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
 
-        <h2 className="text-3xl font-bold mb-6">
-          {query ? `Search Results for "${query}"` : "Trending Movies"}
-        </h2>
+        <div className="relative mx-auto max-w-6xl">
+          <BrandHomeLink />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {movies.map((movie: any) => (
-            <a
-              key={movie.id}
-              href={`/movie/${movie.id}`}
-              className="bg-gray-900 rounded-2xl overflow-hidden hover:scale-105 transition block cursor-pointer"
-            >
-              {movie.poster_path ? (
-                <img
-                  src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+          <div className="mt-8 grid gap-8 md:grid-cols-[280px_1fr]">
+            <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-900">
+              {poster ? (
+                <Image
+                  src={poster}
                   alt={movie.title}
-                  className="w-full h-[360px] object-cover"
+                  fill
+                  priority
+                  sizes="280px"
+                  className="object-cover"
                 />
               ) : (
-                <div className="w-full h-[360px] bg-gray-800 flex items-center justify-center text-gray-500">
+                <div className="flex h-full items-center justify-center text-gray-500">
                   No Poster
                 </div>
               )}
+            </div>
 
-              <div className="p-4">
-                <h3 className="font-bold text-lg">{movie.title}</h3>
+            <div className="flex flex-col justify-center">
+              <p className="mb-3 font-bold text-yellow-400">
+                PopScore: Not rated yet
+              </p>
 
-                <p className="text-yellow-400 font-bold text-sm mt-2">
-                  PopScore: Not rated yet
-                </p>
+              <h1 className="text-4xl font-black sm:text-6xl">{movie.title}</h1>
+
+              {movie.tagline ? (
+                <p className="mt-4 text-xl text-gray-300">{movie.tagline}</p>
+              ) : null}
+
+              <div className="mt-6 flex flex-wrap gap-3 text-sm font-bold text-gray-300">
+                {year ? <span>{year}</span> : null}
+                {runtime ? <span>{runtime}</span> : null}
+                {movie.genres.map((genre) => (
+                  <span key={genre.id}>{genre.name}</span>
+                ))}
               </div>
-            </a>
-          ))}
+
+              <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-200">
+                {movie.overview || "No overview is available for this movie."}
+              </p>
+
+              <div className="mt-8">
+                <Link
+                  href={`/rate?movie=${movie.id}`}
+                  className="inline-flex min-h-12 items-center rounded-lg bg-yellow-400 px-6 font-bold text-black hover:bg-yellow-300"
+                >
+                  Rate This Movie
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
