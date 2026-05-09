@@ -57,6 +57,7 @@ export default async function RatePage({
 
   return (
     <RateClient
+      movieId={params.movie}
       initialGenre={initialGenre}
       lockGenre={Boolean(movieGenre || urlGenre)}
       movieTitle={movie?.title}

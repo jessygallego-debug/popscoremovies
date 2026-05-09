@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { savePopScore } from "@/lib/popscore-store";
 
 const genreConfigs = {
   horror: {
@@ -91,6 +92,7 @@ export type GenreKey = keyof typeof genreConfigs;
 type GenreEntry = [GenreKey, (typeof genreConfigs)[GenreKey]];
 
 type RateClientProps = {
+  movieId?: string;
   initialGenre: GenreKey;
   lockGenre: boolean;
   movieTitle?: string;
@@ -109,12 +111,14 @@ export function isGenreKey(value: string | undefined): value is GenreKey {
 }
 
 export default function RateClient({
+  movieId,
   initialGenre,
   lockGenre,
   movieTitle,
 }: RateClientProps) {
   const [selectedGenre, setSelectedGenre] = useState<GenreKey>(initialGenre);
   const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [submittedScore, setSubmittedScore] = useState<number | null>(null);
 
   const currentGenre = genreConfigs[selectedGenre];
   const allAnswered = currentGenre.questions.every((q) => ratings[q.key]);
@@ -129,6 +133,16 @@ export default function RateClient({
   const genresToShow: GenreEntry[] = lockGenre
     ? [[selectedGenre, currentGenre]]
     : (Object.entries(genreConfigs) as GenreEntry[]);
+
+  const handleSubmit = () => {
+    if (!movieId || !allAnswered) {
+      return;
+    }
+
+    savePopScore(movieId, selectedGenre, ratings, currentGenre.questions)
+      .then(() => setSubmittedScore(popScore))
+      .catch(() => setSubmittedScore(null));
+  };
 
   return (
     <main className="min-h-screen bg-black text-white px-8 py-12">
@@ -158,6 +172,7 @@ export default function RateClient({
                 if (!lockGenre) {
                   setSelectedGenre(key);
                   setRatings({});
+                  setSubmittedScore(null);
                 }
               }}
               className="px-5 py-3 rounded-xl font-bold bg-yellow-400 text-black"
@@ -180,10 +195,13 @@ export default function RateClient({
                   <button
                     key={score}
                     onClick={() =>
-                      setRatings({
-                        ...ratings,
-                        [question.key]: score,
-                      })
+                      {
+                        setRatings({
+                          ...ratings,
+                          [question.key]: score,
+                        });
+                        setSubmittedScore(null);
+                      }
                     }
                     className={`h-12 w-12 rounded-full font-bold ${
                       ratings[question.key] === score
@@ -204,6 +222,26 @@ export default function RateClient({
             <p className="text-lg font-bold">Your PopScore</p>
             <h2 className="text-6xl font-black">{popScore}</h2>
             <p className="text-2xl font-bold mt-2">{getPopRating(popScore)}</p>
+
+            {movieId ? (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="mt-6 min-h-12 rounded-lg bg-black px-6 font-bold text-yellow-400 hover:bg-gray-900"
+              >
+                Submit Rating
+              </button>
+            ) : (
+              <p className="mt-6 font-bold">
+                Select a movie before submitting a rating.
+              </p>
+            )}
+
+            {submittedScore ? (
+              <p className="mt-4 font-bold">
+                Rating submitted. This movie&apos;s PopScore is now updated.
+              </p>
+            ) : null}
           </div>
         )}
       </section>

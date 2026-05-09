@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BrandHomeLink from "@/app/components/brand-home-link";
+import PopScoreDisplay from "@/app/components/popscore-display";
 import { backdropUrl, getMovie, isTmdbConfigured, posterUrl } from "@/lib/tmdb";
 
 export default async function MoviePage({
@@ -74,9 +75,10 @@ export default async function MoviePage({
             </div>
 
             <div className="flex flex-col justify-center">
-              <p className="mb-3 font-bold text-yellow-400">
-                PopScore: Not rated yet
-              </p>
+              <PopScoreDisplay
+                movieId={String(movie.id)}
+                className="mb-3 font-bold text-yellow-400"
+              />
 
               <h1 className="text-4xl font-black sm:text-6xl">{movie.title}</h1>
 

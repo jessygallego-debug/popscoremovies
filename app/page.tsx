@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import BrandHomeLink from "@/app/components/brand-home-link";
+import PopScoreDisplay from "@/app/components/popscore-display";
 import { getMovies, isTmdbConfigured, posterUrl } from "@/lib/tmdb";
 
 export default async function Home({
@@ -93,9 +94,7 @@ export default async function Home({
                       Released: {releaseYear || "TBA"}
                     </p>
 
-                    <p className="mt-1 text-sm font-bold text-yellow-400">
-                      PopScore: Not rated yet
-                    </p>
+                    <PopScoreDisplay movieId={String(movie.id)} />
                   </div>
                 </Link>
               );
