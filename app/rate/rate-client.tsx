@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ratingToPercent, savePopScore } from "@/lib/popscore-store";
@@ -88,13 +89,33 @@ const genreConfigs = {
 };
 
 const scoreOptions = [
-  { value: 1, emoji: "💨", label: "Burnt", description: "Really Bad" },
-  { value: 2, emoji: "🧂", label: "Salty", description: "Bad" },
-  { value: 3, emoji: "🍿", label: "Fresh Popcorn", description: "Good" },
-  { value: 4, emoji: "🧈🍿", label: "Buttery", description: "Great" },
+  {
+    value: 1,
+    iconSrc: "/rating-icons/smoke.jpg",
+    label: "Smoke",
+    description: "Really Bad",
+  },
+  {
+    value: 2,
+    iconSrc: "/rating-icons/salty.jpg",
+    label: "Salty",
+    description: "Bad",
+  },
+  {
+    value: 3,
+    iconSrc: "/rating-icons/fresh-popcorn.jpg",
+    label: "Fresh Popcorn",
+    description: "Good",
+  },
+  {
+    value: 4,
+    iconSrc: "/rating-icons/buttery.jpg",
+    label: "Buttery",
+    description: "Great",
+  },
   {
     value: 5,
-    emoji: "✨🧈🧈🍿",
+    iconSrc: "/rating-icons/extra-buttery.jpg",
     label: "Extra Buttery",
     description: "Fantastic",
   },
@@ -279,7 +300,15 @@ export default function RateClient({
                           : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
                       }`}
                     >
-                      <span className="block text-4xl">{option.emoji}</span>
+                      <span className="relative mx-auto block h-20 w-20 overflow-hidden rounded-2xl">
+                        <Image
+                          src={option.iconSrc}
+                          alt={`${option.label} rating icon`}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                        />
+                      </span>
                       <span className="mt-4 block text-4xl font-black">
                         {option.value}
                       </span>
