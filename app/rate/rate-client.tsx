@@ -93,13 +93,13 @@ const scoreOptions = [
     value: 1,
     iconSrc: "/rating-icons/smoke.png",
     label: "Burnt",
-    description: "Really Bad",
+    description: "Bad",
   },
   {
     value: 2,
     iconSrc: "/rating-icons/salty.png",
     label: "Salty",
-    description: "Bad",
+    description: "Meh",
   },
   {
     value: 3,
@@ -117,7 +117,7 @@ const scoreOptions = [
     value: 5,
     iconSrc: "/rating-icons/extra-buttery.png",
     label: "Extra Buttery",
-    description: "Fantastic",
+    description: "Amazing",
   },
 ];
 
@@ -370,7 +370,7 @@ export default function RateClient({
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-5 text-gray-200">
               <p className="font-bold text-yellow-300">
-                ✨ Extra Buttery = Fantastic
+                ✨ Extra Buttery = Amazing
               </p>
               <p className="mt-2 text-sm">
                 You can always come back and leave a full movie rating when
