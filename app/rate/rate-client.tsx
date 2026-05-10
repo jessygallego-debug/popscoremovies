@@ -8,7 +8,7 @@ const genreConfigs = {
   horror: {
     title: "Horror",
     questions: [
-      { key: "story", name: "Story", weight: 0.3 },
+      { key: "story", name: "Storyline", weight: 0.3 },
       { key: "acting", name: "Acting", weight: 0.2 },
       { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
       { key: "scareFactor", name: "Scare Factor", weight: 0.25 },
@@ -18,7 +18,7 @@ const genreConfigs = {
   scifi: {
     title: "Sci-Fi",
     questions: [
-      { key: "story", name: "Story", weight: 0.3 },
+      { key: "story", name: "Storyline", weight: 0.3 },
       { key: "acting", name: "Acting", weight: 0.2 },
       { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
       { key: "visualEffects", name: "Visual Effects", weight: 0.3 },
@@ -28,7 +28,7 @@ const genreConfigs = {
   action: {
     title: "Action",
     questions: [
-      { key: "story", name: "Story", weight: 0.3 },
+      { key: "story", name: "Storyline", weight: 0.3 },
       { key: "acting", name: "Acting", weight: 0.2 },
       { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
       { key: "actionSequences", name: "Action Sequences", weight: 0.3 },
@@ -38,7 +38,7 @@ const genreConfigs = {
   comedy: {
     title: "Comedy",
     questions: [
-      { key: "story", name: "Story", weight: 0.3 },
+      { key: "story", name: "Storyline", weight: 0.3 },
       { key: "acting", name: "Acting", weight: 0.2 },
       { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
       { key: "humor", name: "Humor", weight: 0.3 },
@@ -48,7 +48,7 @@ const genreConfigs = {
   romcom: {
     title: "Rom-Com",
     questions: [
-      { key: "story", name: "Story", weight: 0.3 },
+      { key: "story", name: "Storyline", weight: 0.3 },
       { key: "acting", name: "Acting", weight: 0.2 },
       { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
       { key: "chemistry", name: "Chemistry", weight: 0.25 },
@@ -58,7 +58,7 @@ const genreConfigs = {
   animated: {
     title: "Animated",
     questions: [
-      { key: "story", name: "Story", weight: 0.3 },
+      { key: "story", name: "Storyline", weight: 0.3 },
       { key: "voiceActing", name: "Voice Acting", weight: 0.2 },
       { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
       { key: "animationQuality", name: "Animation Quality", weight: 0.25 },
@@ -68,7 +68,7 @@ const genreConfigs = {
   musical: {
     title: "Musical",
     questions: [
-      { key: "story", name: "Story", weight: 0.3 },
+      { key: "story", name: "Storyline", weight: 0.3 },
       { key: "acting", name: "Acting", weight: 0.2 },
       { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
       { key: "songQuality", name: "Song Quality", weight: 0.25 },
@@ -78,7 +78,7 @@ const genreConfigs = {
   drama: {
     title: "Drama",
     questions: [
-      { key: "story", name: "Story", weight: 0.3 },
+      { key: "story", name: "Storyline", weight: 0.3 },
       { key: "acting", name: "Acting", weight: 0.2 },
       { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
       { key: "conflict", name: "Conflict", weight: 0.2 },
@@ -218,7 +218,7 @@ export default function RateClient({
                   aria-label={categoryTips[question.key]}
                   className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-700 text-xs font-bold text-gray-300"
                 >
-                  ?
+                  i
                 </span>
               </div>
 
