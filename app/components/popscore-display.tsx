@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getPopScore, subscribeToPopScoreUpdates } from "@/lib/popscore-store";
 
@@ -7,6 +8,29 @@ type PopScoreDisplayProps = {
   movieId: string;
   className?: string;
 };
+
+function getPopScoreTitle(score: number) {
+  if (score >= 90) {
+    return {
+      iconSrc: "/rating-icons/extra-buttery.jpg",
+      label: "Extra Buttery",
+    };
+  }
+
+  if (score >= 75) {
+    return { iconSrc: "/rating-icons/buttery.jpg", label: "Buttery" };
+  }
+
+  if (score >= 60) {
+    return { iconSrc: "/rating-icons/fresh-popcorn.jpg", label: "Popcorn" };
+  }
+
+  if (score >= 40) {
+    return { iconSrc: "/rating-icons/salty.jpg", label: "Salty" };
+  }
+
+  return { iconSrc: "/rating-icons/smoke.jpg", label: "Burnt" };
+}
 
 export default function PopScoreDisplay({
   movieId,
@@ -43,13 +67,29 @@ export default function PopScoreDisplay({
     };
   }, [movieId]);
 
+  if (!score) {
+    return <p className={className}>PopScore: Not rated yet</p>;
+  }
+
+  const popScoreTitle = getPopScoreTitle(score.score);
+
   return (
-    <p className={className}>
-      {score
-        ? `PopScore: ${score.score}% (${score.count} ${
-            score.count === 1 ? "rating" : "ratings"
-          })`
-        : "PopScore: Not rated yet"}
-    </p>
+    <div className={className}>
+      <div className="flex items-center gap-2">
+        <span className="relative block h-8 w-8 overflow-hidden rounded-lg bg-black">
+          <Image
+            src={popScoreTitle.iconSrc}
+            alt={`${popScoreTitle.label} PopScore icon`}
+            fill
+            sizes="32px"
+            className="object-contain"
+          />
+        </span>
+        <span>
+          PopScore: {score.score}% - {popScoreTitle.label} ({score.count}{" "}
+          {score.count === 1 ? "rating" : "ratings"})
+        </span>
+      </div>
+    </div>
   );
 }
