@@ -76,7 +76,7 @@ export default function PopScoreDisplay({
   return (
     <div className={className}>
       <div className="flex items-center gap-2">
-        <span className="relative block h-8 w-8 overflow-hidden rounded-lg">
+        <span className="relative block h-8 w-8 overflow-hidden rounded-lg bg-black">
           <Image
             src={popScoreTitle.iconSrc}
             alt={`${popScoreTitle.label} PopScore icon`}
