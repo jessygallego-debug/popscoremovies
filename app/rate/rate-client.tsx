@@ -87,6 +87,29 @@ const genreConfigs = {
   },
 };
 
+const scoreLabels = ["Bad", "Meh", "Good", "Great", "Fantastic"];
+
+const categoryTips: Record<string, string> = {
+  actionSequences: "Stunts, fights, chases, and big moments.",
+  acting: "How believable the performances feel.",
+  animationQuality: "How strong the animation looks and moves.",
+  chemistry: "How well the leads connect on screen.",
+  choreography: "How well the dance and movement land.",
+  conflict: "How strong the central struggle feels.",
+  emotionalImpact: "How much the movie makes you feel.",
+  humor: "How often the jokes land.",
+  originality: "How fresh or unique the movie feels.",
+  pace: "How well the movie keeps moving.",
+  quotability: "How memorable the funny lines are.",
+  rewatchability: "How likely you are to watch it again.",
+  scareFactor: "How tense, scary, or unsettling it feels.",
+  songQuality: "How memorable and enjoyable the songs are.",
+  story: "How strong the plot and characters are.",
+  tension: "How well suspense builds and holds.",
+  visualEffects: "How convincing the effects look.",
+  voiceActing: "How well the voices bring characters to life.",
+};
+
 export type GenreKey = keyof typeof genreConfigs;
 
 type GenreEntry = [GenreKey, (typeof genreConfigs)[GenreKey]];
@@ -188,29 +211,40 @@ export default function RateClient({
               key={question.key}
               className="rounded-2xl border border-gray-800 bg-gray-900 p-6"
             >
-              <h2 className="text-2xl font-bold mb-4">{question.name}</h2>
+              <div className="mb-4 flex items-center gap-2">
+                <h2 className="text-2xl font-bold">{question.name}</h2>
+                <span
+                  title={categoryTips[question.key]}
+                  aria-label={categoryTips[question.key]}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-700 text-xs font-bold text-gray-300"
+                >
+                  ?
+                </span>
+              </div>
 
               <div className="flex gap-3">
                 {[1, 2, 3, 4, 5].map((score) => (
-                  <button
-                    key={score}
-                    onClick={() =>
-                      {
+                  <div key={score} className="flex w-14 flex-col items-center">
+                    <button
+                      onClick={() => {
                         setRatings({
                           ...ratings,
                           [question.key]: score,
                         });
                         setSubmittedScore(null);
-                      }
-                    }
-                    className={`h-12 w-12 rounded-full font-bold ${
-                      ratings[question.key] === score
-                        ? "bg-yellow-400 text-black"
-                        : "bg-gray-800 hover:bg-yellow-400 hover:text-black"
-                    }`}
-                  >
-                    {score}
-                  </button>
+                      }}
+                      className={`h-12 w-12 rounded-full font-bold ${
+                        ratings[question.key] === score
+                          ? "bg-yellow-400 text-black"
+                          : "bg-gray-800 hover:bg-yellow-400 hover:text-black"
+                      }`}
+                    >
+                      {score}
+                    </button>
+                    <span className="mt-2 text-center text-xs font-bold text-gray-400">
+                      {scoreLabels[score - 1]}
+                    </span>
+                  </div>
                 ))}
               </div>
             </div>
