@@ -230,9 +230,6 @@ export default function RateClient({
           <p className="mt-4 text-xl font-bold text-gray-200">
             How did this movie feel overall?
           </p>
-          <p className="mt-2 text-sm text-gray-400">
-            Your quick reaction helps other fans. 🍿
-          </p>
         </div>
 
         {movieTitle ? (
