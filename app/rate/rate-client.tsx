@@ -167,6 +167,7 @@ export default function RateClient({
   const genresToShow: GenreEntry[] = lockGenre
     ? [[selectedGenre, currentGenre]]
     : (Object.entries(genreConfigs) as GenreEntry[]);
+  const exitHref = movieId ? `/movie/${movieId}` : "/";
 
   const handleSubmit = () => {
     if (!movieId || !allAnswered) {
@@ -180,7 +181,15 @@ export default function RateClient({
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#1e293b_0%,#050505_42%,#000_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
-      <section className="mx-auto max-w-6xl rounded-3xl border border-white/10 bg-black/60 p-5 shadow-2xl shadow-yellow-400/10 backdrop-blur sm:p-8">
+      <section className="relative mx-auto max-w-6xl rounded-3xl border border-white/10 bg-black/60 p-5 shadow-2xl shadow-yellow-400/10 backdrop-blur sm:p-8">
+        <Link
+          href={exitHref}
+          aria-label="Exit rating screen"
+          className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg font-black text-gray-300 transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-300"
+        >
+          X
+        </Link>
+
         <Link
           href="/"
           aria-label="Go to PopScore Movies home"
