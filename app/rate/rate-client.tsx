@@ -87,7 +87,18 @@ const genreConfigs = {
   },
 };
 
-const scoreLabels = ["Bad", "Meh", "Good", "Great", "Fantastic"];
+const scoreOptions = [
+  { value: 1, emoji: "💨", label: "Burnt", description: "Really Bad" },
+  { value: 2, emoji: "🧂", label: "Salty", description: "Bad" },
+  { value: 3, emoji: "🍿", label: "Fresh Popcorn", description: "Good" },
+  { value: 4, emoji: "🧈🍿", label: "Buttery", description: "Great" },
+  {
+    value: 5,
+    emoji: "✨🧈🧈🍿",
+    label: "Extra Buttery",
+    description: "Fantastic",
+  },
+];
 
 const categoryTips: Record<string, string> = {
   actionSequences: "Stunts, fights, chases, and big moments.",
@@ -168,26 +179,41 @@ export default function RateClient({
   };
 
   return (
-    <main className="min-h-screen bg-black text-white px-8 py-12">
-      <section className="max-w-3xl mx-auto">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#1e293b_0%,#050505_42%,#000_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
+      <section className="mx-auto max-w-6xl rounded-3xl border border-white/10 bg-black/60 p-5 shadow-2xl shadow-yellow-400/10 backdrop-blur sm:p-8">
         <Link
           href="/"
           aria-label="Go to PopScore Movies home"
-          className="mb-3 inline-flex items-center gap-2 font-bold text-yellow-400 transition hover:text-yellow-300"
+          className="mb-6 inline-flex items-center gap-2 text-lg font-bold text-yellow-400 transition hover:text-yellow-300"
         >
           <span aria-hidden="true">🍿</span>
           <span>PopScore Movies</span>
         </Link>
 
-        <h1 className="text-5xl font-black mb-3">Rate This Movie</h1>
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 text-4xl shadow-lg shadow-yellow-400/20">
+            🍿
+          </div>
+          <h1 className="text-4xl font-black text-white sm:text-6xl">
+            Rate This Movie
+          </h1>
+          <p className="mt-4 text-xl font-bold text-gray-200">
+            How did this movie feel overall?
+          </p>
+          <p className="mt-2 text-sm text-gray-400">
+            Your quick reaction helps other fans. 🍿
+          </p>
+        </div>
 
         {movieTitle ? (
-          <p className="mb-8 text-xl text-gray-300">{movieTitle}</p>
+          <p className="mb-8 text-center text-xl font-bold text-yellow-300">
+            {movieTitle}
+          </p>
         ) : (
           <div className="mb-8" />
         )}
 
-        <div className="flex gap-3 flex-wrap mb-10">
+        <div className="mb-10 flex flex-wrap justify-center gap-3">
           {genresToShow.map(([key, genre]) => (
             <button
               key={key}
@@ -198,72 +224,102 @@ export default function RateClient({
                   setSubmittedScore(null);
                 }
               }}
-              className="px-5 py-3 rounded-xl font-bold bg-yellow-400 text-black"
+              className="rounded-xl bg-yellow-400 px-5 py-3 font-bold text-black shadow-lg shadow-yellow-400/20"
             >
               {genre.title}
             </button>
           ))}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {currentGenre.questions.map((question) => (
             <div
               key={question.key}
-              className="rounded-2xl border border-gray-800 bg-gray-900 p-6"
+              className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/40 sm:p-6"
             >
-              <div className="mb-4 flex items-center gap-2">
-                <h2 className="text-2xl font-bold">{question.name}</h2>
+              <div className="mb-5 flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-white">
+                  {question.name}
+                </h2>
                 <span
                   title={categoryTips[question.key]}
                   aria-label={categoryTips[question.key]}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-700 text-xs font-bold text-gray-300"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-yellow-400/30 bg-yellow-400/10 text-xs font-bold text-yellow-300"
                 >
                   i
                 </span>
               </div>
 
-              <div className="flex gap-3">
-                {[1, 2, 3, 4, 5].map((score) => (
-                  <div key={score} className="flex w-14 flex-col items-center">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+                {scoreOptions.map((option) => {
+                  const isSelected = ratings[question.key] === option.value;
+
+                  return (
                     <button
+                      key={option.value}
                       onClick={() => {
                         setRatings({
                           ...ratings,
-                          [question.key]: score,
+                          [question.key]: option.value,
                         });
                         setSubmittedScore(null);
                       }}
-                      className={`h-12 w-12 rounded-full font-bold ${
-                        ratings[question.key] === score
-                          ? "bg-yellow-400 text-black"
-                          : "bg-gray-800 hover:bg-yellow-400 hover:text-black"
+                      className={`min-h-44 rounded-2xl border p-4 text-center transition ${
+                        isSelected
+                          ? "border-yellow-300 bg-yellow-400/15 text-yellow-300 shadow-[0_0_34px_rgba(250,204,21,0.35)]"
+                          : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
                       }`}
                     >
-                      {score}
+                      <span className="block text-4xl">{option.emoji}</span>
+                      <span className="mt-4 block text-4xl font-black">
+                        {option.value}
+                      </span>
+                      <span className="mt-3 block text-sm font-black">
+                        {option.label}
+                      </span>
+                      <span
+                        className={`mx-auto my-4 block h-px w-12 ${
+                          isSelected ? "bg-yellow-300/70" : "bg-white/15"
+                        }`}
+                      />
+                      <span className="block text-xs font-bold text-gray-400">
+                        {option.description}
+                      </span>
                     </button>
-                    <span className="mt-2 text-center text-xs font-bold text-gray-400">
-                      {scoreLabels[score - 1]}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
         </div>
 
         {allAnswered && (
-          <div className="mt-10 rounded-2xl bg-yellow-400 text-black p-8">
+          <div className="mt-10 rounded-3xl border border-yellow-400/40 bg-yellow-400/10 p-8 text-white shadow-xl shadow-yellow-400/20">
             <p className="text-lg font-bold">Your PopScore</p>
-            <h2 className="text-6xl font-black">{popScore}%</h2>
-            <p className="text-2xl font-bold mt-2">{getPopRating(popScore)}</p>
+            <h2 className="text-6xl font-black text-yellow-300">
+              {popScore}%
+            </h2>
+            <p className="mt-2 text-2xl font-bold text-yellow-200">
+              {getPopRating(popScore)}
+            </p>
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-5 text-gray-200">
+              <p className="font-bold text-yellow-300">
+                ✨ Extra Buttery = Fantastic
+              </p>
+              <p className="mt-2 text-sm">
+                You can always come back and leave a full movie rating when
+                you&apos;re ready!
+              </p>
+            </div>
 
             {movieId ? (
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="mt-6 min-h-12 rounded-lg bg-black px-6 font-bold text-yellow-400 hover:bg-gray-900"
+                className="mt-6 min-h-14 w-full rounded-2xl bg-yellow-400 px-6 text-lg font-black text-black shadow-[0_0_28px_rgba(250,204,21,0.42)] hover:bg-yellow-300 sm:w-auto"
               >
-                Submit Rating
+                Submit Rating ★
               </button>
             ) : (
               <p className="mt-6 font-bold">
