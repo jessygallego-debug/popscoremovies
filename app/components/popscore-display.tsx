@@ -12,24 +12,24 @@ type PopScoreDisplayProps = {
 function getPopScoreTitle(score: number) {
   if (score >= 90) {
     return {
-      iconSrc: "/rating-icons/extra-buttery.jpg",
+      iconSrc: "/rating-icons/extra-buttery.png",
       label: "Extra Buttery",
     };
   }
 
   if (score >= 75) {
-    return { iconSrc: "/rating-icons/buttery.jpg", label: "Buttery" };
+    return { iconSrc: "/rating-icons/buttery.png", label: "Buttery" };
   }
 
   if (score >= 60) {
-    return { iconSrc: "/rating-icons/fresh-popcorn.jpg", label: "Popcorn" };
+    return { iconSrc: "/rating-icons/fresh-popcorn.png", label: "Popcorn" };
   }
 
   if (score >= 40) {
-    return { iconSrc: "/rating-icons/salty.jpg", label: "Salty" };
+    return { iconSrc: "/rating-icons/salty.png", label: "Salty" };
   }
 
-  return { iconSrc: "/rating-icons/smoke.jpg", label: "Burnt" };
+  return { iconSrc: "/rating-icons/smoke.png", label: "Burnt" };
 }
 
 export default function PopScoreDisplay({
@@ -76,7 +76,7 @@ export default function PopScoreDisplay({
   return (
     <div className={className}>
       <div className="flex items-center gap-2">
-        <span className="relative block h-8 w-8 overflow-hidden rounded-lg bg-black">
+        <span className="relative block h-8 w-8 overflow-hidden rounded-lg">
           <Image
             src={popScoreTitle.iconSrc}
             alt={`${popScoreTitle.label} PopScore icon`}

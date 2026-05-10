@@ -91,31 +91,31 @@ const genreConfigs = {
 const scoreOptions = [
   {
     value: 1,
-    iconSrc: "/rating-icons/smoke.jpg",
+    iconSrc: "/rating-icons/smoke.png",
     label: "Burnt",
     description: "Really Bad",
   },
   {
     value: 2,
-    iconSrc: "/rating-icons/salty.jpg",
+    iconSrc: "/rating-icons/salty.png",
     label: "Salty",
     description: "Bad",
   },
   {
     value: 3,
-    iconSrc: "/rating-icons/fresh-popcorn.jpg",
+    iconSrc: "/rating-icons/fresh-popcorn.png",
     label: "Fresh Popcorn",
     description: "Good",
   },
   {
     value: 4,
-    iconSrc: "/rating-icons/buttery.jpg",
+    iconSrc: "/rating-icons/buttery.png",
     label: "Buttery",
     description: "Great",
   },
   {
     value: 5,
-    iconSrc: "/rating-icons/extra-buttery.jpg",
+    iconSrc: "/rating-icons/extra-buttery.png",
     label: "Extra Buttery",
     description: "Fantastic",
   },
@@ -156,27 +156,27 @@ type RateClientProps = {
 function getPopRating(score: number) {
   if (score >= 90) {
     return {
-      iconSrc: "/rating-icons/extra-buttery.jpg",
+      iconSrc: "/rating-icons/extra-buttery.png",
       label: "Extra Buttery",
     };
   }
 
   if (score >= 75) {
-    return { iconSrc: "/rating-icons/buttery.jpg", label: "Buttery" };
+    return { iconSrc: "/rating-icons/buttery.png", label: "Buttery" };
   }
 
   if (score >= 60) {
     return {
-      iconSrc: "/rating-icons/fresh-popcorn.jpg",
+      iconSrc: "/rating-icons/fresh-popcorn.png",
       label: "Fresh Popcorn",
     };
   }
 
   if (score >= 40) {
-    return { iconSrc: "/rating-icons/salty.jpg", label: "Salty" };
+    return { iconSrc: "/rating-icons/salty.png", label: "Salty" };
   }
 
-  return { iconSrc: "/rating-icons/smoke.jpg", label: "Burnt" };
+  return { iconSrc: "/rating-icons/smoke.png", label: "Burnt" };
 }
 
 export function isGenreKey(value: string | undefined): value is GenreKey {
@@ -316,7 +316,7 @@ export default function RateClient({
                           : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
                       }`}
                     >
-                      <span className="relative mx-auto block h-24 w-24 overflow-hidden rounded-2xl bg-black">
+                      <span className="relative mx-auto block h-24 w-24 overflow-hidden rounded-2xl">
                         <Image
                           src={option.iconSrc}
                           alt={`${option.label} rating icon`}
@@ -354,7 +354,7 @@ export default function RateClient({
               {popScore}%
             </h2>
             <div className="mt-4 flex flex-wrap items-center gap-4">
-              <span className="relative block h-20 w-20 overflow-hidden rounded-2xl bg-black">
+              <span className="relative block h-20 w-20 overflow-hidden rounded-2xl">
                 <Image
                   src={popRating.iconSrc}
                   alt={`${popRating.label} PopScore icon`}
