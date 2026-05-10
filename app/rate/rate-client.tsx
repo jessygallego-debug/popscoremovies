@@ -92,7 +92,7 @@ const scoreOptions = [
   {
     value: 1,
     iconSrc: "/rating-icons/smoke.jpg",
-    label: "Smoke",
+    label: "Burnt",
     description: "Really Bad",
   },
   {
