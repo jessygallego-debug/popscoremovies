@@ -154,11 +154,29 @@ type RateClientProps = {
 };
 
 function getPopRating(score: number) {
-  if (score >= 90) return "Extra Buttery 🧈🧈🍿";
-  if (score >= 75) return "Buttery 🧈🍿";
-  if (score >= 60) return "Fresh Popcorn 🍿";
-  if (score >= 40) return "Salty 🧂";
-  return "Burnt 💨";
+  if (score >= 90) {
+    return {
+      iconSrc: "/rating-icons/extra-buttery.jpg",
+      label: "Extra Buttery",
+    };
+  }
+
+  if (score >= 75) {
+    return { iconSrc: "/rating-icons/buttery.jpg", label: "Buttery" };
+  }
+
+  if (score >= 60) {
+    return {
+      iconSrc: "/rating-icons/fresh-popcorn.jpg",
+      label: "Fresh Popcorn",
+    };
+  }
+
+  if (score >= 40) {
+    return { iconSrc: "/rating-icons/salty.jpg", label: "Salty" };
+  }
+
+  return { iconSrc: "/rating-icons/smoke.jpg", label: "Burnt" };
 }
 
 export function isGenreKey(value: string | undefined): value is GenreKey {
@@ -189,6 +207,7 @@ export default function RateClient({
     ? [[selectedGenre, currentGenre]]
     : (Object.entries(genreConfigs) as GenreEntry[]);
   const exitHref = movieId ? `/movie/${movieId}` : "/";
+  const popRating = getPopRating(popScore);
 
   const handleSubmit = () => {
     if (!movieId || !allAnswered) {
@@ -297,13 +316,13 @@ export default function RateClient({
                           : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
                       }`}
                     >
-                      <span className="relative mx-auto block h-20 w-20 overflow-hidden rounded-2xl">
+                      <span className="relative mx-auto block h-24 w-24 overflow-hidden rounded-2xl bg-black">
                         <Image
                           src={option.iconSrc}
                           alt={`${option.label} rating icon`}
                           fill
-                          sizes="80px"
-                          className="object-cover"
+                          sizes="96px"
+                          className="object-contain"
                         />
                       </span>
                       <span className="mt-4 block text-4xl font-black">
@@ -334,9 +353,20 @@ export default function RateClient({
             <h2 className="text-6xl font-black text-yellow-300">
               {popScore}%
             </h2>
-            <p className="mt-2 text-2xl font-bold text-yellow-200">
-              {getPopRating(popScore)}
-            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <span className="relative block h-20 w-20 overflow-hidden rounded-2xl bg-black">
+                <Image
+                  src={popRating.iconSrc}
+                  alt={`${popRating.label} PopScore icon`}
+                  fill
+                  sizes="80px"
+                  className="object-contain"
+                />
+              </span>
+              <p className="text-2xl font-bold text-yellow-200">
+                {popRating.label}
+              </p>
+            </div>
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-5 text-gray-200">
               <p className="font-bold text-yellow-300">
