@@ -89,12 +89,14 @@ export default function CoStarReactions({ movieId }: CoStarReactionsProps) {
               key={reaction.key}
               type="button"
               onClick={() => handleReaction(reaction.key)}
-              className={`min-h-16 border-r border-white/10 px-1.5 py-2 text-center text-[11px] font-bold transition last:border-r-0 hover:bg-yellow-400/10 active:scale-95 ${
+              className={`min-h-16 min-w-0 overflow-hidden border-r border-white/10 px-1 py-2 text-center text-[10px] font-bold transition last:border-r-0 hover:bg-yellow-400/10 active:scale-95 sm:px-1.5 sm:text-[11px] ${
                 isSelected ? "bg-yellow-400/15 text-yellow-300" : "text-gray-200"
               }`}
             >
               <span className="block text-xl leading-none">{reaction.emoji}</span>
-              <span className="mt-1 block leading-tight">{reaction.label}</span>
+              <span className="mx-auto mt-1 block max-w-16 whitespace-normal break-words leading-tight">
+                {reaction.label}
+              </span>
             </button>
           );
         })}
