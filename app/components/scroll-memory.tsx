@@ -15,9 +15,22 @@ function currentPath() {
 
 export default function ScrollMemory() {
   useEffect(() => {
-    const saved = window.sessionStorage.getItem(SCROLL_MEMORY_KEY);
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
 
-    if (saved) {
+    const saved = window.sessionStorage.getItem(SCROLL_MEMORY_KEY);
+    const navigation = window.performance.getEntriesByType(
+      "navigation"
+    )[0] as PerformanceNavigationTiming | undefined;
+    const isRefresh = navigation?.type === "reload";
+
+    if (isRefresh) {
+      window.sessionStorage.removeItem(SCROLL_MEMORY_KEY);
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0 });
+      });
+    } else if (saved) {
       try {
         const memory = JSON.parse(saved) as ScrollMemory;
 

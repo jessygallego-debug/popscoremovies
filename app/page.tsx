@@ -23,7 +23,7 @@ export default async function Home({
   const activeGenre = MOVIE_GENRE_FILTERS.find(
     (genre) => genre.id === params.genre
   );
-  const movies = await getMovies(query, 300, activeGenre?.id);
+  const movies = await getMovies(query, 200, activeGenre?.id);
   const hasMissingToken = !isTmdbConfigured();
   const currentPageParams = new URLSearchParams();
 
