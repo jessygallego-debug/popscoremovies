@@ -19,7 +19,7 @@ type CoStarReactionsProps = {
 
 const reactions: Reaction[] = [
   { emoji: "🔥", key: "loved", label: "Loved It" },
-  { emoji: "🍿", key: "worth", label: "Worth Watching" },
+  { emoji: "🍿", key: "worth", label: "Good Watch" },
   { emoji: "🗑️", key: "trash", label: "Trash" },
 ];
 
