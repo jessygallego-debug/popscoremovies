@@ -101,6 +101,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
               return (
                 <Link
                   key={movie.id}
+                  data-remember-scroll
                   href={`/movie/${movie.id}?returnTo=${encodeURIComponent(
                     returnTo
                   )}`}

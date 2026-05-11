@@ -3,6 +3,7 @@ import Link from "next/link";
 import BrandHomeLink from "@/app/components/brand-home-link";
 import MovieSearch from "@/app/components/movie-search";
 import PopScoreDisplay from "@/app/components/popscore-display";
+import ScrollMemory from "@/app/components/scroll-memory";
 import {
   getMovies,
   isTmdbConfigured,
@@ -38,6 +39,7 @@ export default async function Home({
 
   return (
     <main className="min-h-screen bg-black px-5 py-8 text-white sm:px-8 sm:py-12">
+      <ScrollMemory />
       <section className="max-w-7xl mx-auto">
         <BrandHomeLink />
 
@@ -113,6 +115,7 @@ export default async function Home({
               return (
                 <Link
                   key={movie.id}
+                  data-remember-scroll
                   href={`/movie/${movie.id}?returnTo=${encodeURIComponent(
                     currentPagePath
                   )}`}
