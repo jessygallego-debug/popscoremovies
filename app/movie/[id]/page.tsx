@@ -5,12 +5,23 @@ import BrandHomeLink from "@/app/components/brand-home-link";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import { backdropUrl, getMovie, isTmdbConfigured, posterUrl } from "@/lib/tmdb";
 
+function getSafeReturnPath(returnTo?: string) {
+  if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
+    return "/";
+  }
+
+  return returnTo;
+}
+
 export default async function MoviePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 }) {
   const { id } = await params;
+  const queryParams = await searchParams;
   const movie = await getMovie(id);
 
   if (!movie && isTmdbConfigured()) {
@@ -48,6 +59,10 @@ export default async function MoviePage({
         .map((crewMember) => crewMember.name) ?? []
     )
   );
+  const closeHref = getSafeReturnPath(queryParams.returnTo);
+  const rateHref = `/rate?movie=${movie.id}&returnTo=${encodeURIComponent(
+    closeHref
+  )}`;
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -67,7 +82,7 @@ export default async function MoviePage({
 
         <div className="relative mx-auto max-w-6xl">
           <Link
-            href="/"
+            href={closeHref}
             aria-label="Close movie details"
             className="absolute right-0 top-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg font-black text-gray-300 transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-300"
           >
@@ -116,7 +131,7 @@ export default async function MoviePage({
                 />
                 <div className="mt-8">
                   <Link
-                    href={`/rate?movie=${movie.id}`}
+                    href={rateHref}
                     className="inline-flex min-h-12 items-center justify-center rounded-lg bg-yellow-400 px-6 font-bold text-black hover:bg-yellow-300"
                   >
                     Rate This Movie

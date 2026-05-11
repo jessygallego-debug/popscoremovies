@@ -47,10 +47,18 @@ function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
   return "action";
 }
 
+function getSafeReturnPath(returnTo?: string) {
+  if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
+    return "/";
+  }
+
+  return returnTo;
+}
+
 export default async function RatePage({
   searchParams,
 }: {
-  searchParams: Promise<{ genre?: string; movie?: string }>;
+  searchParams: Promise<{ genre?: string; movie?: string; returnTo?: string }>;
 }) {
   const params = await searchParams;
   const movie = params.movie ? await getMovie(params.movie) : null;
@@ -66,6 +74,7 @@ export default async function RatePage({
       initialGenre={initialGenre}
       lockGenre={Boolean(movieGenre || urlGenre)}
       movieTitle={movie?.title}
+      returnTo={getSafeReturnPath(params.returnTo)}
     />
   );
 }

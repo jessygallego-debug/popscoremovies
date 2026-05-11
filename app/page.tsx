@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import BrandHomeLink from "@/app/components/brand-home-link";
+import MovieSearch from "@/app/components/movie-search";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import {
   getMovies,
@@ -21,6 +22,19 @@ export default async function Home({
   );
   const movies = await getMovies(query, 300, activeGenre?.id);
   const hasMissingToken = !isTmdbConfigured();
+  const currentPageParams = new URLSearchParams();
+
+  if (query) {
+    currentPageParams.set("query", query);
+  }
+
+  if (activeGenre) {
+    currentPageParams.set("genre", activeGenre.id);
+  }
+
+  const currentPagePath = currentPageParams.toString()
+    ? `/?${currentPageParams.toString()}`
+    : "/";
 
   return (
     <main className="min-h-screen bg-black px-5 py-8 text-white sm:px-8 sm:py-12">
@@ -36,26 +50,7 @@ export default async function Home({
           rated like comedy.
         </p>
 
-        <form className="mb-6 flex flex-col gap-3 sm:flex-row" action="/">
-          {activeGenre ? (
-            <input type="hidden" name="genre" value={activeGenre.id} />
-          ) : null}
-
-          <input
-            type="search"
-            name="query"
-            defaultValue={query}
-            placeholder="Search for a movie..."
-            className="min-h-14 w-full rounded-lg border border-gray-700 bg-gray-950 px-5 text-white outline-none focus:border-yellow-400"
-          />
-
-          <button
-            type="submit"
-            className="min-h-14 rounded-lg bg-yellow-400 px-6 font-bold text-black hover:bg-yellow-300"
-          >
-            Search
-          </button>
-        </form>
+        <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
 
         <div
           aria-label="Filter movies by genre"
@@ -118,7 +113,9 @@ export default async function Home({
               return (
                 <Link
                   key={movie.id}
-                  href={`/movie/${movie.id}`}
+                  href={`/movie/${movie.id}?returnTo=${encodeURIComponent(
+                    currentPagePath
+                  )}`}
                   className="block overflow-hidden rounded-lg bg-gray-900 transition hover:-translate-y-1"
                 >
                   <div className="relative aspect-[2/3] bg-gray-800">

@@ -152,6 +152,7 @@ type RateClientProps = {
   initialGenre: GenreKey;
   lockGenre: boolean;
   movieTitle?: string;
+  returnTo?: string;
 };
 
 function getPopRating(score: number) {
@@ -189,6 +190,7 @@ export default function RateClient({
   initialGenre,
   lockGenre,
   movieTitle,
+  returnTo = "/",
 }: RateClientProps) {
   const router = useRouter();
   const [selectedGenre, setSelectedGenre] = useState<GenreKey>(initialGenre);
@@ -208,7 +210,9 @@ export default function RateClient({
   const genresToShow: GenreEntry[] = lockGenre
     ? [[selectedGenre, currentGenre]]
     : (Object.entries(genreConfigs) as GenreEntry[]);
-  const exitHref = movieId ? `/movie/${movieId}` : "/";
+  const exitHref = movieId
+    ? `/movie/${movieId}?returnTo=${encodeURIComponent(returnTo)}`
+    : returnTo;
   const popRating = getPopRating(popScore);
 
   const handleSubmit = () => {
