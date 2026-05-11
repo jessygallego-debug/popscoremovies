@@ -29,7 +29,7 @@ function getPopScoreTitle(score: number) {
     return { iconSrc: "/rating-icons/salty.png", label: "Salty" };
   }
 
-  return { iconSrc: "/rating-icons/smoke.png", label: "Burnt" };
+  return { iconSrc: "/rating-icons/burnt.png", label: "Burnt" };
 }
 
 export default function PopScoreDisplay({

@@ -91,7 +91,7 @@ const genreConfigs = {
 const scoreOptions = [
   {
     value: 1,
-    iconSrc: "/rating-icons/smoke.png",
+    iconSrc: "/rating-icons/burnt.png",
     label: "Burnt",
     description: "Bad",
   },
@@ -176,7 +176,7 @@ function getPopRating(score: number) {
     return { iconSrc: "/rating-icons/salty.png", label: "Salty" };
   }
 
-  return { iconSrc: "/rating-icons/smoke.png", label: "Burnt" };
+  return { iconSrc: "/rating-icons/burnt.png", label: "Burnt" };
 }
 
 export function isGenreKey(value: string | undefined): value is GenreKey {
