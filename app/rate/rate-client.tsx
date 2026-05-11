@@ -248,27 +248,27 @@ export default function RateClient({
           <span>PopScore Movies</span>
         </Link>
 
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 text-4xl shadow-lg shadow-yellow-400/20">
+        <div className="mb-5 text-center sm:mb-8">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 text-3xl shadow-lg shadow-yellow-400/20 sm:mb-4 sm:h-16 sm:w-16 sm:text-4xl">
             🍿
           </div>
-          <h1 className="text-4xl font-black text-white sm:text-6xl">
+          <h1 className="text-3xl font-black text-white sm:text-6xl">
             Rate This Movie
           </h1>
-          <p className="mt-4 text-xl font-bold text-gray-200">
+          <p className="mt-3 text-base font-bold text-gray-200 sm:mt-4 sm:text-xl">
             How did this movie feel overall?
           </p>
         </div>
 
         {movieTitle ? (
-          <p className="mb-8 text-center text-xl font-bold text-yellow-300">
+          <p className="mb-5 text-center text-base font-bold text-yellow-300 sm:mb-8 sm:text-xl">
             {movieTitle}
           </p>
         ) : (
-          <div className="mb-8" />
+          <div className="mb-5 sm:mb-8" />
         )}
 
-        <div className="mb-10 flex flex-wrap justify-center gap-3">
+        <div className="mb-6 flex flex-wrap justify-center gap-3 sm:mb-10">
           {genresToShow.map(([key, genre]) => (
             <button
               key={key}
@@ -286,14 +286,14 @@ export default function RateClient({
           ))}
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-4 sm:space-y-8">
           {currentGenre.questions.map((question) => (
             <div
               key={question.key}
-              className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/40 sm:p-6"
+              className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 shadow-xl shadow-black/40 sm:rounded-3xl sm:p-6"
             >
-              <div className="mb-5 flex items-center gap-2">
-                <h2 className="text-2xl font-bold text-white">
+              <div className="mb-3 flex items-center gap-2 sm:mb-5">
+                <h2 className="text-lg font-bold text-white sm:text-2xl">
                   {question.name}
                 </h2>
                 <span
@@ -305,7 +305,7 @@ export default function RateClient({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
                 {scoreOptions.map((option) => {
                   const isSelected = ratings[question.key] === option.value;
 
@@ -319,33 +319,33 @@ export default function RateClient({
                         });
                         setSubmittedScore(null);
                       }}
-                      className={`min-h-44 rounded-2xl border p-4 text-center transition ${
+                      className={`min-h-24 rounded-xl border p-1.5 text-center transition sm:min-h-44 sm:rounded-2xl sm:p-4 ${
                         isSelected
                           ? "border-yellow-300 bg-yellow-400/15 text-yellow-300 shadow-[0_0_34px_rgba(250,204,21,0.35)]"
                           : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
                       }`}
                     >
-                      <span className="relative mx-auto block h-24 w-24 overflow-hidden rounded-2xl">
+                      <span className="relative mx-auto block h-10 w-10 overflow-hidden rounded-lg sm:h-24 sm:w-24 sm:rounded-2xl">
                         <Image
                           src={option.iconSrc}
                           alt={`${option.label} rating icon`}
                           fill
-                          sizes="96px"
+                          sizes="(min-width: 640px) 96px, 40px"
                           className="object-contain"
                         />
                       </span>
-                      <span className="mt-4 block text-4xl font-black">
+                      <span className="mt-1 block text-lg font-black sm:mt-4 sm:text-4xl">
                         {option.value}
                       </span>
-                      <span className="mt-3 block text-sm font-black">
+                      <span className="mt-1 block text-[9px] font-black leading-tight sm:mt-3 sm:text-sm">
                         {option.label}
                       </span>
                       <span
-                        className={`mx-auto my-4 block h-px w-12 ${
+                        className={`mx-auto my-1.5 block h-px w-8 sm:my-4 sm:w-12 ${
                           isSelected ? "bg-yellow-300/70" : "bg-white/15"
                         }`}
                       />
-                      <span className="block text-xs font-bold text-gray-400">
+                      <span className="block text-[9px] font-bold leading-tight text-gray-400 sm:text-xs">
                         {option.description}
                       </span>
                     </button>
