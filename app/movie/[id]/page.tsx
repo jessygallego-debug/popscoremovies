@@ -66,6 +66,14 @@ export default async function MoviePage({
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
 
         <div className="relative mx-auto max-w-6xl">
+          <Link
+            href="/"
+            aria-label="Close movie details"
+            className="absolute right-0 top-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg font-black text-gray-300 transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-300"
+          >
+            X
+          </Link>
+
           <BrandHomeLink />
 
           <div className="mt-8 grid gap-8 md:grid-cols-[280px_1fr]">
