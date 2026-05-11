@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
-
-type ReactionKey = "loved" | "worth" | "trash";
+import { useEffect, useState } from "react";
+import {
+  CoStarReaction,
+  getCoStarCounts,
+  saveCoStarReaction,
+} from "@/lib/co-star-store";
 
 type Reaction = {
   emoji: string;
-  key: ReactionKey;
+  key: CoStarReaction;
   label: string;
+};
+
+type CoStarReactionsProps = {
+  movieId: string;
 };
 
 const reactions: Reaction[] = [
@@ -16,19 +23,38 @@ const reactions: Reaction[] = [
   { emoji: "🗑️", key: "trash", label: "Trash" },
 ];
 
-export default function CoStarReactions() {
-  const [counts, setCounts] = useState<Record<ReactionKey, number>>({
+export default function CoStarReactions({ movieId }: CoStarReactionsProps) {
+  const [counts, setCounts] = useState<Record<CoStarReaction, number>>({
     loved: 0,
     trash: 0,
     worth: 0,
   });
-  const [selectedReaction, setSelectedReaction] = useState<ReactionKey | null>(
-    null
-  );
+  const [selectedReaction, setSelectedReaction] =
+    useState<CoStarReaction | null>(null);
 
   const total = counts.loved + counts.worth + counts.trash;
 
-  const getPercent = (key: ReactionKey) => {
+  useEffect(() => {
+    let isCurrent = true;
+
+    getCoStarCounts(movieId)
+      .then((nextCounts) => {
+        if (isCurrent) {
+          setCounts(nextCounts);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setCounts({ loved: 0, trash: 0, worth: 0 });
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [movieId]);
+
+  const getPercent = (key: CoStarReaction) => {
     if (total === 0) {
       return 0;
     }
@@ -36,21 +62,18 @@ export default function CoStarReactions() {
     return Math.round((counts[key] / total) * 100);
   };
 
-  const handleReaction = (key: ReactionKey) => {
-    setCounts((currentCounts) => {
-      const nextCounts = { ...currentCounts };
-
-      if (selectedReaction) {
-        nextCounts[selectedReaction] = Math.max(
-          nextCounts[selectedReaction] - 1,
-          0
-        );
-      }
-
-      nextCounts[key] += 1;
-      return nextCounts;
-    });
-    setSelectedReaction(key);
+  const handleReaction = (key: CoStarReaction) => {
+    saveCoStarReaction(movieId, key)
+      .then(() => {
+        setCounts((currentCounts) => ({
+          ...currentCounts,
+          [key]: currentCounts[key] + 1,
+        }));
+        setSelectedReaction(key);
+      })
+      .catch(() => {
+        setSelectedReaction(null);
+      });
   };
 
   return (

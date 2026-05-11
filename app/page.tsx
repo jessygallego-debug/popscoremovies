@@ -152,7 +152,7 @@ export default async function Home({
                     </p>
 
                     <PopScoreDisplay movieId={String(movie.id)} />
-                    <CoStarReactions />
+                    <CoStarReactions movieId={String(movie.id)} />
                   </div>
                 </article>
               );
