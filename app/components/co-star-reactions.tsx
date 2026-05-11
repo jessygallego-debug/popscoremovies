@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 type ReactionKey = "loved" | "worth" | "trash";
 
@@ -10,34 +10,18 @@ type Reaction = {
   label: string;
 };
 
-type CoStarReactionsProps = {
-  movieId: string;
-};
-
 const reactions: Reaction[] = [
   { emoji: "🔥", key: "loved", label: "Loved It" },
   { emoji: "🍿", key: "worth", label: "Worth Watching" },
   { emoji: "🗑️", key: "trash", label: "Trash" },
 ];
 
-function getInitialCounts(movieId: string) {
-  const seed = Number(movieId) || 1;
-  const total = 180 + (seed % 920);
-  const lovedPercent = 48 + (seed % 25);
-  const worthPercent = 18 + (seed % 18);
-  const loved = Math.round(total * (lovedPercent / 100));
-  const worth = Math.round(total * (worthPercent / 100));
-
-  return {
-    loved,
-    trash: Math.max(total - loved - worth, 0),
-    worth,
-  };
-}
-
-export default function CoStarReactions({ movieId }: CoStarReactionsProps) {
-  const initialCounts = useMemo(() => getInitialCounts(movieId), [movieId]);
-  const [counts, setCounts] = useState(initialCounts);
+export default function CoStarReactions() {
+  const [counts, setCounts] = useState<Record<ReactionKey, number>>({
+    loved: 0,
+    trash: 0,
+    worth: 0,
+  });
   const [selectedReaction, setSelectedReaction] = useState<ReactionKey | null>(
     null
   );
