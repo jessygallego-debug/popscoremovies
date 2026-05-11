@@ -3,7 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import BrandHomeLink from "@/app/components/brand-home-link";
 import PopScoreDisplay from "@/app/components/popscore-display";
-import { backdropUrl, getMovie, isTmdbConfigured, posterUrl } from "@/lib/tmdb";
+import {
+  backdropUrl,
+  formatReleaseMonthYear,
+  getMovie,
+  isTmdbConfigured,
+  posterUrl,
+} from "@/lib/tmdb";
 
 function getSafeReturnPath(returnTo?: string) {
   if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
@@ -43,7 +49,9 @@ export default async function MoviePage({
 
   const poster = posterUrl(movie.poster_path);
   const backdrop = backdropUrl(movie.backdrop_path);
-  const year = movie.release_date ? new Date(movie.release_date).getFullYear() : null;
+  const releaseDate = movie.release_date
+    ? formatReleaseMonthYear(movie.release_date)
+    : "";
   const runtime = movie.runtime
     ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m`
     : null;
@@ -117,7 +125,7 @@ export default async function MoviePage({
               ) : null}
 
               <div className="mt-6 flex flex-wrap gap-3 text-sm font-bold text-gray-300">
-                {year ? <span>{year}</span> : null}
+                {releaseDate ? <span>{releaseDate}</span> : null}
                 {runtime ? <span>{runtime}</span> : null}
                 {movie.genres.map((genre) => (
                   <span key={genre.id}>{genre.name}</span>

@@ -64,6 +64,22 @@ export function backdropUrl(path: string | null, size = "w1280") {
   return path ? `${TMDB_IMAGE_BASE_URL}/${size}${path}` : null;
 }
 
+export function formatReleaseMonthYear(releaseDate: string) {
+  const [year, month] = releaseDate.split("-");
+  const monthNumber = Number(month);
+
+  if (!year || !monthNumber) {
+    return "";
+  }
+
+  const monthName = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(Number(year), monthNumber - 1, 1)));
+
+  return `${monthName} ${year}`;
+}
+
 async function tmdbFetch<T>(path: string): Promise<T | null> {
   const token = getToken();
 

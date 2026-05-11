@@ -6,6 +6,7 @@ import MovieSearch from "@/app/components/movie-search";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import ScrollMemory from "@/app/components/scroll-memory";
 import {
+  formatReleaseMonthYear,
   getMovies,
   isTmdbConfigured,
   MOVIE_GENRE_FILTERS,
@@ -109,9 +110,9 @@ export default async function Home({
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
             {movies.map((movie) => {
               const poster = posterUrl(movie.poster_path);
-              const releaseYear = movie.release_date
-                ? new Date(movie.release_date).getFullYear()
-                : null;
+              const releaseDate = movie.release_date
+                ? formatReleaseMonthYear(movie.release_date)
+                : "";
 
               const movieHref = `/movie/${
                 movie.id
@@ -148,7 +149,7 @@ export default async function Home({
                     </Link>
 
                     <p className="mt-2 text-sm text-gray-400">
-                      Released: {releaseYear || "TBA"}
+                      Released: {releaseDate || "TBA"}
                     </p>
 
                     <PopScoreDisplay movieId={String(movie.id)} />

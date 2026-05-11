@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { formatReleaseMonthYear } from "@/lib/tmdb";
 
 type MovieSuggestion = {
   id: number;
@@ -94,9 +95,9 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
         {showSuggestions ? (
           <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-gray-800 bg-gray-950 shadow-2xl shadow-black">
             {suggestions.map((movie) => {
-              const releaseYear = movie.releaseDate
-                ? new Date(movie.releaseDate).getFullYear()
-                : null;
+              const releaseDate = movie.releaseDate
+                ? formatReleaseMonthYear(movie.releaseDate)
+                : "";
 
               return (
                 <Link
@@ -108,9 +109,9 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
                   className="block border-b border-gray-900 px-5 py-3 text-sm font-bold text-white last:border-b-0 hover:bg-yellow-400 hover:text-black"
                 >
                   {movie.title}
-                  {releaseYear ? (
+                  {releaseDate ? (
                     <span className="ml-2 font-normal text-gray-400">
-                      {releaseYear}
+                      {releaseDate}
                     </span>
                   ) : null}
                 </Link>
