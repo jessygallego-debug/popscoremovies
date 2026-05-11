@@ -10,6 +10,7 @@ const popGenreKeys = [
   "animated",
   "musical",
   "drama",
+  "thriller",
 ];
 
 function isGenreKey(value: string | undefined): value is GenreKey {
@@ -36,6 +37,7 @@ function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
   if (genres.has("Comedy")) return "comedy";
   if (genres.has("Horror")) return "horror";
   if (genres.has("Science Fiction")) return "scifi";
+  if (genres.has("Thriller")) return "thriller";
   if (genres.has("Drama")) return "drama";
 
   if (hasActionGenre) {

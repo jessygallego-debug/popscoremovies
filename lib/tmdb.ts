@@ -49,6 +49,7 @@ export const MOVIE_GENRE_FILTERS = [
   { id: "10402", name: "Musical" },
   { id: "10749", name: "Romance" },
   { id: "878", name: "Sci-Fi" },
+  { id: "53", name: "Thriller" },
 ];
 
 function getToken() {

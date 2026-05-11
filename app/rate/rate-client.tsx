@@ -87,6 +87,16 @@ const genreConfigs = {
       { key: "tension", name: "Tension", weight: 0.2 },
     ],
   },
+  thriller: {
+    title: "Thriller",
+    questions: [
+      { key: "story", name: "Storyline", weight: 0.3 },
+      { key: "acting", name: "Acting", weight: 0.2 },
+      { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
+      { key: "suspense", name: "Suspense", weight: 0.25 },
+      { key: "tensionPacing", name: "Tension/Pacing", weight: 0.15 },
+    ],
+  },
 };
 
 const scoreOptions = [
@@ -138,7 +148,9 @@ const categoryTips: Record<string, string> = {
   scareFactor: "How tense, scary, or unsettling it feels.",
   songQuality: "How memorable and enjoyable the songs are.",
   story: "How strong the plot and characters are.",
+  suspense: "How well the movie keeps you on edge.",
   tension: "How well suspense builds and holds.",
+  tensionPacing: "How well tension and momentum build.",
   visualEffects: "How convincing the effects look.",
   voiceActing: "How well the voices bring characters to life.",
 };
