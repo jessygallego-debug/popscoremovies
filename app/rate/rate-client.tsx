@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ratingToPercent, savePopScore } from "@/lib/popscore-store";
 
@@ -189,6 +190,7 @@ export default function RateClient({
   lockGenre,
   movieTitle,
 }: RateClientProps) {
+  const router = useRouter();
   const [selectedGenre, setSelectedGenre] = useState<GenreKey>(initialGenre);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [submittedScore, setSubmittedScore] = useState<number | null>(null);
@@ -215,7 +217,10 @@ export default function RateClient({
     }
 
     savePopScore(movieId, selectedGenre, ratings, currentGenre.questions)
-      .then(() => setSubmittedScore(popScore))
+      .then(() => {
+        setSubmittedScore(popScore);
+        router.push(exitHref);
+      })
       .catch(() => setSubmittedScore(null));
   };
 
