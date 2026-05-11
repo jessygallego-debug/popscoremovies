@@ -319,13 +319,14 @@ export default function RateClient({
                         });
                         setSubmittedScore(null);
                       }}
-                      className={`min-h-24 rounded-xl border p-1.5 text-center transition sm:min-h-44 sm:rounded-2xl sm:p-4 ${
+                      className={`flex min-h-24 flex-col items-center rounded-xl border p-1.5 text-center transition sm:min-h-44 sm:rounded-2xl sm:p-4 ${
                         isSelected
                           ? "border-yellow-300 bg-yellow-400/15 text-yellow-300 shadow-[0_0_34px_rgba(250,204,21,0.35)]"
                           : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
                       }`}
                     >
-                      <span className="relative mx-auto block h-10 w-10 overflow-hidden rounded-lg sm:h-24 sm:w-24 sm:rounded-2xl">
+                      <span className="flex h-11 w-full items-center justify-center sm:h-24">
+                        <span className="relative block h-10 w-10 overflow-hidden rounded-lg sm:h-24 sm:w-24 sm:rounded-2xl">
                         <Image
                           src={option.iconSrc}
                           alt={`${option.label} rating icon`}
@@ -333,6 +334,7 @@ export default function RateClient({
                           sizes="(min-width: 640px) 96px, 40px"
                           className="object-contain"
                         />
+                        </span>
                       </span>
                       <span className="mt-1 block text-lg font-black sm:mt-4 sm:text-4xl">
                         {option.value}
