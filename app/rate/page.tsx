@@ -18,22 +18,27 @@ function isGenreKey(value: string | undefined): value is GenreKey {
 
 function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
   const genres = new Set(genreNames);
-
-  if (genres.has("Animation")) return "animated";
-  if (genres.has("Music")) return "musical";
-  if (genres.has("Horror")) return "horror";
-  if (genres.has("Science Fiction")) return "scifi";
-  if (genres.has("Romance") && genres.has("Comedy")) return "romcom";
-  if (genres.has("Comedy")) return "comedy";
-  if (genres.has("Drama")) return "drama";
-
-  if (
+  const hasActionGenre =
     genres.has("Action") ||
     genres.has("Adventure") ||
     genres.has("Thriller") ||
     genres.has("War") ||
-    genres.has("Western")
-  ) {
+    genres.has("Western");
+
+  if (genres.has("Animation")) return "animated";
+  if (genres.has("Music")) return "musical";
+  if (genres.has("Romance") && genres.has("Comedy")) return "romcom";
+
+  if (genres.has("Comedy") && (genres.has("Horror") || hasActionGenre)) {
+    return "comedy";
+  }
+
+  if (genres.has("Comedy")) return "comedy";
+  if (genres.has("Horror")) return "horror";
+  if (genres.has("Science Fiction")) return "scifi";
+  if (genres.has("Drama")) return "drama";
+
+  if (hasActionGenre) {
     return "action";
   }
 
