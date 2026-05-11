@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import BrandHomeLink from "@/app/components/brand-home-link";
+import CoStarReactions from "@/app/components/co-star-reactions";
 import MovieSearch from "@/app/components/movie-search";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import ScrollMemory from "@/app/components/scroll-memory";
@@ -112,43 +113,48 @@ export default async function Home({
                 ? new Date(movie.release_date).getFullYear()
                 : null;
 
+              const movieHref = `/movie/${
+                movie.id
+              }?returnTo=${encodeURIComponent(currentPagePath)}`;
+
               return (
-                <Link
+                <article
                   key={movie.id}
-                  data-remember-scroll
-                  href={`/movie/${movie.id}?returnTo=${encodeURIComponent(
-                    currentPagePath
-                  )}`}
-                  className="block overflow-hidden rounded-lg bg-gray-900 transition hover:-translate-y-1"
+                  className="overflow-hidden rounded-lg bg-gray-900 transition hover:-translate-y-1"
                 >
-                  <div className="relative aspect-[2/3] bg-gray-800">
-                    {poster ? (
-                      <Image
-                        src={poster}
-                        alt={movie.title}
-                        fill
-                        sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, 50vw"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center px-4 text-center text-sm text-gray-500">
-                        No Poster
-                      </div>
-                    )}
-                  </div>
+                  <Link data-remember-scroll href={movieHref} className="block">
+                    <div className="relative aspect-[2/3] bg-gray-800">
+                      {poster ? (
+                        <Image
+                          src={poster}
+                          alt={movie.title}
+                          fill
+                          sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, 50vw"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center px-4 text-center text-sm text-gray-500">
+                          No Poster
+                        </div>
+                      )}
+                    </div>
+                  </Link>
 
                   <div className="p-4">
+                    <Link data-remember-scroll href={movieHref}>
                     <h3 className="line-clamp-2 min-h-14 text-base font-bold">
                       {movie.title}
                     </h3>
+                    </Link>
 
                     <p className="mt-2 text-sm text-gray-400">
                       Released: {releaseYear || "TBA"}
                     </p>
 
                     <PopScoreDisplay movieId={String(movie.id)} />
+                    <CoStarReactions movieId={String(movie.id)} />
                   </div>
-                </Link>
+                </article>
               );
             })}
           </div>
