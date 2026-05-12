@@ -68,7 +68,7 @@ export default async function Home({
           Worth{" "}
           <span className="relative inline-block text-yellow-400">
             Watching
-            <span className="absolute -bottom-2 left-[48%] h-3 w-[52%] rounded-[50%] border-b-4 border-yellow-400/70 shadow-[0_10px_18px_rgba(250,204,21,0.35)]" />
+            <span className="absolute -bottom-2 left-0 h-3 w-full rounded-[50%] border-b-4 border-yellow-400/70 shadow-[0_10px_18px_rgba(250,204,21,0.35)]" />
           </span>
         </h1>
 
