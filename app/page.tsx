@@ -74,7 +74,7 @@ export default async function Home({
 
         <p className="mb-8 max-w-2xl text-base font-semibold leading-7 text-slate-300 sm:text-xl">
           Movie rating built for true fans – because horror shouldn&apos;t be
-          rated like comedy.
+          rated like romance.
         </p>
 
         <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
