@@ -147,7 +147,7 @@ export default async function Home({
               }?returnTo=${encodeURIComponent(currentPagePath)}`;
               const rateHref = `/rate?movie=${
                 movie.id
-              }&returnTo=${encodeURIComponent(currentPagePath)}`;
+              }&returnTo=${encodeURIComponent(currentPagePath)}&from=home`;
 
               return (
                 <article

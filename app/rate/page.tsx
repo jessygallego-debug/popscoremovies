@@ -60,7 +60,12 @@ function getSafeReturnPath(returnTo?: string) {
 export default async function RatePage({
   searchParams,
 }: {
-  searchParams: Promise<{ genre?: string; movie?: string; returnTo?: string }>;
+  searchParams: Promise<{
+    from?: string;
+    genre?: string;
+    movie?: string;
+    returnTo?: string;
+  }>;
 }) {
   const params = await searchParams;
   const movie = params.movie ? await getMovie(params.movie) : null;
@@ -77,6 +82,9 @@ export default async function RatePage({
       lockGenre={Boolean(movieGenre || urlGenre)}
       movieTitle={movie?.title}
       returnTo={getSafeReturnPath(params.returnTo)}
+      submitReturnTo={
+        params.from === "home" ? getSafeReturnPath(params.returnTo) : undefined
+      }
     />
   );
 }

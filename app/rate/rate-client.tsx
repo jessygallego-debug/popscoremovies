@@ -165,6 +165,7 @@ type RateClientProps = {
   lockGenre: boolean;
   movieTitle?: string;
   returnTo?: string;
+  submitReturnTo?: string;
 };
 
 function getPopRating(score: number) {
@@ -203,6 +204,7 @@ export default function RateClient({
   lockGenre,
   movieTitle,
   returnTo = "/",
+  submitReturnTo,
 }: RateClientProps) {
   const router = useRouter();
   const [selectedGenre, setSelectedGenre] = useState<GenreKey>(initialGenre);
@@ -225,6 +227,7 @@ export default function RateClient({
   const exitHref = movieId
     ? `/movie/${movieId}?returnTo=${encodeURIComponent(returnTo)}`
     : returnTo;
+  const submitHref = submitReturnTo ?? exitHref;
   const popRating = getPopRating(popScore);
 
   const handleSubmit = () => {
@@ -235,7 +238,7 @@ export default function RateClient({
     savePopScore(movieId, selectedGenre, ratings, currentGenre.questions)
       .then(() => {
         setSubmittedScore(popScore);
-        router.push(exitHref);
+        router.push(submitHref);
       })
       .catch(() => setSubmittedScore(null));
   };
