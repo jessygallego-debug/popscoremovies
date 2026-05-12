@@ -113,7 +113,7 @@ export default async function Home({
         </h2>
 
         {movies.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
             {movies.map((movie) => {
               const poster = posterUrl(movie.poster_path);
               const releaseDate = movie.release_date
@@ -155,9 +155,9 @@ export default async function Home({
                     </div>
                   </Link>
 
-                  <div className="p-4 sm:p-5">
+                  <div className="p-3 sm:p-5">
                     <Link data-remember-scroll href={movieHref}>
-                      <h3 className="line-clamp-2 min-h-12 text-base font-black leading-snug text-white transition group-hover:text-yellow-100">
+                      <h3 className="line-clamp-2 min-h-11 text-sm font-black leading-snug text-white transition group-hover:text-yellow-100 sm:min-h-12 sm:text-base">
                         {movie.title}
                       </h3>
                     </Link>
@@ -184,7 +184,7 @@ export default async function Home({
                     <Link
                       data-remember-scroll
                       href={rateHref}
-                      className="block rounded-xl transition hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/70"
+                      className="-m-1 block rounded-xl p-1 transition hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/70"
                       aria-label={`Rate ${movie.title}`}
                     >
                       <PopScoreDisplay
