@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import BrandHomeLink from "@/app/components/brand-home-link";
 import CoStarReactions from "@/app/components/co-star-reactions";
 import MovieSearch from "@/app/components/movie-search";
 import PopScoreDisplay from "@/app/components/popscore-display";
@@ -18,6 +17,19 @@ const TMDB_GENRE_LABELS = new Map(
     (genre) => [Number(genre.id), genre.name]
   )
 );
+
+const GENRE_ICONS = new Map([
+  ["Action", "⚡"],
+  ["Animation", "✦"],
+  ["Comedy", "☺"],
+  ["Drama", "◆"],
+  ["Horror", "☾"],
+  ["Musical", "♪"],
+  ["Romance", "♡"],
+  ["Rom-Com", "♡"],
+  ["Sci-Fi", "◌"],
+  ["Thriller", "⌁"],
+]);
 
 export default async function Home({
   searchParams,
@@ -46,17 +58,35 @@ export default async function Home({
     : "/";
 
   return (
-    <main className="min-h-screen bg-black px-5 py-8 text-white sm:px-8 sm:py-12">
+    <main className="min-h-screen bg-black bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#020617_0%,#000_42%,#020617_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
       <ScrollMemory />
-      <section className="max-w-7xl mx-auto">
-        <BrandHomeLink />
+      <section className="mx-auto max-w-7xl">
+        <div className="mb-8 inline-flex flex-col">
+          <div className="flex items-center gap-3">
+            <span aria-hidden="true" className="text-3xl sm:text-4xl">
+              🍿
+            </span>
+            <span className="text-3xl font-black tracking-wide text-yellow-400 sm:text-5xl">
+              POPSCORE
+            </span>
+          </div>
+          <span className="mt-1 pl-12 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:pl-14 sm:text-xs">
+            Movie Ratings For Real Fans
+          </span>
+        </div>
 
-        <h1 className="mb-4 max-w-4xl text-3xl font-black sm:text-5xl">
-          Discover Movies Worth Watching
+        <h1 className="mb-5 max-w-4xl text-5xl font-black leading-[0.95] text-white sm:text-7xl">
+          Discover Movies
+          <br />
+          Worth{" "}
+          <span className="relative inline-block text-yellow-400">
+            Watching
+            <span className="absolute -bottom-1 left-0 h-1 w-full rounded-full bg-yellow-400/70 shadow-[0_0_18px_rgba(250,204,21,0.45)]" />
+          </span>
         </h1>
 
-        <p className="mb-8 max-w-2xl text-lg text-gray-300 sm:text-xl">
-          Movie rating built for true fans - because horror shouldn&apos;t be
+        <p className="mb-8 max-w-2xl text-base font-semibold leading-7 text-slate-300 sm:text-xl">
+          Movie rating built for true fans – because horror shouldn&apos;t be
           rated like comedy.
         </p>
 
@@ -64,16 +94,17 @@ export default async function Home({
 
         <div
           aria-label="Filter movies by genre"
-          className="mb-10 flex gap-2 overflow-x-auto pb-1"
+          className="mb-12 flex gap-2 overflow-x-auto pb-2"
         >
           <Link
             href={query ? `/?query=${encodeURIComponent(query)}` : "/"}
-            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-black transition ${
               activeGenre
-                ? "border-gray-700 bg-gray-950 text-gray-300 hover:border-yellow-400 hover:text-yellow-300"
+                ? "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
                 : "border-yellow-400 bg-yellow-400 text-black"
             }`}
           >
+            <span aria-hidden="true">▦</span>
             All
           </Link>
 
@@ -86,12 +117,13 @@ export default async function Home({
               <Link
                 key={genre.id}
                 href={href}
-                className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition ${
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-black transition ${
                   activeGenre?.id === genre.id
                     ? "border-yellow-400 bg-yellow-400 text-black"
-                    : "border-gray-700 bg-gray-950 text-gray-300 hover:border-yellow-400 hover:text-yellow-300"
+                    : "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
                 }`}
               >
+                <span aria-hidden="true">{GENRE_ICONS.get(genre.name)}</span>
                 {genre.name}
               </Link>
             );
@@ -104,7 +136,7 @@ export default async function Home({
           </div>
         ) : null}
 
-        <h2 className="mb-6 text-2xl font-bold sm:text-3xl">
+        <h2 className="mb-6 text-2xl font-black text-white sm:text-3xl">
           {query
             ? `${activeGenre ? `${activeGenre.name} ` : ""}Search Results for "${query}"`
             : activeGenre
@@ -113,7 +145,7 @@ export default async function Home({
         </h2>
 
         {movies.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-4 min-[460px]:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
             {movies.map((movie) => {
               const poster = posterUrl(movie.poster_path);
               const releaseDate = movie.release_date
@@ -135,7 +167,7 @@ export default async function Home({
               return (
                 <article
                   key={movie.id}
-                  className="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 shadow-lg shadow-black/25 transition hover:-translate-y-1 hover:scale-[1.01] hover:border-yellow-400/60 hover:shadow-yellow-400/10"
+                  className="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-yellow-400/60 hover:shadow-yellow-400/10"
                 >
                   <Link data-remember-scroll href={movieHref} className="block">
                     <div className="relative aspect-[2/3] overflow-hidden rounded-t-2xl bg-slate-900">
@@ -155,14 +187,14 @@ export default async function Home({
                     </div>
                   </Link>
 
-                  <div className="p-3 sm:p-5">
+                  <div className="p-4 sm:p-5">
                     <Link data-remember-scroll href={movieHref}>
-                      <h3 className="line-clamp-2 min-h-11 text-sm font-black leading-snug text-white transition group-hover:text-yellow-100 sm:min-h-12 sm:text-base">
+                      <h3 className="line-clamp-2 min-h-11 text-lg font-black leading-snug text-white transition group-hover:text-yellow-100 min-[460px]:text-sm sm:min-h-12 sm:text-base">
                         {movie.title}
                       </h3>
                     </Link>
 
-                    <p className="mt-2 text-xs font-bold text-slate-400">
+                    <p className="mt-2 text-sm font-bold text-slate-400 min-[460px]:text-xs">
                       Released: {releaseDate || "TBA"}
                     </p>
 

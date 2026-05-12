@@ -77,10 +77,19 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
   }, [genreId, query]);
 
   return (
-    <form className="relative mb-6 flex flex-col gap-3 sm:flex-row" action="/">
+    <form
+      className="relative mb-8 flex max-w-3xl flex-col gap-3 sm:flex-row"
+      action="/"
+    >
       {genreId ? <input type="hidden" name="genre" value={genreId} /> : null}
 
       <div className="relative w-full">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-lg text-slate-500"
+        >
+          🔎
+        </span>
         <input
           type="search"
           name="query"
@@ -89,11 +98,11 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => setIsFocused(true)}
           placeholder="Search for a movie..."
-          className="min-h-14 w-full rounded-lg border border-gray-700 bg-gray-950 px-5 text-white outline-none focus:border-yellow-400"
+          className="min-h-14 w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-5 pl-12 text-base font-bold text-white shadow-lg shadow-black/30 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:shadow-yellow-400/10"
         />
 
         {showSuggestions ? (
-          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-gray-800 bg-gray-950 shadow-2xl shadow-black">
+          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black">
             {suggestions.map((movie) => {
               const releaseDate = movie.releaseDate
                 ? formatReleaseMonthYear(movie.releaseDate)
@@ -123,7 +132,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
 
       <button
         type="submit"
-        className="min-h-14 rounded-lg bg-yellow-400 px-6 font-bold text-black hover:bg-yellow-300"
+        className="min-h-14 rounded-2xl bg-yellow-400 px-8 text-base font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 active:scale-[0.98]"
       >
         Search
       </button>
