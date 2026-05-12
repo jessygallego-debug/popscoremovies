@@ -224,10 +224,11 @@ export default function RateClient({
   const genresToShow: GenreEntry[] = lockGenre
     ? [[selectedGenre, currentGenre]]
     : (Object.entries(genreConfigs) as GenreEntry[]);
-  const exitHref = movieId
+  const detailExitHref = movieId
     ? `/movie/${movieId}?returnTo=${encodeURIComponent(returnTo)}`
     : returnTo;
-  const submitHref = submitReturnTo ?? exitHref;
+  const exitHref = submitReturnTo ?? detailExitHref;
+  const submitHref = submitReturnTo ?? detailExitHref;
   const popRating = getPopRating(popScore);
 
   const handleSubmit = () => {

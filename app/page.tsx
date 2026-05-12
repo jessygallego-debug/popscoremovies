@@ -48,7 +48,11 @@ export default async function Home({
     <main className="min-h-screen bg-black bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#020617_0%,#000_42%,#020617_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
       <ScrollMemory />
       <section className="mx-auto max-w-7xl">
-        <div className="mb-8 inline-flex flex-col">
+        <Link
+          href="/"
+          aria-label="Go to PopScore Movies home"
+          className="mb-8 inline-flex flex-col transition hover:opacity-85"
+        >
           <div className="flex items-center gap-3">
             <span aria-hidden="true" className="text-3xl sm:text-4xl">
               🍿
@@ -60,7 +64,7 @@ export default async function Home({
           <span className="mt-1 pl-12 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:pl-14 sm:text-xs">
             Movie Ratings For Real Fans
           </span>
-        </div>
+        </Link>
 
         <h1 className="mb-5 max-w-4xl text-5xl font-black leading-[0.95] text-white sm:text-7xl">
           Discover Movies
