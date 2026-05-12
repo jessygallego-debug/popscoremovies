@@ -152,7 +152,10 @@ export default async function Home({
                       Released: {releaseDate || "TBA"}
                     </p>
 
-                    <PopScoreDisplay movieId={String(movie.id)} />
+                    <PopScoreDisplay
+                      movieId={String(movie.id)}
+                      showNumericScore={false}
+                    />
                     <CoStarReactions movieId={String(movie.id)} />
                   </div>
                 </article>

@@ -7,6 +7,7 @@ import { getPopScore, subscribeToPopScoreUpdates } from "@/lib/popscore-store";
 type PopScoreDisplayProps = {
   movieId: string;
   className?: string;
+  showNumericScore?: boolean;
 };
 
 function getPopScoreTitle(score: number) {
@@ -35,6 +36,7 @@ function getPopScoreTitle(score: number) {
 export default function PopScoreDisplay({
   movieId,
   className = "mt-1 text-sm font-bold text-yellow-400",
+  showNumericScore = true,
 }: PopScoreDisplayProps) {
   const [score, setScore] = useState<Awaited<ReturnType<typeof getPopScore>>>(
     null
@@ -86,7 +88,8 @@ export default function PopScoreDisplay({
           />
         </span>
         <span>
-          PopScore: {score.score}% - {popScoreTitle.label} ({score.count}{" "}
+          PopScore: {showNumericScore ? `${score.score}% - ` : ""}
+          {popScoreTitle.label} ({score.count}{" "}
           {score.count === 1 ? "rating" : "ratings"})
         </span>
       </div>

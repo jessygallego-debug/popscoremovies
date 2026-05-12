@@ -47,7 +47,7 @@ export const MOVIE_GENRE_FILTERS = [
   { id: "18", name: "Drama" },
   { id: "27", name: "Horror" },
   { id: "10402", name: "Musical" },
-  { id: "10749", name: "Romance" },
+  { id: "10749", name: "Rom-Com" },
   { id: "878", name: "Sci-Fi" },
   { id: "53", name: "Thriller" },
 ];
