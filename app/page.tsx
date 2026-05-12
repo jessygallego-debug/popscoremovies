@@ -84,9 +84,6 @@ export default async function Home({
         <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
 
         <div className="relative mb-12">
-          <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-10 bg-gradient-to-r from-black via-black/80 to-transparent" />
-          <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-10 bg-gradient-to-l from-black via-black/80 to-transparent" />
-
           <div
             aria-label="Filter movies by genre"
             className="no-scrollbar flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto scroll-smooth whitespace-nowrap px-5 py-1"
