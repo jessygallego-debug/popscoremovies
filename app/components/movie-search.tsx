@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { formatReleaseMonthYear } from "@/lib/tmdb";
 
@@ -33,6 +34,7 @@ function buildReturnTo(query: string, genreId?: string) {
 }
 
 export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps) {
+  const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<MovieSuggestion[]>([]);
   const [isFocused, setIsFocused] = useState(false);
@@ -46,6 +48,10 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
     setQuery("");
     setSuggestions([]);
     setIsFocused(true);
+
+    if (initialQuery.trim()) {
+      router.push(buildReturnTo("", genreId));
+    }
   };
 
   useEffect(() => {
