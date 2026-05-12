@@ -57,6 +57,16 @@ const genreConfigs = {
       { key: "humor", name: "Humor", weight: 0.15 },
     ],
   },
+  romance: {
+    title: "Romance",
+    questions: [
+      { key: "story", name: "Storyline", weight: 0.3 },
+      { key: "acting", name: "Acting", weight: 0.2 },
+      { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
+      { key: "chemistry", name: "Chemistry", weight: 0.25 },
+      { key: "emotionalImpact", name: "Emotional Impact", weight: 0.15 },
+    ],
+  },
   animated: {
     title: "Animated",
     questions: [

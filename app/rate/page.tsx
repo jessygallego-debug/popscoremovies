@@ -7,6 +7,7 @@ const popGenreKeys = [
   "action",
   "comedy",
   "romcom",
+  "romance",
   "animated",
   "musical",
   "drama",
@@ -44,7 +45,7 @@ function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
     return "action";
   }
 
-  if (genres.has("Romance")) return "romcom";
+  if (genres.has("Romance")) return "romance";
 
   return "action";
 }
