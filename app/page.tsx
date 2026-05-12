@@ -128,6 +128,9 @@ export default async function Home({
               const movieHref = `/movie/${
                 movie.id
               }?returnTo=${encodeURIComponent(currentPagePath)}`;
+              const rateHref = `/rate?movie=${
+                movie.id
+              }&returnTo=${encodeURIComponent(currentPagePath)}`;
 
               return (
                 <article
@@ -178,10 +181,17 @@ export default async function Home({
 
                     <div className="my-4 border-t border-slate-800" />
 
-                    <PopScoreDisplay
-                      movieId={String(movie.id)}
-                      variant="card"
-                    />
+                    <Link
+                      data-remember-scroll
+                      href={rateHref}
+                      className="block rounded-xl transition hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/70"
+                      aria-label={`Rate ${movie.title}`}
+                    >
+                      <PopScoreDisplay
+                        movieId={String(movie.id)}
+                        variant="card"
+                      />
+                    </Link>
 
                     <div className="my-4 border-t border-slate-800" />
 
