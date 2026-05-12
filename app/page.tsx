@@ -18,19 +18,6 @@ const TMDB_GENRE_LABELS = new Map(
   )
 );
 
-const GENRE_ICONS = new Map([
-  ["Action", "⚡"],
-  ["Animation", "✦"],
-  ["Comedy", "☺"],
-  ["Drama", "◆"],
-  ["Horror", "☾"],
-  ["Musical", "♪"],
-  ["Romance", "♡"],
-  ["Rom-Com", "♡"],
-  ["Sci-Fi", "◌"],
-  ["Thriller", "⌁"],
-]);
-
 export default async function Home({
   searchParams,
 }: {
@@ -81,7 +68,7 @@ export default async function Home({
           Worth{" "}
           <span className="relative inline-block text-yellow-400">
             Watching
-            <span className="absolute -bottom-1 left-0 h-1 w-full rounded-full bg-yellow-400/70 shadow-[0_0_18px_rgba(250,204,21,0.45)]" />
+            <span className="absolute -bottom-2 left-[48%] h-3 w-[52%] rounded-[50%] border-b-4 border-yellow-400/70 shadow-[0_10px_18px_rgba(250,204,21,0.35)]" />
           </span>
         </h1>
 
@@ -98,13 +85,12 @@ export default async function Home({
         >
           <Link
             href={query ? `/?query=${encodeURIComponent(query)}` : "/"}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-black transition ${
+            className={`inline-flex shrink-0 items-center rounded-full border px-4 py-2 text-sm font-black transition ${
               activeGenre
                 ? "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
                 : "border-yellow-400 bg-yellow-400 text-black"
             }`}
           >
-            <span aria-hidden="true">▦</span>
             All
           </Link>
 
@@ -117,13 +103,12 @@ export default async function Home({
               <Link
                 key={genre.id}
                 href={href}
-                className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-black transition ${
+                className={`inline-flex shrink-0 items-center rounded-full border px-4 py-2 text-sm font-black transition ${
                   activeGenre?.id === genre.id
                     ? "border-yellow-400 bg-yellow-400 text-black"
                     : "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
                 }`}
               >
-                <span aria-hidden="true">{GENRE_ICONS.get(genre.name)}</span>
                 {genre.name}
               </Link>
             );
@@ -145,7 +130,7 @@ export default async function Home({
         </h2>
 
         {movies.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 min-[460px]:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
             {movies.map((movie) => {
               const poster = posterUrl(movie.poster_path);
               const releaseDate = movie.release_date
