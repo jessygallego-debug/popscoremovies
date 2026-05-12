@@ -5,6 +5,7 @@ const popGenreKeys = [
   "horror",
   "scifi",
   "action",
+  "adventure",
   "comedy",
   "romcom",
   "romance",
@@ -40,6 +41,7 @@ function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
   if (genres.has("Science Fiction")) return "scifi";
   if (genres.has("Thriller")) return "thriller";
   if (genres.has("Drama")) return "drama";
+  if (genres.has("Adventure")) return "adventure";
 
   if (hasActionGenre) {
     return "action";

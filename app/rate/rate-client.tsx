@@ -37,6 +37,16 @@ const genreConfigs = {
       { key: "pace", name: "Pace", weight: 0.1 },
     ],
   },
+  adventure: {
+    title: "Adventure",
+    questions: [
+      { key: "story", name: "Storyline", weight: 0.3 },
+      { key: "acting", name: "Acting", weight: 0.2 },
+      { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
+      { key: "exploration", name: "Exploration", weight: 0.25 },
+      { key: "excitement", name: "Excitement", weight: 0.15 },
+    ],
+  },
   comedy: {
     title: "Comedy",
     questions: [
@@ -150,6 +160,8 @@ const categoryTips: Record<string, string> = {
   choreography: "How well the dance and movement land.",
   conflict: "How strong the central struggle feels.",
   emotionalImpact: "How much the movie makes you feel.",
+  excitement: "How fun and thrilling the journey feels.",
+  exploration: "How strong the sense of discovery feels.",
   humor: "How often the jokes land.",
   originality: "How fresh or unique the movie feels.",
   pace: "How well the movie keeps moving.",
