@@ -40,6 +40,13 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
   const returnTo = useMemo(() => buildReturnTo(query, genreId), [genreId, query]);
   const showSuggestions =
     isFocused && query.trim().length >= 2 && suggestions.length > 0;
+  const hasQuery = query.length > 0;
+
+  const clearSearch = () => {
+    setQuery("");
+    setSuggestions([]);
+    setIsFocused(true);
+  };
 
   useEffect(() => {
     const trimmedQuery = query.trim();
@@ -98,8 +105,20 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => setIsFocused(true)}
           placeholder="Search for a movie..."
-          className="min-h-14 w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-5 pl-12 text-base font-bold text-white shadow-lg shadow-black/30 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:shadow-yellow-400/10"
+          className="min-h-14 w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-12 pl-12 text-base font-bold text-white shadow-lg shadow-black/30 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:shadow-yellow-400/10"
         />
+
+        {hasQuery ? (
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={clearSearch}
+            aria-label="Clear search"
+            className="absolute right-4 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-300"
+          >
+            X
+          </button>
+        ) : null}
 
         {showSuggestions ? (
           <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black">
