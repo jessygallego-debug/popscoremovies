@@ -77,10 +77,8 @@ export default function CoStarReactions({ movieId }: CoStarReactionsProps) {
   };
 
   return (
-    <section className="mt-4 border-t border-white/10 pt-4">
-      <h4 className="mb-3 text-sm font-black text-white">Co-Star Reactions</h4>
-
-      <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-white/10 bg-gray-950/70">
+    <section>
+      <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/80">
         {reactions.map((reaction) => {
           const isSelected = selectedReaction === reaction.key;
 
@@ -89,27 +87,26 @@ export default function CoStarReactions({ movieId }: CoStarReactionsProps) {
               key={reaction.key}
               type="button"
               onClick={() => handleReaction(reaction.key)}
-              className={`min-h-16 min-w-0 overflow-hidden border-r border-white/10 px-1 py-2 text-center text-[10px] font-bold transition last:border-r-0 hover:bg-yellow-400/10 active:scale-95 sm:px-1.5 sm:text-[11px] ${
-                isSelected ? "bg-yellow-400/15 text-yellow-300" : "text-gray-200"
+              className={`min-h-20 min-w-0 overflow-hidden border-r border-slate-800 px-1 py-2 text-center text-[10px] font-bold transition last:border-r-0 hover:bg-yellow-400/10 active:scale-95 sm:px-1.5 ${
+                isSelected ? "bg-yellow-400/15 text-yellow-300" : "text-slate-200"
               }`}
             >
               <span className="block text-xl leading-none">{reaction.emoji}</span>
               <span className="mx-auto mt-1 block max-w-16 whitespace-normal break-words leading-tight">
                 {reaction.label}
               </span>
+              <span className="mt-2 block text-sm font-black text-yellow-400">
+                {getPercent(reaction.key)}%
+              </span>
             </button>
           );
         })}
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-1 text-center text-[11px] font-black text-yellow-400">
-        {reactions.map((reaction) => (
-          <div key={reaction.key}>{getPercent(reaction.key)}%</div>
-        ))}
-      </div>
-
-      <p className="mt-2 text-center text-[11px] font-bold text-gray-400">
-        {total.toLocaleString()} Total Co-Star Reactions
+      <p className="mt-2 text-center text-[11px] font-bold text-slate-500">
+        {total === 0
+          ? "No reactions yet"
+          : `${total.toLocaleString()} ${total === 1 ? "reaction" : "reactions"}`}
       </p>
     </section>
   );

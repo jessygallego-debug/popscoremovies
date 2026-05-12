@@ -13,6 +13,12 @@ import {
   posterUrl,
 } from "@/lib/tmdb";
 
+const TMDB_GENRE_LABELS = new Map(
+  MOVIE_GENRE_FILTERS.filter((genre) => Number.isFinite(Number(genre.id))).map(
+    (genre) => [Number(genre.id), genre.name]
+  )
+);
+
 export default async function Home({
   searchParams,
 }: {
@@ -113,6 +119,11 @@ export default async function Home({
               const releaseDate = movie.release_date
                 ? formatReleaseMonthYear(movie.release_date)
                 : "";
+              const genreLabels =
+                movie.genre_ids
+                  ?.map((genreId) => TMDB_GENRE_LABELS.get(genreId))
+                  .filter((genreName): genreName is string => Boolean(genreName))
+                  .slice(0, 3) ?? [];
 
               const movieHref = `/movie/${
                 movie.id
@@ -121,17 +132,17 @@ export default async function Home({
               return (
                 <article
                   key={movie.id}
-                  className="overflow-hidden rounded-lg bg-gray-900 transition hover:-translate-y-1"
+                  className="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 shadow-lg shadow-black/25 transition hover:-translate-y-1 hover:scale-[1.01] hover:border-yellow-400/60 hover:shadow-yellow-400/10"
                 >
                   <Link data-remember-scroll href={movieHref} className="block">
-                    <div className="relative aspect-[2/3] bg-gray-800">
+                    <div className="relative aspect-[2/3] overflow-hidden rounded-t-2xl bg-slate-900">
                       {poster ? (
                         <Image
                           src={poster}
                           alt={movie.title}
                           fill
                           sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, 50vw"
-                          className="object-cover"
+                          className="object-cover transition duration-300 group-hover:scale-105"
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center px-4 text-center text-sm text-gray-500">
@@ -141,21 +152,39 @@ export default async function Home({
                     </div>
                   </Link>
 
-                  <div className="p-4">
+                  <div className="p-4 sm:p-5">
                     <Link data-remember-scroll href={movieHref}>
-                    <h3 className="line-clamp-2 min-h-14 text-base font-bold">
-                      {movie.title}
-                    </h3>
+                      <h3 className="line-clamp-2 min-h-12 text-base font-black leading-snug text-white transition group-hover:text-yellow-100">
+                        {movie.title}
+                      </h3>
                     </Link>
 
-                    <p className="mt-2 text-sm text-gray-400">
+                    <p className="mt-2 text-xs font-bold text-slate-400">
                       Released: {releaseDate || "TBA"}
                     </p>
 
+                    {genreLabels.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {genreLabels.map((genreName) => (
+                          <span
+                            key={genreName}
+                            className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] font-bold text-slate-300"
+                          >
+                            {genreName}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <div className="my-4 border-t border-slate-800" />
+
                     <PopScoreDisplay
                       movieId={String(movie.id)}
-                      showNumericScore={false}
+                      variant="card"
                     />
+
+                    <div className="my-4 border-t border-slate-800" />
+
                     <CoStarReactions movieId={String(movie.id)} />
                   </div>
                 </article>
