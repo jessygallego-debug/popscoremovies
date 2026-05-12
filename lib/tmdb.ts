@@ -39,6 +39,9 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const MAX_MOVIE_RESULTS = 300;
 const TMDB_PAGE_SIZE = 20;
+const COMEDY_GENRE_ID = 35;
+const ROMANCE_GENRE_ID = 10749;
+export const ROMCOM_GENRE_FILTER_ID = "romcom";
 
 export const MOVIE_GENRE_FILTERS = [
   { id: "28", name: "Action" },
@@ -47,7 +50,8 @@ export const MOVIE_GENRE_FILTERS = [
   { id: "18", name: "Drama" },
   { id: "27", name: "Horror" },
   { id: "10402", name: "Musical" },
-  { id: "10749", name: "Rom-Com" },
+  { id: "10749", name: "Romance" },
+  { id: ROMCOM_GENRE_FILTER_ID, name: "Rom-Com" },
   { id: "878", name: "Sci-Fi" },
   { id: "53", name: "Thriller" },
 ];
@@ -104,6 +108,8 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
 
 function moviesPath(query: string, page: number, genreId = "") {
   const trimmedQuery = query.trim();
+  const tmdbGenreId =
+    genreId === ROMCOM_GENRE_FILTER_ID ? String(ROMANCE_GENRE_ID) : genreId;
   const today = new Date().toISOString().slice(0, 10);
   const recentCutoff = new Date();
   recentCutoff.setFullYear(recentCutoff.getFullYear() - 2);
@@ -115,8 +121,8 @@ function moviesPath(query: string, page: number, genreId = "") {
       )}&include_adult=false&language=en-US&page=${page}`;
   }
 
-  if (genreId) {
-    return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.gte=${recentCutoffDate}&primary_release_date.lte=${today}&sort_by=popularity.desc&with_genres=${genreId}`;
+  if (tmdbGenreId) {
+    return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.gte=${recentCutoffDate}&primary_release_date.lte=${today}&sort_by=popularity.desc&with_genres=${tmdbGenreId}`;
   }
 
   return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.gte=${recentCutoffDate}&primary_release_date.lte=${today}&sort_by=popularity.desc`;
@@ -161,12 +167,20 @@ export async function getMovies(
       break;
     }
 
-    const nextMovies =
-      query.trim() && genreId
-        ? data.results.filter((movie) =>
-            movie.genre_ids?.includes(Number(genreId))
-          )
-        : data.results;
+    const nextMovies = data.results.filter((movie) => {
+      if (genreId === ROMCOM_GENRE_FILTER_ID) {
+        return (
+          movie.genre_ids?.includes(ROMANCE_GENRE_ID) &&
+          movie.genre_ids.includes(COMEDY_GENRE_ID)
+        );
+      }
+
+      if (query.trim() && genreId) {
+        return movie.genre_ids?.includes(Number(genreId));
+      }
+
+      return true;
+    });
 
     movies.push(...nextMovies);
     pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
