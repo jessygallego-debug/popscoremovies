@@ -12,6 +12,10 @@ const popGenreKeys = [
   "animated",
   "musical",
   "drama",
+  "mystery",
+  "family",
+  "documentary",
+  "war",
   "thriller",
 ];
 
@@ -29,6 +33,8 @@ function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
     genres.has("Western");
 
   if (genres.has("Animation")) return "animated";
+  if (genres.has("Documentary")) return "documentary";
+  if (genres.has("Family")) return "family";
   if (genres.has("Music")) return "musical";
   if (genres.has("Romance") && genres.has("Comedy")) return "romcom";
 
@@ -39,7 +45,9 @@ function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
   if (genres.has("Comedy")) return "comedy";
   if (genres.has("Horror")) return "horror";
   if (genres.has("Science Fiction")) return "scifi";
+  if (genres.has("Mystery")) return "mystery";
   if (genres.has("Thriller")) return "thriller";
+  if (genres.has("War")) return "war";
   if (genres.has("Drama")) return "drama";
   if (genres.has("Adventure")) return "adventure";
 
