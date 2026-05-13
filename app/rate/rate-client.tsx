@@ -242,25 +242,39 @@ function getPopRating(score: number) {
     return {
       iconSrc: "/rating-icons/extra-buttery-v2.png",
       label: "Extra Buttery",
+      description: "Amazing",
     };
   }
 
   if (score >= 75) {
-    return { iconSrc: "/rating-icons/buttery.png", label: "Buttery" };
+    return {
+      iconSrc: "/rating-icons/buttery.png",
+      label: "Buttery",
+      description: "Great",
+    };
   }
 
   if (score >= 60) {
     return {
       iconSrc: "/rating-icons/fresh-popcorn.png",
       label: "Fresh Popcorn",
+      description: "Good",
     };
   }
 
   if (score >= 40) {
-    return { iconSrc: "/rating-icons/salty.png", label: "Salty" };
+    return {
+      iconSrc: "/rating-icons/salty.png",
+      label: "Salty",
+      description: "Meh",
+    };
   }
 
-  return { iconSrc: "/rating-icons/burnt.png", label: "Burnt" };
+  return {
+    iconSrc: "/rating-icons/burnt.png",
+    label: "Burnt",
+    description: "Bad",
+  };
 }
 
 export function isGenreKey(value: string | undefined): value is GenreKey {
@@ -475,8 +489,8 @@ export default function RateClient({
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <span className="relative block h-20 w-20 overflow-hidden rounded-full border border-yellow-300/40 bg-yellow-400/10 shadow-[0_0_24px_rgba(250,204,21,0.25)]">
                 <Image
-                  src="/rating-icons/extra-buttery-v2.png"
-                  alt="Extra Buttery PopScore icon"
+                  src={popRating.iconSrc}
+                  alt={`${popRating.label} PopScore icon`}
                   fill
                   sizes="80px"
                   className="object-contain"
@@ -489,7 +503,7 @@ export default function RateClient({
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-5 text-gray-200">
               <p className="font-bold text-yellow-300">
-                ✨ Extra Buttery = Amazing
+                {popRating.label} = {popRating.description}
               </p>
               <p className="mt-2 text-sm">
                 You can always come back and leave a full movie rating when
