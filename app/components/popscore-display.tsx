@@ -99,27 +99,17 @@ export default function PopScoreDisplay({
   }
 
   const popScoreTitle = getPopScoreTitle(score.score);
-  const isExtraButtery = popScoreTitle.label === "Extra Buttery";
-
   if (variant === "card") {
     return (
       <div className="flex items-center gap-2 sm:gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-yellow-400/20 bg-yellow-400/10 sm:h-12 sm:w-12">
-          <span
-            className={`relative block ${
-              isExtraButtery ? "h-9 w-9 sm:h-11 sm:w-11" : "h-8 w-8 sm:h-10 sm:w-10"
-            }`}
-          >
+          <span className="relative block h-full w-full">
             <Image
               src={popScoreTitle.iconSrc}
               alt={`${popScoreTitle.label} PopScore icon`}
               fill
-              sizes={
-                isExtraButtery
-                  ? "(min-width: 640px) 44px, 36px"
-                  : "(min-width: 640px) 40px, 32px"
-              }
-              className="object-contain"
+              sizes="(min-width: 640px) 48px, 40px"
+              className="object-cover"
             />
           </span>
         </span>

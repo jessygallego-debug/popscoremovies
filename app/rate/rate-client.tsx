@@ -460,13 +460,13 @@ export default function RateClient({
               {popScore}%
             </h2>
             <div className="mt-4 flex flex-wrap items-center gap-4">
-              <span className="relative block h-20 w-20 overflow-hidden rounded-2xl">
+              <span className="relative block h-20 w-20 overflow-hidden rounded-full border border-yellow-300/40 bg-yellow-400/10 shadow-[0_0_24px_rgba(250,204,21,0.25)]">
                 <Image
-                  src={popRating.iconSrc}
-                  alt={`${popRating.label} PopScore icon`}
+                  src="/rating-icons/extra-buttery-v2.png"
+                  alt="Extra Buttery PopScore icon"
                   fill
                   sizes="80px"
-                  className="object-contain"
+                  className="object-cover"
                 />
               </span>
               <p className="text-2xl font-bold text-yellow-200">
