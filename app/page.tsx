@@ -86,11 +86,11 @@ export default async function Home({
         <div className="relative mb-12">
           <div
             aria-label="Filter movies by genre"
-            className="flex flex-wrap gap-2 py-1 sm:gap-3"
+            className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth whitespace-nowrap py-1 md:grid md:grid-cols-8 md:grid-rows-2 md:overflow-visible md:whitespace-normal"
           >
             <Link
               href={query ? `/?query=${encodeURIComponent(query)}` : "/"}
-              className={`inline-flex items-center rounded-full border px-4 py-2 text-xs font-black transition sm:px-5 sm:py-2.5 sm:text-sm ${
+              className={`inline-flex shrink-0 snap-start items-center justify-center rounded-full border px-5 py-2.5 text-sm font-black transition md:w-full ${
                 activeGenre
                   ? "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
                   : "border-yellow-400 bg-yellow-400 text-black"
@@ -108,7 +108,7 @@ export default async function Home({
                 <Link
                   key={genre.id}
                   href={href}
-                  className={`inline-flex items-center rounded-full border px-4 py-2 text-xs font-black transition sm:px-5 sm:py-2.5 sm:text-sm ${
+                  className={`inline-flex shrink-0 snap-start items-center justify-center rounded-full border px-5 py-2.5 text-sm font-black transition md:w-full ${
                     activeGenre?.id === genre.id
                       ? "border-yellow-400 bg-yellow-400 text-black"
                       : "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
