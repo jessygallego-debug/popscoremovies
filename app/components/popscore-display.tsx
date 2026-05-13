@@ -14,7 +14,7 @@ type PopScoreDisplayProps = {
 function getPopScoreTitle(score: number) {
   if (score >= 90) {
     return {
-      iconSrc: "/rating-icons/extra-buttery.png",
+      iconSrc: "/rating-icons/extra-buttery-gold.png",
       label: "Extra Buttery",
     };
   }
