@@ -14,6 +14,16 @@ export type MovieDetails = MovieSummary & {
   genres: { id: number; name: string }[];
   runtime: number | null;
   tagline: string;
+  videos?: {
+    results?: {
+      id: string;
+      key: string;
+      name: string;
+      official: boolean;
+      site: string;
+      type: string;
+    }[];
+  };
   credits?: {
     cast?: {
       id: number;
@@ -196,7 +206,7 @@ export async function getMovies(
 
 export async function getMovie(id: string) {
   return tmdbFetch<MovieDetails>(
-    `/movie/${id}?language=en-US&append_to_response=credits`
+    `/movie/${id}?language=en-US&append_to_response=credits,videos`
   );
 }
 

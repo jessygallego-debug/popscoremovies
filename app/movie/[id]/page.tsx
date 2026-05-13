@@ -19,6 +19,20 @@ function getSafeReturnPath(returnTo?: string) {
   return returnTo;
 }
 
+function getTrailerUrl(movie: NonNullable<Awaited<ReturnType<typeof getMovie>>>) {
+  const videos = movie.videos?.results ?? [];
+  const youtubeVideos = videos.filter((video) => video.site === "YouTube");
+  const trailer =
+    youtubeVideos.find(
+      (video) => video.official && video.type === "Trailer"
+    ) ??
+    youtubeVideos.find((video) => video.type === "Trailer") ??
+    youtubeVideos.find((video) => video.type === "Teaser") ??
+    youtubeVideos[0];
+
+  return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+}
+
 export default async function MoviePage({
   params,
   searchParams,
@@ -71,6 +85,7 @@ export default async function MoviePage({
   const rateHref = `/rate?movie=${movie.id}&returnTo=${encodeURIComponent(
     closeHref
   )}`;
+  const trailerUrl = getTrailerUrl(movie);
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -137,13 +152,23 @@ export default async function MoviePage({
                   movieId={String(movie.id)}
                   className="font-bold text-yellow-400"
                 />
-                <div className="mt-8">
+                <div className="mt-8 flex flex-wrap gap-3">
                   <Link
                     href={rateHref}
                     className="inline-flex min-h-12 items-center justify-center rounded-lg bg-yellow-400 px-6 font-bold text-black hover:bg-yellow-300"
                   >
                     Rate This Movie
                   </Link>
+                  {trailerUrl ? (
+                    <a
+                      href={trailerUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
+                    >
+                      Watch Trailer
+                    </a>
+                  ) : null}
                 </div>
               </div>
 
