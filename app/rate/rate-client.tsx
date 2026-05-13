@@ -186,7 +186,7 @@ const scoreOptions = [
   },
   {
     value: 5,
-    iconSrc: "/rating-icons/extra-buttery.png",
+    iconSrc: "/rating-icons/extra-buttery-v2.png",
     label: "Extra Buttery",
     description: "Amazing",
   },
@@ -240,7 +240,7 @@ type RateClientProps = {
 function getPopRating(score: number) {
   if (score >= 90) {
     return {
-      iconSrc: "/rating-icons/extra-buttery.png",
+      iconSrc: "/rating-icons/extra-buttery-v2.png",
       label: "Extra Buttery",
     };
   }
