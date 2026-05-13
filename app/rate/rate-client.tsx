@@ -505,10 +505,6 @@ export default function RateClient({
               <p className="font-bold text-yellow-300">
                 {popRating.label} = {popRating.description}
               </p>
-              <p className="mt-2 text-sm">
-                You can always come back and leave a full movie rating when
-                you&apos;re ready!
-              </p>
             </div>
 
             {movieId ? (
