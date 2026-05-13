@@ -84,13 +84,16 @@ export default async function Home({
         <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
 
         <div className="relative mb-12">
+          <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-10 bg-gradient-to-r from-black via-black/80 to-transparent" />
+          <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-10 bg-gradient-to-l from-black via-black/80 to-transparent" />
+
           <div
             aria-label="Filter movies by genre"
-            className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth whitespace-nowrap py-1 md:grid md:grid-cols-8 md:grid-rows-2 md:overflow-visible md:whitespace-normal"
+            className="no-scrollbar flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto scroll-smooth whitespace-nowrap px-5 py-1"
           >
             <Link
               href={query ? `/?query=${encodeURIComponent(query)}` : "/"}
-              className={`inline-flex shrink-0 snap-start items-center justify-center rounded-full border px-5 py-2.5 text-sm font-black transition md:w-full ${
+              className={`inline-flex shrink-0 snap-start items-center rounded-full border px-5 py-2.5 text-sm font-black transition ${
                 activeGenre
                   ? "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
                   : "border-yellow-400 bg-yellow-400 text-black"
@@ -108,7 +111,7 @@ export default async function Home({
                 <Link
                   key={genre.id}
                   href={href}
-                  className={`inline-flex shrink-0 snap-start items-center justify-center rounded-full border px-5 py-2.5 text-sm font-black transition md:w-full ${
+                  className={`inline-flex shrink-0 snap-start items-center rounded-full border px-5 py-2.5 text-sm font-black transition ${
                     activeGenre?.id === genre.id
                       ? "border-yellow-400 bg-yellow-400 text-black"
                       : "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
