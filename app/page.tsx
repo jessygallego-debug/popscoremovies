@@ -43,6 +43,22 @@ export default async function Home({
   const currentPagePath = currentPageParams.toString()
     ? `/?${currentPageParams.toString()}`
     : "/";
+  const genreFilters = [
+    {
+      id: "all",
+      name: "All",
+      href: query ? `/?query=${encodeURIComponent(query)}` : "/",
+      isActive: !activeGenre,
+    },
+    ...MOVIE_GENRE_FILTERS.map((genre) => ({
+      id: genre.id,
+      name: genre.name,
+      href: query
+        ? `/?query=${encodeURIComponent(query)}&genre=${genre.id}`
+        : `/?genre=${genre.id}`,
+      isActive: activeGenre?.id === genre.id,
+    })),
+  ];
 
   return (
     <main className="min-h-screen bg-black bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#020617_0%,#000_42%,#020617_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
@@ -54,8 +70,18 @@ export default async function Home({
           className="mb-8 inline-flex flex-col transition hover:opacity-85"
         >
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="text-3xl sm:text-4xl">
-              🍿
+            <span
+              aria-hidden="true"
+              className="relative block h-10 w-10 overflow-hidden rounded-full sm:h-14 sm:w-14"
+            >
+              <Image
+                src="/rating-icons/extra-buttery-v2.png"
+                alt=""
+                fill
+                sizes="(min-width: 640px) 56px, 40px"
+                className="object-cover"
+                priority
+              />
             </span>
             <span className="text-3xl font-black tracking-wide text-yellow-400 sm:text-5xl">
               POPSCORE
@@ -83,44 +109,43 @@ export default async function Home({
 
         <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
 
-        <div className="relative mb-12">
-          <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-10 bg-gradient-to-r from-black via-black/80 to-transparent" />
-          <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-10 bg-gradient-to-l from-black via-black/80 to-transparent" />
+        <div className="mb-12">
+          <div
+            aria-label="Filter movies by genre"
+            className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth whitespace-nowrap py-1 md:hidden"
+          >
+            {genreFilters.map((genre) => (
+              <Link
+                key={genre.id}
+                href={genre.href}
+                className={`inline-flex shrink-0 snap-start items-center justify-center rounded-full border px-5 py-2.5 text-sm font-black transition ${
+                  genre.isActive
+                    ? "border-yellow-400 bg-yellow-400 text-black"
+                    : "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
+                }`}
+              >
+                {genre.name}
+              </Link>
+            ))}
+          </div>
 
           <div
             aria-label="Filter movies by genre"
-            className="no-scrollbar flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto scroll-smooth whitespace-nowrap px-5 py-1"
+            className="hidden gap-3 md:grid md:grid-cols-8 md:grid-rows-2"
           >
-            <Link
-              href={query ? `/?query=${encodeURIComponent(query)}` : "/"}
-              className={`inline-flex shrink-0 snap-start items-center rounded-full border px-5 py-2.5 text-sm font-black transition ${
-                activeGenre
-                  ? "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
-                  : "border-yellow-400 bg-yellow-400 text-black"
-              }`}
-            >
-              All
-            </Link>
-
-            {MOVIE_GENRE_FILTERS.map((genre) => {
-              const href = query
-                ? `/?query=${encodeURIComponent(query)}&genre=${genre.id}`
-                : `/?genre=${genre.id}`;
-
-              return (
-                <Link
-                  key={genre.id}
-                  href={href}
-                  className={`inline-flex shrink-0 snap-start items-center rounded-full border px-5 py-2.5 text-sm font-black transition ${
-                    activeGenre?.id === genre.id
-                      ? "border-yellow-400 bg-yellow-400 text-black"
-                      : "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
-                  }`}
-                >
-                  {genre.name}
-                </Link>
-              );
-            })}
+            {genreFilters.map((genre) => (
+              <Link
+                key={genre.id}
+                href={genre.href}
+                className={`inline-flex min-w-0 items-center justify-center rounded-full border px-4 py-2.5 text-center text-sm font-black transition ${
+                  genre.isActive
+                    ? "border-yellow-400 bg-yellow-400 text-black"
+                    : "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
+                }`}
+              >
+                {genre.name}
+              </Link>
+            ))}
           </div>
         </div>
 

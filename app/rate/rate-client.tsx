@@ -395,7 +395,7 @@ export default function RateClient({
                   const isSelected = ratings[question.key] === option.value;
                   const imageSize =
                     option.value === 5
-                      ? "h-10 w-10 sm:h-24 sm:w-24"
+                      ? "h-12 w-12 sm:h-28 sm:w-28"
                       : "h-9 w-9 sm:h-20 sm:w-20";
 
                   return (
@@ -414,7 +414,7 @@ export default function RateClient({
                           : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
                       }`}
                     >
-                      <span className="flex h-11 w-full items-center justify-center sm:h-24">
+                      <span className="flex h-12 w-full items-center justify-center sm:h-28">
                         <span
                           className={`relative block overflow-hidden rounded-lg sm:rounded-2xl ${imageSize}`}
                         >
@@ -424,7 +424,7 @@ export default function RateClient({
                             fill
                             sizes={
                               option.value === 5
-                                ? "(min-width: 640px) 96px, 40px"
+                                ? "(min-width: 640px) 112px, 48px"
                                 : "(min-width: 640px) 80px, 36px"
                             }
                             className="object-contain"
