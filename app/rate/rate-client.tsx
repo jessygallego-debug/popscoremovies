@@ -393,6 +393,10 @@ export default function RateClient({
               <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
                 {scoreOptions.map((option) => {
                   const isSelected = ratings[question.key] === option.value;
+                  const imageSize =
+                    option.value === 5
+                      ? "h-10 w-10 sm:h-24 sm:w-24"
+                      : "h-9 w-9 sm:h-20 sm:w-20";
 
                   return (
                     <button
@@ -411,14 +415,20 @@ export default function RateClient({
                       }`}
                     >
                       <span className="flex h-11 w-full items-center justify-center sm:h-24">
-                        <span className="relative block h-10 w-10 overflow-hidden rounded-lg sm:h-24 sm:w-24 sm:rounded-2xl">
-                        <Image
-                          src={option.iconSrc}
-                          alt={`${option.label} rating icon`}
-                          fill
-                          sizes="(min-width: 640px) 96px, 40px"
-                          className="object-contain"
-                        />
+                        <span
+                          className={`relative block overflow-hidden rounded-lg sm:rounded-2xl ${imageSize}`}
+                        >
+                          <Image
+                            src={option.iconSrc}
+                            alt={`${option.label} rating icon`}
+                            fill
+                            sizes={
+                              option.value === 5
+                                ? "(min-width: 640px) 96px, 40px"
+                                : "(min-width: 640px) 80px, 36px"
+                            }
+                            className="object-contain"
+                          />
                         </span>
                       </span>
                       <span className="mt-1 block text-lg font-black sm:mt-4 sm:text-4xl">
