@@ -72,16 +72,18 @@ export default async function Home({
           <div className="flex items-center gap-3">
             <span
               aria-hidden="true"
-              className="relative block h-10 w-10 overflow-hidden rounded-full sm:h-14 sm:w-14"
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-yellow-400/10 sm:h-14 sm:w-14"
             >
-              <Image
-                src="/rating-icons/extra-buttery-v2.png"
-                alt=""
-                fill
-                sizes="(min-width: 640px) 56px, 40px"
-                className="object-cover"
-                priority
-              />
+              <span className="relative block h-8 w-8 sm:h-11 sm:w-11">
+                <Image
+                  src="/rating-icons/extra-buttery-v2.png"
+                  alt=""
+                  fill
+                  sizes="(min-width: 640px) 44px, 32px"
+                  className="object-contain"
+                  priority
+                />
+              </span>
             </span>
             <span className="text-3xl font-black tracking-wide text-yellow-400 sm:text-5xl">
               POPSCORE

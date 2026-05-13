@@ -329,7 +329,20 @@ export default function RateClient({
           aria-label="Go to PopScore Movies home"
           className="mb-6 inline-flex items-center gap-2 text-lg font-bold text-yellow-400 transition hover:text-yellow-300"
         >
-          <span aria-hidden="true">🍿</span>
+          <span
+            aria-hidden="true"
+            className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-yellow-400/10"
+          >
+            <span className="relative block h-6 w-6">
+              <Image
+                src="/rating-icons/extra-buttery-v2.png"
+                alt=""
+                fill
+                sizes="24px"
+                className="object-contain"
+              />
+            </span>
+          </span>
           <span>PopScore Movies</span>
         </Link>
 
@@ -466,7 +479,7 @@ export default function RateClient({
                   alt="Extra Buttery PopScore icon"
                   fill
                   sizes="80px"
-                  className="object-cover"
+                  className="object-contain"
                 />
               </span>
               <p className="text-2xl font-bold text-yellow-200">
