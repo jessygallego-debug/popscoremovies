@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   CoStarReaction,
   getCoStarCounts,
-  saveCoStarReaction,
 } from "@/lib/co-star-store";
 import {
   getCurrentProfile,
@@ -89,21 +88,22 @@ export default function CoStarReactions({
           return Promise.reject(new Error("Missing profile"));
         }
 
-        return saveCoStarReaction(movieId, key, profile.user_id);
+        if (!movie) {
+          setMessage("Could not save reaction. Please try again.");
+          return Promise.reject(new Error("Missing movie"));
+        }
+
+        return saveUserQuickReaction({
+          movie,
+          quickReaction: profileReactionMap[key],
+        });
       })
       .then(() => {
         getCoStarCounts(movieId).then(setCounts).catch(() => null);
         setSelectedReaction(key);
-
-        if (movie) {
-          saveUserQuickReaction({
-            movie,
-            quickReaction: profileReactionMap[key],
-          }).catch(() => null);
-        }
       })
       .catch((error: Error) => {
-        if (error.message !== "Missing profile") {
+        if (error.message !== "Missing profile" && error.message !== "Missing movie") {
           setSelectedReaction(null);
           setMessage("Could not save reaction. Please try again.");
         }

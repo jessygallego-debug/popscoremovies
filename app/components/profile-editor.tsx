@@ -172,10 +172,10 @@ export default function ProfileEditor() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
-            PopScore Profile
+            PopScore PopFile
           </p>
           <h1 className="mt-2 text-3xl font-black text-white">
-            {profile ? "Edit Profile" : "Set Up Profile"}
+            {profile ? "Edit PopFile" : "Set Up Profile"}
           </h1>
         </div>
         <button

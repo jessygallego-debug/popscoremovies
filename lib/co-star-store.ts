@@ -1,17 +1,11 @@
 "use client";
 
-import { getSupabaseAccessToken } from "@/lib/profile-store";
-
 export type CoStarReaction = "loved" | "worth" | "trash";
 
 export type CoStarCounts = Record<CoStarReaction, number>;
 
 type CoStarRow = {
-  reaction: CoStarReaction;
-};
-
-type UserCoStarRow = {
-  id: string;
+  quick_reaction: "loved_it" | "worth_watching" | "trash" | null;
 };
 
 const emptyCounts: CoStarCounts = {
@@ -62,73 +56,27 @@ async function supabaseFetch(
   return response;
 }
 
-export async function saveCoStarReaction(
-  movieId: string,
-  reaction: CoStarReaction,
-  userId: string
-) {
-  const accessToken = await getSupabaseAccessToken();
-
-  if (!accessToken) {
-    throw new Error("Please sign in before reacting.");
-  }
-
-  const existingResponse = await supabaseFetch(
-    `/co_star_reactions?user_id=eq.${encodeURIComponent(
-      userId
-    )}&movie_id=eq.${encodeURIComponent(movieId)}&select=id`,
-    {},
-    accessToken
-  );
-  const existingRows = (await existingResponse.json()) as UserCoStarRow[];
-
-  if (existingRows[0]) {
-    await supabaseFetch(
-      `/co_star_reactions?id=eq.${encodeURIComponent(existingRows[0].id)}`,
-      {
-        method: "PATCH",
-        headers: {
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify({
-          reaction,
-        }),
-      },
-      accessToken
-    );
-    return;
-  }
-
-  await supabaseFetch(
-    "/co_star_reactions",
-    {
-      method: "POST",
-      headers: {
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify({
-        movie_id: movieId,
-        reaction,
-        user_id: userId,
-      }),
-    },
-    accessToken
-  );
-}
-
 export async function getCoStarCounts(movieId: string): Promise<CoStarCounts> {
   const response = await supabaseFetch(
-    `/co_star_reactions?movie_id=eq.${encodeURIComponent(
+    `/movie_ratings?movie_id=eq.${encodeURIComponent(
       movieId
-    )}&select=reaction`
+    )}&select=quick_reaction`
   );
   const rows = (await response.json()) as CoStarRow[];
 
-  return rows.reduce<CoStarCounts>(
-    (counts, row) => ({
-      ...counts,
-      [row.reaction]: counts[row.reaction] + 1,
-    }),
-    { ...emptyCounts }
-  );
+  return rows.reduce<CoStarCounts>((counts, row) => {
+    if (row.quick_reaction === "loved_it") {
+      return { ...counts, loved: counts.loved + 1 };
+    }
+
+    if (row.quick_reaction === "worth_watching") {
+      return { ...counts, worth: counts.worth + 1 };
+    }
+
+    if (row.quick_reaction === "trash") {
+      return { ...counts, trash: counts.trash + 1 };
+    }
+
+    return counts;
+  }, { ...emptyCounts });
 }

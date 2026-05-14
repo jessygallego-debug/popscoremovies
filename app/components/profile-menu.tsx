@@ -10,7 +10,7 @@ import {
 } from "@/lib/profile-store";
 
 const menuItems = [
-  { href: "/profile/edit", label: "Edit Profile" },
+  { href: "/profile/edit", label: "Edit PopFile" },
   { href: "ratings", label: "Rating History" },
   { href: "watchlist", label: "Watchlist" },
   { href: "stats", label: "Profile Stats" },
@@ -64,7 +64,7 @@ export default function ProfileMenu() {
   return (
     <details className="group relative shrink-0">
       <summary className="list-none rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:cursor-pointer hover:border-yellow-300 hover:bg-yellow-400 hover:text-black">
-        Profile
+        PopFile
       </summary>
       <div className="absolute right-0 z-30 mt-3 w-56 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl shadow-black/50">
         {menuItems.map((item) => {
