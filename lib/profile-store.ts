@@ -1,7 +1,5 @@
 "use client";
 
-import { QuickReactionKey } from "@/lib/profile-config";
-
 const SESSION_KEY = "popscore_supabase_session";
 
 type SupabaseSession = {
@@ -38,6 +36,8 @@ export type MovieMeta = {
   genreNames?: string[];
 };
 
+export type ProfileQuickReaction = "loved_it" | "worth_watching" | "trash";
+
 export type UserMovieRating = MovieMeta & {
   id: string;
   user_id: string;
@@ -46,7 +46,7 @@ export type UserMovieRating = MovieMeta & {
   ratings: Record<string, number>;
   weights: { key: string; weight: number }[];
   popscore: number;
-  quick_reaction: QuickReactionKey;
+  quick_reaction: ProfileQuickReaction;
   created_at: string;
   updated_at: string;
 };
@@ -403,11 +403,7 @@ export async function upsertProfile(profile: {
   return rows[0];
 }
 
-function toSnakeScore(key: string) {
-  return `${key.replace(/[A-Z]/g, (match) => `_${match.toLowerCase()}`)}_score`;
-}
-
-function quickReactionForScore(popscore: number): QuickReactionKey {
+function quickReactionForScore(popscore: number): ProfileQuickReaction {
   if (popscore >= 75) return "loved_it";
   if (popscore >= 40) return "worth_watching";
   return "trash";
@@ -425,7 +421,7 @@ function mapRatingRow(row: {
   ratings: Record<string, number>;
   weights: { key: string; weight: number }[];
   popscore: number;
-  quick_reaction: QuickReactionKey;
+  quick_reaction: ProfileQuickReaction;
   created_at: string;
   updated_at: string;
 }): UserMovieRating {
@@ -466,10 +462,6 @@ export async function saveUserMovieRating({
     return null;
   }
 
-  const scoreColumns = Object.fromEntries(
-    Object.entries(ratings).map(([key, value]) => [toSnakeScore(key), value])
-  );
-
   const rows = await supabaseFetch<unknown[]>(
     "/movie_ratings?on_conflict=user_id,movie_id",
     {
@@ -478,7 +470,6 @@ export async function saveUserMovieRating({
         Prefer: "resolution=merge-duplicates,return=representation",
       },
       body: JSON.stringify({
-        ...scoreColumns,
         genre,
         genre_names: movie.genreNames ?? [],
         movie_id: movie.movieId,
@@ -490,6 +481,68 @@ export async function saveUserMovieRating({
         release_date: movie.releaseDate ?? null,
         user_id: user.id,
         weights: questions,
+      }),
+    }
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function saveUserQuickReaction({
+  movie,
+  quickReaction,
+}: {
+  movie: MovieMeta & { genre?: string };
+  quickReaction: ProfileQuickReaction;
+}) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const existingRows = await supabaseFetch<{ id: string }[]>(
+    `/movie_ratings?user_id=eq.${encodeURIComponent(
+      user.id
+    )}&movie_id=eq.${encodeURIComponent(movie.movieId)}&select=id`
+  );
+
+  if (existingRows[0]) {
+    await supabaseFetch(
+      `/movie_ratings?id=eq.${encodeURIComponent(existingRows[0].id)}`,
+      {
+        method: "PATCH",
+        headers: {
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({
+          quick_reaction: quickReaction,
+        }),
+      }
+    );
+
+    return existingRows[0];
+  }
+
+  const rows = await supabaseFetch<unknown[]>(
+    "/movie_ratings?on_conflict=user_id,movie_id",
+    {
+      method: "POST",
+      headers: {
+        Prefer: "resolution=merge-duplicates,return=representation",
+      },
+      body: JSON.stringify({
+        genre: movie.genre ?? movie.genreNames?.[0] ?? "unknown",
+        genre_names: movie.genreNames ?? [],
+        movie_id: movie.movieId,
+        movie_title: movie.movieTitle,
+        popscore: 0,
+        poster_path: movie.posterPath ?? null,
+        quick_reaction: quickReaction,
+        ratings: {},
+        release_date: movie.releaseDate ?? null,
+        user_id: user.id,
+        weights: [],
       }),
     }
   );

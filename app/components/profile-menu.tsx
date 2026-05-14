@@ -43,7 +43,7 @@ export default function ProfileMenu() {
     return (
       <Link
         href="/profile/edit"
-        className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
+        className="shrink-0 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
       >
         Sign In
       </Link>
@@ -53,7 +53,7 @@ export default function ProfileMenu() {
   const profilePath = `/profile/${profile.username}`;
 
   return (
-    <details className="group relative">
+    <details className="group relative shrink-0">
       <summary className="list-none rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:cursor-pointer hover:border-yellow-300 hover:bg-yellow-400 hover:text-black">
         Profile
       </summary>

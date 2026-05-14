@@ -6,6 +6,11 @@ import {
   getCoStarCounts,
   saveCoStarReaction,
 } from "@/lib/co-star-store";
+import {
+  MovieMeta,
+  ProfileQuickReaction,
+  saveUserQuickReaction,
+} from "@/lib/profile-store";
 
 type Reaction = {
   emoji: string;
@@ -14,6 +19,7 @@ type Reaction = {
 };
 
 type CoStarReactionsProps = {
+  movie?: MovieMeta & { genre?: string };
   movieId: string;
 };
 
@@ -23,7 +29,16 @@ const reactions: Reaction[] = [
   { emoji: "🗑️", key: "trash", label: "Trash" },
 ];
 
-export default function CoStarReactions({ movieId }: CoStarReactionsProps) {
+const profileReactionMap: Record<CoStarReaction, ProfileQuickReaction> = {
+  loved: "loved_it",
+  trash: "trash",
+  worth: "worth_watching",
+};
+
+export default function CoStarReactions({
+  movie,
+  movieId,
+}: CoStarReactionsProps) {
   const [counts, setCounts] = useState<Record<CoStarReaction, number>>({
     loved: 0,
     trash: 0,
@@ -70,6 +85,13 @@ export default function CoStarReactions({ movieId }: CoStarReactionsProps) {
           [key]: currentCounts[key] + 1,
         }));
         setSelectedReaction(key);
+
+        if (movie) {
+          saveUserQuickReaction({
+            movie,
+            quickReaction: profileReactionMap[key],
+          }).catch(() => null);
+        }
       })
       .catch(() => {
         setSelectedReaction(null);

@@ -66,11 +66,11 @@ export default async function Home({
     <main className="min-h-screen bg-black bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#020617_0%,#000_42%,#020617_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
       <ScrollMemory />
       <section className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div className="mb-8 flex items-start justify-between gap-4">
           <Link
             href="/"
             aria-label="Go to PopScore Movies home"
-            className="inline-flex flex-col transition hover:opacity-85"
+            className="min-w-0 flex-1 transition hover:opacity-85"
           >
             <div className="flex items-center gap-3">
               <span
@@ -254,7 +254,17 @@ export default async function Home({
 
                     <div className="my-4 border-t border-slate-800" />
 
-                    <CoStarReactions movieId={String(movie.id)} />
+                    <CoStarReactions
+                      movie={{
+                        genre: genreLabels[0],
+                        genreNames: genreLabels,
+                        movieId: String(movie.id),
+                        movieTitle: movie.title,
+                        posterPath: movie.poster_path,
+                        releaseDate: movie.release_date,
+                      }}
+                      movieId={String(movie.id)}
+                    />
 
                     <div className="mt-4">
                       <AddToWatchlistButton

@@ -329,19 +329,21 @@ export default function RateClient({
 
     savePopScore(movieId, selectedGenre, ratings, currentGenre.questions)
       .then(() =>
-        saveUserMovieRating({
-          genre: selectedGenre,
-          movie: {
-            genreNames: movieGenreNames ?? [],
-            movieId,
-            movieTitle: movieTitle ?? `Movie ${movieId}`,
-            posterPath: moviePosterPath,
-            releaseDate: movieReleaseDate,
-          },
-          popscore: popScore,
-          questions: currentGenre.questions,
-          ratings,
-        })
+        Promise.allSettled([
+          saveUserMovieRating({
+            genre: selectedGenre,
+            movie: {
+              genreNames: movieGenreNames ?? [],
+              movieId,
+              movieTitle: movieTitle ?? `Movie ${movieId}`,
+              posterPath: moviePosterPath,
+              releaseDate: movieReleaseDate,
+            },
+            popscore: popScore,
+            questions: currentGenre.questions,
+            ratings,
+          }),
+        ])
       )
       .then(() => {
         setSubmittedScore(popScore);
