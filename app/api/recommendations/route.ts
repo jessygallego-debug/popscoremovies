@@ -13,6 +13,6 @@ export async function GET(request: NextRequest) {
   const movies = await getMovies("", 40, tmdbGenreId);
 
   return NextResponse.json({
-    movies: movies.slice(0, 10),
+    movies: movies.filter((movie) => movie.poster_path).slice(0, 10),
   });
 }

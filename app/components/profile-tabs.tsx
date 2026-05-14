@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -285,13 +284,13 @@ function DiscoverRecommendations({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible lg:grid lg:grid-cols-8 lg:gap-3">
         {PROFILE_GENRES.map((nextGenre) => (
           <button
             key={nextGenre.key}
             type="button"
             onClick={() => setGenre(nextGenre.key)}
-            className={`rounded-full border px-4 py-2 text-sm font-black ${
+            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-black lg:w-full ${
               genre === nextGenre.key
                 ? "border-yellow-400 bg-yellow-400 text-black"
                 : "border-slate-700 bg-slate-950 text-slate-300"
@@ -311,15 +310,12 @@ function DiscoverRecommendations({
             className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950"
           >
             <div className="relative aspect-[2/3] bg-slate-900">
-              {posterUrl(movie.poster_path) ? (
-                <Image
-                  src={posterUrl(movie.poster_path) as string}
-                  alt={movie.title}
-                  fill
-                  sizes="20vw"
-                  className="object-cover"
-                />
-              ) : null}
+              <MoviePosterImage
+                src={posterUrl(movie.poster_path)}
+                alt={movie.title}
+                sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+                className="object-cover"
+              />
             </div>
             <div className="p-3">
               <p className="line-clamp-2 text-sm font-black text-white">

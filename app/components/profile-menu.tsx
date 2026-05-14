@@ -13,7 +13,7 @@ const menuItems = [
   { href: "/profile/edit", label: "Edit PopFile" },
   { href: "ratings", label: "Rating History" },
   { href: "watchlist", label: "Watchlist" },
-  { href: "stats", label: "Profile Stats" },
+  { href: "stats", label: "PopFile Stats" },
   { href: "discover", label: "Discovery" },
 ];
 
