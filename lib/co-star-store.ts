@@ -10,6 +10,10 @@ type CoStarRow = {
   reaction: CoStarReaction;
 };
 
+type UserCoStarRow = {
+  id: string;
+};
+
 const emptyCounts: CoStarCounts = {
   loved: 0,
   trash: 0,
@@ -69,12 +73,38 @@ export async function saveCoStarReaction(
     throw new Error("Please sign in before reacting.");
   }
 
+  const existingResponse = await supabaseFetch(
+    `/co_star_reactions?user_id=eq.${encodeURIComponent(
+      userId
+    )}&movie_id=eq.${encodeURIComponent(movieId)}&select=id`,
+    {},
+    accessToken
+  );
+  const existingRows = (await existingResponse.json()) as UserCoStarRow[];
+
+  if (existingRows[0]) {
+    await supabaseFetch(
+      `/co_star_reactions?id=eq.${encodeURIComponent(existingRows[0].id)}`,
+      {
+        method: "PATCH",
+        headers: {
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({
+          reaction,
+        }),
+      },
+      accessToken
+    );
+    return;
+  }
+
   await supabaseFetch(
-    "/co_star_reactions?on_conflict=user_id,movie_id",
+    "/co_star_reactions",
     {
       method: "POST",
       headers: {
-        Prefer: "resolution=merge-duplicates,return=minimal",
+        Prefer: "return=minimal",
       },
       body: JSON.stringify({
         movie_id: movieId,

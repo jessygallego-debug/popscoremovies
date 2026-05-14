@@ -1,8 +1,14 @@
 alter table public.co_star_reactions
 add column if not exists user_id uuid references auth.users(id) on delete cascade;
 
-create unique index if not exists co_star_reactions_user_movie_unique
-on public.co_star_reactions(user_id, movie_id);
+drop index if exists public.co_star_reactions_user_movie_unique;
+
+alter table public.co_star_reactions
+drop constraint if exists co_star_reactions_user_movie_unique;
+
+alter table public.co_star_reactions
+add constraint co_star_reactions_user_movie_unique
+unique (user_id, movie_id);
 
 alter table public.co_star_reactions enable row level security;
 
