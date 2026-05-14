@@ -25,37 +25,34 @@ function isGenreKey(value: string | undefined): value is GenreKey {
 
 function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
   const genres = new Set(genreNames);
-  const hasActionGenre =
-    genres.has("Action") ||
-    genres.has("Adventure") ||
-    genres.has("Thriller") ||
-    genres.has("War") ||
-    genres.has("Western");
 
   if (genres.has("Animation")) return "animated";
-  if (genres.has("Documentary")) return "documentary";
-  if (genres.has("Family")) return "family";
-  if (genres.has("Music")) return "musical";
   if (genres.has("Romance") && genres.has("Comedy")) return "romcom";
 
-  if (genres.has("Comedy") && (genres.has("Horror") || hasActionGenre)) {
-    return "comedy";
+  const genreMap: Record<string, GenreKey> = {
+    Action: "action",
+    Adventure: "adventure",
+    Comedy: "comedy",
+    Documentary: "documentary",
+    Drama: "drama",
+    Family: "family",
+    Horror: "horror",
+    Music: "musical",
+    Mystery: "mystery",
+    Romance: "romance",
+    "Science Fiction": "scifi",
+    Thriller: "thriller",
+    War: "war",
+    Western: "action",
+  };
+
+  for (const genreName of genreNames) {
+    const popGenre = genreMap[genreName];
+
+    if (popGenre) {
+      return popGenre;
+    }
   }
-
-  if (genres.has("Comedy")) return "comedy";
-  if (genres.has("Horror")) return "horror";
-  if (genres.has("Science Fiction")) return "scifi";
-  if (genres.has("Mystery")) return "mystery";
-  if (genres.has("Thriller")) return "thriller";
-  if (genres.has("War")) return "war";
-  if (genres.has("Drama")) return "drama";
-  if (genres.has("Adventure")) return "adventure";
-
-  if (hasActionGenre) {
-    return "action";
-  }
-
-  if (genres.has("Romance")) return "romance";
 
   return "action";
 }
