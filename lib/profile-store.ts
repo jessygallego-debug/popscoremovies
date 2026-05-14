@@ -10,6 +10,11 @@ type SupabaseSession = {
   expires_at?: number;
 };
 
+type SupabaseAuthResponse = SupabaseSession & {
+  expires_in?: number;
+  user?: SupabaseUser;
+};
+
 export type SupabaseUser = {
   id: string;
   email?: string;
@@ -137,6 +142,47 @@ async function supabaseFetch<T>(
   return response.json() as Promise<T>;
 }
 
+async function readSupabaseAuthError(
+  response: Response,
+  fallback: string
+) {
+  try {
+    const errorBody = (await response.json()) as {
+      error?: string;
+      error_description?: string;
+      message?: string;
+      msg?: string;
+    };
+
+    return (
+      errorBody.error_description ??
+      errorBody.message ??
+      errorBody.msg ??
+      errorBody.error ??
+      fallback
+    );
+  } catch {
+    return fallback;
+  }
+}
+
+function saveAuthSession(authResponse: SupabaseAuthResponse) {
+  const expiresAt =
+    authResponse.expires_at ??
+    (authResponse.expires_in
+      ? Math.floor(Date.now() / 1000) + authResponse.expires_in
+      : undefined);
+
+  window.localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify({
+      access_token: authResponse.access_token,
+      refresh_token: authResponse.refresh_token,
+      expires_at: expiresAt,
+    })
+  );
+}
+
 export function consumeAuthRedirect() {
   if (typeof window === "undefined" || !window.location.hash) {
     return { error: null, signedIn: false };
@@ -193,27 +239,75 @@ export async function sendMagicLink(email: string) {
   });
 
   if (!response.ok) {
-    let message = "Could not send sign-in link.";
-
-    try {
-      const errorBody = (await response.json()) as {
-        error?: string;
-        error_description?: string;
-        message?: string;
-        msg?: string;
-      };
-      message =
-        errorBody.error_description ??
-        errorBody.message ??
-        errorBody.msg ??
-        errorBody.error ??
-        message;
-    } catch {
-      // Keep the friendly fallback if Supabase does not return JSON.
-    }
-
-    throw new Error(message);
+    throw new Error(
+      await readSupabaseAuthError(response, "Could not send sign-in link.")
+    );
   }
+}
+
+export async function signInWithPassword(email: string, password: string) {
+  const config = getSupabaseConfig();
+
+  if (!config) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const response = await fetch(
+    `${config.authUrl}/token?grant_type=password`,
+    {
+      method: "POST",
+      headers: {
+        apikey: config.key,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readSupabaseAuthError(response, "Could not sign in.")
+    );
+  }
+
+  saveAuthSession((await response.json()) as SupabaseAuthResponse);
+}
+
+export async function signUpWithPassword(email: string, password: string) {
+  const config = getSupabaseConfig();
+
+  if (!config) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const response = await fetch(`${config.authUrl}/signup`, {
+    method: "POST",
+    headers: {
+      apikey: config.key,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      options: {
+        email_redirect_to: getEmailRedirectUrl(),
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await readSupabaseAuthError(response, "Could not create account.")
+    );
+  }
+
+  const authResponse = (await response.json()) as SupabaseAuthResponse;
+
+  if (authResponse.access_token) {
+    saveAuthSession(authResponse);
+  }
+
+  return Boolean(authResponse.access_token);
 }
 
 export async function getCurrentUser() {

@@ -11,7 +11,8 @@ import {
   getProfileByUserId,
   normalizeUsername,
   ProfileRecord,
-  sendMagicLink,
+  signInWithPassword,
+  signUpWithPassword,
   signOut,
   SupabaseUser,
   upsertProfile,
@@ -19,12 +20,14 @@ import {
 
 export default function ProfileEditor() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [username, setUsername] = useState("");
   const [avatarKey, setAvatarKey] = useState("classic");
   const [favoriteGenre, setFavoriteGenre] = useState("horror");
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -53,19 +56,19 @@ export default function ProfileEditor() {
       <section className="mx-auto max-w-xl rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-black/30">
         <h1 className="text-3xl font-black text-white">Create Your Profile</h1>
         <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
-          Enter your email and PopScore will send you a sign-in link. After you
-          open it, you can choose your username, avatar, and favorite genre.
+          Sign in with your email and password. New here? Create an account,
+          then choose your username, avatar, and favorite genre.
         </p>
         <form
-          className="mt-6 space-y-3"
+          className="mt-6 space-y-4"
           onSubmit={(event) => {
             event.preventDefault();
+            setIsSigningIn(true);
             setMessage("");
-            sendMagicLink(email)
-              .then(() =>
-                setMessage("Check your email for the PopScore sign-in link.")
-              )
-              .catch((error: Error) => setMessage(error.message));
+            signInWithPassword(email, password)
+              .then(() => window.location.reload())
+              .catch((error: Error) => setMessage(error.message))
+              .finally(() => setIsSigningIn(false));
           }}
         >
           <input
@@ -76,11 +79,56 @@ export default function ProfileEditor() {
             placeholder="you@example.com"
             className="min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400"
           />
-          <button className="min-h-12 w-full rounded-xl bg-yellow-400 px-5 font-black text-black hover:bg-yellow-300">
-            Send Sign-In Link
+          <input
+            type="password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Password"
+            className="min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400"
+          />
+          <button
+            disabled={isSigningIn}
+            className="min-h-12 w-full rounded-xl bg-yellow-400 px-5 font-black text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSigningIn ? "Signing In..." : "Sign In"}
+          </button>
+          <button
+            type="button"
+            disabled={isSigningIn}
+            onClick={() => {
+              if (!email || password.length < 8) {
+                setMessage(
+                  "Enter an email and a password with at least 8 characters."
+                );
+                return;
+              }
+
+              setIsSigningIn(true);
+              setMessage("");
+              signUpWithPassword(email, password)
+                .then((signedIn) => {
+                  if (signedIn) {
+                    window.location.reload();
+                    return;
+                  }
+
+                  setMessage(
+                    "Account created. Check your email to confirm it, then sign in."
+                  );
+                })
+                .catch((error: Error) => setMessage(error.message))
+                .finally(() => setIsSigningIn(false));
+            }}
+            className="min-h-12 w-full rounded-xl border border-yellow-400/50 px-5 font-black text-yellow-300 transition hover:bg-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Create Account
           </button>
         </form>
-        {message ? <p className="mt-4 text-sm font-bold text-yellow-300">{message}</p> : null}
+        {message ? (
+          <p className="mt-4 text-sm font-bold text-yellow-300">{message}</p>
+        ) : null}
       </section>
     );
   }
