@@ -76,7 +76,15 @@ function getToken() {
 }
 
 export function posterUrl(path: string | null, size = "w500") {
-  return path ? `${TMDB_IMAGE_BASE_URL}/${size}${path}` : null;
+  if (!path) {
+    return null;
+  }
+
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+
+  return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 }
 
 export function backdropUrl(path: string | null, size = "w1280") {

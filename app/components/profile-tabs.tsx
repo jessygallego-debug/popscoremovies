@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import MoviePosterImage from "@/app/components/movie-poster-image";
 import QuickReactionBadge from "@/app/components/quick-reaction-badge";
 import {
   avatarForKey,
@@ -340,9 +341,12 @@ function MoviePoster({ path, title }: { path?: string | null; title: string }) {
 
   return (
     <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-900">
-      {poster ? (
-        <Image src={poster} alt={title} fill sizes="80px" className="object-cover" />
-      ) : null}
+      <MoviePosterImage
+        src={poster}
+        alt={title}
+        sizes="80px"
+        className="object-cover"
+      />
     </div>
   );
 }
