@@ -1,11 +1,14 @@
 "use client";
 
 const SESSION_KEY = "popscore_supabase_session";
+const SESSION_MAX_IDLE_SECONDS = 90 * 24 * 60 * 60;
+const SESSION_REFRESH_BUFFER_SECONDS = 60;
 
 type SupabaseSession = {
   access_token: string;
   refresh_token?: string;
   expires_at?: number;
+  last_used_at?: number;
 };
 
 type SupabaseAuthResponse = SupabaseSession & {
@@ -80,6 +83,20 @@ function getSupabaseConfig() {
   };
 }
 
+function clearSession() {
+  window.localStorage.removeItem(SESSION_KEY);
+}
+
+function writeSession(session: SupabaseSession) {
+  window.localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify({
+      ...session,
+      last_used_at: Math.floor(Date.now() / 1000),
+    })
+  );
+}
+
 function getSession(): SupabaseSession | null {
   if (typeof window === "undefined") {
     return null;
@@ -92,15 +109,77 @@ function getSession(): SupabaseSession | null {
   }
 
   try {
-    return JSON.parse(stored) as SupabaseSession;
+    const session = JSON.parse(stored) as SupabaseSession;
+    const now = Math.floor(Date.now() / 1000);
+
+    if (
+      session.last_used_at &&
+      now - session.last_used_at > SESSION_MAX_IDLE_SECONDS
+    ) {
+      clearSession();
+      return null;
+    }
+
+    return session;
   } catch {
     return null;
   }
 }
 
-function authHeaders(accessToken?: string) {
+async function refreshAuthSession(session: SupabaseSession) {
   const config = getSupabaseConfig();
-  const token = accessToken ?? getSession()?.access_token ?? config?.key;
+
+  if (!config || !session.refresh_token) {
+    clearSession();
+    return null;
+  }
+
+  const response = await fetch(`${config.authUrl}/token?grant_type=refresh_token`, {
+    method: "POST",
+    headers: {
+      apikey: config.key,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      refresh_token: session.refresh_token,
+    }),
+  });
+
+  if (!response.ok) {
+    clearSession();
+    return null;
+  }
+
+  const authResponse = (await response.json()) as SupabaseAuthResponse;
+  saveAuthSession(authResponse);
+  return getSession();
+}
+
+export async function getSupabaseAccessToken() {
+  const session = getSession();
+
+  if (!session?.access_token) {
+    return null;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const shouldRefresh =
+    session.expires_at && session.expires_at - now <= SESSION_REFRESH_BUFFER_SECONDS;
+  const activeSession = shouldRefresh
+    ? await refreshAuthSession(session)
+    : session;
+
+  if (!activeSession?.access_token) {
+    return null;
+  }
+
+  writeSession(activeSession);
+  return activeSession.access_token;
+}
+
+async function authHeaders(accessToken?: string) {
+  const config = getSupabaseConfig();
+  const token = accessToken ?? (await getSupabaseAccessToken()) ?? config?.key;
 
   if (!config || !token) {
     throw new Error("Supabase is not configured.");
@@ -127,7 +206,7 @@ async function supabaseFetch<T>(
   const response = await fetch(`${config.restUrl}${path}`, {
     ...options,
     headers: {
-      ...authHeaders(accessToken),
+      ...(await authHeaders(accessToken)),
       ...options.headers,
     },
   });
@@ -174,14 +253,11 @@ function saveAuthSession(authResponse: SupabaseAuthResponse) {
       ? Math.floor(Date.now() / 1000) + authResponse.expires_in
       : undefined);
 
-  window.localStorage.setItem(
-    SESSION_KEY,
-    JSON.stringify({
-      access_token: authResponse.access_token,
-      refresh_token: authResponse.refresh_token,
-      expires_at: expiresAt,
-    })
-  );
+  writeSession({
+    access_token: authResponse.access_token,
+    refresh_token: authResponse.refresh_token,
+    expires_at: expiresAt,
+  });
 }
 
 export function consumeAuthRedirect() {
@@ -212,7 +288,7 @@ export function consumeAuthRedirect() {
     expires_at: Number(hashParams.get("expires_at")) || undefined,
   };
 
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  writeSession(session);
   window.history.replaceState(null, "", window.location.pathname);
   return { error: null, signedIn: true };
 }
@@ -313,16 +389,16 @@ export async function signUpWithPassword(email: string, password: string) {
 
 export async function getCurrentUser() {
   const config = getSupabaseConfig();
-  const session = getSession();
+  const accessToken = await getSupabaseAccessToken();
 
-  if (!config || !session?.access_token) {
+  if (!config || !accessToken) {
     return null;
   }
 
   const response = await fetch(`${config.authUrl}/user`, {
     headers: {
       apikey: config.key,
-      Authorization: `Bearer ${session.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 
@@ -334,7 +410,7 @@ export async function getCurrentUser() {
 }
 
 export function signOut() {
-  window.localStorage.removeItem(SESSION_KEY);
+  clearSession();
 }
 
 export function normalizeUsername(username: string) {

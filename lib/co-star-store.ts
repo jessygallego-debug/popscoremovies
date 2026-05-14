@@ -1,5 +1,7 @@
 "use client";
 
+import { getSupabaseAccessToken } from "@/lib/profile-store";
+
 export type CoStarReaction = "loved" | "worth" | "trash";
 
 export type CoStarCounts = Record<CoStarReaction, number>;
@@ -28,7 +30,11 @@ function getSupabaseConfig() {
   };
 }
 
-async function supabaseFetch(path: string, options: RequestInit = {}) {
+async function supabaseFetch(
+  path: string,
+  options: RequestInit = {},
+  accessToken?: string
+) {
   const config = getSupabaseConfig();
 
   if (!config) {
@@ -39,7 +45,7 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
     ...options,
     headers: {
       apikey: config.key,
-      Authorization: `Bearer ${config.key}`,
+      Authorization: `Bearer ${accessToken ?? config.key}`,
       "Content-Type": "application/json",
       ...options.headers,
     },
@@ -54,18 +60,30 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
 
 export async function saveCoStarReaction(
   movieId: string,
-  reaction: CoStarReaction
+  reaction: CoStarReaction,
+  userId: string
 ) {
-  await supabaseFetch("/co_star_reactions", {
-    method: "POST",
-    headers: {
-      Prefer: "return=minimal",
+  const accessToken = await getSupabaseAccessToken();
+
+  if (!accessToken) {
+    throw new Error("Please sign in before reacting.");
+  }
+
+  await supabaseFetch(
+    "/co_star_reactions?on_conflict=user_id,movie_id",
+    {
+      method: "POST",
+      headers: {
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify({
+        movie_id: movieId,
+        reaction,
+        user_id: userId,
+      }),
     },
-    body: JSON.stringify({
-      movie_id: movieId,
-      reaction,
-    }),
-  });
+    accessToken
+  );
 }
 
 export async function getCoStarCounts(movieId: string): Promise<CoStarCounts> {

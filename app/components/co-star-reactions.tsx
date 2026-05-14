@@ -89,13 +89,10 @@ export default function CoStarReactions({
           return Promise.reject(new Error("Missing profile"));
         }
 
-        return saveCoStarReaction(movieId, key);
+        return saveCoStarReaction(movieId, key, profile.user_id);
       })
       .then(() => {
-        setCounts((currentCounts) => ({
-          ...currentCounts,
-          [key]: currentCounts[key] + 1,
-        }));
+        getCoStarCounts(movieId).then(setCounts).catch(() => null);
         setSelectedReaction(key);
 
         if (movie) {
