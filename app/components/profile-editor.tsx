@@ -165,6 +165,7 @@ export default function ProfileEditor() {
   }
 
   const avatar = avatarForKey(avatarKey);
+  const usernameLocked = Boolean(profile);
 
   return (
     <section className="mx-auto max-w-3xl rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-black/30">
@@ -211,6 +212,7 @@ export default function ProfileEditor() {
           setMessage("");
           upsertProfile({
             avatarKey,
+            email: user.email ?? null,
             favoriteGenre,
             userId: user.id,
             username,
@@ -232,12 +234,15 @@ export default function ProfileEditor() {
             required
             minLength={3}
             maxLength={24}
+            disabled={usernameLocked}
             value={username}
             onChange={(event) => setUsername(normalizeUsername(event.target.value))}
-            className="mt-2 min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400"
+            className="mt-2 min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-70"
           />
           <span className="mt-2 block text-xs font-bold text-slate-500">
-            Use lowercase letters, numbers, or underscores.
+            {usernameLocked
+              ? "Your username is connected to your email and cannot be changed."
+              : "Use lowercase letters, numbers, or underscores. Usernames must be unique and clean."}
           </span>
         </label>
 

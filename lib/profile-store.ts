@@ -21,6 +21,7 @@ export type SupabaseUser = {
 export type ProfileRecord = {
   id: string;
   user_id: string;
+  email?: string | null;
   username: string;
   avatar_key: string;
   favorite_genre: string | null;
@@ -340,6 +341,71 @@ export function normalizeUsername(username: string) {
   return username.toLowerCase().trim().replace(/[^a-z0-9_]/g, "_");
 }
 
+const BLOCKED_USERNAME_WORDS = [
+  "anal",
+  "anus",
+  "bitch",
+  "blowjob",
+  "boner",
+  "boob",
+  "clit",
+  "cock",
+  "cunt",
+  "dick",
+  "dildo",
+  "fag",
+  "fuck",
+  "fuk",
+  "hitler",
+  "hoe",
+  "jizz",
+  "kike",
+  "kkk",
+  "nazi",
+  "nigga",
+  "nigger",
+  "penis",
+  "porn",
+  "pussy",
+  "rape",
+  "rapist",
+  "retard",
+  "sex",
+  "shit",
+  "slut",
+  "tits",
+  "vagina",
+  "whore",
+];
+
+function hasBlockedUsernameLanguage(username: string) {
+  const normalized = normalizeUsername(username);
+  const compact = normalized.replace(/_/g, "");
+  const parts = normalized.split("_").filter(Boolean);
+
+  return BLOCKED_USERNAME_WORDS.some((word) => {
+    if (parts.includes(word)) {
+      return true;
+    }
+
+    return compact.includes(word);
+  });
+}
+
+export function validateUsername(username: string) {
+  const normalized = normalizeUsername(username);
+
+  if (!/^[a-z0-9_]{3,24}$/.test(normalized)) {
+    throw new Error("Use 3-24 lowercase letters, numbers, or underscores.");
+  }
+
+  if (hasBlockedUsernameLanguage(normalized)) {
+    throw new Error("Please choose a different username.");
+  }
+
+  return normalized;
+}
+
 function getEmailRedirectUrl() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
 
@@ -390,10 +456,39 @@ export async function getCurrentProfile() {
 
 export async function upsertProfile(profile: {
   userId: string;
+  email?: string | null;
   username: string;
   avatarKey: string;
   favoriteGenre: string;
 }) {
+  const existingProfile = await getProfileByUserId(profile.userId);
+
+  if (existingProfile) {
+    const rows = await supabaseFetch<ProfileRecord[]>(
+      `/profiles?user_id=eq.${encodeURIComponent(profile.userId)}`,
+      {
+        method: "PATCH",
+        headers: {
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify({
+          avatar_key: profile.avatarKey,
+          email: profile.email ?? existingProfile.email ?? null,
+          favorite_genre: profile.favoriteGenre,
+        }),
+      }
+    );
+
+    return rows[0] ?? existingProfile;
+  }
+
+  const username = validateUsername(profile.username);
+  const usernameProfile = await getProfileByUsername(username);
+
+  if (usernameProfile) {
+    throw new Error("That username is already taken.");
+  }
+
   const rows = await supabaseFetch<ProfileRecord[]>(
     "/profiles?on_conflict=user_id",
     {
@@ -403,9 +498,10 @@ export async function upsertProfile(profile: {
       },
       body: JSON.stringify({
         avatar_key: profile.avatarKey,
+        email: profile.email ?? null,
         favorite_genre: profile.favoriteGenre,
         user_id: profile.userId,
-        username: normalizeUsername(profile.username),
+        username,
       }),
     }
   );
