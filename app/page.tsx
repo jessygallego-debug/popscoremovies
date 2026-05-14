@@ -65,35 +65,44 @@ export default async function Home({
     <main className="min-h-screen bg-black bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#020617_0%,#000_42%,#020617_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
       <ScrollMemory />
       <section className="mx-auto max-w-7xl">
-        <Link
-          href="/"
-          aria-label="Go to PopScore Movies home"
-          className="mb-8 inline-flex flex-col transition hover:opacity-85"
-        >
-          <div className="flex items-center gap-3">
-            <span
-              aria-hidden="true"
-              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-yellow-400/10 sm:h-14 sm:w-14"
-            >
-              <span className="relative block h-8 w-8 sm:h-11 sm:w-11">
-                <Image
-                  src="/rating-icons/extra-buttery-v2.png"
-                  alt=""
-                  fill
-                  sizes="(min-width: 640px) 44px, 32px"
-                  className="object-contain"
-                  priority
-                />
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <Link
+            href="/"
+            aria-label="Go to PopScore Movies home"
+            className="inline-flex flex-col transition hover:opacity-85"
+          >
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-yellow-400/10 sm:h-14 sm:w-14"
+              >
+                <span className="relative block h-8 w-8 sm:h-11 sm:w-11">
+                  <Image
+                    src="/rating-icons/extra-buttery-v2.png"
+                    alt=""
+                    fill
+                    sizes="(min-width: 640px) 44px, 32px"
+                    className="object-contain"
+                    priority
+                  />
+                </span>
               </span>
+              <span className="text-3xl font-black tracking-wide text-yellow-400 sm:text-5xl">
+                POPSCORE
+              </span>
+            </div>
+            <span className="mt-1 pl-12 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:pl-14 sm:text-xs">
+              Movie Ratings For Real Fans
             </span>
-            <span className="text-3xl font-black tracking-wide text-yellow-400 sm:text-5xl">
-              POPSCORE
-            </span>
-          </div>
-          <span className="mt-1 pl-12 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:pl-14 sm:text-xs">
-            Movie Ratings For Real Fans
-          </span>
-        </Link>
+          </Link>
+
+          <Link
+            href="/profile/edit"
+            className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
+          >
+            Profile / Sign In
+          </Link>
+        </div>
 
         <h1 className="mb-5 max-w-4xl text-5xl font-black leading-[0.95] text-white sm:text-7xl">
           Discover Movies

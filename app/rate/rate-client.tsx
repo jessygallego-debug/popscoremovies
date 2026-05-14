@@ -360,27 +360,36 @@ export default function RateClient({
           X
         </Link>
 
-        <Link
-          href="/"
-          aria-label="Go to PopScore Movies home"
-          className="mb-6 inline-flex items-center gap-2 text-lg font-bold text-yellow-400 transition hover:text-yellow-300"
-        >
-          <span
-            aria-hidden="true"
-            className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-yellow-400/10"
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4 pr-12">
+          <Link
+            href="/"
+            aria-label="Go to PopScore Movies home"
+            className="inline-flex items-center gap-2 text-lg font-bold text-yellow-400 transition hover:text-yellow-300"
           >
-            <span className="relative block h-6 w-6">
-              <Image
-                src="/rating-icons/extra-buttery-v2.png"
-                alt=""
-                fill
-                sizes="24px"
-                className="object-contain"
-              />
+            <span
+              aria-hidden="true"
+              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-yellow-400/10"
+            >
+              <span className="relative block h-6 w-6">
+                <Image
+                  src="/rating-icons/extra-buttery-v2.png"
+                  alt=""
+                  fill
+                  sizes="24px"
+                  className="object-contain"
+                />
+              </span>
             </span>
-          </span>
-          <span>PopScore Movies</span>
-        </Link>
+            <span>PopScore Movies</span>
+          </Link>
+
+          <Link
+            href="/profile/edit"
+            className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
+          >
+            Profile / Sign In
+          </Link>
+        </div>
 
         <div className="mb-5 text-center sm:mb-8">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 text-3xl shadow-lg shadow-yellow-400/20 sm:mb-4 sm:h-16 sm:w-16 sm:text-4xl">
