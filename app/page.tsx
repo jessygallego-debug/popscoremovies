@@ -3,6 +3,7 @@ import Link from "next/link";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import CoStarReactions from "@/app/components/co-star-reactions";
 import MovieSearch from "@/app/components/movie-search";
+import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import ProfileMenu from "@/app/components/profile-menu";
 import ScrollMemory from "@/app/components/scroll-memory";
@@ -198,19 +199,12 @@ export default async function Home({
                 >
                   <Link data-remember-scroll href={movieHref} className="block">
                     <div className="relative aspect-[2/3] overflow-hidden rounded-t-2xl bg-slate-900">
-                      {poster ? (
-                        <Image
-                          src={poster}
-                          alt={movie.title}
-                          fill
-                          sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, 50vw"
-                          className="object-cover transition duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center px-4 text-center text-sm text-gray-500">
-                          No Poster
-                        </div>
-                      )}
+                      <MoviePosterImage
+                        src={poster}
+                        alt={movie.title}
+                        sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, 50vw"
+                        className="object-cover transition duration-300 group-hover:scale-105"
+                      />
                     </div>
                   </Link>
 
