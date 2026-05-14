@@ -184,7 +184,7 @@ export async function sendMagicLink(email: string) {
       create_user: true,
       email,
       options: {
-        email_redirect_to: `${window.location.origin}/profile/edit`,
+        email_redirect_to: getEmailRedirectUrl(),
       },
     }),
   });
@@ -222,6 +222,28 @@ export function signOut() {
 
 export function normalizeUsername(username: string) {
   return username.toLowerCase().trim().replace(/[^a-z0-9_]/g, "_");
+}
+
+function getEmailRedirectUrl() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+
+  if (siteUrl) {
+    return `${siteUrl}/profile/edit`;
+  }
+
+  if (typeof window === "undefined") {
+    return "https://popscoremovies.com/profile/edit";
+  }
+
+  const isLocalhost = ["localhost", "127.0.0.1"].includes(
+    window.location.hostname
+  );
+
+  if (isLocalhost) {
+    return `${window.location.origin}/profile/edit`;
+  }
+
+  return "https://popscoremovies.com/profile/edit";
 }
 
 export async function getProfileByUsername(username: string) {
