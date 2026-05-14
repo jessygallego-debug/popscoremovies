@@ -59,7 +59,7 @@ export default async function MoviePage({
               href="/profile/edit"
               className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
             >
-              Profile / Sign In
+              Sign In
             </Link>
           </div>
           <div className="mt-8 rounded-lg border border-yellow-500/40 bg-yellow-400/10 p-5 text-yellow-100">
@@ -127,7 +127,7 @@ export default async function MoviePage({
               href="/profile/edit"
               className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
             >
-              Profile / Sign In
+              Sign In
             </Link>
           </div>
 

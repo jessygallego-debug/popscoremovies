@@ -387,7 +387,7 @@ export default function RateClient({
             href="/profile/edit"
             className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
           >
-            Profile / Sign In
+            Sign In
           </Link>
         </div>
 
