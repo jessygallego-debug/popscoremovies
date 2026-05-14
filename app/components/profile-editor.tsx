@@ -28,10 +28,10 @@ export default function ProfileEditor() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const authError = consumeAuthRedirect();
+    const authResult = consumeAuthRedirect();
 
-    if (authError) {
-      queueMicrotask(() => setMessage(authError));
+    if (authResult.error) {
+      queueMicrotask(() => setMessage(authResult.error));
     }
 
     getCurrentUser().then((nextUser) => {

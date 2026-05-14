@@ -139,7 +139,7 @@ async function supabaseFetch<T>(
 
 export function consumeAuthRedirect() {
   if (typeof window === "undefined" || !window.location.hash) {
-    return null;
+    return { error: null, signedIn: false };
   }
 
   const hashParams = new URLSearchParams(window.location.hash.slice(1));
@@ -147,13 +147,16 @@ export function consumeAuthRedirect() {
 
   if (errorDescription) {
     window.history.replaceState(null, "", window.location.pathname);
-    return errorDescription.replace(/\+/g, " ");
+    return {
+      error: errorDescription.replace(/\+/g, " "),
+      signedIn: false,
+    };
   }
 
   const accessToken = hashParams.get("access_token");
 
   if (!accessToken) {
-    return null;
+    return { error: null, signedIn: false };
   }
 
   const session: SupabaseSession = {
@@ -164,7 +167,7 @@ export function consumeAuthRedirect() {
 
   window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   window.history.replaceState(null, "", window.location.pathname);
-  return null;
+  return { error: null, signedIn: true };
 }
 
 export async function sendMagicLink(email: string) {
