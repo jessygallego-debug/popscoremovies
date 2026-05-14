@@ -193,7 +193,26 @@ export async function sendMagicLink(email: string) {
   });
 
   if (!response.ok) {
-    throw new Error("Could not send sign-in link.");
+    let message = "Could not send sign-in link.";
+
+    try {
+      const errorBody = (await response.json()) as {
+        error?: string;
+        error_description?: string;
+        message?: string;
+        msg?: string;
+      };
+      message =
+        errorBody.error_description ??
+        errorBody.message ??
+        errorBody.msg ??
+        errorBody.error ??
+        message;
+    } catch {
+      // Keep the friendly fallback if Supabase does not return JSON.
+    }
+
+    throw new Error(message);
   }
 }
 
