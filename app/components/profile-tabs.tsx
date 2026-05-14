@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import QuickReactionBadge from "@/app/components/quick-reaction-badge";
 import {
@@ -21,7 +21,15 @@ import {
 } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
 
-type TabKey = "ratings" | "watchlist" | "discover" | "stats";
+type TabKey = "stats" | "watchlist" | "discover";
+
+type ProfileStatSummary = {
+  average: number;
+  highestGenre: string;
+  lowestGenre: string;
+  mostRatedGenre: string;
+  totalMovieReactions: number;
+};
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -35,16 +43,7 @@ function yearFromDate(date?: string | null) {
   return date?.split("-")[0] ?? "";
 }
 
-function ProfileHeader({
-  profile,
-  ratings,
-  watchlist,
-}: {
-  profile: ProfileRecord;
-  ratings: UserMovieRating[];
-  watchlist: WatchlistMovie[];
-}) {
-  const avatar = avatarForKey(profile.avatar_key);
+function getProfileStatSummary(ratings: UserMovieRating[]): ProfileStatSummary {
   const average =
     ratings.length > 0
       ? Math.round(
@@ -52,43 +51,126 @@ function ProfileHeader({
             ratings.length
         )
       : 0;
+  const totalMovieReactions = ratings.filter(
+    (rating) =>
+      rating.quick_reaction === "loved_it" ||
+      rating.quick_reaction === "worth_watching" ||
+      rating.quick_reaction === "trash"
+  ).length;
+  const totals = new Map<string, { count: number; total: number }>();
+
+  ratings.forEach((rating) => {
+    const genre = rating.genreNames[0] ?? genreLabelForKey(rating.genre);
+    const current = totals.get(genre) ?? { count: 0, total: 0 };
+    totals.set(genre, {
+      count: current.count + 1,
+      total: current.total + rating.popscore,
+    });
+  });
+
+  const genreStats = Array.from(totals.entries()).map(([genre, stats]) => ({
+    average: Math.round(stats.total / stats.count),
+    count: stats.count,
+    genre,
+  }));
+  const mostRated = [...genreStats].sort((a, b) => b.count - a.count)[0];
+  const highest = [...genreStats].sort((a, b) => b.average - a.average)[0];
+  const lowest = [...genreStats].sort((a, b) => a.average - b.average)[0];
+
+  return {
+    average,
+    highestGenre: highest?.genre ?? "None",
+    lowestGenre: lowest?.genre ?? "None",
+    mostRatedGenre: mostRated?.genre ?? "None",
+    totalMovieReactions,
+  };
+}
+
+function ProfileHeader({
+  profile,
+  ratings,
+}: {
+  profile: ProfileRecord;
+  ratings: UserMovieRating[];
+}) {
+  const avatar = avatarForKey(profile.avatar_key);
+  const stats = getProfileStatSummary(ratings);
 
   return (
     <div className="rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-black/30">
-      <div className="flex flex-wrap items-center gap-5">
-        <span className="flex h-20 w-20 items-center justify-center rounded-full border border-yellow-400/30 bg-yellow-400/10 text-5xl">
-          {avatar.icon}
-        </span>
-        <div>
-          <h1 className="text-4xl font-black text-white">@{profile.username}</h1>
-          <div className="mt-3 flex flex-wrap gap-2 text-sm font-bold text-slate-300">
-            {profile.favorite_genre ? (
-              <span className="rounded-full bg-yellow-400 px-3 py-1 text-black">
-                {genreLabelForKey(profile.favorite_genre)}
-              </span>
-            ) : null}
-            <span>Member since {formatDate(profile.created_at)}</span>
+      <div className="flex flex-wrap items-start justify-between gap-5">
+        <div className="flex flex-wrap items-center gap-5">
+          <span className="flex h-20 w-20 items-center justify-center rounded-full border border-yellow-400/30 bg-yellow-400/10 text-5xl">
+            {avatar.icon}
+          </span>
+          <div>
+            <h1 className="text-4xl font-black text-white">@{profile.username}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-bold text-slate-300">
+              {profile.favorite_genre ? (
+                <span className="rounded-full bg-yellow-400 px-3 py-1 text-black">
+                  {genreLabelForKey(profile.favorite_genre)}
+                </span>
+              ) : null}
+              <span>Member since {formatDate(profile.created_at)}</span>
+            </div>
           </div>
         </div>
+        <Link
+          href="/profile/edit"
+          className="rounded-full border border-slate-700 bg-black/30 px-4 py-2 text-sm font-black text-slate-200 transition hover:border-yellow-400 hover:text-yellow-300"
+        >
+          Edit PopFile
+        </Link>
       </div>
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Rated" value={ratings.length} />
-        <StatCard label="Avg PopScore" value={ratings.length ? `${average}%` : "NR"} />
-        <StatCard label="Watchlist" value={watchlist.length} />
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard icon="▣" label="Total Movies Rated" value={ratings.length} />
         <StatCard
-          label="Loved It"
-          value={ratings.filter((rating) => rating.quick_reaction === "loved_it").length}
+          icon="♡"
+          label="Total Movie Reactions"
+          value={stats.totalMovieReactions}
+        />
+        <StatCard
+          icon="↗"
+          label="Average PopScore"
+          value={ratings.length ? `${stats.average}%` : "NR"}
+        />
+        <StatCard
+          icon="☆"
+          label="Most Rated Genre"
+          value={stats.mostRatedGenre}
+        />
+        <StatCard
+          icon="♕"
+          label="Highest Rated Genre"
+          value={stats.highestGenre}
+        />
+        <StatCard
+          icon="↘"
+          label="Lowest Rated Genre"
+          value={stats.lowestGenre}
         />
       </div>
     </div>
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: string;
+  label: string;
+  value: string | number;
+}) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-black/40 p-4">
-      <p className="text-2xl font-black text-yellow-400">{value}</p>
-      <p className="mt-1 text-xs font-black uppercase text-slate-500">{label}</p>
+    <div className="flex min-h-24 items-center gap-4 rounded-2xl border border-slate-800 bg-black/40 p-5">
+      <span className="text-3xl font-black text-yellow-400">{icon}</span>
+      <div>
+        <p className="text-2xl font-black text-yellow-400">{value}</p>
+        <p className="mt-1 text-xs font-black uppercase text-slate-500">{label}</p>
+      </div>
     </div>
   );
 }
@@ -174,71 +256,6 @@ function WatchlistGrid({
           </div>
         </article>
       ))}
-    </div>
-  );
-}
-
-function ProfileStats({
-  profile,
-  ratings,
-  watchlist,
-}: {
-  profile: ProfileRecord;
-  ratings: UserMovieRating[];
-  watchlist: WatchlistMovie[];
-}) {
-  const genreStats = useMemo(() => {
-    const totals = new Map<string, { count: number; total: number }>();
-    ratings.forEach((rating) => {
-      const genre = rating.genreNames[0] ?? rating.genre;
-      const current = totals.get(genre) ?? { count: 0, total: 0 };
-      totals.set(genre, {
-        count: current.count + 1,
-        total: current.total + rating.popscore,
-      });
-    });
-    return Array.from(totals.entries()).map(([genre, stats]) => ({
-      average: Math.round(stats.total / stats.count),
-      count: stats.count,
-      genre,
-    }));
-  }, [ratings]);
-
-  const average =
-    ratings.length > 0
-      ? Math.round(
-          ratings.reduce((total, rating) => total + rating.popscore, 0) /
-            ratings.length
-        )
-      : 0;
-  const mostRated = [...genreStats].sort((a, b) => b.count - a.count)[0];
-  const highest = [...genreStats].sort((a, b) => b.average - a.average)[0];
-  const lowest = [...genreStats].sort((a, b) => a.average - b.average)[0];
-
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <StatCard label="Total movies rated" value={ratings.length} />
-      <StatCard label="Average PopScore" value={ratings.length ? `${average}%` : "NR"} />
-      <StatCard label="Favorite genre" value={genreLabelForKey(profile.favorite_genre)} />
-      <StatCard label="Most rated genre" value={mostRated?.genre ?? "None"} />
-      <StatCard label="Highest-rated genre" value={highest?.genre ?? "None"} />
-      <StatCard label="Lowest-rated genre" value={lowest?.genre ?? "None"} />
-      <StatCard
-        label="Loved It count"
-        value={ratings.filter((rating) => rating.quick_reaction === "loved_it").length}
-      />
-      <StatCard
-        label="Worth Watching count"
-        value={
-          ratings.filter((rating) => rating.quick_reaction === "worth_watching")
-            .length
-        }
-      />
-      <StatCard
-        label="Trash count"
-        value={ratings.filter((rating) => rating.quick_reaction === "trash").length}
-      />
-      <StatCard label="Watchlist count" value={watchlist.length} />
     </div>
   );
 }
@@ -359,11 +376,9 @@ export default function ProfileTabs({ username }: { username: string }) {
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const initialTab: TabKey =
-    requestedTab === "watchlist" ||
-    requestedTab === "discover" ||
-    requestedTab === "stats"
+    requestedTab === "watchlist" || requestedTab === "discover"
       ? requestedTab
-      : "ratings";
+      : "stats";
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [ratings, setRatings] = useState<UserMovieRating[]>([]);
@@ -402,15 +417,14 @@ export default function ProfileTabs({ username }: { username: string }) {
   }
 
   const tabs: { key: TabKey; label: string }[] = [
-    { key: "ratings", label: "Ratings" },
+    { key: "stats", label: "Stats" },
     { key: "watchlist", label: "Watchlist" },
     { key: "discover", label: "Discover" },
-    { key: "stats", label: "Stats" },
   ];
 
   return (
     <div>
-      <ProfileHeader profile={profile} ratings={ratings} watchlist={watchlist} />
+      <ProfileHeader profile={profile} ratings={ratings} />
       <div className="my-6 flex gap-2 overflow-x-auto">
         {tabs.map((tab) => (
           <button
@@ -427,7 +441,7 @@ export default function ProfileTabs({ username }: { username: string }) {
         ))}
       </div>
 
-      {activeTab === "ratings" ? <RatingsHistory ratings={ratings} /> : null}
+      {activeTab === "stats" ? <RatingsHistory ratings={ratings} /> : null}
       {activeTab === "watchlist" ? (
         <WatchlistGrid
           watchlist={watchlist}
@@ -442,9 +456,6 @@ export default function ProfileTabs({ username }: { username: string }) {
       ) : null}
       {activeTab === "discover" ? (
         <DiscoverRecommendations ratedMovieIds={ratings.map((rating) => rating.movieId)} />
-      ) : null}
-      {activeTab === "stats" ? (
-        <ProfileStats profile={profile} ratings={ratings} watchlist={watchlist} />
       ) : null}
     </div>
   );

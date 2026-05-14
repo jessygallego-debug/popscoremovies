@@ -11,9 +11,8 @@ import {
 
 const menuItems = [
   { href: "/profile/edit", label: "Edit PopFile" },
-  { href: "ratings", label: "Rating History" },
-  { href: "watchlist", label: "Watchlist" },
   { href: "stats", label: "PopFile Stats" },
+  { href: "watchlist", label: "Watchlist" },
   { href: "discover", label: "Discovery" },
 ];
 
