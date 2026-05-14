@@ -28,7 +28,12 @@ export default function ProfileEditor() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    consumeAuthRedirect();
+    const authError = consumeAuthRedirect();
+
+    if (authError) {
+      queueMicrotask(() => setMessage(authError));
+    }
+
     getCurrentUser().then((nextUser) => {
       setUser(nextUser);
 
@@ -48,7 +53,7 @@ export default function ProfileEditor() {
       <section className="mx-auto max-w-xl rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-black/30">
         <h1 className="text-3xl font-black text-white">Create Your Profile</h1>
         <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
-          Enter your email and Supabase will send you a sign-in link. After you
+          Enter your email and PopScore will send you a sign-in link. After you
           open it, you can choose your username, avatar, and favorite genre.
         </p>
         <form
@@ -57,7 +62,9 @@ export default function ProfileEditor() {
             event.preventDefault();
             setMessage("");
             sendMagicLink(email)
-              .then(() => setMessage("Check your email for the sign-in link."))
+              .then(() =>
+                setMessage("Check your email for the PopScore sign-in link.")
+              )
               .catch((error: Error) => setMessage(error.message));
           }}
         >

@@ -139,14 +139,21 @@ async function supabaseFetch<T>(
 
 export function consumeAuthRedirect() {
   if (typeof window === "undefined" || !window.location.hash) {
-    return false;
+    return null;
   }
 
   const hashParams = new URLSearchParams(window.location.hash.slice(1));
+  const errorDescription = hashParams.get("error_description");
+
+  if (errorDescription) {
+    window.history.replaceState(null, "", window.location.pathname);
+    return errorDescription.replace(/\+/g, " ");
+  }
+
   const accessToken = hashParams.get("access_token");
 
   if (!accessToken) {
-    return false;
+    return null;
   }
 
   const session: SupabaseSession = {
@@ -157,7 +164,7 @@ export function consumeAuthRedirect() {
 
   window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   window.history.replaceState(null, "", window.location.pathname);
-  return true;
+  return null;
 }
 
 export async function sendMagicLink(email: string) {
