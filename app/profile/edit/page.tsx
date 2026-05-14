@@ -1,6 +1,7 @@
 import BrandHomeLink from "@/app/components/brand-home-link";
 import ProfileEditor from "@/app/components/profile-editor";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default function EditProfilePage() {
   return (
@@ -17,7 +18,15 @@ export default function EditProfilePage() {
           </Link>
         </div>
         <div className="mt-10">
-          <ProfileEditor />
+          <Suspense
+            fallback={
+              <div className="mx-auto max-w-xl rounded-3xl border border-slate-800 bg-slate-950/90 p-6 font-bold text-slate-300 shadow-xl shadow-black/30">
+                Loading profile...
+              </div>
+            }
+          >
+            <ProfileEditor />
+          </Suspense>
         </div>
       </section>
     </main>

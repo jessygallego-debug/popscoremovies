@@ -378,6 +378,16 @@ export async function getProfileByUserId(userId: string) {
   return rows[0] ?? null;
 }
 
+export async function getCurrentProfile() {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return null;
+  }
+
+  return getProfileByUserId(user.id);
+}
+
 export async function upsertProfile(profile: {
   userId: string;
   username: string;

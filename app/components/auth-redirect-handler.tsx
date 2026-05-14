@@ -2,7 +2,11 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { consumeAuthRedirect } from "@/lib/profile-store";
+import {
+  consumeAuthRedirect,
+  getCurrentUser,
+  getProfileByUserId,
+} from "@/lib/profile-store";
 
 export default function AuthRedirectHandler() {
   const pathname = usePathname();
@@ -16,7 +20,16 @@ export default function AuthRedirectHandler() {
     const authResult = consumeAuthRedirect();
 
     if (authResult.signedIn) {
-      router.replace("/profile/edit");
+      getCurrentUser().then((user) => {
+        if (!user) {
+          router.replace("/profile/edit");
+          return;
+        }
+
+        getProfileByUserId(user.id).then((profile) => {
+          router.replace(profile ? "/" : "/profile/edit");
+        });
+      });
     }
   }, [pathname, router]);
 

@@ -7,6 +7,7 @@ import {
   saveCoStarReaction,
 } from "@/lib/co-star-store";
 import {
+  getCurrentProfile,
   MovieMeta,
   ProfileQuickReaction,
   saveUserQuickReaction,
@@ -46,6 +47,7 @@ export default function CoStarReactions({
   });
   const [selectedReaction, setSelectedReaction] =
     useState<CoStarReaction | null>(null);
+  const [message, setMessage] = useState("");
 
   const total = counts.loved + counts.worth + counts.trash;
 
@@ -78,7 +80,17 @@ export default function CoStarReactions({
   };
 
   const handleReaction = (key: CoStarReaction) => {
-    saveCoStarReaction(movieId, key)
+    setMessage("");
+
+    getCurrentProfile()
+      .then((profile) => {
+        if (!profile) {
+          setMessage("Create or sign in to your profile to react.");
+          return Promise.reject(new Error("Missing profile"));
+        }
+
+        return saveCoStarReaction(movieId, key);
+      })
       .then(() => {
         setCounts((currentCounts) => ({
           ...currentCounts,
@@ -93,8 +105,11 @@ export default function CoStarReactions({
           }).catch(() => null);
         }
       })
-      .catch(() => {
-        setSelectedReaction(null);
+      .catch((error: Error) => {
+        if (error.message !== "Missing profile") {
+          setSelectedReaction(null);
+          setMessage("Could not save reaction. Please try again.");
+        }
       });
   };
 
@@ -132,6 +147,11 @@ export default function CoStarReactions({
           ? "No reactions yet"
           : `${total.toLocaleString()} ${total === 1 ? "reaction" : "reactions"}`}
       </p>
+      {message ? (
+        <p className="mt-2 text-center text-[11px] font-bold text-yellow-300">
+          {message}
+        </p>
+      ) : null}
     </section>
   );
 }

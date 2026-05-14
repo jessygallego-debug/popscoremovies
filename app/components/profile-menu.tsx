@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   getCurrentUser,
@@ -17,7 +18,15 @@ const menuItems = [
 ];
 
 export default function ProfileMenu() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
+  const currentPath = `${pathname}${
+    searchParams.toString() ? `?${searchParams.toString()}` : ""
+  }`;
+  const signInHref = `/profile/edit?returnTo=${encodeURIComponent(
+    currentPath
+  )}`;
 
   useEffect(() => {
     let isCurrent = true;
@@ -42,7 +51,7 @@ export default function ProfileMenu() {
   if (!profile) {
     return (
       <Link
-        href="/profile/edit"
+        href={signInHref}
         className="shrink-0 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
       >
         Sign In

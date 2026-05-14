@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AvatarPicker from "@/app/components/avatar-picker";
 import FavoriteGenreSelector from "@/app/components/favorite-genre-selector";
@@ -18,7 +19,22 @@ import {
   upsertProfile,
 } from "@/lib/profile-store";
 
+function getSafeReturnPath(returnTo: string | null) {
+  if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
+    return "/";
+  }
+
+  if (returnTo.startsWith("/profile/edit")) {
+    return "/";
+  }
+
+  return returnTo;
+}
+
 export default function ProfileEditor() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = getSafeReturnPath(searchParams.get("returnTo"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -66,7 +82,22 @@ export default function ProfileEditor() {
             setIsSigningIn(true);
             setMessage("");
             signInWithPassword(email, password)
-              .then(() => window.location.reload())
+              .then(() => getCurrentUser())
+              .then((nextUser) => {
+                if (!nextUser) {
+                  window.location.reload();
+                  return;
+                }
+
+                return getProfileByUserId(nextUser.id).then((nextProfile) => {
+                  if (nextProfile) {
+                    router.push(returnTo);
+                    return;
+                  }
+
+                  window.location.reload();
+                });
+              })
               .catch((error: Error) => setMessage(error.message))
               .finally(() => setIsSigningIn(false));
           }}

@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProfileMenu from "@/app/components/profile-menu";
-import { saveUserMovieRating } from "@/lib/profile-store";
+import {
+  getCurrentProfile,
+  saveUserMovieRating,
+} from "@/lib/profile-store";
 import { ratingToPercent, savePopScore } from "@/lib/popscore-store";
 
 const genreConfigs = {
@@ -301,6 +304,7 @@ export default function RateClient({
   const [selectedGenre, setSelectedGenre] = useState<GenreKey>(initialGenre);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [submittedScore, setSubmittedScore] = useState<number | null>(null);
+  const [submitMessage, setSubmitMessage] = useState("");
 
   const currentGenre = genreConfigs[selectedGenre];
   const allAnswered = currentGenre.questions.every((q) => ratings[q.key]);
@@ -327,7 +331,19 @@ export default function RateClient({
       return;
     }
 
-    savePopScore(movieId, selectedGenre, ratings, currentGenre.questions)
+    setSubmitMessage("");
+
+    getCurrentProfile()
+      .then((profile) => {
+        if (!profile) {
+          setSubmitMessage(
+            "Create or sign in to your profile before rating movies."
+          );
+          return Promise.reject(new Error("Missing profile"));
+        }
+
+        return savePopScore(movieId, selectedGenre, ratings, currentGenre.questions);
+      })
       .then(() =>
         Promise.allSettled([
           saveUserMovieRating({
@@ -349,7 +365,12 @@ export default function RateClient({
         setSubmittedScore(popScore);
         router.push(submitHref);
       })
-      .catch(() => setSubmittedScore(null));
+      .catch((error: Error) => {
+        if (error.message !== "Missing profile") {
+          setSubmittedScore(null);
+          setSubmitMessage("Could not submit rating. Please try again.");
+        }
+      });
   };
 
   return (
@@ -549,6 +570,10 @@ export default function RateClient({
                 Select a movie before submitting a rating.
               </p>
             )}
+
+            {submitMessage ? (
+              <p className="mt-4 font-bold text-yellow-200">{submitMessage}</p>
+            ) : null}
 
             {submittedScore ? (
               <p className="mt-4 font-bold">

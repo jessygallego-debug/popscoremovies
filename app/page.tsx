@@ -93,7 +93,12 @@ export default async function Home({
                 POPSCORE
               </span>
             </div>
-            <span className="mt-1 pl-12 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:pl-14 sm:text-xs">
+            <span className="mt-1 block pl-12 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:hidden">
+              Movie Ratings For Real
+              <br />
+              Fans
+            </span>
+            <span className="mt-1 hidden pl-14 text-xs font-black uppercase tracking-[0.22em] text-slate-400 sm:block">
               Movie Ratings For Real Fans
             </span>
           </Link>
