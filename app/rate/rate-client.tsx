@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import ProfileMenu from "@/app/components/profile-menu";
 import { saveUserMovieRating } from "@/lib/profile-store";
 import { ratingToPercent, savePopScore } from "@/lib/popscore-store";
 
@@ -383,12 +384,7 @@ export default function RateClient({
             <span>PopScore Movies</span>
           </Link>
 
-          <Link
-            href="/profile/edit"
-            className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
-          >
-            Sign In
-          </Link>
+          <ProfileMenu />
         </div>
 
         <div className="mb-5 text-center sm:mb-8">

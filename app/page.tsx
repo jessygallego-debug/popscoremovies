@@ -4,6 +4,7 @@ import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import CoStarReactions from "@/app/components/co-star-reactions";
 import MovieSearch from "@/app/components/movie-search";
 import PopScoreDisplay from "@/app/components/popscore-display";
+import ProfileMenu from "@/app/components/profile-menu";
 import ScrollMemory from "@/app/components/scroll-memory";
 import {
   formatReleaseMonthYear,
@@ -96,12 +97,7 @@ export default async function Home({
             </span>
           </Link>
 
-          <Link
-            href="/profile/edit"
-            className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
-          >
-            Sign In
-          </Link>
+          <ProfileMenu />
         </div>
 
         <h1 className="mb-5 max-w-4xl text-5xl font-black leading-[0.95] text-white sm:text-7xl">

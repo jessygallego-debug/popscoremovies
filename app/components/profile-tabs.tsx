@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import QuickReactionBadge from "@/app/components/quick-reaction-badge";
 import {
@@ -355,11 +356,23 @@ function EmptyState({ text }: { text: string }) {
 }
 
 export default function ProfileTabs({ username }: { username: string }) {
-  const [activeTab, setActiveTab] = useState<TabKey>("ratings");
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const initialTab: TabKey =
+    requestedTab === "watchlist" ||
+    requestedTab === "discover" ||
+    requestedTab === "stats"
+      ? requestedTab
+      : "ratings";
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [ratings, setRatings] = useState<UserMovieRating[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistMovie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    queueMicrotask(() => setActiveTab(initialTab));
+  }, [initialTab]);
 
   useEffect(() => {
     getProfileByUsername(username).then((nextProfile) => {

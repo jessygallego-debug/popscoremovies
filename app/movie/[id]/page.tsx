@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import BrandHomeLink from "@/app/components/brand-home-link";
 import PopScoreDisplay from "@/app/components/popscore-display";
+import ProfileMenu from "@/app/components/profile-menu";
 import {
   backdropUrl,
   formatReleaseMonthYear,
@@ -55,12 +56,7 @@ export default async function MoviePage({
         <section className="mx-auto max-w-4xl">
           <div className="flex flex-wrap items-start justify-between gap-4 pr-14">
             <BrandHomeLink />
-            <Link
-              href="/profile/edit"
-              className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
-            >
-              Sign In
-            </Link>
+            <ProfileMenu />
           </div>
           <div className="mt-8 rounded-lg border border-yellow-500/40 bg-yellow-400/10 p-5 text-yellow-100">
             Add `TMDB_API_TOKEN` to your environment to load movie details.
@@ -123,12 +119,7 @@ export default async function MoviePage({
 
           <div className="flex flex-wrap items-start justify-between gap-4 pr-14">
             <BrandHomeLink />
-            <Link
-              href="/profile/edit"
-              className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
-            >
-              Sign In
-            </Link>
+            <ProfileMenu />
           </div>
 
           <div className="mt-8 grid gap-8 md:grid-cols-[280px_1fr]">
