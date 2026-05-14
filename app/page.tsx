@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import CoStarReactions from "@/app/components/co-star-reactions";
 import MovieSearch from "@/app/components/movie-search";
 import PopScoreDisplay from "@/app/components/popscore-display";
@@ -249,6 +250,20 @@ export default async function Home({
                     <div className="my-4 border-t border-slate-800" />
 
                     <CoStarReactions movieId={String(movie.id)} />
+
+                    <div className="mt-4">
+                      <AddToWatchlistButton
+                        movie={{
+                          genre: genreLabels[0],
+                          genreNames: genreLabels,
+                          movieId: String(movie.id),
+                          movieTitle: movie.title,
+                          posterPath: movie.poster_path,
+                          releaseDate: movie.release_date,
+                        }}
+                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300"
+                      />
+                    </div>
                   </div>
                 </article>
               );

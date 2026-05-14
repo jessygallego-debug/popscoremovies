@@ -91,6 +91,9 @@ export default async function RatePage({
       movieId={params.movie}
       initialGenre={initialGenre}
       lockGenre={Boolean(movieGenre || urlGenre)}
+      movieGenreNames={movie?.genres.map((genre) => genre.name)}
+      moviePosterPath={movie?.poster_path}
+      movieReleaseDate={movie?.release_date}
       movieTitle={movie?.title}
       returnTo={getSafeReturnPath(params.returnTo)}
       submitReturnTo={

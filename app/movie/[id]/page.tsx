@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import BrandHomeLink from "@/app/components/brand-home-link";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import {
@@ -169,6 +170,16 @@ export default async function MoviePage({
                       Watch Trailer
                     </a>
                   ) : null}
+                  <AddToWatchlistButton
+                    movie={{
+                      genre: movie.genres[0]?.name,
+                      genreNames: movie.genres.map((genre) => genre.name),
+                      movieId: String(movie.id),
+                      movieTitle: movie.title,
+                      posterPath: movie.poster_path,
+                      releaseDate: movie.release_date,
+                    }}
+                  />
                 </div>
               </div>
 

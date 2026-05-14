@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { saveUserMovieRating } from "@/lib/profile-store";
 import { ratingToPercent, savePopScore } from "@/lib/popscore-store";
 
 const genreConfigs = {
@@ -230,6 +231,9 @@ type GenreEntry = [GenreKey, (typeof genreConfigs)[GenreKey]];
 
 type RateClientProps = {
   movieId?: string;
+  movieGenreNames?: string[];
+  moviePosterPath?: string | null;
+  movieReleaseDate?: string | null;
   initialGenre: GenreKey;
   lockGenre: boolean;
   movieTitle?: string;
@@ -283,6 +287,9 @@ export function isGenreKey(value: string | undefined): value is GenreKey {
 
 export default function RateClient({
   movieId,
+  movieGenreNames,
+  moviePosterPath,
+  movieReleaseDate,
   initialGenre,
   lockGenre,
   movieTitle,
@@ -320,6 +327,21 @@ export default function RateClient({
     }
 
     savePopScore(movieId, selectedGenre, ratings, currentGenre.questions)
+      .then(() =>
+        saveUserMovieRating({
+          genre: selectedGenre,
+          movie: {
+            genreNames: movieGenreNames ?? [],
+            movieId,
+            movieTitle: movieTitle ?? `Movie ${movieId}`,
+            posterPath: moviePosterPath,
+            releaseDate: movieReleaseDate,
+          },
+          popscore: popScore,
+          questions: currentGenre.questions,
+          ratings,
+        })
+      )
       .then(() => {
         setSubmittedScore(popScore);
         router.push(submitHref);
