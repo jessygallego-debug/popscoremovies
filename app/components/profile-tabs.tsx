@@ -659,16 +659,16 @@ function TierBadge({
   const dimensions =
     size === "large"
       ? {
-          icon: "h-16 w-16 text-5xl",
-          outer: "h-32 w-28",
-          shine: "top-4 h-8",
-          stripe: "bottom-5 h-1.5 w-11",
+          icon: "h-14 w-14 text-4xl",
+          outer: "h-28 w-24",
+          shine: "top-3 h-7",
+          stripe: "bottom-4 h-1.5 w-10",
         }
       : {
-          icon: "h-8 w-8 text-2xl",
-          outer: "h-14 w-12",
+          icon: "h-7 w-7 text-xl",
+          outer: "h-12 w-10",
           shine: "top-2 h-4",
-          stripe: "bottom-2 h-1 w-7",
+          stripe: "bottom-2 h-1 w-6",
         };
   const mutedStyle = isMuted
     ? {
@@ -742,7 +742,7 @@ function PopScoreStatusCard({
   const circlePercent = Math.max(4, 100 - percentile.topPercentile);
 
   return (
-    <section className={profilePanelClass("overflow-hidden p-6 sm:p-7")}>
+    <section className={profilePanelClass("overflow-hidden p-5 sm:p-6")}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-black text-white">Your PopScore Status</h2>
@@ -755,19 +755,19 @@ function PopScoreStatusCard({
         </span>
       </div>
 
-      <div className="mt-7 grid gap-7 lg:grid-cols-[auto_minmax(0,1fr)_150px] lg:items-center">
+      <div className="mt-5 grid gap-5 lg:grid-cols-[auto_minmax(0,1fr)_128px] lg:items-center">
         <TierBadge tier={tier} />
         <div className="min-w-0">
-          <h3 className="text-4xl font-black" style={{ color: tier.accent }}>
+          <h3 className="text-3xl font-black" style={{ color: tier.accent }}>
             {tier.name}
           </h3>
-          <p className="mt-3 text-base font-bold text-slate-300">
+          <p className="mt-2 text-sm font-bold text-slate-300">
             You&apos;re in the top{" "}
             <span className="text-white">{percentile.topPercentile}%</span> of all
             PopScore raters.
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <MiniMetric
               label="Total Movies Rated"
               value={summary.totalMoviesRated}
@@ -781,14 +781,14 @@ function PopScoreStatusCard({
         </div>
 
         <div
-          className="mx-auto flex h-36 w-36 items-center justify-center rounded-full p-3"
+          className="mx-auto flex h-28 w-28 items-center justify-center rounded-full p-2.5"
           style={{
             background: `conic-gradient(${tier.accent} ${circlePercent}%, rgba(30, 41, 59, 0.85) 0)`,
           }}
         >
           <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-slate-950 text-center">
             <span className="text-xs font-black uppercase text-slate-400">Top</span>
-            <span className="text-4xl font-black" style={{ color: tier.accent }}>
+            <span className="text-3xl font-black" style={{ color: tier.accent }}>
               {percentile.topPercentile}%
             </span>
             <span className="text-xs font-bold text-slate-400">of raters</span>
@@ -796,7 +796,7 @@ function PopScoreStatusCard({
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="font-bold text-slate-300">
             Progress to next tier:{" "}
@@ -825,7 +825,7 @@ function PopScoreStatusCard({
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
         {POPSCORE_TIERS.map((item, index) => (
           <div key={item.id} className="flex flex-col items-center text-center">
             <TierBadge
@@ -857,8 +857,8 @@ function MiniMetric({
   value: number | string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-black/30 p-4">
-      <p className="text-2xl font-black text-white">{value}</p>
+    <div className="rounded-2xl border border-slate-800 bg-black/30 p-3">
+      <p className="text-xl font-black text-white">{value}</p>
       <p className="mt-1 text-xs font-bold text-slate-500">{label}</p>
     </div>
   );
@@ -883,18 +883,10 @@ function StatCard({
 }
 
 function ProfileStatsCard({
-  nextTier,
-  percentile,
   summary,
-  tier,
 }: {
-  nextTier?: PopScoreTier;
-  percentile: ReturnType<typeof getPercentileStatus>;
   summary: ProfileStatSummary;
-  tier: PopScoreTier;
 }) {
-  const nextTarget = nextTier?.minRatings ?? summary.totalMoviesRated;
-
   return (
     <section className={profilePanelClass("p-6")}>
       <h2 className="text-xl font-black text-white">Your Stats</h2>
@@ -928,21 +920,6 @@ function ProfileStatsCard({
           icon="↘"
           label="Lowest Rated Genre"
           value={summary.lowestGenre}
-        />
-        <StatCard
-          icon="%"
-          label="Rating Percentile"
-          value={`Top ${percentile.topPercentile}%`}
-        />
-        <StatCard icon="◆" label="Current Tier" value={tier.name} />
-        <StatCard
-          icon="▰"
-          label="Next Tier Progress"
-          value={
-            nextTier
-              ? `${summary.totalMoviesRated} / ${nextTarget}`
-              : "Complete"
-          }
         />
       </div>
     </section>
@@ -1605,10 +1582,6 @@ export default function ProfileTabs({ username }: { username: string }) {
     summary.totalMoviesRated,
     percentile.topPercentile
   );
-  const currentTierIndex = POPSCORE_TIERS.findIndex(
-    (tier) => tier.id === currentTier.id
-  );
-  const nextTier = POPSCORE_TIERS[currentTierIndex + 1];
   const fullRatings = ratings.filter(hasPopScoreRating);
 
   return (
@@ -1626,12 +1599,7 @@ export default function ProfileTabs({ username }: { username: string }) {
           summary={summary}
           tier={currentTier}
         />
-        <ProfileStatsCard
-          nextTier={nextTier}
-          percentile={percentile}
-          summary={summary}
-          tier={currentTier}
-        />
+        <ProfileStatsCard summary={summary} />
 
         {activeTab === "ratings" ? (
           <SectionCard title="Ratings History">
