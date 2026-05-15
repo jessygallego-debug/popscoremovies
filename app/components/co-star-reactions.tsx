@@ -21,6 +21,7 @@ type Reaction = {
 type CoStarReactionsProps = {
   movie?: MovieMeta & { genre?: string };
   movieId: string;
+  variant?: "default" | "compact";
 };
 
 const reactions: Reaction[] = [
@@ -38,6 +39,7 @@ const profileReactionMap: Record<CoStarReaction, ProfileQuickReaction> = {
 export default function CoStarReactions({
   movie,
   movieId,
+  variant = "default",
 }: CoStarReactionsProps) {
   const [counts, setCounts] = useState<Record<CoStarReaction, number>>({
     loved: 0,
@@ -49,6 +51,7 @@ export default function CoStarReactions({
   const [message, setMessage] = useState("");
 
   const total = counts.loved + counts.worth + counts.trash;
+  const isCompact = variant === "compact";
 
   useEffect(() => {
     let isCurrent = true;
@@ -112,7 +115,11 @@ export default function CoStarReactions({
 
   return (
     <section>
-      <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/80">
+      <div
+        className={`grid grid-cols-3 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/80 ${
+          isCompact ? "shadow-inner shadow-black/30" : ""
+        }`}
+      >
         {reactions.map((reaction) => {
           const isSelected = selectedReaction === reaction.key;
 
@@ -121,17 +128,33 @@ export default function CoStarReactions({
               key={reaction.key}
               type="button"
               onClick={() => handleReaction(reaction.key)}
-              className={`grid min-h-24 min-w-0 grid-rows-[1.5rem_2.25rem_1.5rem] items-center overflow-hidden border-r border-slate-800 px-0.5 py-2 text-center text-[9px] font-bold transition last:border-r-0 hover:bg-yellow-400/10 active:scale-95 sm:min-h-24 sm:grid-rows-[1.75rem_2.5rem_1.75rem] sm:px-1.5 sm:text-[10px] ${
+              className={`grid min-w-0 items-center overflow-hidden border-r border-slate-800 text-center font-bold transition last:border-r-0 hover:bg-yellow-400/10 active:scale-95 ${
+                isCompact
+                  ? "min-h-16 grid-rows-[1.15rem_1.6rem_1.15rem] px-1 py-1.5 text-[9px] sm:min-h-16 sm:grid-rows-[1.25rem_1.7rem_1.25rem] sm:text-[9px]"
+                  : "min-h-24 grid-rows-[1.5rem_2.25rem_1.5rem] px-0.5 py-2 text-[9px] sm:min-h-24 sm:grid-rows-[1.75rem_2.5rem_1.75rem] sm:px-1.5 sm:text-[10px]"
+              } ${
                 isSelected ? "bg-yellow-400/15 text-yellow-300" : "text-slate-200"
               }`}
             >
-              <span className="flex items-center justify-center text-lg leading-none sm:text-xl">
+              <span
+                className={`flex items-center justify-center leading-none ${
+                  isCompact ? "text-base" : "text-lg sm:text-xl"
+                }`}
+              >
                 {reaction.emoji}
               </span>
-              <span className="mx-auto flex max-w-14 items-center justify-center whitespace-normal break-words leading-tight sm:max-w-16">
+              <span
+                className={`mx-auto flex items-center justify-center whitespace-normal break-words leading-tight ${
+                  isCompact ? "max-w-12" : "max-w-14 sm:max-w-16"
+                }`}
+              >
                 {reaction.label}
               </span>
-              <span className="flex items-center justify-center text-sm font-black leading-none text-yellow-400 sm:text-base">
+              <span
+                className={`flex items-center justify-center font-black leading-none text-yellow-400 ${
+                  isCompact ? "text-xs" : "text-sm sm:text-base"
+                }`}
+              >
                 {getPercent(reaction.key)}%
               </span>
             </button>
@@ -139,7 +162,11 @@ export default function CoStarReactions({
         })}
       </div>
 
-      <p className="mt-2 text-center text-[11px] font-bold text-slate-500">
+      <p
+        className={`mt-2 text-center font-bold text-slate-500 ${
+          isCompact ? "text-[10px]" : "text-[11px]"
+        }`}
+      >
         {total === 0
           ? "Total reactions: 0"
           : `Total reactions: ${total.toLocaleString()}`}

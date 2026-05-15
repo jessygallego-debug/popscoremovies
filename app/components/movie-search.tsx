@@ -85,7 +85,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
 
   return (
     <form
-      className="relative mb-8 flex max-w-3xl flex-col gap-3 sm:flex-row"
+      className="relative flex max-w-4xl flex-col gap-3 sm:flex-row"
       action="/"
     >
       {genreId ? <input type="hidden" name="genre" value={genreId} /> : null}
@@ -93,7 +93,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
       <div className="relative w-full">
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-lg text-slate-500"
+          className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-lg text-yellow-300/80"
         >
           🔎
         </span>
@@ -105,7 +105,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => setIsFocused(true)}
           placeholder="Search for a movie..."
-          className="min-h-14 w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-12 pl-12 text-base font-bold text-white shadow-lg shadow-black/30 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:shadow-yellow-400/10"
+          className="min-h-16 w-full rounded-2xl border border-slate-700/90 bg-slate-950/80 px-12 pl-12 text-base font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_45px_rgba(0,0,0,0.35)] outline-none backdrop-blur transition placeholder:text-slate-500 focus:border-yellow-400/80 focus:bg-slate-950 focus:shadow-yellow-400/15"
         />
 
         {hasQuery ? (
@@ -151,7 +151,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
 
       <button
         type="submit"
-        className="min-h-14 rounded-2xl bg-yellow-400 px-8 text-base font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 active:scale-[0.98]"
+        className="min-h-16 rounded-2xl bg-yellow-400 px-9 text-base font-black text-black shadow-[0_16px_34px_rgba(250,204,21,0.25)] transition hover:bg-yellow-300 hover:shadow-yellow-400/40 active:scale-[0.98]"
       >
         Search
       </button>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { avatarForKey } from "@/lib/profile-config";
 import {
   getCurrentUser,
   getProfileByUserId,
@@ -10,8 +11,8 @@ import {
 } from "@/lib/profile-store";
 
 const menuItems = [
-  { href: "/profile/edit", label: "Edit PopFile" },
-  { href: "stats", label: "PopFile Stats" },
+  { href: "/profile/edit", label: "Edit Profile" },
+  { href: "stats", label: "Profile Stats" },
   { href: "watchlist", label: "Watchlist" },
   { href: "discover", label: "Discovery" },
 ];
@@ -51,19 +52,29 @@ export default function ProfileMenu() {
     return (
       <Link
         href={signInHref}
-        className="shrink-0 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black"
+        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black hover:shadow-yellow-400/30"
       >
-        Sign In
+        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
+          ★
+        </span>
+        My Profile
       </Link>
     );
   }
 
   const profilePath = `/profile/${profile.username}`;
+  const avatar = avatarForKey(profile.avatar_key);
 
   return (
     <details className="group relative shrink-0">
-      <summary className="list-none rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:cursor-pointer hover:border-yellow-300 hover:bg-yellow-400 hover:text-black">
-        PopFile
+      <summary className="inline-flex list-none items-center gap-2 rounded-full border border-yellow-400/45 bg-yellow-400/10 px-3 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:cursor-pointer hover:border-yellow-300 hover:bg-yellow-400 hover:text-black hover:shadow-yellow-400/30">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/45 bg-black/40 text-lg">
+          {avatar.icon}
+        </span>
+        <span>My Profile</span>
+        <span aria-hidden="true" className="text-yellow-300 group-hover:text-black">
+          ›
+        </span>
       </summary>
       <div className="absolute right-0 z-30 mt-3 w-56 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl shadow-black/50">
         {menuItems.map((item) => {

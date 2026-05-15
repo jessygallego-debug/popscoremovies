@@ -12,6 +12,7 @@ import {
   getMovies,
   isTmdbConfigured,
   MOVIE_GENRE_FILTERS,
+  MovieSummary,
   posterUrl,
 } from "@/lib/tmdb";
 
@@ -20,6 +21,197 @@ const TMDB_GENRE_LABELS = new Map(
     (genre) => [Number(genre.id), genre.name]
   )
 );
+
+const whyPopScoreCards = [
+  {
+    icon: "◎",
+    title: "Genre-Specific Ratings",
+    description: "Horror shouldn't be rated like romance.",
+  },
+  {
+    icon: "♡",
+    title: "Real Fan Reactions",
+    description: "See how real fans actually feel about movies.",
+  },
+  {
+    icon: "◇",
+    title: "Built For Movie Fans",
+    description: "No critics. No agendas. Just fans.",
+  },
+  {
+    icon: "☆",
+    title: "Discover Your Next Favorite",
+    description: "Recommendations based on your taste.",
+  },
+];
+
+function genreLabelsForMovie(movie: MovieSummary) {
+  return (
+    movie.genre_ids
+      ?.map((genreId) => TMDB_GENRE_LABELS.get(genreId))
+      .filter((genreName): genreName is string => Boolean(genreName))
+      .slice(0, 3) ?? []
+  );
+}
+
+function fanCountForMovie(movie: MovieSummary) {
+  return Math.max(64, Math.round((movie.popularity ?? 10) * 7));
+}
+
+function lovedPercentForMovie(movie: MovieSummary) {
+  return Math.min(98, Math.max(62, Math.round((movie.vote_average ?? 7.4) * 10)));
+}
+
+function SiteLogo() {
+  return (
+    <Link
+      href="/"
+      aria-label="Go to PopScore Movies home"
+      className="group min-w-0 shrink-0 transition hover:opacity-90"
+    >
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/25 bg-yellow-400/10 shadow-lg shadow-yellow-400/10 sm:h-14 sm:w-14"
+        >
+          <span className="relative block h-10 w-10 sm:h-11 sm:w-11">
+            <Image
+              src="/rating-icons/extra-buttery-v2.png"
+              alt=""
+              fill
+              sizes="(min-width: 640px) 44px, 40px"
+              className="object-contain transition group-hover:scale-105"
+              priority
+            />
+          </span>
+        </span>
+        <span>
+          <span className="block text-3xl font-black leading-none tracking-wide text-yellow-400 sm:text-4xl">
+            POPSCORE
+          </span>
+          <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">
+            Movie Ratings For Real Fans
+          </span>
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function HeroVisual({ movies }: { movies: MovieSummary[] }) {
+  const heroMovies = movies.filter((movie) => movie.poster_path).slice(0, 3);
+
+  return (
+    <div className="relative min-h-[360px] overflow-hidden rounded-[2rem] border border-slate-800/80 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.24),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-6 shadow-2xl shadow-black/40 lg:min-h-[470px]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(250,204,21,0.18),transparent_28%),radial-gradient(circle_at_15%_80%,rgba(59,130,246,0.16),transparent_30%)]" />
+      <div className="absolute left-8 top-12 rounded-2xl border border-yellow-400/25 bg-black/45 px-4 py-3 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10">
+        🍿 {fanCountForMovie(heroMovies[0] ?? movies[0] ?? { popularity: 95 } as MovieSummary).toLocaleString()}
+      </div>
+      <div className="absolute right-8 top-7 rounded-2xl border border-red-400/25 bg-black/45 px-4 py-3 text-sm font-black text-red-300 shadow-lg shadow-red-500/10">
+        ♡ {(fanCountForMovie(heroMovies[1] ?? movies[1] ?? { popularity: 170 } as MovieSummary) / 1000).toFixed(1)}K
+      </div>
+      <div className="absolute bottom-12 right-5 rounded-2xl border border-yellow-400/25 bg-black/45 px-4 py-3 text-sm font-black text-yellow-200 shadow-lg shadow-yellow-400/10">
+        🔥 {lovedPercentForMovie(heroMovies[2] ?? movies[2] ?? { vote_average: 8.8 } as MovieSummary)}% Loved It
+      </div>
+
+      <div className="relative z-10 flex h-full items-center justify-center">
+        <div className="relative h-[300px] w-full max-w-[460px] lg:h-[380px]">
+          {heroMovies.map((movie, index) => {
+            const offsets = [
+              "left-[3%] top-[22%] z-10 rotate-[-8deg] scale-[0.86]",
+              "left-[32%] top-[4%] z-20 rotate-[2deg] scale-100",
+              "right-[1%] top-[24%] z-10 rotate-[8deg] scale-[0.88]",
+            ];
+            const genre = genreLabelsForMovie(movie)[0] ?? "Movie";
+
+            return (
+              <Link
+                key={movie.id}
+                data-remember-scroll
+                href={`/movie/${movie.id}`}
+                className={`absolute block w-[42%] overflow-hidden rounded-[1.35rem] border border-white/15 bg-slate-950 shadow-2xl shadow-black/60 transition duration-500 motion-safe:animate-[popFloat_8s_ease-in-out_infinite] hover:z-30 hover:-translate-y-2 hover:rotate-0 hover:border-yellow-400/70 ${offsets[index]}`}
+                style={{ animationDelay: `${index * 0.8}s` }}
+              >
+                <div className="relative aspect-[2/3]">
+                  <MoviePosterImage
+                    src={posterUrl(movie.poster_path)}
+                    alt={movie.title}
+                    sizes="(min-width: 1024px) 16vw, 34vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-lg font-black text-white shadow-lg shadow-yellow-400/20">
+                        {lovedPercentForMovie(movie)}
+                      </span>
+                      <span className="min-w-0 text-[11px] font-black text-white">
+                        {genre} Fans
+                        <span className="block text-[10px] font-bold text-slate-300">
+                          PopScore
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+
+          <div className="absolute bottom-2 left-1/2 z-30 w-[82%] -translate-x-1/2 rounded-2xl border border-white/10 bg-black/45 p-3 text-center shadow-2xl shadow-black/50 backdrop-blur">
+            <div className="flex justify-center -space-x-2">
+              {["J", "M", "A"].map((initial) => (
+                <span
+                  key={initial}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/50 bg-slate-900 text-xs font-black text-yellow-300"
+                >
+                  {initial}
+                </span>
+              ))}
+            </div>
+            <p className="mt-2 text-sm font-bold text-slate-200">
+              Join fans rating movies by what they{" "}
+              <span className="text-yellow-300">actually love.</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WhyPopScore() {
+  return (
+    <section
+      id="why-popscore"
+      className="rounded-[1.75rem] border border-slate-800/80 bg-slate-950/65 p-5 shadow-2xl shadow-black/30 backdrop-blur"
+    >
+      <div className="grid gap-5 lg:grid-cols-[220px_repeat(4,minmax(0,1fr))] lg:items-center">
+        <h2 className="text-2xl font-black text-white sm:text-3xl">
+          Why PopScore?
+        </h2>
+        {whyPopScoreCards.map((card) => (
+          <article
+            key={card.title}
+            className="rounded-2xl border border-slate-800/80 bg-white/[0.03] p-4 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06]"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-yellow-400/35 bg-yellow-400/10 text-2xl font-black text-yellow-300">
+                {card.icon}
+              </span>
+              <div>
+                <h3 className="font-black text-yellow-300">{card.title}</h3>
+                <p className="mt-1 text-sm font-semibold leading-6 text-slate-300">
+                  {card.description}
+                </p>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export default async function Home({
   searchParams,
@@ -62,210 +254,202 @@ export default async function Home({
       isActive: activeGenre?.id === genre.id,
     })),
   ];
+  const sectionTitle = query
+    ? `${activeGenre ? `${activeGenre.name} ` : ""}Search Results for "${query}"`
+    : activeGenre
+      ? `${activeGenre.name} Movies`
+      : "Trending Movies";
 
   return (
-    <main className="min-h-screen bg-black bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#020617_0%,#000_42%,#020617_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
+    <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.16),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.16),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_34%,#000_64%,#020617_100%)] text-white">
       <ScrollMemory />
-      <section className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <Link
-            href="/"
-            aria-label="Go to PopScore Movies home"
-            className="min-w-0 flex-1 transition hover:opacity-85"
-          >
-            <div className="flex items-center gap-3">
-              <span
-                aria-hidden="true"
-                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-yellow-400/10 sm:h-14 sm:w-14"
-              >
-                <span className="relative block h-8 w-8 sm:h-11 sm:w-11">
-                  <Image
-                    src="/rating-icons/extra-buttery-v2.png"
-                    alt=""
-                    fill
-                    sizes="(min-width: 640px) 44px, 32px"
-                    className="object-contain"
-                    priority
-                  />
-                </span>
-              </span>
-              <span className="text-3xl font-black tracking-wide text-yellow-400 sm:text-5xl">
-                POPSCORE
-              </span>
-            </div>
-            <span className="mt-1 block pl-12 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:hidden">
-              Movie Ratings For Real
-              <br />
-              Fans
-            </span>
-            <span className="mt-1 hidden pl-14 text-xs font-black uppercase tracking-[0.22em] text-slate-400 sm:block">
-              Movie Ratings For Real Fans
-            </span>
-          </Link>
-
+      <div className="pointer-events-none fixed inset-0 opacity-40 [background-image:radial-gradient(rgba(250,204,21,0.28)_1px,transparent_1px)] [background-size:42px_42px]" />
+      <section className="relative mx-auto max-w-[1500px] px-5 py-6 sm:px-8">
+        <header className="flex items-center justify-between gap-5 border-b border-white/10 pb-5">
+          <SiteLogo />
+          <nav className="hidden items-center gap-8 text-sm font-black text-slate-200 lg:flex">
+            <Link href="#trending" className="transition hover:text-yellow-300">
+              Movies
+            </Link>
+            <Link href="#genres" className="transition hover:text-yellow-300">
+              Genres
+            </Link>
+            <Link href="#trending" className="transition hover:text-yellow-300">
+              Trending
+            </Link>
+            <Link href="#why-popscore" className="transition hover:text-yellow-300">
+              Community
+            </Link>
+          </nav>
           <ProfileMenu />
-        </div>
+        </header>
 
-        <h1 className="mb-5 max-w-4xl text-5xl font-black leading-[0.95] text-white sm:text-7xl">
-          Discover Movies
-          <br />
-          Worth{" "}
-          <span className="relative inline-block text-yellow-400">
-            Watching
-            <span className="absolute -bottom-2 left-0 h-3 w-full rounded-[50%] border-b-4 border-yellow-400/70 shadow-[0_10px_18px_rgba(250,204,21,0.35)]" />
-          </span>
-        </h1>
+        <section className="grid gap-10 py-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(420px,1fr)] lg:items-center lg:py-16">
+          <div>
+            <div className="mb-5 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-yellow-300">
+              Ratings that actually understand genre
+            </div>
+            <h1 className="max-w-4xl text-5xl font-black leading-[0.94] text-white sm:text-7xl xl:text-8xl">
+              Discover Movies
+              <br />
+              Worth{" "}
+              <span className="relative inline-block text-yellow-400">
+                Watching
+                <span className="absolute -bottom-2 left-0 h-3 w-full rounded-[50%] border-b-4 border-yellow-400/75 shadow-[0_12px_24px_rgba(250,204,21,0.42)]" />
+              </span>
+            </h1>
+            <p className="mt-7 max-w-2xl text-lg font-semibold leading-8 text-slate-300 sm:text-xl">
+              Movie ratings built for real fans -- because horror shouldn&apos;t be
+              scored like romance.
+            </p>
+            <div className="mt-8">
+              <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
+            </div>
+          </div>
 
-        <p className="mb-8 max-w-2xl text-base font-semibold leading-7 text-slate-300 sm:text-xl">
-          Movie rating built for true fans – because horror shouldn&apos;t be
-          rated like romance.
-        </p>
+          <HeroVisual movies={movies} />
+        </section>
 
-        <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
-
-        <div className="mb-12">
+        <section id="genres" className="border-t border-white/10 pt-7">
           <div
             aria-label="Filter movies by genre"
-            className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth whitespace-nowrap py-1 md:hidden"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8"
           >
             {genreFilters.map((genre) => (
               <Link
                 key={genre.id}
                 href={genre.href}
-                className={`inline-flex shrink-0 snap-start items-center justify-center rounded-full border px-5 py-2.5 text-sm font-black transition ${
+                className={`inline-flex min-h-11 min-w-0 items-center justify-center rounded-full border px-4 py-2 text-center text-sm font-black transition duration-300 hover:-translate-y-0.5 ${
                   genre.isActive
-                    ? "border-yellow-400 bg-yellow-400 text-black"
-                    : "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
+                    ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/25"
+                    : "border-slate-700/90 bg-slate-950/80 text-slate-300 hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-200"
                 }`}
               >
                 {genre.name}
               </Link>
             ))}
           </div>
+        </section>
 
-          <div
-            aria-label="Filter movies by genre"
-            className="hidden gap-3 md:grid md:grid-cols-8 md:grid-rows-2"
-          >
-            {genreFilters.map((genre) => (
-              <Link
-                key={genre.id}
-                href={genre.href}
-                className={`inline-flex min-w-0 items-center justify-center rounded-full border px-4 py-2.5 text-center text-sm font-black transition ${
-                  genre.isActive
-                    ? "border-yellow-400 bg-yellow-400 text-black"
-                    : "border-slate-700 bg-slate-950/80 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
-                }`}
-              >
-                {genre.name}
-              </Link>
-            ))}
-          </div>
+        <div className="mt-8">
+          <WhyPopScore />
         </div>
 
         {hasMissingToken ? (
-          <div className="rounded-lg border border-yellow-500/40 bg-yellow-400/10 p-5 text-yellow-100">
+          <div className="mt-8 rounded-2xl border border-yellow-500/40 bg-yellow-400/10 p-5 text-yellow-100">
             Add `TMDB_API_TOKEN` to your environment to load live movie data.
           </div>
         ) : null}
 
-        <h2 className="mb-6 text-2xl font-black text-white sm:text-3xl">
-          {query
-            ? `${activeGenre ? `${activeGenre.name} ` : ""}Search Results for "${query}"`
-            : activeGenre
-              ? `${activeGenre.name} Movies`
-              : "Trending Movies"}
-        </h2>
+        <section id="trending" className="mt-10">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-yellow-300">
+                Fan-powered discovery
+              </p>
+              <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">
+                {sectionTitle}
+              </h2>
+            </div>
+            <Link
+              href={currentPagePath}
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-yellow-400/50 px-5 text-sm font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-black"
+            >
+              View all
+            </Link>
+          </div>
 
-        {movies.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
-            {movies.map((movie) => {
-              const poster = posterUrl(movie.poster_path);
-              const releaseDate = movie.release_date
-                ? formatReleaseMonthYear(movie.release_date)
-                : "";
-              const genreLabels =
-                movie.genre_ids
-                  ?.map((genreId) => TMDB_GENRE_LABELS.get(genreId))
-                  .filter((genreName): genreName is string => Boolean(genreName))
-                  .slice(0, 3) ?? [];
+          {movies.length > 0 ? (
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {movies.map((movie) => {
+                const poster = posterUrl(movie.poster_path);
+                const releaseDate = movie.release_date
+                  ? formatReleaseMonthYear(movie.release_date)
+                  : "";
+                const genreLabels = genreLabelsForMovie(movie);
+                const primaryGenre = genreLabels[0] ?? "Movie";
+                const movieHref = `/movie/${
+                  movie.id
+                }?returnTo=${encodeURIComponent(currentPagePath)}`;
+                const rateHref = `/rate?movie=${
+                  movie.id
+                }&returnTo=${encodeURIComponent(currentPagePath)}&from=home`;
 
-              const movieHref = `/movie/${
-                movie.id
-              }?returnTo=${encodeURIComponent(currentPagePath)}`;
-              const rateHref = `/rate?movie=${
-                movie.id
-              }&returnTo=${encodeURIComponent(currentPagePath)}&from=home`;
-
-              return (
-                <article
-                  key={movie.id}
-                  className="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-yellow-400/60 hover:shadow-yellow-400/10"
-                >
-                  <Link data-remember-scroll href={movieHref} className="block">
-                    <div className="relative aspect-[2/3] overflow-hidden rounded-t-2xl bg-slate-900">
-                      <MoviePosterImage
-                        src={poster}
-                        alt={movie.title}
-                        sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, 50vw"
-                        className="object-cover transition duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  </Link>
-
-                  <div className="p-4 sm:p-5">
-                    <Link data-remember-scroll href={movieHref}>
-                      <h3 className="line-clamp-2 min-h-11 text-lg font-black leading-snug text-white transition group-hover:text-yellow-100 min-[460px]:text-sm sm:min-h-12 sm:text-base">
-                        {movie.title}
-                      </h3>
-                    </Link>
-
-                    <p className="mt-2 text-sm font-bold text-slate-400 min-[460px]:text-xs">
-                      Released: {releaseDate || "TBA"}
-                    </p>
-
-                    {genreLabels.length > 0 ? (
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {genreLabels.map((genreName) => (
-                          <span
-                            key={genreName}
-                            className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] font-bold text-slate-300"
-                          >
-                            {genreName}
+                return (
+                  <article
+                    key={movie.id}
+                    className="group overflow-hidden rounded-[1.5rem] border border-slate-800/90 bg-slate-950/85 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10"
+                  >
+                    <Link data-remember-scroll href={movieHref} className="block">
+                      <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
+                        <MoviePosterImage
+                          src={poster}
+                          alt={movie.title}
+                          sizes="(min-width: 1536px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+                          className="object-cover transition duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/25 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                        <div className="absolute left-4 top-4 flex items-center gap-3">
+                          <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/70 text-xl font-black text-white shadow-lg shadow-yellow-400/20">
+                            {lovedPercentForMovie(movie)}
                           </span>
-                        ))}
+                          <span className="rounded-full border border-white/15 bg-black/45 px-3 py-1 text-xs font-black text-white backdrop-blur">
+                            {primaryGenre} Fans
+                          </span>
+                        </div>
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <h3 className="line-clamp-2 text-2xl font-black leading-tight text-white">
+                            {movie.title}
+                          </h3>
+                          <p className="mt-1 text-sm font-bold text-slate-300">
+                            {releaseDate || "TBA"} · {fanCountForMovie(movie).toLocaleString()} fan reactions
+                          </p>
+                        </div>
                       </div>
-                    ) : null}
-
-                    <div className="my-4 border-t border-slate-800" />
-
-                    <Link
-                      data-remember-scroll
-                      href={rateHref}
-                      className="-m-1 block rounded-xl p-1 transition hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/70"
-                      aria-label={`Rate ${movie.title}`}
-                    >
-                      <PopScoreDisplay
-                        movieId={String(movie.id)}
-                        variant="card"
-                      />
                     </Link>
 
-                    <div className="my-4 border-t border-slate-800" />
+                    <div className="space-y-4 p-4">
+                      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                        <Link
+                          data-remember-scroll
+                          href={rateHref}
+                          className="rounded-2xl border border-yellow-400/15 bg-yellow-400/10 p-3 transition hover:border-yellow-400/50 hover:bg-yellow-400/15"
+                          aria-label={`Rate ${movie.title}`}
+                        >
+                          <PopScoreDisplay movieId={String(movie.id)} variant="card" />
+                        </Link>
+                        <div className="rounded-2xl border border-slate-800 bg-black/25 px-3 py-2 text-sm font-black text-yellow-300">
+                          🔥 {lovedPercentForMovie(movie)}% Loved It
+                        </div>
+                      </div>
 
-                    <CoStarReactions
-                      movie={{
-                        genre: genreLabels[0],
-                        genreNames: genreLabels,
-                        movieId: String(movie.id),
-                        movieTitle: movie.title,
-                        posterPath: movie.poster_path,
-                        releaseDate: movie.release_date,
-                      }}
-                      movieId={String(movie.id)}
-                    />
+                      {genreLabels.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {genreLabels.map((genreName) => (
+                            <span
+                              key={genreName}
+                              className="rounded-full border border-slate-700/80 bg-slate-900/80 px-3 py-1 text-xs font-bold text-slate-300"
+                            >
+                              {genreName}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
 
-                    <div className="mt-4">
+                      <CoStarReactions
+                        variant="compact"
+                        movie={{
+                          genre: genreLabels[0],
+                          genreNames: genreLabels,
+                          movieId: String(movie.id),
+                          movieTitle: movie.title,
+                          posterPath: movie.poster_path,
+                          releaseDate: movie.release_date,
+                        }}
+                        movieId={String(movie.id)}
+                      />
+
                       <AddToWatchlistButton
                         movie={{
                           genre: genreLabels[0],
@@ -275,21 +459,21 @@ export default async function Home({
                           posterPath: movie.poster_path,
                           releaseDate: movie.release_date,
                         }}
-                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300"
+                        className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-3 py-3 text-xs font-black text-slate-300 transition hover:border-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300"
                       />
                     </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-gray-800 bg-gray-900 p-8 text-gray-300">
-            {query
-              ? `No movies found for "${query}".`
-              : "No movies are available right now."}
-          </div>
-        )}
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/90 p-8 text-slate-300">
+              {query
+                ? `No movies found for "${query}".`
+                : "No movies are available right now."}
+            </div>
+          )}
+        </section>
       </section>
     </main>
   );
