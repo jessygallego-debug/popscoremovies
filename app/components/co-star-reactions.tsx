@@ -141,8 +141,8 @@ export default function CoStarReactions({
 
       <p className="mt-2 text-center text-[11px] font-bold text-slate-500">
         {total === 0
-          ? "No reactions yet"
-          : `${total.toLocaleString()} ${total === 1 ? "reaction" : "reactions"}`}
+          ? "Total reactions: 0"
+          : `Total reactions: ${total.toLocaleString()}`}
       </p>
       {message ? (
         <p className="mt-2 text-center text-[11px] font-bold text-yellow-300">
