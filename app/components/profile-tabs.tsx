@@ -1168,6 +1168,7 @@ function RecentActivityCard({
                 className="grid grid-cols-[52px_minmax(0,1fr)] gap-4 py-4 sm:grid-cols-[52px_minmax(0,1fr)_auto]"
               >
                 <MoviePoster
+                  movieId={rating.movieId}
                   path={rating.posterPath}
                   title={rating.movieTitle}
                   size="small"
@@ -1216,7 +1217,11 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
           key={rating.id}
           className="flex gap-4 rounded-2xl border border-slate-800 bg-slate-950/90 p-4"
         >
-          <MoviePoster path={rating.posterPath} title={rating.movieTitle} />
+          <MoviePoster
+            movieId={rating.movieId}
+            path={rating.posterPath}
+            title={rating.movieTitle}
+          />
           <div className="min-w-0 flex-1">
             <h3 className="line-clamp-2 font-black text-white">
               {rating.movieTitle}
@@ -1261,7 +1266,11 @@ function WatchlistGrid({
           className="rounded-2xl border border-slate-800 bg-slate-950/90 p-4"
         >
           <div className="flex gap-4">
-            <MoviePoster path={movie.posterPath} title={movie.movieTitle} />
+            <MoviePoster
+              movieId={movie.movieId}
+              path={movie.posterPath}
+              title={movie.movieTitle}
+            />
             <div className="min-w-0 flex-1">
               <h3 className="line-clamp-2 font-black text-white">
                 {movie.movieTitle}
@@ -1336,16 +1345,16 @@ function DiscoverRecommendations({
 
   return (
     <div>
-      <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible lg:grid lg:grid-cols-5 xl:grid-cols-8 lg:gap-3">
+      <div className="flex flex-wrap items-center gap-3 overflow-visible pb-1">
         {PROFILE_GENRES.map((nextGenre) => (
           <button
             key={nextGenre.key}
             type="button"
             onClick={() => setGenre(nextGenre.key)}
-            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-black lg:w-full ${
+            className={`inline-flex min-h-12 max-w-full shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-5 py-2 text-sm font-black leading-none transition ${
               genre === nextGenre.key
                 ? "border-yellow-400 bg-yellow-400 text-black"
-                : "border-slate-700 bg-slate-950 text-slate-300"
+                : "border-slate-700 bg-slate-950 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
             }`}
           >
             {nextGenre.label}
@@ -1441,27 +1450,73 @@ function SectionCard({
 }
 
 function MoviePoster({
+  movieId,
   path,
   size = "default",
   title,
 }: {
+  movieId?: string | null;
   path?: string | null;
   size?: "default" | "small";
   title: string;
 }) {
-  const poster = posterUrl(path ?? null);
+  const [fallbackPath, setFallbackPath] = useState<string | null>(null);
+  const poster = posterUrl(path ?? fallbackPath ?? null);
   const dimensions = size === "small" ? "h-[78px] w-[52px]" : "h-28 w-20";
+  const initials = title
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    if (path || !movieId) {
+      return () => {
+        isCurrent = false;
+      };
+    }
+
+    fetch(`/api/movie-poster?movie=${encodeURIComponent(movieId)}`)
+      .then((response) => response.json())
+      .then((data: { posterPath?: string | null }) => {
+        if (isCurrent && data.posterPath) {
+          setFallbackPath(data.posterPath);
+        }
+      })
+      .catch(() => null);
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [movieId, path]);
 
   return (
     <div
       className={`relative shrink-0 overflow-hidden rounded-xl bg-slate-900 ${dimensions}`}
     >
-      <MoviePosterImage
-        src={poster}
-        alt={title}
-        sizes={size === "small" ? "52px" : "80px"}
-        className="object-cover"
-      />
+      {poster ? (
+        <MoviePosterImage
+          src={poster}
+          alt={title}
+          sizes={size === "small" ? "52px" : "80px"}
+          className="object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-black px-2 text-center">
+          <span className="text-base font-black text-yellow-300">
+            {initials || "PS"}
+          </span>
+          {size === "default" ? (
+            <span className="mt-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+              No Poster
+            </span>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

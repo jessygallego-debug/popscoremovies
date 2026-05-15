@@ -704,6 +704,37 @@ export async function saveUserQuickReaction({
   );
 
   if (existingRows[0]) {
+    const patchBody: {
+      genre?: string;
+      genre_names?: string[];
+      movie_title?: string;
+      poster_path?: string | null;
+      quick_reaction: ProfileQuickReaction;
+      release_date?: string | null;
+    } = {
+      quick_reaction: quickReaction,
+    };
+
+    if (movie.genre ?? movie.genreNames?.[0]) {
+      patchBody.genre = movie.genre ?? movie.genreNames?.[0];
+    }
+
+    if (movie.genreNames?.length) {
+      patchBody.genre_names = movie.genreNames;
+    }
+
+    if (movie.movieTitle) {
+      patchBody.movie_title = movie.movieTitle;
+    }
+
+    if (movie.posterPath) {
+      patchBody.poster_path = movie.posterPath;
+    }
+
+    if (movie.releaseDate) {
+      patchBody.release_date = movie.releaseDate;
+    }
+
     await supabaseFetch(
       `/movie_ratings?id=eq.${encodeURIComponent(existingRows[0].id)}`,
       {
@@ -711,9 +742,7 @@ export async function saveUserQuickReaction({
         headers: {
           Prefer: "return=minimal",
         },
-        body: JSON.stringify({
-          quick_reaction: quickReaction,
-        }),
+        body: JSON.stringify(patchBody),
       }
     );
 
