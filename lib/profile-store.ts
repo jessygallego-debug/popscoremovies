@@ -63,6 +63,11 @@ export type WatchlistMovie = MovieMeta & {
   created_at: string;
 };
 
+export type UserRatingCount = {
+  userId: string;
+  ratingsCount: number;
+};
+
 type RatingQuestion = {
   key: string;
   weight: number;
@@ -625,6 +630,15 @@ function mapRatingRow(row: {
   };
 }
 
+function rowHasPopScoreRating(row: {
+  ratings?: Record<string, number> | null;
+  weights?: { key: string; weight: number }[] | null;
+}) {
+  return Boolean(
+    row.weights?.length && row.ratings && Object.keys(row.ratings).length > 0
+  );
+}
+
 export async function saveUserMovieRating({
   genre,
   movie,
@@ -740,6 +754,50 @@ export async function getUserRatings(userId: string) {
   );
 
   return rows.map(mapRatingRow);
+}
+
+export async function getAllUserRatingCounts(): Promise<UserRatingCount[]> {
+  type RatingCountRow = {
+    movie_id: string;
+    ratings: Record<string, number> | null;
+    user_id: string;
+    weights: { key: string; weight: number }[] | null;
+  };
+
+  const pageSize = 1000;
+  const rows: RatingCountRow[] = [];
+  let offset = 0;
+
+  for (;;) {
+    const page = await supabaseFetch<RatingCountRow[]>(
+      `/movie_ratings?select=user_id,movie_id,ratings,weights&order=user_id.asc,movie_id.asc&limit=${pageSize}&offset=${offset}`
+    );
+
+    rows.push(...page);
+
+    if (page.length < pageSize) {
+      break;
+    }
+
+    offset += pageSize;
+  }
+
+  const moviesByUser = new Map<string, Set<string>>();
+
+  rows.forEach((row) => {
+    if (!rowHasPopScoreRating(row)) {
+      return;
+    }
+
+    const movies = moviesByUser.get(row.user_id) ?? new Set<string>();
+    movies.add(row.movie_id);
+    moviesByUser.set(row.user_id, movies);
+  });
+
+  return Array.from(moviesByUser.entries()).map(([userId, movieIds]) => ({
+    ratingsCount: movieIds.size,
+    userId,
+  }));
 }
 
 export async function addToWatchlist(movie: MovieMeta & { genre?: string }) {

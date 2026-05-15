@@ -11,7 +11,7 @@ export default async function ProfilePage({
 
   return (
     <main className="min-h-screen bg-black bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_34%),linear-gradient(180deg,#020617_0%,#000_50%,#020617_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
-      <section className="mx-auto max-w-6xl">
+      <section className="mx-auto max-w-[1500px]">
         <div className="flex items-start justify-between gap-4">
           <BrandHomeLink />
           <Link
