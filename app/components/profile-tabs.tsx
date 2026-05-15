@@ -43,23 +43,31 @@ function yearFromDate(date?: string | null) {
   return date?.split("-")[0] ?? "";
 }
 
+function hasPopScoreRating(rating: UserMovieRating) {
+  return rating.weights.length > 0 && Object.keys(rating.ratings).length > 0;
+}
+
 function getProfileStatSummary(ratings: UserMovieRating[]): ProfileStatSummary {
+  const popScoreRatings = ratings.filter(hasPopScoreRating);
   const average =
-    ratings.length > 0
+    popScoreRatings.length > 0
       ? Math.round(
-          ratings.reduce((total, rating) => total + rating.popscore, 0) /
-            ratings.length
+          popScoreRatings.reduce(
+            (total, rating) => total + rating.popscore,
+            0
+          ) / popScoreRatings.length
         )
       : 0;
   const totalMovieReactions = ratings.filter(
     (rating) =>
-      rating.quick_reaction === "loved_it" ||
-      rating.quick_reaction === "worth_watching" ||
-      rating.quick_reaction === "trash"
+      !hasPopScoreRating(rating) &&
+      (rating.quick_reaction === "loved_it" ||
+        rating.quick_reaction === "worth_watching" ||
+        rating.quick_reaction === "trash")
   ).length;
   const totals = new Map<string, { count: number; total: number }>();
 
-  ratings.forEach((rating) => {
+  popScoreRatings.forEach((rating) => {
     const genre = rating.genreNames[0] ?? genreLabelForKey(rating.genre);
     const current = totals.get(genre) ?? { count: 0, total: 0 };
     totals.set(genre, {
@@ -95,6 +103,7 @@ function ProfileHeader({
 }) {
   const avatar = avatarForKey(profile.avatar_key);
   const stats = getProfileStatSummary(ratings);
+  const totalMoviesRated = ratings.filter(hasPopScoreRating).length;
 
   return (
     <div className="rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-black/30">
@@ -124,7 +133,11 @@ function ProfileHeader({
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard icon="▣" label="Total Movies Rated" value={ratings.length} />
+        <StatCard
+          icon="▣"
+          label="Total Movies Rated"
+          value={totalMoviesRated}
+        />
         <StatCard
           icon="♡"
           label="Total Movie Reactions"
@@ -133,7 +146,7 @@ function ProfileHeader({
         <StatCard
           icon="↗"
           label="Average PopScore"
-          value={ratings.length ? `${stats.average}%` : "NR"}
+          value={totalMoviesRated ? `${stats.average}%` : "NR"}
         />
         <StatCard
           icon="☆"
@@ -441,7 +454,9 @@ export default function ProfileTabs({ username }: { username: string }) {
         ))}
       </div>
 
-      {activeTab === "stats" ? <RatingsHistory ratings={ratings} /> : null}
+      {activeTab === "stats" ? (
+        <RatingsHistory ratings={ratings.filter(hasPopScoreRating)} />
+      ) : null}
       {activeTab === "watchlist" ? (
         <WatchlistGrid
           watchlist={watchlist}
@@ -455,7 +470,11 @@ export default function ProfileTabs({ username }: { username: string }) {
         />
       ) : null}
       {activeTab === "discover" ? (
-        <DiscoverRecommendations ratedMovieIds={ratings.map((rating) => rating.movieId)} />
+        <DiscoverRecommendations
+          ratedMovieIds={ratings
+            .filter(hasPopScoreRating)
+            .map((rating) => rating.movieId)}
+        />
       ) : null}
     </div>
   );
