@@ -477,10 +477,16 @@ function getPercentileStatus({
   }
 
   const rank = counts.filter((count) => count > totalMoviesRated).length + 1;
-  const topPercentile = Math.max(
-    1,
-    Math.min(100, Math.ceil((rank / totalRaters) * 100))
-  );
+  const topPercentile =
+    totalRaters <= 1
+      ? 1
+      : Math.max(
+          1,
+          Math.min(
+            100,
+            Math.round(1 + ((rank - 1) / (totalRaters - 1)) * 99)
+          )
+        );
 
   return { rank, topPercentile, totalRaters };
 }
@@ -563,10 +569,10 @@ function ProfileSidebar({
   summary: ProfileStatSummary;
 }) {
   const avatar = avatarForKey(profile.avatar_key);
-  const navItems: { icon: string; key: TabKey; label: string }[] = [
-    { icon: "⌂", key: "stats", label: "Overview" },
-    { icon: "▥", key: "ratings", label: "Ratings" },
-    { icon: "◇", key: "achievements", label: "Achievements" },
+  const navItems: { key: TabKey; label: string }[] = [
+    { key: "stats", label: "Overview" },
+    { key: "ratings", label: "Ratings" },
+    { key: "achievements", label: "Achievements" },
   ];
 
   return (
@@ -594,13 +600,12 @@ function ProfileSidebar({
             key={item.key}
             type="button"
             onClick={() => onTabChange(item.key)}
-            className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${
+            className={`flex w-full items-center rounded-2xl border px-5 py-3 text-left text-sm font-black transition ${
               activeTab === item.key
                 ? "border-yellow-400/50 bg-yellow-400/10 text-yellow-300"
                 : "border-transparent text-slate-300 hover:border-slate-700 hover:bg-white/5 hover:text-white"
             }`}
           >
-            <span className="w-5 text-center text-lg text-yellow-400">{item.icon}</span>
             {item.label}
           </button>
         ))}
@@ -646,63 +651,52 @@ function TierBadge({
   const dimensions =
     size === "large"
       ? {
-          icon: "h-14 w-14 text-4xl",
-          outer: "h-28 w-24",
-          shine: "top-3 h-7",
-          stripe: "bottom-4 h-1.5 w-10",
+          icon: "text-4xl",
+          outer: "h-24 w-24",
+          shine: "top-4 h-3",
+          stripe: "bottom-3 h-1.5 w-10",
         }
       : {
-          icon: "h-7 w-7 text-xl",
-          outer: "h-12 w-10",
-          shine: "top-2 h-4",
-          stripe: "bottom-2 h-1 w-6",
+          icon: "text-xl",
+          outer: "h-12 w-12",
+          shine: "top-2 h-2",
+          stripe: "bottom-1.5 h-1 w-6",
         };
   const mutedStyle = isMuted
     ? {
         background:
-          "linear-gradient(145deg,#64748b 0%,#1e293b 45%,#020617 100%)",
-        borderColor: "#64748b",
-        boxShadow: "none",
+          "linear-gradient(145deg,rgba(15,23,42,0.86),rgba(2,6,23,0.98))",
+        borderColor: "#475569",
+        boxShadow: "0 10px 22px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08)",
         filter: "grayscale(1)",
-        opacity: 0.45,
+        opacity: 0.52,
       }
     : {
-        background: `linear-gradient(145deg,#f8fafc 0%,${tier.accent} 34%,#0f172a 70%,${tier.accent} 100%)`,
+        background: `linear-gradient(145deg,${tier.accent}33 0%,rgba(15,23,42,0.96) 38%,rgba(2,6,23,0.98) 100%)`,
         borderColor: tier.accent,
-        boxShadow: `0 0 28px ${tier.accent}45, inset 0 1px 0 rgba(255,255,255,0.35)`,
+        boxShadow: `0 0 22px ${tier.accent}55, 0 12px 26px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -14px 22px rgba(0,0,0,0.36)`,
       };
 
   return (
     <span
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden border shadow-lg ${dimensions.outer}`}
-      style={{
-        ...mutedStyle,
-        clipPath:
-          "polygon(50% 0, 92% 16%, 100% 60%, 50% 100%, 0 60%, 8% 16%)",
-      }}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border font-black shadow-lg transition duration-300 ${dimensions.outer}`}
+      style={mutedStyle}
     >
+      <span className="absolute inset-0 rounded-full bg-black/20" />
+      <span className="absolute inset-1 rounded-full border border-white/5" />
+      <span className={`absolute inset-x-5 ${dimensions.shine} rounded-full bg-white/20 blur-sm`} />
+      <span className="absolute bottom-0 h-1/2 w-full bg-gradient-to-t from-black/35 to-transparent" />
       <span
-        className="absolute inset-1 bg-slate-950"
+        className={`relative z-10 leading-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] ${dimensions.icon}`}
         style={{
-          background: `radial-gradient(circle at 32% 16%,rgba(255,255,255,0.26),transparent 30%),linear-gradient(145deg,${tier.accent}66 0%,#020617 64%)`,
-          clipPath:
-            "polygon(50% 0, 92% 16%, 100% 60%, 50% 100%, 0 60%, 8% 16%)",
-        }}
-      />
-      <span
-        className={`absolute inset-x-4 ${dimensions.shine} rounded-full bg-white/35 blur-md`}
-      />
-      <span
-        className={`relative z-10 flex items-center justify-center rounded-full border border-white/25 text-white shadow-inner ${dimensions.icon}`}
-        style={{
-          background: `radial-gradient(circle at 32% 22%,rgba(255,255,255,0.85),${tier.accent} 42%,#020617 100%)`,
+          color: isMuted ? "#94a3b8" : tier.accent,
         }}
       >
-        {tier.icon}
+        {isMuted ? "🔒" : tier.icon}
       </span>
       <span
-        className={`absolute ${dimensions.stripe} z-10 rounded-full border border-white/20`}
-        style={{ backgroundColor: tier.accent }}
+        className={`absolute ${dimensions.stripe} z-10 rounded-full border border-white/15`}
+        style={{ backgroundColor: isMuted ? "#475569" : tier.accent }}
       />
     </span>
   );
@@ -763,7 +757,7 @@ function PopScoreStatusCard({
               label="Rating Percentile"
               value={`Top ${percentile.topPercentile}%`}
             />
-            <MiniMetric label="All-Time Rank" value={`#${percentile.rank}`} />
+            <MiniMetric label="Ranking" value={`#${percentile.rank}`} />
           </div>
         </div>
 
