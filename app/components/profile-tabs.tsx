@@ -54,13 +54,16 @@ type RequirementType =
 type Achievement = {
   badgeText?: string;
   color:
+    | "black"
     | "blue"
+    | "butter"
     | "gold"
     | "grayRed"
     | "green"
     | "orange"
     | "purple"
-    | "silver";
+    | "silver"
+    | "teal";
   description: string;
   icon: string;
   id: string;
@@ -120,9 +123,9 @@ const ACHIEVEMENTS: Achievement[] = [
     id: "movie_buff",
     name: "Movie Buff",
     description: "Rated 50 movies.",
-    icon: "🍿",
+    icon: "🎞",
     badgeText: "50",
-    color: "blue",
+    color: "purple",
     requirementType: "ratings_count",
     requirementValue: 50,
   },
@@ -130,9 +133,9 @@ const ACHIEVEMENTS: Achievement[] = [
     id: "century_club",
     name: "Century Club",
     description: "Rated 100 movies.",
-    icon: "🎟",
+    icon: "🎬",
     badgeText: "100",
-    color: "gold",
+    color: "black",
     requirementType: "ratings_count",
     requirementValue: 100,
   },
@@ -140,8 +143,8 @@ const ACHIEVEMENTS: Achievement[] = [
     id: "genre_explorer",
     name: "Genre Explorer",
     description: "Rated movies across 5 genres.",
-    icon: "🎬",
-    color: "green",
+    icon: "▦",
+    color: "teal",
     requirementType: "unique_genres_rated",
     requirementValue: 5,
   },
@@ -194,8 +197,8 @@ const ACHIEVEMENTS: Achievement[] = [
     id: "buttery_fan",
     name: "Buttery Fan",
     description: "You know a great movie when you see one.",
-    icon: "🧈",
-    color: "gold",
+    icon: "🍿",
+    color: "butter",
     requirementType: "ratings_90_plus",
     requirementValue: 10,
   },
@@ -276,6 +279,16 @@ const ACHIEVEMENT_BADGE_VISUALS: Record<
   Achievement["color"],
   AchievementBadgeVisual
 > = {
+  black: {
+    border: "#e5e7eb",
+    frame:
+      "linear-gradient(145deg,#f8fafc 0%,#64748b 18%,#111827 46%,#020617 76%,#facc15 100%)",
+    glow: "rgba(148,163,184,0.34)",
+    iconBackground:
+      "radial-gradient(circle at 32% 22%,#f8fafc 0%,#64748b 34%,#111827 72%,#020617 100%)",
+    surface:
+      "radial-gradient(circle at 32% 14%,rgba(255,255,255,0.26),transparent 28%),linear-gradient(145deg,#1f2937 0%,#020617 62%,#111827 100%)",
+  },
   blue: {
     border: "#93c5fd",
     frame: "linear-gradient(145deg,#bfdbfe 0%,#2563eb 34%,#0f172a 68%,#38bdf8 100%)",
@@ -284,6 +297,16 @@ const ACHIEVEMENT_BADGE_VISUALS: Record<
       "radial-gradient(circle at 32% 22%,#dbeafe 0%,#60a5fa 36%,#1d4ed8 72%,#020617 100%)",
     surface:
       "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.28),transparent 30%),linear-gradient(145deg,#172554 0%,#1d4ed8 48%,#020617 100%)",
+  },
+  butter: {
+    border: "#fef08a",
+    frame:
+      "linear-gradient(145deg,#fff7ad 0%,#facc15 24%,#f59e0b 48%,#7c2d12 78%,#fde68a 100%)",
+    glow: "rgba(250,204,21,0.72)",
+    iconBackground:
+      "radial-gradient(circle at 30% 18%,#fffbeb 0%,#fde047 32%,#f59e0b 64%,#451a03 100%)",
+    surface:
+      "radial-gradient(circle at 34% 14%,rgba(255,255,255,0.42),transparent 30%),linear-gradient(145deg,#854d0e 0%,#f59e0b 42%,#451a03 100%)",
   },
   gold: {
     border: "#fde68a",
@@ -338,6 +361,16 @@ const ACHIEVEMENT_BADGE_VISUALS: Record<
       "radial-gradient(circle at 32% 22%,#ffffff 0%,#cbd5e1 36%,#64748b 72%,#020617 100%)",
     surface:
       "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.3),transparent 30%),linear-gradient(145deg,#334155 0%,#64748b 50%,#020617 100%)",
+  },
+  teal: {
+    border: "#99f6e4",
+    frame:
+      "linear-gradient(145deg,#ccfbf1 0%,#14b8a6 30%,#0f766e 66%,#5eead4 100%)",
+    glow: "rgba(20,184,166,0.45)",
+    iconBackground:
+      "radial-gradient(circle at 32% 22%,#f0fdfa 0%,#5eead4 36%,#0d9488 72%,#020617 100%)",
+    surface:
+      "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.28),transparent 30%),linear-gradient(145deg,#134e4a 0%,#0d9488 48%,#020617 100%)",
   },
 };
 
@@ -914,79 +947,166 @@ function ProfileStatsCard({
   );
 }
 
+function ButteryFanIcon({ isUnlocked }: { isUnlocked: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`relative block h-full w-full ${isUnlocked ? "" : "opacity-70"}`}
+    >
+      <span className="absolute left-2 top-1 h-1.5 w-1.5 rounded-full bg-yellow-100 shadow-[0_0_10px_rgba(254,240,138,0.9)]" />
+      <span className="absolute right-2 top-2 h-1 w-1 rounded-full bg-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.9)]" />
+      <span className="absolute left-1/2 top-2 h-[34%] w-[62%] -translate-x-1/2">
+        <span className="absolute left-0 top-3 h-4 w-4 rounded-full bg-yellow-50 shadow-[0_0_12px_rgba(254,240,138,0.7)]" />
+        <span className="absolute left-3 top-0 h-5 w-5 rounded-full bg-amber-100 shadow-[0_0_14px_rgba(250,204,21,0.7)]" />
+        <span className="absolute right-3 top-1 h-5 w-5 rounded-full bg-yellow-50 shadow-[0_0_14px_rgba(254,240,138,0.7)]" />
+        <span className="absolute right-0 top-4 h-4 w-4 rounded-full bg-amber-200 shadow-[0_0_12px_rgba(250,204,21,0.7)]" />
+        <span className="absolute left-1/2 top-5 h-4 w-4 -translate-x-1/2 rounded-full bg-yellow-100" />
+      </span>
+      <span
+        className="absolute left-1/2 top-[38%] h-[44%] w-[48%] -translate-x-1/2 overflow-hidden rounded-b-lg rounded-t-sm border border-yellow-100/80 bg-red-600 shadow-[0_0_18px_rgba(250,204,21,0.45)]"
+        style={{ clipPath: "polygon(8% 0, 92% 0, 78% 100%, 22% 100%)" }}
+      >
+        <span className="absolute inset-y-0 left-[21%] w-[16%] bg-yellow-50" />
+        <span className="absolute inset-y-0 right-[21%] w-[16%] bg-yellow-50" />
+        <span className="absolute inset-x-0 top-0 h-[28%] bg-yellow-300" />
+      </span>
+      <span className="absolute left-[35%] top-[46%] h-5 w-2 rounded-full bg-yellow-300 shadow-[0_0_10px_rgba(250,204,21,0.9)]" />
+      <span className="absolute right-[35%] top-[43%] h-6 w-2 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(250,204,21,0.9)]" />
+    </span>
+  );
+}
+
 function AchievementBadge({
   achievement,
   compact = false,
   showCaption = true,
+  size,
   summary,
 }: {
   achievement: Achievement;
   compact?: boolean;
   showCaption?: boolean;
+  size?: "small" | "medium" | "large";
   summary: ProfileStatSummary;
 }) {
   const progress = getAchievementProgress(achievement, summary);
   const visual = ACHIEVEMENT_BADGE_VISUALS[achievement.color];
   const isUnlocked = progress.isUnlocked;
-  const dimensions = compact
-    ? {
-        badgeText: "bottom-3 text-[10px]",
-        icon: "h-9 w-9 text-2xl",
-        outer: "h-[76px] w-[76px]",
-        shine: "top-2 h-5",
-      }
-    : {
-        badgeText: "bottom-5 text-xs",
-        icon: "h-14 w-14 text-3xl",
-        outer: "h-24 w-24",
-        shine: "top-3 h-7",
-      };
+  const resolvedSize = size ?? (compact ? "small" : "medium");
+  const dimensions = {
+    large: {
+      badgeText: "bottom-5 text-xs",
+      icon: "h-16 w-16 text-4xl",
+      laurel: "top-[22px] h-3 w-2",
+      outer: "h-28 w-28",
+      shine: "top-3 h-8",
+    },
+    medium: {
+      badgeText: "bottom-5 text-xs",
+      icon: "h-14 w-14 text-3xl",
+      laurel: "top-[18px] h-2.5 w-1.5",
+      outer: "h-24 w-24",
+      shine: "top-3 h-7",
+    },
+    small: {
+      badgeText: "bottom-3 text-[10px]",
+      icon: "h-10 w-10 text-2xl",
+      laurel: "top-[15px] h-2 w-1.5",
+      outer: "h-[78px] w-[78px]",
+      shine: "top-2 h-5",
+    },
+  }[resolvedSize];
+  const shieldClip =
+    "polygon(50% 0, 88% 14%, 96% 52%, 76% 88%, 50% 100%, 24% 88%, 4% 52%, 12% 14%)";
+  const lockedFrame =
+    "linear-gradient(145deg,#475569 0%,#1f2937 36%,#020617 72%,#334155 100%)";
+  const lockedSurface =
+    "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.14),transparent 30%),linear-gradient(145deg,#334155 0%,#020617 72%)";
+  const isButteryFan = achievement.id === "buttery_fan";
+  const progressLabel = progress.isUnlocked ? "Unlocked" : progress.text;
 
   return (
     <div className="group relative flex flex-col items-center text-center">
       <span
+        aria-hidden="true"
+        className={`absolute left-1 top-2 flex flex-col gap-1 transition duration-300 ${
+          isUnlocked ? "opacity-70" : "opacity-25 grayscale"
+        }`}
+      >
+        {[0, 1, 2].map((leaf) => (
+          <span
+            key={leaf}
+            className={`${dimensions.laurel} rounded-full`}
+            style={{
+              background: isUnlocked ? visual.border : "#64748b",
+              transform: `rotate(${-32 + leaf * 16}deg)`,
+            }}
+          />
+        ))}
+      </span>
+      <span
+        aria-hidden="true"
+        className={`absolute right-1 top-2 flex flex-col gap-1 transition duration-300 ${
+          isUnlocked ? "opacity-70" : "opacity-25 grayscale"
+        }`}
+      >
+        {[0, 1, 2].map((leaf) => (
+          <span
+            key={leaf}
+            className={`${dimensions.laurel} rounded-full`}
+            style={{
+              background: isUnlocked ? visual.border : "#64748b",
+              transform: `rotate(${32 - leaf * 16}deg)`,
+            }}
+          />
+        ))}
+      </span>
+      <span
         aria-label={`${achievement.name}: ${progress.text}`}
-        className={`${dimensions.outer} relative flex items-center justify-center overflow-hidden border font-black text-white shadow-lg transition group-hover:-translate-y-1`}
+        className={`${dimensions.outer} relative flex items-center justify-center overflow-hidden border font-black text-white shadow-lg transition duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]`}
         style={{
-          background: isUnlocked
-            ? visual.frame
-            : "linear-gradient(145deg,#475569 0%,#1e293b 42%,#020617 100%)",
+          background: isUnlocked ? visual.frame : lockedFrame,
           borderColor: isUnlocked ? visual.border : "#64748b",
           boxShadow: isUnlocked
-            ? `0 0 24px ${visual.glow}, inset 0 1px 0 rgba(255,255,255,0.35)`
-            : "inset 0 1px 0 rgba(255,255,255,0.12)",
-          clipPath:
-            "polygon(50% 0, 92% 16%, 100% 60%, 50% 100%, 0 60%, 8% 16%)",
+            ? `0 0 24px ${visual.glow}, 0 14px 28px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.42), inset 0 -12px 24px rgba(0,0,0,0.36)`
+            : "0 10px 22px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.12)",
+          clipPath: shieldClip,
           filter: isUnlocked ? "saturate(1.15)" : "grayscale(1)",
-          opacity: isUnlocked ? 1 : 0.5,
+          opacity: isUnlocked ? 1 : 0.48,
         }}
       >
+        <span className="absolute inset-0 bg-black/10" />
         <span
           className="absolute inset-1"
           style={{
-            background: isUnlocked
-              ? visual.surface
-              : "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.14),transparent 30%),linear-gradient(145deg,#334155 0%,#020617 72%)",
-            clipPath:
-              "polygon(50% 0, 92% 16%, 100% 60%, 50% 100%, 0 60%, 8% 16%)",
+            background: isUnlocked ? visual.surface : lockedSurface,
+            clipPath: shieldClip,
+            boxShadow:
+              "inset 0 10px 18px rgba(255,255,255,0.1), inset 0 -16px 24px rgba(0,0,0,0.35)",
           }}
         />
         <span
-          className={`absolute inset-x-4 ${dimensions.shine} rounded-full bg-white/30 blur-md`}
+          className={`absolute inset-x-4 ${dimensions.shine} rounded-full bg-white/35 blur-md transition group-hover:bg-white/45`}
         />
+        <span className="absolute left-1/2 top-3 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white/70 shadow-[0_0_12px_rgba(255,255,255,0.8)]" />
         <span
-          className={`relative z-10 flex items-center justify-center rounded-full border border-white/25 shadow-inner ${dimensions.icon}`}
+          className={`relative z-10 flex items-center justify-center overflow-hidden rounded-full border border-white/30 shadow-[inset_0_2px_8px_rgba(255,255,255,0.22),inset_0_-8px_12px_rgba(0,0,0,0.34)] ${dimensions.icon}`}
           style={{
             background: isUnlocked
               ? visual.iconBackground
               : "radial-gradient(circle at 32% 22%,#cbd5e1 0%,#64748b 45%,#020617 100%)",
+            textShadow: isUnlocked ? "0 2px 8px rgba(0,0,0,0.5)" : "none",
           }}
         >
-          {achievement.icon}
+          {isButteryFan ? (
+            <ButteryFanIcon isUnlocked={isUnlocked} />
+          ) : (
+            <span className="relative z-10">{achievement.icon}</span>
+          )}
         </span>
         {achievement.badgeText ? (
           <span
-            className={`absolute ${dimensions.badgeText} z-10 rounded-full border border-white/20 bg-black/60 px-2 py-0.5 font-black text-white shadow-sm`}
+            className={`absolute ${dimensions.badgeText} z-10 rounded-full border border-white/25 bg-black/65 px-2 py-0.5 font-black text-white shadow-[0_0_10px_rgba(0,0,0,0.35)]`}
           >
             {achievement.badgeText}
           </span>
@@ -998,7 +1118,7 @@ function AchievementBadge({
             {achievement.name}
           </p>
           <p className="mt-1 line-clamp-1 text-xs font-bold text-slate-500">
-            {progress.isUnlocked ? "Unlocked" : progress.text}
+            {progressLabel}
           </p>
         </>
       ) : null}
@@ -1226,7 +1346,7 @@ function AllAchievements({ summary }: { summary: ProfileStatSummary }) {
             <div className="flex items-center gap-4">
               <AchievementBadge
                 achievement={achievement}
-                compact
+                size="medium"
                 showCaption={false}
                 summary={summary}
               />
