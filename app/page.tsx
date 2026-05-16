@@ -284,12 +284,12 @@ export default async function Home({
           <ProfileMenu />
         </header>
 
-        <section className="grid gap-10 py-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(420px,1fr)] lg:items-center lg:py-16">
-          <div>
+        <section className="grid gap-8 py-10 lg:grid-cols-[minmax(390px,0.82fr)_minmax(520px,1fr)] lg:items-center lg:gap-12 lg:py-14">
+          <div className="max-w-[680px]">
             <div className="mb-5 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-yellow-300">
               Ratings that actually understand genre
             </div>
-            <h1 className="max-w-4xl text-5xl font-black leading-[0.94] text-white sm:text-7xl xl:text-8xl">
+            <h1 className="text-5xl font-black leading-[0.94] text-white sm:text-6xl xl:text-7xl">
               Discover Movies
               <br />
               Worth{" "}
@@ -298,11 +298,7 @@ export default async function Home({
                 <span className="absolute -bottom-2 left-0 h-3 w-full rounded-[50%] border-b-4 border-yellow-400/75 shadow-[0_12px_24px_rgba(250,204,21,0.42)]" />
               </span>
             </h1>
-            <p className="mt-7 max-w-2xl text-lg font-semibold leading-8 text-slate-300 sm:text-xl">
-              Movie ratings built for real fans -- because horror shouldn&apos;t be
-              scored like romance.
-            </p>
-            <div className="mt-8">
+            <div className="mt-8 max-w-[640px]">
               <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
             </div>
           </div>
