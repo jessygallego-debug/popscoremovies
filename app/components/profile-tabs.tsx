@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import MoviePosterImage from "@/app/components/movie-poster-image";
@@ -74,10 +75,9 @@ type Achievement = {
 
 type AchievementBadgeVisual = {
   border: string;
-  frame: string;
   glow: string;
-  iconBackground: string;
   surface: string;
+  text: string;
 };
 
 type PopScoreTier = {
@@ -96,7 +96,7 @@ const ACHIEVEMENTS: Achievement[] = [
     id: "first_rating",
     name: "First Rating",
     description: "Rated your first movie.",
-    icon: "★",
+    icon: "⭐",
     color: "gold",
     requirementType: "ratings_count",
     requirementValue: 1,
@@ -123,7 +123,7 @@ const ACHIEVEMENTS: Achievement[] = [
     id: "movie_buff",
     name: "Movie Buff",
     description: "Rated 50 movies.",
-    icon: "🎞",
+    icon: "🎬",
     badgeText: "50",
     color: "purple",
     requirementType: "ratings_count",
@@ -133,7 +133,7 @@ const ACHIEVEMENTS: Achievement[] = [
     id: "century_club",
     name: "Century Club",
     description: "Rated 100 movies.",
-    icon: "🎬",
+    icon: "💯",
     badgeText: "100",
     color: "black",
     requirementType: "ratings_count",
@@ -143,7 +143,7 @@ const ACHIEVEMENTS: Achievement[] = [
     id: "genre_explorer",
     name: "Genre Explorer",
     description: "Rated movies across 5 genres.",
-    icon: "▦",
+    icon: "🎭",
     color: "teal",
     requirementType: "unique_genres_rated",
     requirementValue: 5,
@@ -280,97 +280,64 @@ const ACHIEVEMENT_BADGE_VISUALS: Record<
   AchievementBadgeVisual
 > = {
   black: {
-    border: "#e5e7eb",
-    frame:
-      "linear-gradient(145deg,#f8fafc 0%,#64748b 18%,#111827 46%,#020617 76%,#facc15 100%)",
-    glow: "rgba(148,163,184,0.34)",
-    iconBackground:
-      "radial-gradient(circle at 32% 22%,#f8fafc 0%,#64748b 34%,#111827 72%,#020617 100%)",
-    surface:
-      "radial-gradient(circle at 32% 14%,rgba(255,255,255,0.26),transparent 28%),linear-gradient(145deg,#1f2937 0%,#020617 62%,#111827 100%)",
+    border: "#94a3b8",
+    glow: "rgba(148,163,184,0.28)",
+    surface: "linear-gradient(145deg,rgba(15,23,42,0.96),rgba(2,6,23,0.98))",
+    text: "#e5e7eb",
   },
   blue: {
-    border: "#93c5fd",
-    frame: "linear-gradient(145deg,#bfdbfe 0%,#2563eb 34%,#0f172a 68%,#38bdf8 100%)",
-    glow: "rgba(59,130,246,0.45)",
-    iconBackground:
-      "radial-gradient(circle at 32% 22%,#dbeafe 0%,#60a5fa 36%,#1d4ed8 72%,#020617 100%)",
-    surface:
-      "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.28),transparent 30%),linear-gradient(145deg,#172554 0%,#1d4ed8 48%,#020617 100%)",
+    border: "#60a5fa",
+    glow: "rgba(59,130,246,0.38)",
+    surface: "linear-gradient(145deg,rgba(15,23,42,0.96),rgba(2,6,23,0.98))",
+    text: "#bfdbfe",
   },
   butter: {
     border: "#fef08a",
-    frame:
-      "linear-gradient(145deg,#fff7ad 0%,#facc15 24%,#f59e0b 48%,#7c2d12 78%,#fde68a 100%)",
-    glow: "rgba(250,204,21,0.72)",
-    iconBackground:
-      "radial-gradient(circle at 30% 18%,#fffbeb 0%,#fde047 32%,#f59e0b 64%,#451a03 100%)",
-    surface:
-      "radial-gradient(circle at 34% 14%,rgba(255,255,255,0.42),transparent 30%),linear-gradient(145deg,#854d0e 0%,#f59e0b 42%,#451a03 100%)",
+    glow: "rgba(250,204,21,0.62)",
+    surface: "linear-gradient(145deg,rgba(69,26,3,0.9),rgba(2,6,23,0.98))",
+    text: "#fef08a",
   },
   gold: {
     border: "#fde68a",
-    frame: "linear-gradient(145deg,#fff7ad 0%,#facc15 32%,#92400e 66%,#f59e0b 100%)",
-    glow: "rgba(250,204,21,0.5)",
-    iconBackground:
-      "radial-gradient(circle at 32% 22%,#fff7ed 0%,#fde047 36%,#d97706 72%,#020617 100%)",
-    surface:
-      "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.34),transparent 30%),linear-gradient(145deg,#713f12 0%,#ca8a04 48%,#020617 100%)",
+    glow: "rgba(250,204,21,0.42)",
+    surface: "linear-gradient(145deg,rgba(30,41,59,0.96),rgba(2,6,23,0.98))",
+    text: "#fde047",
   },
   grayRed: {
     border: "#fca5a5",
-    frame: "linear-gradient(145deg,#cbd5e1 0%,#64748b 30%,#7f1d1d 70%,#ef4444 100%)",
-    glow: "rgba(239,68,68,0.35)",
-    iconBackground:
-      "radial-gradient(circle at 32% 22%,#fee2e2 0%,#94a3b8 36%,#991b1b 72%,#020617 100%)",
-    surface:
-      "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.24),transparent 30%),linear-gradient(145deg,#334155 0%,#7f1d1d 52%,#020617 100%)",
+    glow: "rgba(239,68,68,0.32)",
+    surface: "linear-gradient(145deg,rgba(30,41,59,0.96),rgba(2,6,23,0.98))",
+    text: "#fecaca",
   },
   green: {
     border: "#bef264",
-    frame: "linear-gradient(145deg,#ecfccb 0%,#84cc16 32%,#166534 68%,#22c55e 100%)",
-    glow: "rgba(132,204,22,0.45)",
-    iconBackground:
-      "radial-gradient(circle at 32% 22%,#f7fee7 0%,#bef264 36%,#16a34a 72%,#020617 100%)",
-    surface:
-      "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.28),transparent 30%),linear-gradient(145deg,#14532d 0%,#16a34a 48%,#020617 100%)",
+    glow: "rgba(132,204,22,0.38)",
+    surface: "linear-gradient(145deg,rgba(20,83,45,0.76),rgba(2,6,23,0.98))",
+    text: "#bef264",
   },
   orange: {
     border: "#fed7aa",
-    frame: "linear-gradient(145deg,#ffedd5 0%,#fb923c 30%,#991b1b 68%,#f97316 100%)",
-    glow: "rgba(249,115,22,0.48)",
-    iconBackground:
-      "radial-gradient(circle at 32% 22%,#fff7ed 0%,#fb923c 36%,#dc2626 72%,#020617 100%)",
-    surface:
-      "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.28),transparent 30%),linear-gradient(145deg,#7c2d12 0%,#dc2626 52%,#020617 100%)",
+    glow: "rgba(249,115,22,0.42)",
+    surface: "linear-gradient(145deg,rgba(124,45,18,0.82),rgba(2,6,23,0.98))",
+    text: "#fdba74",
   },
   purple: {
     border: "#d8b4fe",
-    frame: "linear-gradient(145deg,#f3e8ff 0%,#a855f7 32%,#581c87 68%,#c084fc 100%)",
-    glow: "rgba(168,85,247,0.48)",
-    iconBackground:
-      "radial-gradient(circle at 32% 22%,#faf5ff 0%,#c084fc 36%,#7e22ce 72%,#020617 100%)",
-    surface:
-      "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.28),transparent 30%),linear-gradient(145deg,#3b0764 0%,#7e22ce 50%,#020617 100%)",
+    glow: "rgba(168,85,247,0.42)",
+    surface: "linear-gradient(145deg,rgba(88,28,135,0.78),rgba(2,6,23,0.98))",
+    text: "#d8b4fe",
   },
   silver: {
     border: "#e2e8f0",
-    frame: "linear-gradient(145deg,#f8fafc 0%,#94a3b8 32%,#334155 68%,#cbd5e1 100%)",
-    glow: "rgba(226,232,240,0.32)",
-    iconBackground:
-      "radial-gradient(circle at 32% 22%,#ffffff 0%,#cbd5e1 36%,#64748b 72%,#020617 100%)",
-    surface:
-      "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.3),transparent 30%),linear-gradient(145deg,#334155 0%,#64748b 50%,#020617 100%)",
+    glow: "rgba(226,232,240,0.28)",
+    surface: "linear-gradient(145deg,rgba(51,65,85,0.86),rgba(2,6,23,0.98))",
+    text: "#e2e8f0",
   },
   teal: {
     border: "#99f6e4",
-    frame:
-      "linear-gradient(145deg,#ccfbf1 0%,#14b8a6 30%,#0f766e 66%,#5eead4 100%)",
-    glow: "rgba(20,184,166,0.45)",
-    iconBackground:
-      "radial-gradient(circle at 32% 22%,#f0fdfa 0%,#5eead4 36%,#0d9488 72%,#020617 100%)",
-    surface:
-      "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.28),transparent 30%),linear-gradient(145deg,#134e4a 0%,#0d9488 48%,#020617 100%)",
+    glow: "rgba(20,184,166,0.38)",
+    surface: "linear-gradient(145deg,rgba(19,78,74,0.82),rgba(2,6,23,0.98))",
+    text: "#99f6e4",
   },
 };
 
@@ -950,27 +917,22 @@ function ButteryFanIcon({ isUnlocked }: { isUnlocked: boolean }) {
   return (
     <span
       aria-hidden="true"
-      className={`relative block h-full w-full ${isUnlocked ? "" : "opacity-70"}`}
+      className={`relative block h-full w-full ${isUnlocked ? "" : "grayscale opacity-[0.65]"}`}
     >
-      <span className="absolute left-2 top-1 h-1.5 w-1.5 rounded-full bg-yellow-100 shadow-[0_0_10px_rgba(254,240,138,0.9)]" />
-      <span className="absolute right-2 top-2 h-1 w-1 rounded-full bg-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.9)]" />
-      <span className="absolute left-1/2 top-2 h-[34%] w-[62%] -translate-x-1/2">
-        <span className="absolute left-0 top-3 h-4 w-4 rounded-full bg-yellow-50 shadow-[0_0_12px_rgba(254,240,138,0.7)]" />
-        <span className="absolute left-3 top-0 h-5 w-5 rounded-full bg-amber-100 shadow-[0_0_14px_rgba(250,204,21,0.7)]" />
-        <span className="absolute right-3 top-1 h-5 w-5 rounded-full bg-yellow-50 shadow-[0_0_14px_rgba(254,240,138,0.7)]" />
-        <span className="absolute right-0 top-4 h-4 w-4 rounded-full bg-amber-200 shadow-[0_0_12px_rgba(250,204,21,0.7)]" />
-        <span className="absolute left-1/2 top-5 h-4 w-4 -translate-x-1/2 rounded-full bg-yellow-100" />
-      </span>
-      <span
-        className="absolute left-1/2 top-[38%] h-[44%] w-[48%] -translate-x-1/2 overflow-hidden rounded-b-lg rounded-t-sm border border-yellow-100/80 bg-red-600 shadow-[0_0_18px_rgba(250,204,21,0.45)]"
-        style={{ clipPath: "polygon(8% 0, 92% 0, 78% 100%, 22% 100%)" }}
-      >
-        <span className="absolute inset-y-0 left-[21%] w-[16%] bg-yellow-50" />
-        <span className="absolute inset-y-0 right-[21%] w-[16%] bg-yellow-50" />
-        <span className="absolute inset-x-0 top-0 h-[28%] bg-yellow-300" />
-      </span>
-      <span className="absolute left-[35%] top-[46%] h-5 w-2 rounded-full bg-yellow-300 shadow-[0_0_10px_rgba(250,204,21,0.9)]" />
-      <span className="absolute right-[35%] top-[43%] h-6 w-2 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(250,204,21,0.9)]" />
+      {isUnlocked ? (
+        <>
+          <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-yellow-100 shadow-[0_0_10px_rgba(254,240,138,0.95)]" />
+          <span className="absolute right-1 top-2 h-1 w-1 rounded-full bg-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.95)]" />
+          <span className="absolute bottom-2 left-2 h-1 w-1 rounded-full bg-yellow-200 shadow-[0_0_8px_rgba(250,204,21,0.95)]" />
+        </>
+      ) : null}
+      <Image
+        alt=""
+        className="object-contain drop-shadow-[0_0_14px_rgba(250,204,21,0.45)]"
+        fill
+        sizes="96px"
+        src="/rating-icons/extra-buttery-v2.png"
+      />
     </span>
   );
 }
@@ -994,118 +956,74 @@ function AchievementBadge({
   const resolvedSize = size ?? (compact ? "small" : "medium");
   const dimensions = {
     large: {
-      badgeText: "bottom-5 text-xs",
-      icon: "h-16 w-16 text-4xl",
-      laurel: "top-[22px] h-3 w-2",
-      outer: "h-28 w-28",
-      shine: "top-3 h-8",
+      badgeText: "bottom-2 text-xs",
+      icon: "text-4xl",
+      image: "h-16 w-16",
+      outer: "h-24 w-24",
+      shine: "top-4 h-3",
     },
     medium: {
-      badgeText: "bottom-5 text-xs",
-      icon: "h-14 w-14 text-3xl",
-      laurel: "top-[18px] h-2.5 w-1.5",
-      outer: "h-24 w-24",
-      shine: "top-3 h-7",
+      badgeText: "bottom-2 text-[11px]",
+      icon: "text-3xl",
+      image: "h-14 w-14",
+      outer: "h-20 w-20",
+      shine: "top-3 h-2.5",
     },
     small: {
-      badgeText: "bottom-3 text-[10px]",
-      icon: "h-10 w-10 text-2xl",
-      laurel: "top-[15px] h-2 w-1.5",
-      outer: "h-[78px] w-[78px]",
-      shine: "top-2 h-5",
+      badgeText: "bottom-1.5 text-[10px]",
+      icon: "text-2xl",
+      image: "h-12 w-12",
+      outer: "h-[68px] w-[68px]",
+      shine: "top-2.5 h-2",
     },
   }[resolvedSize];
-  const shieldClip =
-    "polygon(50% 0, 88% 14%, 96% 52%, 76% 88%, 50% 100%, 24% 88%, 4% 52%, 12% 14%)";
-  const lockedFrame =
-    "linear-gradient(145deg,#475569 0%,#1f2937 36%,#020617 72%,#334155 100%)";
   const lockedSurface =
-    "radial-gradient(circle at 34% 16%,rgba(255,255,255,0.14),transparent 30%),linear-gradient(145deg,#334155 0%,#020617 72%)";
+    "linear-gradient(145deg,rgba(15,23,42,0.86),rgba(2,6,23,0.98))";
   const isButteryFan = achievement.id === "buttery_fan";
+  const displayIcon = isUnlocked ? achievement.icon : "🔒";
   const progressLabel = progress.isUnlocked ? "Unlocked" : progress.text;
 
   return (
     <div className="group relative flex flex-col items-center text-center">
-      <span
-        aria-hidden="true"
-        className={`absolute left-1 top-2 flex flex-col gap-1 transition duration-300 ${
-          isUnlocked ? "opacity-70" : "opacity-25 grayscale"
-        }`}
-      >
-        {[0, 1, 2].map((leaf) => (
-          <span
-            key={leaf}
-            className={`${dimensions.laurel} rounded-full`}
-            style={{
-              background: isUnlocked ? visual.border : "#64748b",
-              transform: `rotate(${-32 + leaf * 16}deg)`,
-            }}
-          />
-        ))}
-      </span>
-      <span
-        aria-hidden="true"
-        className={`absolute right-1 top-2 flex flex-col gap-1 transition duration-300 ${
-          isUnlocked ? "opacity-70" : "opacity-25 grayscale"
-        }`}
-      >
-        {[0, 1, 2].map((leaf) => (
-          <span
-            key={leaf}
-            className={`${dimensions.laurel} rounded-full`}
-            style={{
-              background: isUnlocked ? visual.border : "#64748b",
-              transform: `rotate(${32 - leaf * 16}deg)`,
-            }}
-          />
-        ))}
-      </span>
+      {isUnlocked ? (
+        <span
+          aria-hidden="true"
+          className={`${dimensions.outer} absolute rounded-full blur-xl transition duration-300 group-hover:opacity-95`}
+          style={{ background: visual.glow, opacity: 0.68 }}
+        />
+      ) : null}
       <span
         aria-label={`${achievement.name}: ${progress.text}`}
-        className={`${dimensions.outer} relative flex items-center justify-center overflow-hidden border font-black text-white shadow-lg transition duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]`}
+        className={`${dimensions.outer} relative flex items-center justify-center overflow-hidden rounded-full border font-black shadow-lg transition duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]`}
         style={{
-          background: isUnlocked ? visual.frame : lockedFrame,
-          borderColor: isUnlocked ? visual.border : "#64748b",
+          background: isUnlocked ? visual.surface : lockedSurface,
+          borderColor: isUnlocked ? visual.border : "#475569",
           boxShadow: isUnlocked
-            ? `0 0 24px ${visual.glow}, 0 14px 28px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.42), inset 0 -12px 24px rgba(0,0,0,0.36)`
-            : "0 10px 22px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.12)",
-          clipPath: shieldClip,
-          filter: isUnlocked ? "saturate(1.15)" : "grayscale(1)",
-          opacity: isUnlocked ? 1 : 0.48,
+            ? `0 0 22px ${visual.glow}, 0 12px 26px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -14px 22px rgba(0,0,0,0.36)`
+            : "0 10px 22px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08)",
+          color: isUnlocked ? visual.text : "#94a3b8",
+          filter: isUnlocked ? "none" : "grayscale(1)",
+          opacity: isUnlocked ? 1 : 0.52,
         }}
       >
-        <span className="absolute inset-0 bg-black/10" />
-        <span
-          className="absolute inset-1"
-          style={{
-            background: isUnlocked ? visual.surface : lockedSurface,
-            clipPath: shieldClip,
-            boxShadow:
-              "inset 0 10px 18px rgba(255,255,255,0.1), inset 0 -16px 24px rgba(0,0,0,0.35)",
-          }}
-        />
-        <span
-          className={`absolute inset-x-4 ${dimensions.shine} rounded-full bg-white/35 blur-md transition group-hover:bg-white/45`}
-        />
-        <span className="absolute left-1/2 top-3 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white/70 shadow-[0_0_12px_rgba(255,255,255,0.8)]" />
-        <span
-          className={`relative z-10 flex items-center justify-center overflow-hidden rounded-full border border-white/30 shadow-[inset_0_2px_8px_rgba(255,255,255,0.22),inset_0_-8px_12px_rgba(0,0,0,0.34)] ${dimensions.icon}`}
-          style={{
-            background: isUnlocked
-              ? visual.iconBackground
-              : "radial-gradient(circle at 32% 22%,#cbd5e1 0%,#64748b 45%,#020617 100%)",
-            textShadow: isUnlocked ? "0 2px 8px rgba(0,0,0,0.5)" : "none",
-          }}
-        >
+        <span className="absolute inset-0 rounded-full bg-black/20" />
+        <span className="absolute inset-1 rounded-full border border-white/5" />
+        <span className={`absolute inset-x-5 ${dimensions.shine} rounded-full bg-white/20 blur-sm transition group-hover:bg-white/30`} />
+        <span className="absolute bottom-0 h-1/2 w-full bg-gradient-to-t from-black/35 to-transparent" />
+        <span className="relative z-10 flex items-center justify-center leading-none">
           {isButteryFan ? (
-            <ButteryFanIcon isUnlocked={isUnlocked} />
+            <span className={`relative block ${dimensions.image}`}>
+              <ButteryFanIcon isUnlocked={isUnlocked} />
+            </span>
           ) : (
-            <span className="relative z-10">{achievement.icon}</span>
+            <span className={`${dimensions.icon} relative z-10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]`}>
+              {displayIcon}
+            </span>
           )}
         </span>
         {achievement.badgeText ? (
           <span
-            className={`absolute ${dimensions.badgeText} z-10 rounded-full border border-white/25 bg-black/65 px-2 py-0.5 font-black text-white shadow-[0_0_10px_rgba(0,0,0,0.35)]`}
+            className={`absolute ${dimensions.badgeText} z-10 rounded-full border border-white/15 bg-black/70 px-2 py-0.5 font-black text-white shadow-[0_0_10px_rgba(0,0,0,0.35)]`}
           >
             {achievement.badgeText}
           </span>
