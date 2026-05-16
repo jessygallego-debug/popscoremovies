@@ -76,15 +76,25 @@ function getToken() {
 }
 
 export function posterUrl(path: string | null, size = "w500") {
-  if (!path) {
+  const trimmedPath = path?.trim();
+
+  if (
+    !trimmedPath ||
+    trimmedPath.toLowerCase() === "null" ||
+    trimmedPath.toLowerCase() === "undefined"
+  ) {
     return null;
   }
 
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
+  if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
+    return trimmedPath;
   }
 
-  return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
+  const normalizedPath = trimmedPath.startsWith("/")
+    ? trimmedPath
+    : `/${trimmedPath}`;
+
+  return `${TMDB_IMAGE_BASE_URL}/${size}${normalizedPath}`;
 }
 
 export function backdropUrl(path: string | null, size = "w1280") {

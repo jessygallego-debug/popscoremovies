@@ -227,8 +227,7 @@ const POPSCORE_TIERS: PopScoreTier[] = [
     id: "movie_buff",
     name: "Movie Buff",
     minRatings: 25,
-    topPercentile: 50,
-    requirementLabel: "25+ or top 50%",
+    requirementLabel: "25+",
     icon: "🍿",
     accent: "#3b82f6",
     description: "You've rated more than half of PopScore users.",
@@ -237,8 +236,7 @@ const POPSCORE_TIERS: PopScoreTier[] = [
     id: "theater_regular",
     name: "Theater Regular",
     minRatings: 50,
-    topPercentile: 25,
-    requirementLabel: "50+ or top 25%",
+    requirementLabel: "50+",
     icon: "🍿",
     accent: "#a855f7",
     description: "You're becoming a serious PopScore rater.",
@@ -247,8 +245,7 @@ const POPSCORE_TIERS: PopScoreTier[] = [
     id: "popscore_pro",
     name: "PopScore Pro",
     minRatings: 100,
-    topPercentile: 10,
-    requirementLabel: "100+ or top 10%",
+    requirementLabel: "100+",
     icon: "★",
     accent: "#facc15",
     description: "Your ratings are shaping PopScore.",
@@ -257,8 +254,7 @@ const POPSCORE_TIERS: PopScoreTier[] = [
     id: "elite_critic",
     name: "Elite Critic",
     minRatings: 200,
-    topPercentile: 5,
-    requirementLabel: "200+ or top 5%",
+    requirementLabel: "200+",
     icon: "🎬",
     accent: "#fb923c",
     description: "You're one of the most active movie raters.",
@@ -267,8 +263,7 @@ const POPSCORE_TIERS: PopScoreTier[] = [
     id: "buttery_legend",
     name: "Buttery Legend",
     minRatings: 500,
-    topPercentile: 1,
-    requirementLabel: "500+ or top 1%",
+    requirementLabel: "500+",
     icon: "♛",
     accent: "#ef4444",
     description: "PopScore royalty.",
@@ -492,14 +487,12 @@ function getPercentileStatus({
 }
 
 function getCurrentTier(totalMoviesRated: number, topPercentile: number) {
+  void topPercentile;
+
   return POPSCORE_TIERS.reduce((currentTier, tier) => {
     const qualifiesByRatings = totalMoviesRated >= tier.minRatings;
-    const qualifiesByPercentile =
-      totalMoviesRated > 0 &&
-      Boolean(tier.topPercentile) &&
-      topPercentile <= Number(tier.topPercentile);
 
-    return qualifiesByRatings || qualifiesByPercentile ? tier : currentTier;
+    return qualifiesByRatings ? tier : currentTier;
   }, POPSCORE_TIERS[0]);
 }
 
@@ -1299,6 +1292,20 @@ function SectionCard({
   );
 }
 
+function normalizeMoviePosterPath(path?: string | null) {
+  const trimmedPath = path?.trim();
+
+  if (
+    !trimmedPath ||
+    trimmedPath.toLowerCase() === "null" ||
+    trimmedPath.toLowerCase() === "undefined"
+  ) {
+    return null;
+  }
+
+  return trimmedPath;
+}
+
 function MoviePoster({
   movieId,
   path,
@@ -1310,8 +1317,25 @@ function MoviePoster({
   size?: "default" | "small";
   title: string;
 }) {
-  const [fallbackPath, setFallbackPath] = useState<string | null>(null);
-  const poster = posterUrl(path ?? fallbackPath ?? null);
+  const posterKey = `${movieId ?? ""}:${path ?? ""}`;
+  const [posterRecovery, setPosterRecovery] = useState<{
+    failedPosterPath: string | null;
+    fallbackPath: string | null;
+    key: string;
+  }>({
+    failedPosterPath: null,
+    fallbackPath: null,
+    key: posterKey,
+  });
+  const fallbackPath =
+    posterRecovery.key === posterKey ? posterRecovery.fallbackPath : null;
+  const failedPosterPath =
+    posterRecovery.key === posterKey ? posterRecovery.failedPosterPath : null;
+  const primaryPath = normalizeMoviePosterPath(path);
+  const resolvedFallbackPath = normalizeMoviePosterPath(fallbackPath);
+  const activePath = resolvedFallbackPath ?? primaryPath;
+  const poster =
+    activePath && activePath !== failedPosterPath ? posterUrl(activePath) : null;
   const dimensions = size === "small" ? "h-[78px] w-[52px]" : "h-28 w-20";
   const initials = title
     .split(/\s+/)
@@ -1324,7 +1348,7 @@ function MoviePoster({
   useEffect(() => {
     let isCurrent = true;
 
-    if (path || !movieId) {
+    if (!movieId || (primaryPath && failedPosterPath !== primaryPath)) {
       return () => {
         isCurrent = false;
       };
@@ -1333,8 +1357,15 @@ function MoviePoster({
     fetch(`/api/movie-poster?movie=${encodeURIComponent(movieId)}`)
       .then((response) => response.json())
       .then((data: { posterPath?: string | null }) => {
-        if (isCurrent && data.posterPath) {
-          setFallbackPath(data.posterPath);
+        const nextPath = normalizeMoviePosterPath(data.posterPath);
+
+        if (isCurrent && nextPath && nextPath !== primaryPath) {
+          setPosterRecovery((current) => ({
+            failedPosterPath:
+              current.key === posterKey ? current.failedPosterPath : null,
+            fallbackPath: nextPath,
+            key: posterKey,
+          }));
         }
       })
       .catch(() => null);
@@ -1342,7 +1373,7 @@ function MoviePoster({
     return () => {
       isCurrent = false;
     };
-  }, [movieId, path]);
+  }, [failedPosterPath, movieId, posterKey, primaryPath]);
 
   return (
     <div
@@ -1354,6 +1385,17 @@ function MoviePoster({
           alt={title}
           sizes={size === "small" ? "52px" : "80px"}
           className="object-cover"
+          onLoadError={() => {
+            if (activePath) {
+              setPosterRecovery((current) => ({
+                failedPosterPath: activePath,
+                fallbackPath:
+                  current.key === posterKey ? current.fallbackPath : null,
+                key: posterKey,
+              }));
+            }
+          }}
+          unoptimized
         />
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-black px-2 text-center">

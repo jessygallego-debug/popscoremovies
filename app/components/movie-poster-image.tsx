@@ -6,17 +6,22 @@ import { useState } from "react";
 type MoviePosterImageProps = {
   alt: string;
   className?: string;
+  onLoadError?: () => void;
   sizes: string;
   src: string | null;
+  unoptimized?: boolean;
 };
 
 export default function MoviePosterImage({
   alt,
   className = "object-cover",
+  onLoadError,
   sizes,
   src,
+  unoptimized = false,
 }: MoviePosterImageProps) {
-  const [hasError, setHasError] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const hasError = Boolean(src && src === failedSrc);
 
   if (!src || hasError) {
     return (
@@ -35,7 +40,11 @@ export default function MoviePosterImage({
       fill
       sizes={sizes}
       className={className}
-      onError={() => setHasError(true)}
+      onError={() => {
+        setFailedSrc(src);
+        onLoadError?.();
+      }}
+      unoptimized={unoptimized}
     />
   );
 }
