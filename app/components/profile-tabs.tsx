@@ -8,7 +8,6 @@ import QuickReactionBadge from "@/app/components/quick-reaction-badge";
 import {
   avatarForKey,
   genreLabelForKey,
-  PROFILE_GENRES,
 } from "@/lib/profile-config";
 import {
   getAllUserRatingCounts,
@@ -23,7 +22,6 @@ import { posterUrl } from "@/lib/tmdb";
 type TabKey =
   | "stats"
   | "ratings"
-  | "discover"
   | "achievements"
   | "activity";
 
@@ -353,10 +351,6 @@ function formatDate(date: string) {
   }).format(new Date(date));
 }
 
-function yearFromDate(date?: string | null) {
-  return date?.split("-")[0] ?? "";
-}
-
 function hasPopScoreRating(rating: UserMovieRating) {
   return rating.weights.length > 0 && Object.keys(rating.ratings).length > 0;
 }
@@ -574,7 +568,6 @@ function ProfileSidebar({
     { icon: "▥", key: "ratings", label: "Ratings" },
     { icon: "◇", key: "achievements", label: "Achievements" },
     { icon: "◷", key: "activity", label: "Activity" },
-    { icon: "⌕", key: "discover", label: "Discover" },
   ];
 
   return (
@@ -1219,95 +1212,6 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
   );
 }
 
-function DiscoverRecommendations({
-  ratedMovieIds,
-}: {
-  ratedMovieIds: string[];
-}) {
-  const [genre, setGenre] = useState(PROFILE_GENRES[0].key);
-  const [movies, setMovies] = useState<
-    { id: number; poster_path: string | null; release_date: string; title: string }[]
-  >([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    fetch(`/api/recommendations?genre=${encodeURIComponent(genre)}`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (!isCurrent) {
-          return;
-        }
-
-        const rated = new Set(ratedMovieIds);
-        setMovies(
-          (data.movies ?? []).filter(
-            (movie: { id: number }) => !rated.has(String(movie.id))
-          )
-        );
-      })
-      .finally(() => {
-        if (isCurrent) {
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [genre, ratedMovieIds]);
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-center gap-3 overflow-visible pb-1">
-        {PROFILE_GENRES.map((nextGenre) => (
-          <button
-            key={nextGenre.key}
-            type="button"
-            onClick={() => setGenre(nextGenre.key)}
-            className={`inline-flex min-h-12 max-w-full shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-5 py-2 text-sm font-black leading-none transition ${
-              genre === nextGenre.key
-                ? "border-yellow-400 bg-yellow-400 text-black"
-                : "border-slate-700 bg-slate-950 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
-            }`}
-          >
-            {nextGenre.label}
-          </button>
-        ))}
-      </div>
-
-      {isLoading ? <p className="mt-6 font-bold text-slate-400">Loading...</p> : null}
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {movies.slice(0, 10).map((movie) => (
-          <Link
-            key={movie.id}
-            href={`/movie/${movie.id}`}
-            className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950"
-          >
-            <div className="relative aspect-[2/3] bg-slate-900">
-              <MoviePosterImage
-                src={posterUrl(movie.poster_path)}
-                alt={movie.title}
-                sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
-                className="object-cover"
-              />
-            </div>
-            <div className="p-3">
-              <p className="line-clamp-2 text-sm font-black text-white">
-                {movie.title}
-              </p>
-              <p className="mt-1 text-xs font-bold text-slate-500">
-                {yearFromDate(movie.release_date)}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function AllAchievements({ summary }: { summary: ProfileStatSummary }) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -1448,7 +1352,6 @@ export default function ProfileTabs({ username }: { username: string }) {
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const initialTab: TabKey =
-    requestedTab === "discover" ||
     requestedTab === "ratings" ||
     requestedTab === "achievements" ||
     requestedTab === "activity"
@@ -1538,13 +1441,6 @@ export default function ProfileTabs({ username }: { username: string }) {
         {activeTab === "ratings" ? (
           <SectionCard title="Ratings History">
             <RatingsHistory ratings={fullRatings} />
-          </SectionCard>
-        ) : null}
-        {activeTab === "discover" ? (
-          <SectionCard title="Discover More Movies">
-            <DiscoverRecommendations
-              ratedMovieIds={fullRatings.map((rating) => rating.movieId)}
-            />
           </SectionCard>
         ) : null}
         {activeTab === "achievements" ? (

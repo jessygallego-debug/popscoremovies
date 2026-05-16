@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import { PROFILE_GENRES } from "@/lib/profile-config";
 import {
   getCurrentUser,
   getWatchlist,
@@ -13,6 +14,10 @@ import { posterUrl } from "@/lib/tmdb";
 
 function yearFromDate(releaseDate?: string | null) {
   return releaseDate?.slice(0, 4) || "TBA";
+}
+
+function primaryGenreForMovie(movie: WatchlistMovie) {
+  return movie.genreNames[0] ?? movie.genre ?? "Movie";
 }
 
 function WatchlistPoster({ movie }: { movie: WatchlistMovie }) {
@@ -69,7 +74,7 @@ function WatchlistEmptyState() {
         up here.
       </p>
       <Link
-        href="/"
+        href="/discover"
         className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-yellow-400 px-6 text-sm font-black text-black shadow-lg shadow-yellow-400/25 transition hover:bg-yellow-300"
       >
         Discover Movies
@@ -83,6 +88,7 @@ export default function WatchlistClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(true);
   const [removingMovieId, setRemovingMovieId] = useState<string | null>(null);
+  const [selectedGenre, setSelectedGenre] = useState("all");
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -126,10 +132,38 @@ export default function WatchlistClient() {
   const genreCount = useMemo(() => {
     return new Set(
       watchlist
-        .map((movie) => movie.genreNames[0] ?? movie.genre)
+        .map(primaryGenreForMovie)
         .filter(Boolean)
     ).size;
   }, [watchlist]);
+
+  const genreFilters = useMemo(() => {
+    const genres = new Set(
+      PROFILE_GENRES.map((nextGenre) => nextGenre.label)
+    );
+    watchlist.map(primaryGenreForMovie).forEach((genre) => genres.add(genre));
+
+    return [
+      "all",
+      ...Array.from(genres).sort((firstGenre, secondGenre) =>
+        firstGenre.localeCompare(secondGenre)
+      ),
+    ];
+  }, [watchlist]);
+  const activeGenre =
+    selectedGenre !== "all" && genreFilters.includes(selectedGenre)
+      ? selectedGenre
+      : "all";
+
+  const filteredWatchlist = useMemo(() => {
+    if (activeGenre === "all") {
+      return watchlist;
+    }
+
+    return watchlist.filter(
+      (movie) => primaryGenreForMovie(movie) === activeGenre
+    );
+  }, [activeGenre, watchlist]);
 
   if (isLoading) {
     return (
@@ -137,27 +171,6 @@ export default function WatchlistClient() {
         Loading your watchlist...
       </section>
     );
-  }
-
-  if (!isSignedIn) {
-    return (
-      <section className="rounded-[1.75rem] border border-slate-800/80 bg-slate-950/75 p-8 text-center shadow-2xl shadow-black/30">
-        <h2 className="text-2xl font-black text-white">Sign in to see your watchlist</h2>
-        <p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-400">
-          Your saved movies are connected to your PopFile account.
-        </p>
-        <Link
-          href={`/profile/edit?returnTo=${encodeURIComponent("/watchlist")}`}
-          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-yellow-400 px-6 text-sm font-black text-black shadow-lg shadow-yellow-400/25 transition hover:bg-yellow-300"
-        >
-          Sign In
-        </Link>
-      </section>
-    );
-  }
-
-  if (watchlist.length === 0) {
-    return <WatchlistEmptyState />;
   }
 
   return (
@@ -189,73 +202,141 @@ export default function WatchlistClient() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {watchlist.map((movie) => {
-          const detailsHref = `/movie/${movie.movieId}?returnTo=${encodeURIComponent(
-            "/watchlist"
-          )}`;
-          const rateHref = `/rate?movie=${movie.movieId}&returnTo=${encodeURIComponent(
-            "/watchlist"
-          )}&from=watchlist`;
-
-          return (
-            <article
-              key={movie.id}
-              className="group overflow-hidden rounded-[1.5rem] border border-slate-800/90 bg-slate-950/85 p-4 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10"
+      <div className="rounded-[1.75rem] border border-slate-800/80 bg-slate-950/65 p-5 shadow-2xl shadow-black/30 backdrop-blur">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-black text-white">
+              Filter Watchlist
+            </h2>
+            <p className="mt-1 text-sm font-semibold text-slate-400">
+              Keep your saved movies organized by genre.
+            </p>
+          </div>
+          <p className="text-sm font-black text-yellow-300">
+            {filteredWatchlist.length} shown
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {genreFilters.map((genre) => (
+            <button
+              key={genre}
+              type="button"
+              onClick={() => setSelectedGenre(genre)}
+              className={`inline-flex min-h-11 max-w-full shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-5 py-2 text-sm font-black leading-none transition ${
+                activeGenre === genre
+                  ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/25"
+                  : "border-slate-700 bg-slate-950 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
+              }`}
             >
-              <Link href={detailsHref} className="block">
-                <WatchlistPoster movie={movie} />
-              </Link>
-              <div className="pt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="line-clamp-2 text-xl font-black leading-tight text-white">
-                      {movie.movieTitle}
-                    </h2>
-                    <p className="mt-2 text-sm font-bold text-slate-400">
-                      {movie.genreNames[0] ?? movie.genre ?? "Movie"} ·{" "}
-                      {yearFromDate(movie.releaseDate)}
-                    </p>
-                  </div>
-                  <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-300">
-                    Saved
-                  </span>
-                </div>
-
-                <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-                  <Link
-                    href={rateHref}
-                    className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-400 px-4 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
-                  >
-                    Rate Now
-                  </Link>
-                  <button
-                    type="button"
-                    disabled={removingMovieId === movie.movieId}
-                    onClick={() => {
-                      setRemovingMovieId(movie.movieId);
-                      setStatus("");
-                      removeFromWatchlist(movie.movieId)
-                        .then(() => {
-                          setWatchlist((current) =>
-                            current.filter(
-                              (item) => item.movieId !== movie.movieId
-                            )
-                          );
-                        })
-                        .catch((error: Error) => setStatus(error.message))
-                        .finally(() => setRemovingMovieId(null));
-                    }}
-                    className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-700 px-4 text-sm font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300 disabled:opacity-60"
-                  >
-                    {removingMovieId === movie.movieId ? "..." : "Remove"}
-                  </button>
-                </div>
-              </div>
-            </article>
-          );
-        })}
+              {genre === "all" ? "All Movies" : genre}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {!isSignedIn ? (
+        <section className="rounded-[1.75rem] border border-slate-800/80 bg-slate-950/75 p-8 text-center shadow-2xl shadow-black/30">
+          <h2 className="text-2xl font-black text-white">
+            Sign in to see your watchlist
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-400">
+            Your saved movies are connected to your PopFile account.
+          </p>
+          <Link
+            href={`/profile/edit?returnTo=${encodeURIComponent("/watchlist")}`}
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-yellow-400 px-6 text-sm font-black text-black shadow-lg shadow-yellow-400/25 transition hover:bg-yellow-300"
+          >
+            Sign In
+          </Link>
+        </section>
+      ) : null}
+
+      {isSignedIn && watchlist.length === 0 ? <WatchlistEmptyState /> : null}
+
+      {isSignedIn && watchlist.length > 0 && filteredWatchlist.length === 0 ? (
+        <div className="rounded-[1.75rem] border border-slate-800/80 bg-slate-950/75 p-8 text-center shadow-2xl shadow-black/30">
+          <h2 className="text-2xl font-black text-white">
+            No saved movies in this genre
+          </h2>
+          <button
+            type="button"
+            onClick={() => setSelectedGenre("all")}
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-yellow-400 px-5 text-sm font-black text-black transition hover:bg-yellow-300"
+          >
+            Show All Movies
+          </button>
+        </div>
+      ) : null}
+
+      {isSignedIn && filteredWatchlist.length > 0 ? (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredWatchlist.map((movie) => {
+            const detailsHref = `/movie/${
+              movie.movieId
+            }?returnTo=${encodeURIComponent("/watchlist")}`;
+            const rateHref = `/rate?movie=${
+              movie.movieId
+            }&returnTo=${encodeURIComponent("/watchlist")}&from=watchlist`;
+
+            return (
+              <article
+                key={movie.id}
+                className="group overflow-hidden rounded-[1.5rem] border border-slate-800/90 bg-slate-950/85 p-4 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10"
+              >
+                <Link href={detailsHref} className="block">
+                  <WatchlistPoster movie={movie} />
+                </Link>
+                <div className="pt-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="line-clamp-2 text-xl font-black leading-tight text-white">
+                        {movie.movieTitle}
+                      </h2>
+                      <p className="mt-2 text-sm font-bold text-slate-400">
+                        {primaryGenreForMovie(movie)} ·{" "}
+                        {yearFromDate(movie.releaseDate)}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-300">
+                      Saved
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+                    <Link
+                      href={rateHref}
+                      className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-400 px-4 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+                    >
+                      Rate Now
+                    </Link>
+                    <button
+                      type="button"
+                      disabled={removingMovieId === movie.movieId}
+                      onClick={() => {
+                        setRemovingMovieId(movie.movieId);
+                        setStatus("");
+                        removeFromWatchlist(movie.movieId)
+                          .then(() => {
+                            setWatchlist((current) =>
+                              current.filter(
+                                (item) => item.movieId !== movie.movieId
+                              )
+                            );
+                          })
+                          .catch((error: Error) => setStatus(error.message))
+                          .finally(() => setRemovingMovieId(null));
+                      }}
+                      className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-700 px-4 text-sm font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300 disabled:opacity-60"
+                    >
+                      {removingMovieId === movie.movieId ? "..." : "Remove"}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : null}
     </section>
   );
 }

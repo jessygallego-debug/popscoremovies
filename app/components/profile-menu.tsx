@@ -14,7 +14,7 @@ const menuItems = [
   { href: "/profile/edit", label: "Edit Profile" },
   { href: "stats", label: "Profile Stats" },
   { href: "/watchlist", label: "Watchlist" },
-  { href: "discover", label: "Discovery" },
+  { href: "/discover", label: "Discovery" },
 ];
 
 export default function ProfileMenu() {

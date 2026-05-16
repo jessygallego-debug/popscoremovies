@@ -7,6 +7,7 @@ const navItems = [
   { href: "/#trending", label: "Movies" },
   { href: "/#why-popscore", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
+  { href: "/discover", label: "Discovery" },
 ];
 
 function SiteLogo() {
