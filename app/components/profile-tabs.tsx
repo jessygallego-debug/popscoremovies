@@ -14,19 +14,15 @@ import {
   getAllUserRatingCounts,
   getProfileByUsername,
   getUserRatings,
-  getWatchlist,
   ProfileRecord,
-  removeFromWatchlist,
   UserMovieRating,
   UserRatingCount,
-  WatchlistMovie,
 } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
 
 type TabKey =
   | "stats"
   | "ratings"
-  | "watchlist"
   | "discover"
   | "achievements"
   | "activity";
@@ -576,7 +572,6 @@ function ProfileSidebar({
   const navItems: { icon: string; key: TabKey; label: string }[] = [
     { icon: "⌂", key: "stats", label: "Overview" },
     { icon: "▥", key: "ratings", label: "Ratings" },
-    { icon: "♡", key: "watchlist", label: "Watchlist" },
     { icon: "◇", key: "achievements", label: "Achievements" },
     { icon: "◷", key: "activity", label: "Activity" },
     { icon: "⌕", key: "discover", label: "Discover" },
@@ -1224,63 +1219,6 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
   );
 }
 
-function WatchlistGrid({
-  onRemove,
-  watchlist,
-}: {
-  onRemove: (movieId: string) => void;
-  watchlist: WatchlistMovie[];
-}) {
-  if (watchlist.length === 0) {
-    return <EmptyState text="No movies in watchlist yet." />;
-  }
-
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {watchlist.map((movie) => (
-        <article
-          key={movie.id}
-          className="rounded-2xl border border-slate-800 bg-slate-950/90 p-4"
-        >
-          <div className="flex gap-4">
-            <MoviePoster
-              movieId={movie.movieId}
-              path={movie.posterPath}
-              title={movie.movieTitle}
-            />
-            <div className="min-w-0 flex-1">
-              <h3 className="line-clamp-2 font-black text-white">
-                {movie.movieTitle}
-              </h3>
-              <p className="mt-1 text-xs font-bold text-slate-400">
-                {movie.genreNames[0] ?? movie.genre}
-              </p>
-              <p className="mt-1 text-xs font-bold text-slate-500">
-                {yearFromDate(movie.releaseDate)}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 flex gap-2">
-            <Link
-              href={`/rate?movie=${movie.movieId}&returnTo=/profile/edit`}
-              className="flex-1 rounded-xl bg-yellow-400 px-3 py-2 text-center text-sm font-black text-black"
-            >
-              Rate Now
-            </Link>
-            <button
-              type="button"
-              onClick={() => onRemove(movie.movieId)}
-              className="rounded-xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-300 hover:border-yellow-400"
-            >
-              Remove
-            </button>
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
 function DiscoverRecommendations({
   ratedMovieIds,
 }: {
@@ -1510,7 +1448,6 @@ export default function ProfileTabs({ username }: { username: string }) {
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const initialTab: TabKey =
-    requestedTab === "watchlist" ||
     requestedTab === "discover" ||
     requestedTab === "ratings" ||
     requestedTab === "achievements" ||
@@ -1520,7 +1457,6 @@ export default function ProfileTabs({ username }: { username: string }) {
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [ratings, setRatings] = useState<UserMovieRating[]>([]);
-  const [watchlist, setWatchlist] = useState<WatchlistMovie[]>([]);
   const [ratingPopulation, setRatingPopulation] = useState<UserRatingCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -1544,15 +1480,13 @@ export default function ProfileTabs({ username }: { username: string }) {
 
       Promise.all([
         getUserRatings(nextProfile.user_id),
-        getWatchlist(nextProfile.user_id),
         getAllUserRatingCounts(),
-      ]).then(([nextRatings, nextWatchlist, nextRatingPopulation]) => {
+      ]).then(([nextRatings, nextRatingPopulation]) => {
         if (!isCurrent) {
           return;
         }
 
         setRatings(nextRatings);
-        setWatchlist(nextWatchlist);
         setRatingPopulation(nextRatingPopulation);
         setIsLoading(false);
       });
@@ -1604,20 +1538,6 @@ export default function ProfileTabs({ username }: { username: string }) {
         {activeTab === "ratings" ? (
           <SectionCard title="Ratings History">
             <RatingsHistory ratings={fullRatings} />
-          </SectionCard>
-        ) : null}
-        {activeTab === "watchlist" ? (
-          <SectionCard title="Watchlist">
-            <WatchlistGrid
-              watchlist={watchlist}
-              onRemove={(movieId) => {
-                removeFromWatchlist(movieId).then(() => {
-                  setWatchlist((current) =>
-                    current.filter((movie) => movie.movieId !== movieId)
-                  );
-                });
-              }}
-            />
           </SectionCard>
         ) : null}
         {activeTab === "discover" ? (

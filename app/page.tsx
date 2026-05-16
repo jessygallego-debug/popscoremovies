@@ -1,11 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import CoStarReactions from "@/app/components/co-star-reactions";
 import MovieSearch from "@/app/components/movie-search";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
-import ProfileMenu from "@/app/components/profile-menu";
+import SiteHeader from "@/app/components/site-header";
 import ScrollMemory from "@/app/components/scroll-memory";
 import {
   formatReleaseMonthYear,
@@ -60,42 +59,6 @@ function fanCountForMovie(movie: MovieSummary) {
 
 function lovedPercentForMovie(movie: MovieSummary) {
   return Math.min(98, Math.max(62, Math.round((movie.vote_average ?? 7.4) * 10)));
-}
-
-function SiteLogo() {
-  return (
-    <Link
-      href="/"
-      aria-label="Go to PopScore Movies home"
-      className="group min-w-0 shrink-0 transition hover:opacity-90"
-    >
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/25 bg-yellow-400/10 shadow-lg shadow-yellow-400/10 sm:h-14 sm:w-14"
-        >
-          <span className="relative block h-10 w-10 sm:h-11 sm:w-11">
-            <Image
-              src="/rating-icons/extra-buttery-v2.png"
-              alt=""
-              fill
-              sizes="(min-width: 640px) 44px, 40px"
-              className="object-contain transition group-hover:scale-105"
-              priority
-            />
-          </span>
-        </span>
-        <span>
-          <span className="block text-3xl font-black leading-none tracking-wide text-yellow-400 sm:text-4xl">
-            POPSCORE
-          </span>
-          <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">
-            Movie Ratings For Real Fans
-          </span>
-        </span>
-      </div>
-    </Link>
-  );
 }
 
 function HeroVisual({ movies }: { movies: MovieSummary[] }) {
@@ -271,24 +234,7 @@ export default async function Home({
       <ScrollMemory />
       <div className="pointer-events-none fixed inset-0 opacity-40 [background-image:radial-gradient(rgba(250,204,21,0.28)_1px,transparent_1px)] [background-size:42px_42px]" />
       <section className="relative mx-auto max-w-[1500px] px-5 py-6 sm:px-8">
-        <header className="flex items-center justify-between gap-5 border-b border-white/10 pb-5">
-          <SiteLogo />
-          <nav className="hidden items-center gap-8 text-sm font-black text-slate-200 lg:flex">
-            <Link href="#trending" className="transition hover:text-yellow-300">
-              Movies
-            </Link>
-            <Link href="#genres" className="transition hover:text-yellow-300">
-              Genres
-            </Link>
-            <Link href="#trending" className="transition hover:text-yellow-300">
-              Trending
-            </Link>
-            <Link href="#why-popscore" className="transition hover:text-yellow-300">
-              Community
-            </Link>
-          </nav>
-          <ProfileMenu />
-        </header>
+        <SiteHeader />
 
         <section className="grid gap-8 py-10 lg:grid-cols-[minmax(390px,0.82fr)_minmax(520px,1fr)] lg:items-center lg:gap-12 lg:py-14">
           <div className="max-w-[680px]">
