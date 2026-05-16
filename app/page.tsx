@@ -186,28 +186,34 @@ function WhyPopScore() {
       id="why-popscore"
       className="rounded-[1.75rem] border border-slate-800/80 bg-slate-950/65 p-5 shadow-2xl shadow-black/30 backdrop-blur"
     >
-      <div className="grid gap-5 lg:grid-cols-[220px_repeat(4,minmax(0,1fr))] lg:items-center">
-        <h2 className="text-2xl font-black text-white sm:text-3xl">
-          Why PopScore?
-        </h2>
-        {whyPopScoreCards.map((card) => (
-          <article
-            key={card.title}
-            className="rounded-2xl border border-slate-800/80 bg-white/[0.03] p-4 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06]"
-          >
-            <div className="flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-yellow-400/35 bg-yellow-400/10 text-2xl font-black text-yellow-300">
-                {card.icon}
-              </span>
-              <div>
-                <h3 className="font-black text-yellow-300">{card.title}</h3>
-                <p className="mt-1 text-sm font-semibold leading-6 text-slate-300">
-                  {card.description}
-                </p>
+      <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-stretch">
+        <div className="flex items-center">
+          <h2 className="text-3xl font-black leading-tight text-white sm:text-4xl xl:text-3xl">
+            Why PopScore?
+          </h2>
+        </div>
+        <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {whyPopScoreCards.map((card) => (
+            <article
+              key={card.title}
+              className="flex h-full min-h-[150px] rounded-2xl border border-slate-800/80 bg-white/[0.03] p-5 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06]"
+            >
+              <div className="flex h-full flex-col gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-yellow-400/35 bg-yellow-400/10 text-2xl font-black text-yellow-300">
+                  {card.icon}
+                </span>
+                <div>
+                  <h3 className="text-lg font-black leading-snug text-yellow-300">
+                    {card.title}
+                  </h3>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+                    {card.description}
+                  </p>
+                </div>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -338,21 +344,10 @@ export default async function Home({
         ) : null}
 
         <section id="trending" className="mt-10">
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-yellow-300">
-                Fan-powered discovery
-              </p>
-              <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">
-                {sectionTitle}
-              </h2>
-            </div>
-            <Link
-              href={currentPagePath}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-yellow-400/50 px-5 text-sm font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-black"
-            >
-              View all
-            </Link>
+          <div className="mb-6">
+            <h2 className="text-3xl font-black text-white sm:text-4xl">
+              {sectionTitle}
+            </h2>
           </div>
 
           {movies.length > 0 ? (
