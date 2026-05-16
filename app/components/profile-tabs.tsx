@@ -600,7 +600,6 @@ function ProfileSidebar({
     { icon: "⌂", key: "stats", label: "Overview" },
     { icon: "▥", key: "ratings", label: "Ratings" },
     { icon: "◇", key: "achievements", label: "Achievements" },
-    { icon: "◷", key: "activity", label: "Activity" },
   ];
 
   return (

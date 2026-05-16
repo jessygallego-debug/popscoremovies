@@ -7,6 +7,7 @@ import { useState } from "react";
 import ProfileMenu from "@/app/components/profile-menu";
 import {
   getCurrentProfile,
+  removeFromWatchlist,
   saveUserMovieRating,
 } from "@/lib/profile-store";
 import { ratingToPercent, savePopScore } from "@/lib/popscore-store";
@@ -345,21 +346,21 @@ export default function RateClient({
         return savePopScore(movieId, selectedGenre, ratings, currentGenre.questions);
       })
       .then(() =>
-        Promise.allSettled([
-          saveUserMovieRating({
-            genre: selectedGenre,
-            movie: {
-              genreNames: movieGenreNames ?? [],
-              movieId,
-              movieTitle: movieTitle ?? `Movie ${movieId}`,
-              posterPath: moviePosterPath,
-              releaseDate: movieReleaseDate,
-            },
-            popscore: popScore,
-            questions: currentGenre.questions,
-            ratings,
-          }),
-        ])
+        saveUserMovieRating({
+          genre: selectedGenre,
+          movie: {
+            genreNames: movieGenreNames ?? [],
+            movieId,
+            movieTitle: movieTitle ?? `Movie ${movieId}`,
+            posterPath: moviePosterPath,
+            releaseDate: movieReleaseDate,
+          },
+          popscore: popScore,
+          questions: currentGenre.questions,
+          ratings,
+        })
+          .then(() => removeFromWatchlist(movieId).catch(() => null))
+          .catch(() => null)
       )
       .then(() => {
         setSubmittedScore(popScore);
