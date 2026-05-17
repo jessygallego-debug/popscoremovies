@@ -7,6 +7,7 @@ import PopScoreDisplay from "@/app/components/popscore-display";
 import SiteHeader from "@/app/components/site-header";
 import ScrollMemory from "@/app/components/scroll-memory";
 import {
+  backdropUrl,
   formatReleaseMonthYear,
   getMovies,
   isTmdbConfigured,
@@ -57,6 +58,14 @@ function lovedPercentForMovie(movie: MovieSummary) {
   return Math.min(98, Math.max(62, Math.round((movie.vote_average ?? 7.4) * 10)));
 }
 
+function hasMovieArtwork(movie: MovieSummary) {
+  return Boolean(movie.poster_path || movie.backdrop_path);
+}
+
+function movieArtworkUrl(movie: MovieSummary) {
+  return posterUrl(movie.poster_path) ?? backdropUrl(movie.backdrop_path);
+}
+
 function HeroVisual({ movies }: { movies: MovieSummary[] }) {
   const heroMovies = movies.filter((movie) => movie.poster_path).slice(0, 3);
 
@@ -102,7 +111,7 @@ function HeroVisual({ movies }: { movies: MovieSummary[] }) {
                     <PopScoreDisplay
                       movieId={String(movie.id)}
                       variant="posterBadge"
-                      className="flex h-12 w-12 flex-col items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center font-black text-white shadow-lg shadow-yellow-400/20"
+                      className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-lg font-black text-white shadow-lg shadow-yellow-400/20"
                     />
                   </div>
                 </div>
@@ -148,11 +157,11 @@ function WhyPopScore() {
           {whyPopScoreCards.map((card) => (
             <article
               key={card.title}
-              className="flex h-full min-h-[132px] rounded-2xl border border-slate-800/80 bg-white/[0.03] p-5 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06]"
+              className="flex h-full min-h-[150px] rounded-2xl border border-slate-800/80 bg-white/[0.03] p-5 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06]"
             >
-              <div className="flex h-full flex-col justify-center">
+              <div className="flex h-full flex-col">
                 <div>
-                  <h3 className="text-lg font-black leading-snug text-yellow-300">
+                  <h3 className="flex min-h-[3.4rem] items-start text-lg font-black leading-snug text-yellow-300">
                     {card.title}
                   </h3>
                   <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
@@ -179,6 +188,7 @@ export default async function Home({
     (genre) => genre.id === params.genre
   );
   const movies = await getMovies(query, 200, activeGenre?.id);
+  const displayMovies = movies.filter(hasMovieArtwork);
   const hasMissingToken = !isTmdbConfigured();
   const currentPageParams = new URLSearchParams();
 
@@ -241,7 +251,7 @@ export default async function Home({
             </div>
           </div>
 
-          <HeroVisual movies={movies} />
+          <HeroVisual movies={displayMovies} />
         </section>
 
         <section id="genres" className="border-t border-white/10 pt-7">
@@ -282,10 +292,10 @@ export default async function Home({
             </h2>
           </div>
 
-          {movies.length > 0 ? (
+          {displayMovies.length > 0 ? (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              {movies.map((movie) => {
-                const poster = posterUrl(movie.poster_path);
+              {displayMovies.map((movie) => {
+                const poster = movieArtworkUrl(movie);
                 const releaseDate = movie.release_date
                   ? formatReleaseMonthYear(movie.release_date)
                   : "";

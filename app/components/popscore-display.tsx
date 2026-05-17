@@ -76,14 +76,11 @@ export default function PopScoreDisplay({
       <span
         className={
           className ??
-          "flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center font-black text-white shadow-lg shadow-yellow-400/20"
+          "flex h-14 w-14 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center font-black text-white shadow-lg shadow-yellow-400/20"
         }
       >
-        <span className="text-lg leading-none text-white">
+        <span className="text-xl leading-none text-white">
           {score ? score.score : "NR"}
-        </span>
-        <span className="mt-0.5 text-[8px] uppercase tracking-[0.08em] text-yellow-200">
-          PopScore
         </span>
       </span>
     );
