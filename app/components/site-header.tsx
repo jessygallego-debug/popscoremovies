@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
+import MobileSiteMenu from "@/app/components/mobile-site-menu";
 import ProfileMenu from "@/app/components/profile-menu";
 
 const navItems = [
@@ -20,9 +21,9 @@ function SiteLogo() {
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/25 bg-yellow-400/10 shadow-lg shadow-yellow-400/10 sm:h-14 sm:w-14"
+          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/25 bg-yellow-400/10 shadow-lg shadow-yellow-400/10 sm:h-12 sm:w-12 md:h-14 md:w-14"
         >
-          <span className="relative block h-10 w-10 sm:h-11 sm:w-11">
+          <span className="relative block h-8 w-8 sm:h-10 sm:w-10 md:h-11 md:w-11">
             <Image
               src="/rating-icons/extra-buttery-v2.png"
               alt=""
@@ -34,10 +35,10 @@ function SiteLogo() {
           </span>
         </span>
         <span>
-          <span className="block text-3xl font-black leading-none tracking-wide text-yellow-400 sm:text-4xl">
+          <span className="block text-2xl font-black leading-none tracking-wide text-yellow-400 sm:text-3xl md:text-4xl">
             POPSCORE
           </span>
-          <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 sm:text-xs">
+          <span className="mt-1 block text-[8px] font-black uppercase tracking-[0.16em] text-slate-400 sm:text-[10px] sm:tracking-[0.22em] md:text-xs">
             Movie Ratings For Real Fans
           </span>
         </span>
@@ -50,7 +51,7 @@ export default function SiteHeader() {
   return (
     <header className="flex items-center justify-between gap-5 border-b border-white/10 pb-5">
       <SiteLogo />
-      <nav className="hidden items-center gap-8 text-sm font-black text-slate-200 lg:flex">
+      <nav className="hidden items-center gap-8 text-sm font-black text-slate-200 md:flex">
         {navItems.map((item) => (
           <Link
             key={item.label}
@@ -63,7 +64,7 @@ export default function SiteHeader() {
       </nav>
       <Suspense
         fallback={
-          <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10">
+          <div className="hidden shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 md:inline-flex">
             <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
               ★
             </span>
@@ -71,7 +72,16 @@ export default function SiteHeader() {
           </div>
         }
       >
-        <ProfileMenu />
+        <div className="hidden md:block">
+          <ProfileMenu />
+        </div>
+      </Suspense>
+      <Suspense
+        fallback={
+          <div className="h-11 w-11 rounded-2xl border border-slate-700/90 bg-slate-950/85 md:hidden" />
+        }
+      >
+        <MobileSiteMenu />
       </Suspense>
     </header>
   );

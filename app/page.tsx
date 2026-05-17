@@ -145,26 +145,26 @@ function WhyPopScore() {
   return (
     <section
       id="why-popscore"
-      className="rounded-[1.75rem] border border-slate-800/80 bg-slate-950/65 p-5 shadow-2xl shadow-black/30 backdrop-blur"
+      className="rounded-[1.5rem] border border-slate-800/80 bg-slate-950/65 p-4 text-center shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[1.75rem] sm:p-5 xl:text-left"
     >
-      <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-stretch">
-        <div className="flex items-center">
-          <h2 className="text-3xl font-black leading-tight text-white sm:text-4xl xl:text-3xl">
+      <div className="grid gap-4 sm:gap-5 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-stretch">
+        <div className="flex items-center justify-center xl:justify-start">
+          <h2 className="text-2xl font-black leading-tight text-white sm:text-4xl xl:text-3xl">
             Why PopScore?
           </h2>
         </div>
-        <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
           {whyPopScoreCards.map((card) => (
             <article
               key={card.title}
-              className="flex h-full min-h-[150px] rounded-2xl border border-slate-800/80 bg-white/[0.03] p-5 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06]"
+              className="flex h-full min-h-[118px] rounded-2xl border border-slate-800/80 bg-white/[0.03] p-3 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06] sm:min-h-[150px] sm:p-5"
             >
               <div className="flex h-full flex-col">
                 <div>
-                  <h3 className="flex min-h-[3.4rem] items-start text-lg font-black leading-snug text-yellow-300">
+                  <h3 className="flex min-h-[2.5rem] items-start justify-center text-[13px] font-black leading-snug text-yellow-300 sm:min-h-[3.4rem] sm:text-lg xl:justify-start">
                     {card.title}
                   </h3>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+                  <p className="mt-1 text-[11px] font-semibold leading-5 text-slate-300 sm:mt-2 sm:text-sm sm:leading-6">
                     {card.description}
                   </p>
                 </div>
@@ -257,13 +257,13 @@ export default async function Home({
         <section id="genres" className="border-t border-white/10 pt-7">
           <div
             aria-label="Filter movies by genre"
-            className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8"
+            className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-8"
           >
             {genreFilters.map((genre) => (
               <Link
                 key={genre.id}
                 href={genre.href}
-                className={`inline-flex min-h-11 min-w-0 items-center justify-center rounded-full border px-4 py-2 text-center text-sm font-black transition duration-300 hover:-translate-y-0.5 ${
+                className={`inline-flex min-h-9 min-w-0 items-center justify-center rounded-full border px-2 py-1.5 text-center text-xs font-black transition duration-300 hover:-translate-y-0.5 sm:min-h-10 sm:px-3 sm:text-sm md:min-h-11 md:px-4 ${
                   genre.isActive
                     ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/25"
                     : "border-slate-700/90 bg-slate-950/80 text-slate-300 hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-200"
@@ -293,7 +293,7 @@ export default async function Home({
           </div>
 
           {displayMovies.length > 0 ? (
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {displayMovies.map((movie) => {
                 const poster = movieArtworkUrl(movie);
                 const releaseDate = movie.release_date
@@ -310,46 +310,47 @@ export default async function Home({
                 return (
                   <article
                     key={movie.id}
-                    className="group overflow-hidden rounded-[1.5rem] border border-slate-800/90 bg-slate-950/85 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10"
+                    className="group overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/85 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10 sm:rounded-[1.5rem]"
                   >
                     <Link data-remember-scroll href={movieHref} className="block">
                       <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
                         <MoviePosterImage
                           src={poster}
                           alt={movie.title}
-                          sizes="(min-width: 1536px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+                          sizes="(min-width: 1536px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 50vw"
                           className="object-cover transition duration-500 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/25 to-transparent" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                        <div className="absolute left-4 top-4">
+                        <div className="absolute left-2 top-2 sm:left-4 sm:top-4">
                           <PopScoreDisplay
                             movieId={String(movie.id)}
                             variant="posterBadge"
+                            className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-sm font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl"
                           />
                         </div>
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <h3 className="line-clamp-2 text-2xl font-black leading-tight text-white">
+                        <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4">
+                          <h3 className="line-clamp-2 text-base font-black leading-tight text-white sm:text-2xl">
                             {movie.title}
                           </h3>
-                          <p className="mt-1 text-sm font-bold text-slate-300">
+                          <p className="mt-1 text-xs font-bold text-slate-300 sm:text-sm">
                             {releaseDate || "TBA"}
                           </p>
                         </div>
                       </div>
                     </Link>
 
-                    <div className="space-y-4 p-4">
-                      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                    <div className="space-y-3 p-3 sm:space-y-4 sm:p-4">
+                      <div className="grid gap-2 sm:gap-3 md:grid-cols-[1fr_auto] md:items-center">
                         <Link
                           data-remember-scroll
                           href={rateHref}
-                          className="rounded-2xl border border-yellow-400/15 bg-yellow-400/10 p-3 transition hover:border-yellow-400/50 hover:bg-yellow-400/15"
+                          className="rounded-2xl border border-yellow-400/15 bg-yellow-400/10 p-2 transition hover:border-yellow-400/50 hover:bg-yellow-400/15 sm:p-3"
                           aria-label={`Rate ${movie.title}`}
                         >
                           <PopScoreDisplay movieId={String(movie.id)} variant="card" />
                         </Link>
-                        <div className="rounded-2xl border border-slate-800 bg-black/25 px-3 py-2 text-sm font-black text-yellow-300">
+                        <div className="rounded-2xl border border-slate-800 bg-black/25 px-2 py-2 text-center text-[11px] font-black text-yellow-300 sm:px-3 sm:text-sm">
                           🔥 {lovedPercentForMovie(movie)}% Loved It
                         </div>
                       </div>
@@ -359,7 +360,7 @@ export default async function Home({
                           {genreLabels.map((genreName) => (
                             <span
                               key={genreName}
-                              className="rounded-full border border-slate-700/80 bg-slate-900/80 px-3 py-1 text-xs font-bold text-slate-300"
+                              className="rounded-full border border-slate-700/80 bg-slate-900/80 px-2 py-1 text-[10px] font-bold text-slate-300 sm:px-3 sm:text-xs"
                             >
                               {genreName}
                             </span>
@@ -389,7 +390,7 @@ export default async function Home({
                           posterPath: movie.poster_path,
                           releaseDate: movie.release_date,
                         }}
-                        className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-3 py-3 text-xs font-black text-slate-300 transition hover:border-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300"
+                        className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-2 py-2.5 text-[11px] font-black text-slate-300 transition hover:border-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300 sm:px-3 sm:py-3 sm:text-xs"
                       />
                     </div>
                   </article>
