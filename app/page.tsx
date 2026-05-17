@@ -70,20 +70,20 @@ function HeroVisual({ movies }: { movies: MovieSummary[] }) {
   const heroMovies = movies.filter((movie) => movie.poster_path).slice(0, 3);
 
   return (
-    <div className="relative min-h-[360px] overflow-hidden rounded-[2rem] border border-slate-800/80 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.24),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-6 shadow-2xl shadow-black/40 lg:min-h-[470px]">
+    <div className="relative min-h-[250px] overflow-hidden rounded-[1.5rem] border border-slate-800/80 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.24),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-black/40 sm:min-h-[340px] sm:rounded-[2rem] sm:p-6 lg:min-h-[470px]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(250,204,21,0.18),transparent_28%),radial-gradient(circle_at_15%_80%,rgba(59,130,246,0.16),transparent_30%)]" />
-      <div className="absolute left-8 top-12 rounded-2xl border border-yellow-400/25 bg-black/45 px-4 py-3 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10">
+      <div className="absolute left-8 top-12 hidden rounded-2xl border border-yellow-400/25 bg-black/45 px-4 py-3 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 md:block">
         🍿 {fanCountForMovie(heroMovies[0] ?? movies[0] ?? { popularity: 95 } as MovieSummary).toLocaleString()}
       </div>
-      <div className="absolute right-8 top-7 rounded-2xl border border-red-400/25 bg-black/45 px-4 py-3 text-sm font-black text-red-300 shadow-lg shadow-red-500/10">
+      <div className="absolute right-8 top-7 hidden rounded-2xl border border-red-400/25 bg-black/45 px-4 py-3 text-sm font-black text-red-300 shadow-lg shadow-red-500/10 md:block">
         ♡ {(fanCountForMovie(heroMovies[1] ?? movies[1] ?? { popularity: 170 } as MovieSummary) / 1000).toFixed(1)}K
       </div>
-      <div className="absolute bottom-12 right-5 rounded-2xl border border-yellow-400/25 bg-black/45 px-4 py-3 text-sm font-black text-yellow-200 shadow-lg shadow-yellow-400/10">
+      <div className="absolute bottom-12 right-5 hidden rounded-2xl border border-yellow-400/25 bg-black/45 px-4 py-3 text-sm font-black text-yellow-200 shadow-lg shadow-yellow-400/10 md:block">
         🔥 {lovedPercentForMovie(heroMovies[2] ?? movies[2] ?? { vote_average: 8.8 } as MovieSummary)}% Loved It
       </div>
 
       <div className="relative z-10 flex h-full items-center justify-center">
-        <div className="relative h-[300px] w-full max-w-[460px] lg:h-[380px]">
+        <div className="relative h-[210px] w-full max-w-[320px] sm:h-[280px] sm:max-w-[420px] lg:h-[380px] lg:max-w-[460px]">
           {heroMovies.map((movie, index) => {
             const offsets = [
               "left-[3%] top-[22%] z-10 rotate-[-8deg] scale-[0.86]",
@@ -107,7 +107,7 @@ function HeroVisual({ movies }: { movies: MovieSummary[] }) {
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3">
+                  <div className="absolute bottom-3 left-3 right-3 hidden md:block">
                     <PopScoreDisplay
                       movieId={String(movie.id)}
                       variant="posterBadge"
@@ -119,7 +119,7 @@ function HeroVisual({ movies }: { movies: MovieSummary[] }) {
             );
           })}
 
-          <div className="absolute bottom-2 left-1/2 z-30 w-[82%] -translate-x-1/2 rounded-2xl border border-white/10 bg-black/45 p-3 text-center shadow-2xl shadow-black/50 backdrop-blur">
+          <div className="absolute bottom-2 left-1/2 z-30 hidden w-[82%] -translate-x-1/2 rounded-2xl border border-white/10 bg-black/45 p-3 text-center shadow-2xl shadow-black/50 backdrop-blur md:block">
             <div className="flex justify-center -space-x-2">
               {["J", "M", "A"].map((initial) => (
                 <span
@@ -234,7 +234,7 @@ export default async function Home({
 
         <section className="grid gap-8 py-10 lg:grid-cols-[minmax(390px,0.82fr)_minmax(520px,1fr)] lg:items-center lg:gap-12 lg:py-14">
           <div className="max-w-[680px]">
-            <div className="mb-5 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-yellow-300">
+            <div className="mb-4 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-yellow-300 sm:mb-5 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.18em]">
               Ratings that actually understand genre
             </div>
             <h1 className="text-5xl font-black leading-[0.94] text-white sm:text-6xl xl:text-7xl">
@@ -310,10 +310,10 @@ export default async function Home({
                 return (
                   <article
                     key={movie.id}
-                    className="group overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/85 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10 sm:rounded-[1.5rem]"
+                    className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/85 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10 sm:rounded-[1.5rem]"
                   >
                     <Link data-remember-scroll href={movieHref} className="block">
-                      <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-slate-900 sm:aspect-[16/10]">
                         <MoviePosterImage
                           src={poster}
                           alt={movie.title}
@@ -326,11 +326,11 @@ export default async function Home({
                           <PopScoreDisplay
                             movieId={String(movie.id)}
                             variant="posterBadge"
-                            className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-sm font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl"
+                            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-[15px] font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl"
                           />
                         </div>
                         <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4">
-                          <h3 className="line-clamp-2 text-base font-black leading-tight text-white sm:text-2xl">
+                          <h3 className="line-clamp-2 text-sm font-black leading-tight text-white sm:text-2xl">
                             {movie.title}
                           </h3>
                           <p className="mt-1 text-xs font-bold text-slate-300 sm:text-sm">
@@ -340,7 +340,7 @@ export default async function Home({
                       </div>
                     </Link>
 
-                    <div className="space-y-3 p-3 sm:space-y-4 sm:p-4">
+                    <div className="flex flex-1 flex-col space-y-3 p-3 sm:space-y-4 sm:p-4">
                       <div className="grid gap-2 sm:gap-3 md:grid-cols-[1fr_auto] md:items-center">
                         <Link
                           data-remember-scroll
@@ -355,18 +355,20 @@ export default async function Home({
                         </div>
                       </div>
 
-                      {genreLabels.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {genreLabels.map((genreName) => (
-                            <span
-                              key={genreName}
-                              className="rounded-full border border-slate-700/80 bg-slate-900/80 px-2 py-1 text-[10px] font-bold text-slate-300 sm:px-3 sm:text-xs"
-                            >
-                              {genreName}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
+                      <div className="min-h-[4.25rem] md:min-h-0">
+                        {genreLabels.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {genreLabels.map((genreName) => (
+                              <span
+                                key={genreName}
+                                className="rounded-full border border-slate-700/80 bg-slate-900/80 px-2 py-1 text-[10px] font-bold text-slate-300 sm:px-3 sm:text-xs"
+                              >
+                                {genreName}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
 
                       <CoStarReactions
                         variant="compact"
@@ -390,7 +392,7 @@ export default async function Home({
                           posterPath: movie.poster_path,
                           releaseDate: movie.release_date,
                         }}
-                        className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-2 py-2.5 text-[11px] font-black text-slate-300 transition hover:border-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300 sm:px-3 sm:py-3 sm:text-xs"
+                        className="mt-auto w-full rounded-2xl border border-slate-700 bg-slate-950 px-2 py-2.5 text-[11px] font-black text-slate-300 transition hover:border-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300 sm:px-3 sm:py-3 sm:text-xs"
                       />
                     </div>
                   </article>
