@@ -87,7 +87,7 @@ export default function CoStarReactions({
     getCurrentProfile()
       .then((profile) => {
         if (!profile) {
-          setMessage("Create or sign in to your profile to react.");
+          setMessage("Create or sign in to your PopFile to react.");
           return Promise.reject(new Error("Missing profile"));
         }
 

@@ -67,7 +67,7 @@ export default function SiteHeader() {
             <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
               ★
             </span>
-            My Profile
+            My PopFile
           </div>
         }
       >

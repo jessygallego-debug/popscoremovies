@@ -1476,11 +1476,11 @@ export default function ProfileTabs({ username }: { username: string }) {
   const summary = useMemo(() => getProfileStatSummary(ratings), [ratings]);
 
   if (isLoading) {
-    return <EmptyState text="Loading profile..." />;
+    return <EmptyState text="Loading PopFile..." />;
   }
 
   if (!profile) {
-    return <EmptyState text="Profile not found." />;
+    return <EmptyState text="PopFile not found." />;
   }
 
   const percentile = getPercentileStatus({

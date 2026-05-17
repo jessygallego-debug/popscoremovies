@@ -16,7 +16,7 @@ export default async function ProfilePage({
           <BrandHomeLink />
           <Link
             href="/"
-            aria-label="Exit profile screen"
+            aria-label="Exit PopFile screen"
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg font-black text-gray-300 transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-300"
           >
             X

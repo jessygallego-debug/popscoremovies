@@ -11,8 +11,8 @@ import {
 } from "@/lib/profile-store";
 
 const menuItems = [
-  { href: "/profile/edit", label: "Edit Profile" },
-  { href: "stats", label: "Profile Stats" },
+  { href: "/profile/edit", label: "Edit PopFile" },
+  { href: "stats", label: "PopFile Stats" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/discover", label: "Discovery" },
 ];
@@ -57,7 +57,7 @@ export default function ProfileMenu() {
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
           ★
         </span>
-        My Profile
+        My PopFile
       </Link>
     );
   }
@@ -71,7 +71,7 @@ export default function ProfileMenu() {
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/45 bg-black/40 text-lg">
           {avatar.icon}
         </span>
-        <span>My Profile</span>
+        <span>My PopFile</span>
         <span aria-hidden="true" className="text-yellow-300 group-hover:text-black">
           ›
         </span>

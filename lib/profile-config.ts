@@ -1,11 +1,40 @@
 export const AVATAR_OPTIONS = [
-  { key: "classic", label: "Classic", icon: "🍿" },
-  { key: "butter", label: "Buttery", icon: "🧈" },
-  { key: "fire", label: "Fire", icon: "🔥" },
-  { key: "star", label: "Star", icon: "⭐" },
-  { key: "ticket", label: "Ticket", icon: "🎟️" },
-  { key: "camera", label: "Camera", icon: "🎬" },
-];
+  { key: "clapper", label: "Clapper Board", icon: "🎬", unlockAt: 0 },
+  { key: "popcorn", label: "Popcorn", icon: "🍿", unlockAt: 0 },
+  { key: "theater_masks", label: "Theater Masks", icon: "🎭", unlockAt: 0 },
+  { key: "movie_camera", label: "Movie Camera", icon: "🎥", unlockAt: 0 },
+  { key: "tickets", label: "Admission Tickets", icon: "🎟️", unlockAt: 0 },
+  { key: "star", label: "Star", icon: "⭐", unlockAt: 0 },
+  { key: "heart_arrow", label: "Heart with Arrow", icon: "💘", unlockAt: 0 },
+  { key: "rose", label: "Rose", icon: "🌹", unlockAt: 0 },
+  { key: "rocket", label: "Rocket", icon: "🚀", unlockAt: 0 },
+  { key: "ghost", label: "Ghost", icon: "👻", unlockAt: 0 },
+  { key: "detective", label: "Detective", icon: "🕵️", unlockAt: 0 },
+  { key: "crossed_swords", label: "Crossed Swords", icon: "⚔️", unlockAt: 0 },
+  { key: "fire", label: "Fire", icon: "🔥", unlockAt: 10 },
+  { key: "film_frames", label: "Film Frames", icon: "🎞️", unlockAt: 10 },
+  { key: "explosion", label: "Explosion", icon: "💥", unlockAt: 10 },
+  { key: "joker", label: "Joker", icon: "🃏", unlockAt: 10 },
+  { key: "alien", label: "Alien", icon: "👽", unlockAt: 25 },
+  { key: "saucer", label: "Flying Saucer", icon: "🛸", unlockAt: 25 },
+  { key: "wizard", label: "Wizard", icon: "🧙", unlockAt: 25 },
+  { key: "zombie", label: "Zombie", icon: "🧟", unlockAt: 25 },
+  { key: "alien_monster", label: "Alien Monster", icon: "👾", unlockAt: 50 },
+  { key: "dragon", label: "Dragon", icon: "🐉", unlockAt: 50 },
+  { key: "skull", label: "Skull", icon: "💀", unlockAt: 50 },
+  { key: "vampire", label: "Vampire", icon: "🧛", unlockAt: 50 },
+  { key: "magic_wand", label: "Magic Wand", icon: "🪄", unlockAt: 50 },
+  { key: "projector", label: "Film Projector", icon: "📽️", unlockAt: 100 },
+  { key: "genie", label: "Man Genie", icon: "🧞‍♂️", unlockAt: 100 },
+  { key: "crown", label: "Crown", icon: "👑", unlockAt: 150 },
+] as const;
+
+const LEGACY_AVATAR_KEY_MAP: Record<string, (typeof AVATAR_OPTIONS)[number]["key"]> = {
+  butter: "popcorn",
+  camera: "clapper",
+  classic: "popcorn",
+  ticket: "tickets",
+};
 
 export const PROFILE_GENRES = [
   { key: "action", label: "Action", tmdbId: "28" },
@@ -34,7 +63,23 @@ export const QUICK_REACTIONS = {
 export type QuickReactionKey = keyof typeof QUICK_REACTIONS;
 
 export function avatarForKey(key: string) {
-  return AVATAR_OPTIONS.find((avatar) => avatar.key === key) ?? AVATAR_OPTIONS[0];
+  const normalizedKey = LEGACY_AVATAR_KEY_MAP[key] ?? key;
+
+  return (
+    AVATAR_OPTIONS.find((avatar) => avatar.key === normalizedKey) ??
+    AVATAR_OPTIONS[0]
+  );
+}
+
+export function isAvatarUnlocked(key: string, ratedMovieCount: number) {
+  return ratedMovieCount >= avatarForKey(key).unlockAt;
+}
+
+export function firstUnlockedAvatarKey(ratedMovieCount: number) {
+  return (
+    AVATAR_OPTIONS.find((avatar) => ratedMovieCount >= avatar.unlockAt)?.key ??
+    AVATAR_OPTIONS[0].key
+  );
 }
 
 export function genreLabelForKey(key?: string | null) {

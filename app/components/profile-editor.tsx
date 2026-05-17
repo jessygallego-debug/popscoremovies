@@ -5,11 +5,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AvatarPicker from "@/app/components/avatar-picker";
 import FavoriteGenreSelector from "@/app/components/favorite-genre-selector";
-import { avatarForKey, genreLabelForKey } from "@/lib/profile-config";
+import {
+  avatarForKey,
+  firstUnlockedAvatarKey,
+  genreLabelForKey,
+  isAvatarUnlocked,
+} from "@/lib/profile-config";
 import {
   consumeAuthRedirect,
   getCurrentUser,
   getProfileByUserId,
+  getUserRatings,
   normalizeUsername,
   ProfileRecord,
   signInWithPassword,
@@ -17,6 +23,7 @@ import {
   signOut,
   SupabaseUser,
   upsertProfile,
+  UserMovieRating,
 } from "@/lib/profile-store";
 
 function getSafeReturnPath(returnTo: string | null) {
@@ -31,6 +38,22 @@ function getSafeReturnPath(returnTo: string | null) {
   return returnTo;
 }
 
+function hasCompletedRating(rating: UserMovieRating) {
+  return Boolean(
+    rating.weights.length && rating.ratings && Object.keys(rating.ratings).length
+  );
+}
+
+function getUniqueCompletedRatingCount(ratings: UserMovieRating[]) {
+  return new Set(
+    ratings.filter(hasCompletedRating).map((rating) => rating.movieId)
+  ).size;
+}
+
+function ratingText(count: number) {
+  return `${count} movie rating${count === 1 ? "" : "s"}`;
+}
+
 export default function ProfileEditor() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,8 +64,9 @@ export default function ProfileEditor() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [username, setUsername] = useState("");
-  const [avatarKey, setAvatarKey] = useState("classic");
+  const [avatarKey, setAvatarKey] = useState("clapper");
   const [favoriteGenre, setFavoriteGenre] = useState("horror");
+  const [ratedMovieCount, setRatedMovieCount] = useState(0);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -57,10 +81,23 @@ export default function ProfileEditor() {
       setUser(nextUser);
 
       if (nextUser) {
-        getProfileByUserId(nextUser.id).then((nextProfile) => {
+        Promise.all([
+          getProfileByUserId(nextUser.id),
+          getUserRatings(nextUser.id),
+        ]).then(([nextProfile, ratings]) => {
+          const nextRatedMovieCount = getUniqueCompletedRatingCount(ratings);
+          const nextAvatar = avatarForKey(
+            nextProfile?.avatar_key ?? firstUnlockedAvatarKey(nextRatedMovieCount)
+          );
+
           setProfile(nextProfile);
           setUsername(nextProfile?.username ?? "");
-          setAvatarKey(nextProfile?.avatar_key ?? "classic");
+          setRatedMovieCount(nextRatedMovieCount);
+          setAvatarKey(
+            isAvatarUnlocked(nextAvatar.key, nextRatedMovieCount)
+              ? nextAvatar.key
+              : firstUnlockedAvatarKey(nextRatedMovieCount)
+          );
           setFavoriteGenre(nextProfile?.favorite_genre ?? "horror");
         });
       }
@@ -70,7 +107,7 @@ export default function ProfileEditor() {
   if (!user) {
     return (
       <section className="mx-auto max-w-xl rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-black/30">
-        <h1 className="text-3xl font-black text-white">Create Your Profile</h1>
+        <h1 className="text-3xl font-black text-white">Create Your PopFile</h1>
         <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
           Sign in with your email and password. New here? Create an account,
           then choose your username, avatar, and favorite genre.
@@ -175,7 +212,7 @@ export default function ProfileEditor() {
             PopScore PopFile
           </p>
           <h1 className="mt-2 text-3xl font-black text-white">
-            {profile ? "Edit PopFile" : "Set Up Profile"}
+            {profile ? "Edit PopFile" : "Set Up PopFile"}
           </h1>
         </div>
         <button
@@ -208,10 +245,22 @@ export default function ProfileEditor() {
         className="mt-8 space-y-8"
         onSubmit={(event) => {
           event.preventDefault();
+          const selectedAvatar = avatarForKey(avatarKey);
+
+          if (!isAvatarUnlocked(selectedAvatar.key, ratedMovieCount)) {
+            setAvatarKey(firstUnlockedAvatarKey(ratedMovieCount));
+            setMessage(
+              `${selectedAvatar.label} needs ${ratingText(
+                Math.max(selectedAvatar.unlockAt - ratedMovieCount, 0)
+              )} more to unlock.`
+            );
+            return;
+          }
+
           setIsSaving(true);
           setMessage("");
           upsertProfile({
-            avatarKey,
+            avatarKey: selectedAvatar.key,
             email: user.email ?? null,
             favoriteGenre,
             userId: user.id,
@@ -220,7 +269,7 @@ export default function ProfileEditor() {
             .then((nextProfile) => {
               setProfile(nextProfile);
               setUsername(nextProfile.username);
-              setMessage("Profile saved.");
+              setMessage("PopFile saved.");
             })
             .catch((error: Error) => setMessage(error.message))
             .finally(() => setIsSaving(false));
@@ -250,7 +299,11 @@ export default function ProfileEditor() {
           <h2 className="mb-3 text-sm font-black uppercase text-yellow-400">
             Avatar
           </h2>
-          <AvatarPicker value={avatarKey} onChange={setAvatarKey} />
+          <AvatarPicker
+            ratedMovieCount={ratedMovieCount}
+            value={avatarKey}
+            onChange={setAvatarKey}
+          />
         </div>
 
         <div>
@@ -267,7 +320,7 @@ export default function ProfileEditor() {
           disabled={isSaving}
           className="min-h-12 rounded-xl bg-yellow-400 px-6 font-black text-black hover:bg-yellow-300"
         >
-          {isSaving ? "Saving..." : "Save Profile"}
+          {isSaving ? "Saving..." : "Save PopFile"}
         </button>
       </form>
 
@@ -277,7 +330,7 @@ export default function ProfileEditor() {
           href={`/profile/${profile.username}`}
           className="mt-5 inline-flex font-bold text-yellow-300 hover:text-yellow-200"
         >
-          View public profile
+          View public PopFile
         </Link>
       ) : null}
     </section>

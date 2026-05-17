@@ -39,7 +39,7 @@ export default function DiscoverPage() {
               ))}
             </div>
             <p className="mt-5 text-center text-sm font-bold leading-6 text-slate-300">
-              The same PopScore discovery flow, now outside the profile stats
+              The same PopScore discovery flow, now outside the PopFile stats
               page.
             </p>
           </div>

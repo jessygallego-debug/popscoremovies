@@ -191,7 +191,7 @@ export default function RateClient({
       .then((profile) => {
         if (!profile) {
           setSubmitMessage(
-            "Create or sign in to your profile before rating movies."
+            "Create or sign in to your PopFile before rating movies."
           );
           return Promise.reject(new Error("Missing profile"));
         }
