@@ -649,7 +649,7 @@ export async function saveUserMovieRating({
   genre: string;
   movie: MovieMeta;
   popscore: number;
-  questions: RatingQuestion[];
+  questions: readonly RatingQuestion[];
   ratings: Record<string, number>;
 }) {
   const user = await getCurrentUser();

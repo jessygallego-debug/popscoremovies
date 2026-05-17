@@ -222,6 +222,53 @@ export async function getMovies(
   return movies.sort(compareLatestPopular).slice(0, requestedLimit);
 }
 
+function recommendationMoviesPath(page: number, genreId: string) {
+  const tmdbGenreId =
+    genreId === ROMCOM_GENRE_FILTER_ID ? String(ROMANCE_GENRE_ID) : genreId;
+
+  return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc&with_genres=${tmdbGenreId}`;
+}
+
+export async function getRecommendationMovies(
+  genreId: string,
+  limit = MAX_MOVIE_RESULTS
+) {
+  const requestedLimit = Math.min(Math.max(limit, 10), MAX_MOVIE_RESULTS);
+  const requestedPages = Math.ceil(requestedLimit / TMDB_PAGE_SIZE);
+  const movies: MovieSummary[] = [];
+  let pageLimit = requestedPages;
+
+  for (
+    let page = 1;
+    page <= pageLimit && movies.length < requestedLimit;
+    page++
+  ) {
+    const data = await tmdbFetch<TmdbListResponse>(
+      recommendationMoviesPath(page, genreId)
+    );
+
+    if (!data?.results?.length) {
+      break;
+    }
+
+    const nextMovies = data.results.filter((movie) => {
+      if (genreId === ROMCOM_GENRE_FILTER_ID) {
+        return (
+          movie.genre_ids?.includes(ROMANCE_GENRE_ID) &&
+          movie.genre_ids.includes(COMEDY_GENRE_ID)
+        );
+      }
+
+      return true;
+    });
+
+    movies.push(...nextMovies);
+    pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
+  }
+
+  return movies.sort(compareLatestPopular).slice(0, requestedLimit);
+}
+
 export async function getMovie(id: string) {
   return tmdbFetch<MovieDetails>(
     `/movie/${id}?language=en-US&append_to_response=credits,videos`

@@ -65,7 +65,7 @@ export async function savePopScore(
   movieId: string,
   genre: string,
   ratings: Record<string, number>,
-  questions: RatingQuestion[]
+  questions: readonly RatingQuestion[]
 ) {
   await supabaseFetch("/ratings", {
     method: "POST",
