@@ -18,20 +18,6 @@ function lovedPercentForMovie(movie: MovieSummary) {
   return Math.min(98, Math.max(62, Math.round((movie.vote_average ?? 7.4) * 10)));
 }
 
-function normalizeMoviePosterPath(path?: string | null) {
-  const trimmedPath = path?.trim();
-
-  if (
-    !trimmedPath ||
-    trimmedPath.toLowerCase() === "null" ||
-    trimmedPath.toLowerCase() === "undefined"
-  ) {
-    return null;
-  }
-
-  return trimmedPath;
-}
-
 type DiscoveryRecommendation = MovieSummary & {
   explanation: string;
   overallPopScore: number;
@@ -48,56 +34,7 @@ type RecommendationResponse = {
 };
 
 function DiscoveryPoster({ movie }: { movie: DiscoveryRecommendation }) {
-  const posterKey = `${movie.id}:${movie.poster_path ?? ""}`;
-  const [posterRecovery, setPosterRecovery] = useState<{
-    failedPosterPath: string | null;
-    fallbackPath: string | null;
-    key: string;
-  }>({
-    failedPosterPath: null,
-    fallbackPath: null,
-    key: posterKey,
-  });
-  const primaryPath = normalizeMoviePosterPath(movie.poster_path);
-  const fallbackPath =
-    posterRecovery.key === posterKey
-      ? normalizeMoviePosterPath(posterRecovery.fallbackPath)
-      : null;
-  const failedPosterPath =
-    posterRecovery.key === posterKey ? posterRecovery.failedPosterPath : null;
-  const activePath = fallbackPath ?? primaryPath;
-  const poster =
-    activePath && activePath !== failedPosterPath ? posterUrl(activePath) : null;
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    if (!movie.id || (primaryPath && failedPosterPath !== primaryPath)) {
-      return () => {
-        isCurrent = false;
-      };
-    }
-
-    fetch(`/api/movie-poster?movie=${encodeURIComponent(String(movie.id))}`)
-      .then((response) => response.json())
-      .then((data: { posterPath?: string | null }) => {
-        const nextPath = normalizeMoviePosterPath(data.posterPath);
-
-        if (isCurrent && nextPath && nextPath !== primaryPath) {
-          setPosterRecovery((current) => ({
-            failedPosterPath:
-              current.key === posterKey ? current.failedPosterPath : null,
-            fallbackPath: nextPath,
-            key: posterKey,
-          }));
-        }
-      })
-      .catch(() => null);
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [failedPosterPath, movie.id, posterKey, primaryPath]);
+  const poster = posterUrl(movie.poster_path);
 
   return (
     <MoviePosterImage
@@ -105,15 +42,7 @@ function DiscoveryPoster({ movie }: { movie: DiscoveryRecommendation }) {
       alt={movie.title}
       sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 50vw"
       className="object-cover transition duration-500 group-hover:scale-105"
-      onLoadError={() => {
-        if (activePath) {
-          setPosterRecovery((current) => ({
-            failedPosterPath: activePath,
-            fallbackPath: current.key === posterKey ? current.fallbackPath : null,
-            key: posterKey,
-          }));
-        }
-      }}
+      fallbackMovieId={String(movie.id)}
       unoptimized
     />
   );
@@ -212,25 +141,25 @@ export default function DiscoverClient() {
   }, [genre, isLoadingUser, userId]);
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-[1.75rem] border border-slate-800/80 bg-slate-950/65 p-5 shadow-2xl shadow-black/30 backdrop-blur">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+    <section className="space-y-5 sm:space-y-6">
+      <div className="rounded-[1.5rem] border border-slate-800/80 bg-slate-950/65 p-4 shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[1.75rem] sm:p-5">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3 sm:mb-5 sm:gap-4">
           <div>
-            <h2 className="text-2xl font-black text-white sm:text-3xl">
+            <h2 className="text-xl font-black text-white sm:text-3xl">
               Explore By Genre
             </h2>
-            <p className="mt-2 text-sm font-semibold text-slate-400">
+            <p className="mt-1 text-xs font-semibold text-slate-400 sm:mt-2 sm:text-sm">
               Pick a lane and find movies that match the mood.
             </p>
           </div>
           {isLoadingUser ? (
-            <p className="text-sm font-bold text-slate-400">
+            <p className="text-xs font-bold text-slate-400 sm:text-sm">
               Checking your PopScore taste...
             </p>
           ) : null}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 overflow-visible pb-1 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8">
+        <div className="grid grid-cols-3 gap-2 overflow-visible pb-1 sm:grid-cols-4 sm:gap-3 md:grid-cols-5 lg:grid-cols-8">
           {PROFILE_GENRES.map((nextGenre) => (
             <button
               key={nextGenre.key}
@@ -243,7 +172,7 @@ export default function DiscoverClient() {
                   setGenre(nextGenre.key);
                 }
               }}
-              className={`inline-flex min-h-12 w-full max-w-full items-center justify-center whitespace-nowrap rounded-full border px-4 py-2 text-sm font-black leading-none transition ${
+              className={`inline-flex min-h-9 w-full max-w-full items-center justify-center rounded-full border px-2 py-1.5 text-center text-[11px] font-black leading-tight transition sm:min-h-10 sm:px-3 sm:text-sm md:min-h-12 md:px-4 ${
                 genre === nextGenre.key
                   ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/25"
                   : "border-slate-700 bg-slate-950 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
@@ -290,19 +219,19 @@ export default function DiscoverClient() {
       {!isLoadingMovies && visibleMovies.length > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-300">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-300 sm:text-xs sm:tracking-[0.22em]">
               {recommendationMode === "personalized"
                 ? "Personalized Picks"
                 : "Popular Genre Picks"}
             </p>
-            <h2 className="mt-1 text-2xl font-black text-white">
+            <h2 className="mt-1 text-xl font-black text-white sm:text-2xl">
               {visibleMovies.length} {selectedGenre?.label ?? "Movie"} recommendations
             </h2>
           </div>
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
         {visibleMovies.map((movie) => {
           const detailsHref = `/movie/${movie.id}?returnTo=${encodeURIComponent(
             "/discover"
@@ -314,22 +243,22 @@ export default function DiscoverClient() {
           return (
             <article
               key={movie.id}
-              className="group overflow-hidden rounded-[1.5rem] border border-slate-800/90 bg-slate-950/85 p-4 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10"
+              className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/85 p-3 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10 sm:rounded-[1.5rem] sm:p-4"
             >
               <Link href={detailsHref} className="block">
-                <div className="relative aspect-[2/3] overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-900 shadow-xl shadow-black/30">
+                <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl shadow-black/30 sm:rounded-[1.35rem]">
                   <DiscoveryPoster movie={movie} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                  <div className="absolute left-4 top-4 rounded-full border border-yellow-300/60 bg-black/75 px-3 py-1.5 text-sm font-black text-yellow-200 shadow-lg shadow-yellow-400/15">
+                  <div className="absolute left-2 top-2 rounded-full border border-yellow-300/60 bg-black/75 px-2 py-1 text-[10px] font-black text-yellow-200 shadow-lg shadow-yellow-400/15 sm:left-4 sm:top-4 sm:px-3 sm:py-1.5 sm:text-sm">
                     {movie.tasteMatchScore}% Match
                   </div>
-                  <div className="absolute bottom-4 left-4 flex items-center gap-3">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/70 text-xl font-black text-white shadow-lg shadow-yellow-400/20">
+                  <div className="absolute bottom-3 left-3 flex items-center gap-2 sm:bottom-4 sm:left-4 sm:gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/70 text-sm font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl">
                       {movie.overallPopScore || lovedPercentForMovie(movie)}
                     </span>
-                    <span className="text-xs font-black text-white">
+                    <span className="text-[10px] font-black text-white sm:text-xs">
                       PopScore
-                      <span className="block text-[11px] font-bold text-slate-300">
+                      <span className="block text-[9px] font-bold text-slate-300 sm:text-[11px]">
                         {movie.totalRatings > 0
                           ? `${movie.totalRatings} ratings`
                           : "Trending pick"}
@@ -338,19 +267,19 @@ export default function DiscoverClient() {
                   </div>
                 </div>
               </Link>
-              <div className="pt-4">
-                <h2 className="line-clamp-2 text-xl font-black leading-tight text-white">
+              <div className="flex flex-1 flex-col pt-3 sm:pt-4">
+                <h2 className="line-clamp-2 text-sm font-black leading-tight text-white sm:text-xl">
                   {movie.title}
                 </h2>
-                <p className="mt-2 text-sm font-bold text-slate-400">
+                <p className="mt-1 text-[11px] font-bold text-slate-400 sm:mt-2 sm:text-sm">
                   {selectedGenre?.label ?? "Movie"} ·{" "}
                   {yearFromDate(movie.release_date)}
                 </p>
 
-                <div className="mt-4 grid gap-2">
+                <div className="mt-auto grid gap-2 pt-3 sm:pt-4">
                   <Link
                     href={rateHref}
-                    className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-400 px-4 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+                    className="inline-flex min-h-10 items-center justify-center rounded-2xl bg-yellow-400 px-3 text-xs font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:min-h-11 sm:px-4 sm:text-sm"
                   >
                     Rate Now
                   </Link>
@@ -363,7 +292,7 @@ export default function DiscoverClient() {
                       posterPath: movie.poster_path,
                       releaseDate: movie.release_date,
                     }}
-                    className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-700 px-4 text-sm font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300"
+                    className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-slate-700 px-3 text-xs font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300 sm:min-h-11 sm:px-4 sm:text-sm"
                   />
                 </div>
               </div>

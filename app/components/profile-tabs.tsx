@@ -567,31 +567,31 @@ function ProfileSidebar({
   ];
 
   return (
-    <aside className={profilePanelClass("p-5 xl:sticky xl:top-6 xl:self-start")}>
+    <aside className={profilePanelClass("p-4 sm:p-5 xl:sticky xl:top-6 xl:self-start")}>
       <div className="flex flex-col items-center text-center">
-        <span className="flex h-28 w-28 items-center justify-center rounded-full border border-yellow-400/50 bg-yellow-400/10 text-6xl shadow-lg shadow-yellow-500/10">
+        <span className="flex h-20 w-20 items-center justify-center rounded-full border border-yellow-400/50 bg-yellow-400/10 text-4xl shadow-lg shadow-yellow-500/10 sm:h-28 sm:w-28 sm:text-6xl">
           {avatar.icon}
         </span>
-        <h1 className="mt-4 break-all text-3xl font-black text-white">
+        <h1 className="mt-3 break-all text-2xl font-black text-white sm:mt-4 sm:text-3xl">
           @{profile.username}
         </h1>
         {profile.favorite_genre ? (
-          <span className="mt-3 rounded-full bg-yellow-400 px-4 py-1.5 text-sm font-black text-black">
+          <span className="mt-2 rounded-full bg-yellow-400 px-3 py-1 text-xs font-black text-black sm:mt-3 sm:px-4 sm:py-1.5 sm:text-sm">
             {genreLabelForKey(profile.favorite_genre)}
           </span>
         ) : null}
-        <p className="mt-3 text-sm font-bold text-slate-400">
+        <p className="mt-2 text-xs font-bold text-slate-400 sm:mt-3 sm:text-sm">
           Member since {formatDate(profile.created_at)}
         </p>
       </div>
 
-      <div className="mt-6 space-y-2 border-t border-slate-800 pt-6">
+      <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-800 pt-5 sm:mt-6 sm:block sm:space-y-2 sm:pt-6">
         {navItems.map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={() => onTabChange(item.key)}
-            className={`flex w-full items-center rounded-2xl border px-5 py-3 text-left text-sm font-black transition ${
+            className={`flex w-full items-center justify-center rounded-2xl border px-4 py-2.5 text-center text-sm font-black transition sm:justify-start sm:px-5 sm:py-3 sm:text-left ${
               activeTab === item.key
                 ? "border-yellow-400/50 bg-yellow-400/10 text-yellow-300"
                 : "border-transparent text-slate-300 hover:border-slate-700 hover:bg-white/5 hover:text-white"
@@ -604,25 +604,25 @@ function ProfileSidebar({
 
       <Link
         href="/profile/edit"
-        className="mt-6 flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-black/30 px-4 py-3 text-sm font-black text-slate-200 transition hover:border-yellow-400 hover:text-yellow-300"
+        className="mt-4 flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-black/30 px-4 py-2.5 text-sm font-black text-slate-200 transition hover:border-yellow-400 hover:text-yellow-300 sm:mt-6 sm:py-3"
       >
         Edit PopFile
       </Link>
 
-      <div className="mt-6 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-        <p className="text-sm font-black text-yellow-300">PopFile Momentum</p>
-        <div className="mt-3 flex items-end justify-between gap-3">
+      <div className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3 sm:mt-6 sm:p-4">
+        <p className="text-xs font-black text-yellow-300 sm:text-sm">PopFile Momentum</p>
+        <div className="mt-2 flex items-end justify-between gap-3 sm:mt-3">
           <div>
-            <p className="text-3xl font-black text-white">
+            <p className="text-2xl font-black text-white sm:text-3xl">
               {summary.totalMoviesRated}
             </p>
-            <p className="text-xs font-bold text-slate-400">movies rated</p>
+            <p className="text-[11px] font-bold text-slate-400 sm:text-xs">movies rated</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-black text-yellow-300">
+            <p className="text-2xl font-black text-yellow-300 sm:text-3xl">
               {summary.ratingStreakDays}
             </p>
-            <p className="text-xs font-bold text-slate-400">day streak</p>
+            <p className="text-[11px] font-bold text-slate-400 sm:text-xs">day streak</p>
           </div>
         </div>
       </div>
@@ -642,16 +642,16 @@ function TierBadge({
   const dimensions =
     size === "large"
       ? {
-          icon: "text-4xl",
-          outer: "h-24 w-24",
-          shine: "top-4 h-3",
-          stripe: "bottom-3 h-1.5 w-10",
+          icon: "text-3xl sm:text-4xl",
+          outer: "h-20 w-20 sm:h-24 sm:w-24",
+          shine: "top-3 h-2.5 sm:top-4 sm:h-3",
+          stripe: "bottom-2.5 h-1.5 w-9 sm:bottom-3 sm:w-10",
         }
       : {
-          icon: "text-xl",
-          outer: "h-12 w-12",
+          icon: "text-lg sm:text-xl",
+          outer: "h-10 w-10 sm:h-12 sm:w-12",
           shine: "top-2 h-2",
-          stripe: "bottom-1.5 h-1 w-6",
+          stripe: "bottom-1.5 h-1 w-5 sm:w-6",
         };
   const mutedStyle = isMuted
     ? {
@@ -714,11 +714,11 @@ function PopScoreStatusCard({
   const circlePercent = Math.max(4, 100 - percentile.topPercentile);
 
   return (
-    <section className={profilePanelClass("overflow-hidden p-5 sm:p-6")}>
+    <section className={profilePanelClass("overflow-hidden p-4 sm:p-6")}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-white">Your PopScore Status</h2>
-          <p className="mt-1 text-sm font-bold text-slate-400">
+          <h2 className="text-lg font-black text-white sm:text-xl">Your PopScore Status</h2>
+          <p className="mt-1 text-xs font-bold text-slate-400 sm:text-sm">
             {tier.description}
           </p>
         </div>
@@ -727,19 +727,19 @@ function PopScoreStatusCard({
         </span>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[auto_minmax(0,1fr)_128px] lg:items-center">
+      <div className="mt-4 grid gap-4 sm:mt-5 lg:grid-cols-[auto_minmax(0,1fr)_128px] lg:items-center">
         <TierBadge tier={tier} />
         <div className="min-w-0">
-          <h3 className="text-3xl font-black" style={{ color: tier.accent }}>
+          <h3 className="text-2xl font-black sm:text-3xl" style={{ color: tier.accent }}>
             {tier.name}
           </h3>
-          <p className="mt-2 text-sm font-bold text-slate-300">
+          <p className="mt-2 text-xs font-bold text-slate-300 sm:text-sm">
             You&apos;re in the top{" "}
             <span className="text-white">{percentile.topPercentile}%</span> of all
             PopScore raters.
           </p>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-3">
             <MiniMetric
               label="Total Movies Rated"
               value={summary.totalMoviesRated}
@@ -753,30 +753,30 @@ function PopScoreStatusCard({
         </div>
 
         <div
-          className="mx-auto flex h-28 w-28 items-center justify-center rounded-full p-2.5"
+          className="mx-auto flex h-24 w-24 items-center justify-center rounded-full p-2 sm:h-28 sm:w-28 sm:p-2.5"
           style={{
             background: `conic-gradient(${tier.accent} ${circlePercent}%, rgba(30, 41, 59, 0.85) 0)`,
           }}
         >
           <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-slate-950 text-center">
-            <span className="text-xs font-black uppercase text-slate-400">Top</span>
-            <span className="text-3xl font-black" style={{ color: tier.accent }}>
+            <span className="text-[10px] font-black uppercase text-slate-400 sm:text-xs">Top</span>
+            <span className="text-2xl font-black sm:text-3xl" style={{ color: tier.accent }}>
               {percentile.topPercentile}%
             </span>
-            <span className="text-xs font-bold text-slate-400">of raters</span>
+            <span className="text-[10px] font-bold text-slate-400 sm:text-xs">of raters</span>
           </div>
         </div>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-4 sm:mt-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="font-bold text-slate-300">
+          <p className="text-sm font-bold text-slate-300 sm:text-base">
             Progress to next tier:{" "}
             <span style={{ color: nextTier?.accent ?? tier.accent }}>
               {nextTier?.name ?? "Top tier reached"}
             </span>
           </p>
-          <p className="text-sm font-bold text-slate-400">
+          <p className="text-xs font-bold text-slate-400 sm:text-sm">
             {nextTier
               ? `${ratingsRemaining} more ratings to go`
               : "You reached the highest tier"}
@@ -789,7 +789,7 @@ function PopScoreStatusCard({
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <span className="w-20 text-right text-sm font-black text-white">
+          <span className="w-16 text-right text-xs font-black text-white sm:w-20 sm:text-sm">
             {nextTier
               ? `${summary.totalMoviesRated} / ${progressTarget}`
               : `${summary.totalMoviesRated}`}
@@ -797,7 +797,7 @@ function PopScoreStatusCard({
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+      <div className="mt-5 grid grid-cols-4 gap-2 sm:mt-6 sm:grid-cols-4 sm:gap-3 xl:grid-cols-7">
         {POPSCORE_TIERS.map((item, index) => (
           <div key={item.id} className="flex flex-col items-center text-center">
             <TierBadge
@@ -806,12 +806,12 @@ function PopScoreStatusCard({
               isMuted={index > currentTierIndex}
             />
             <p
-              className="mt-2 text-xs font-black"
+              className="mt-2 text-[10px] font-black leading-tight sm:text-xs"
               style={{ color: index <= currentTierIndex ? item.accent : "#94a3b8" }}
             >
               {item.name}
             </p>
-            <p className="mt-1 text-[11px] font-bold text-slate-500">
+            <p className="mt-1 text-[10px] font-bold text-slate-500 sm:text-[11px]">
               {item.requirementLabel}
             </p>
           </div>
@@ -829,9 +829,9 @@ function MiniMetric({
   value: number | string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-black/30 p-3">
-      <p className="text-xl font-black text-white">{value}</p>
-      <p className="mt-1 text-xs font-bold text-slate-500">{label}</p>
+    <div className="rounded-2xl border border-slate-800 bg-black/30 p-2 sm:p-3">
+      <p className="break-words text-lg font-black text-white sm:text-xl">{value}</p>
+      <p className="mt-1 text-[10px] font-bold leading-tight text-slate-500 sm:text-xs">{label}</p>
     </div>
   );
 }
@@ -844,9 +844,9 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <div className="min-h-28 rounded-2xl border border-slate-800 bg-black/35 p-4">
-      <p className="break-words text-2xl font-black text-white">{value}</p>
-      <p className="mt-1 text-xs font-bold text-slate-500">{label}</p>
+    <div className="min-h-24 rounded-2xl border border-slate-800 bg-black/35 p-3 sm:min-h-28 sm:p-4">
+      <p className="break-words text-xl font-black text-white sm:text-2xl">{value}</p>
+      <p className="mt-1 text-[11px] font-bold text-slate-500 sm:text-xs">{label}</p>
     </div>
   );
 }
@@ -857,9 +857,9 @@ function ProfileStatsCard({
   summary: ProfileStatSummary;
 }) {
   return (
-    <section className={profilePanelClass("p-6")}>
-      <h2 className="text-xl font-black text-white">Your Stats</h2>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <section className={profilePanelClass("p-4 sm:p-6")}>
+      <h2 className="text-lg font-black text-white sm:text-xl">Your Stats</h2>
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-4 xl:grid-cols-3">
         <StatCard
           label="Total Movies Rated"
           value={summary.totalMoviesRated}
@@ -933,23 +933,23 @@ function AchievementBadge({
   const dimensions = {
     large: {
       badgeText: "bottom-2 text-xs",
-      icon: "text-4xl",
-      image: "h-16 w-16",
-      outer: "h-24 w-24",
+      icon: "text-3xl sm:text-4xl",
+      image: "h-14 w-14 sm:h-16 sm:w-16",
+      outer: "h-20 w-20 sm:h-24 sm:w-24",
       shine: "top-4 h-3",
     },
     medium: {
       badgeText: "bottom-2 text-[11px]",
-      icon: "text-3xl",
-      image: "h-14 w-14",
-      outer: "h-20 w-20",
+      icon: "text-2xl sm:text-3xl",
+      image: "h-12 w-12 sm:h-14 sm:w-14",
+      outer: "h-16 w-16 sm:h-20 sm:w-20",
       shine: "top-3 h-2.5",
     },
     small: {
       badgeText: "bottom-1.5 text-[10px]",
-      icon: "text-2xl",
-      image: "h-12 w-12",
-      outer: "h-[68px] w-[68px]",
+      icon: "text-xl sm:text-2xl",
+      image: "h-10 w-10 sm:h-12 sm:w-12",
+      outer: "h-14 w-14 sm:h-[68px] sm:w-[68px]",
       shine: "top-2.5 h-2",
     },
   }[resolvedSize];
@@ -1007,10 +1007,10 @@ function AchievementBadge({
       </span>
       {showCaption ? (
         <>
-          <p className="mt-3 line-clamp-1 text-sm font-black text-white">
+          <p className="mt-2 line-clamp-1 text-[11px] font-black text-white sm:mt-3 sm:text-sm">
             {achievement.name}
           </p>
-          <p className="mt-1 line-clamp-1 text-xs font-bold text-slate-500">
+          <p className="mt-1 line-clamp-1 text-[10px] font-bold text-slate-500 sm:text-xs">
             {progressLabel}
           </p>
         </>
@@ -1037,12 +1037,12 @@ function AchievementsCard({
   const nextAchievement = getNextAchievement(summary);
 
   return (
-    <section className={profilePanelClass("p-5")}>
+    <section className={profilePanelClass("p-4 sm:p-5")}>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-black text-white">Achievements</h2>
+        <h2 className="text-lg font-black text-white sm:text-xl">Achievements</h2>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-3">
+      <div className="mt-4 grid grid-cols-4 gap-2 sm:mt-6 sm:gap-3">
         {featured.map((achievement) => (
           <AchievementBadge
             key={achievement.id}
@@ -1053,7 +1053,7 @@ function AchievementsCard({
         ))}
       </div>
 
-      <div className="mt-6 rounded-2xl border border-slate-800 bg-black/35 p-4">
+      <div className="mt-5 rounded-2xl border border-slate-800 bg-black/35 p-3 sm:mt-6 sm:p-4">
         {nextAchievement ? (
           <>
             <div className="flex items-center justify-between gap-4">
@@ -1062,7 +1062,7 @@ function AchievementsCard({
                 {nextAchievement.progress.text}
               </p>
             </div>
-            <div className="mt-4 flex items-center gap-4">
+            <div className="mt-4 flex items-center gap-3 sm:gap-4">
               <AchievementBadge
                 achievement={nextAchievement.achievement}
                 compact
@@ -1070,10 +1070,10 @@ function AchievementsCard({
                 summary={summary}
               />
               <div className="min-w-0 flex-1">
-                <p className="font-black text-white">
+                <p className="text-sm font-black text-white sm:text-base">
                   {nextAchievement.achievement.name}
                 </p>
-                <p className="mt-1 text-xs font-bold text-slate-400">
+                <p className="mt-1 text-[11px] font-bold text-slate-400 sm:text-xs">
                   {nextAchievement.achievement.description}
                 </p>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-800">
@@ -1112,14 +1112,14 @@ function RecentActivityCard({
   const items = showAll ? ratings : ratings.slice(0, limit);
 
   return (
-    <section className={profilePanelClass("p-5")}>
+    <section className={profilePanelClass("p-4 sm:p-5")}>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-black text-white">Recent Activity</h2>
+        <h2 className="text-lg font-black text-white sm:text-xl">Recent Activity</h2>
         {onViewAll ? (
           <button
             type="button"
             onClick={onViewAll}
-            className="text-sm font-black text-purple-300 transition hover:text-yellow-300"
+            className="text-xs font-black text-purple-300 transition hover:text-yellow-300 sm:text-sm"
           >
             View all
           </button>
@@ -1134,7 +1134,7 @@ function RecentActivityCard({
             return (
               <article
                 key={rating.id}
-                className="grid grid-cols-[52px_minmax(0,1fr)] gap-4 py-4 sm:grid-cols-[52px_minmax(0,1fr)_auto]"
+                className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 py-3 sm:grid-cols-[52px_minmax(0,1fr)_auto] sm:gap-4 sm:py-4"
               >
                 <MoviePoster
                   movieId={rating.movieId}
@@ -1143,11 +1143,11 @@ function RecentActivityCard({
                   size="small"
                 />
                 <div className="min-w-0">
-                  <p className="line-clamp-2 font-black text-white">
+                  <p className="line-clamp-2 text-sm font-black text-white sm:text-base">
                     {isFullRating ? "Rated" : "Reacted to"} {rating.movieTitle}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-yellow-400/10 px-2.5 py-1 text-sm font-black text-yellow-300">
+                    <span className="rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-black text-yellow-300 sm:px-2.5 sm:text-sm">
                       {isFullRating ? `${rating.popscore}%` : "Reaction"}
                     </span>
                     {rating.quick_reaction ? (
@@ -1180,11 +1180,11 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
       {ratings.map((rating) => (
         <article
           key={rating.id}
-          className="flex gap-4 rounded-2xl border border-slate-800 bg-slate-950/90 p-4"
+          className="flex gap-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-3 sm:gap-4 sm:p-4"
         >
           <MoviePoster
             movieId={rating.movieId}
@@ -1192,13 +1192,13 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
             title={rating.movieTitle}
           />
           <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-2 font-black text-white">
+            <h3 className="line-clamp-2 text-sm font-black text-white sm:text-base">
               {rating.movieTitle}
             </h3>
             <p className="mt-1 text-xs font-bold text-slate-400">
               {rating.genreNames[0] ?? genreLabelForKey(rating.genre)}
             </p>
-            <p className="mt-3 text-2xl font-black text-yellow-400">
+            <p className="mt-2 text-xl font-black text-yellow-400 sm:mt-3 sm:text-2xl">
               {rating.popscore}%
             </p>
             <div className="mt-2">
@@ -1206,7 +1206,7 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
                 <QuickReactionBadge reaction={rating.quick_reaction} />
               ) : null}
             </div>
-            <p className="mt-3 text-xs font-bold text-slate-500">
+            <p className="mt-2 text-xs font-bold text-slate-500 sm:mt-3">
               Rated {formatDate(rating.created_at)}
             </p>
           </div>
@@ -1218,16 +1218,16 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
 
 function AllAchievements({ summary }: { summary: ProfileStatSummary }) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
       {ACHIEVEMENTS.map((achievement) => {
         const progress = getAchievementProgress(achievement, summary);
 
         return (
           <article
             key={achievement.id}
-            className="rounded-2xl border border-slate-800 bg-slate-950/90 p-5"
+            className="rounded-2xl border border-slate-800 bg-slate-950/90 p-4 sm:p-5"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <AchievementBadge
                 achievement={achievement}
                 size="medium"
@@ -1235,8 +1235,8 @@ function AllAchievements({ summary }: { summary: ProfileStatSummary }) {
                 summary={summary}
               />
               <div className="min-w-0">
-                <h3 className="font-black text-white">{achievement.name}</h3>
-                <p className="mt-1 text-sm font-bold text-slate-400">
+                <h3 className="text-sm font-black text-white sm:text-base">{achievement.name}</h3>
+                <p className="mt-1 text-xs font-bold text-slate-400 sm:text-sm">
                   {achievement.description}
                 </p>
               </div>
@@ -1265,9 +1265,9 @@ function SectionCard({
   title: string;
 }) {
   return (
-    <section className={profilePanelClass("p-6")}>
-      <h2 className="text-xl font-black text-white">{title}</h2>
-      <div className="mt-5">{children}</div>
+    <section className={profilePanelClass("p-4 sm:p-6")}>
+      <h2 className="text-lg font-black text-white sm:text-xl">{title}</h2>
+      <div className="mt-4 sm:mt-5">{children}</div>
     </section>
   );
 }
@@ -1474,7 +1474,7 @@ export default function ProfileTabs({ username }: { username: string }) {
   const fullRatings = ratings.filter(hasPopScoreRating);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_380px] 2xl:grid-cols-[280px_minmax(0,1fr)_430px]">
+    <div className="grid gap-4 sm:gap-6 xl:grid-cols-[260px_minmax(0,1fr)_380px] 2xl:grid-cols-[280px_minmax(0,1fr)_430px]">
       <ProfileSidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -1482,7 +1482,7 @@ export default function ProfileTabs({ username }: { username: string }) {
         summary={summary}
       />
 
-      <main className="space-y-6">
+      <main className="space-y-4 sm:space-y-6">
         <PopScoreStatusCard
           percentile={percentile}
           summary={summary}
@@ -1505,7 +1505,7 @@ export default function ProfileTabs({ username }: { username: string }) {
         ) : null}
       </main>
 
-      <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
+      <aside className="space-y-4 sm:space-y-6 xl:sticky xl:top-6 xl:self-start">
         <AchievementsCard summary={summary} />
         <RecentActivityCard
           ratings={ratings}
