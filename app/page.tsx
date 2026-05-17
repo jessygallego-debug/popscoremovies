@@ -6,6 +6,7 @@ import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import SiteHeader from "@/app/components/site-header";
 import ScrollMemory from "@/app/components/scroll-memory";
+import { getSiteEngagementTotals } from "@/lib/site-stats";
 import {
   backdropUrl,
   formatReleaseMonthYear,
@@ -50,10 +51,6 @@ function genreLabelsForMovie(movie: MovieSummary) {
   );
 }
 
-function fanCountForMovie(movie: MovieSummary) {
-  return Math.max(64, Math.round((movie.popularity ?? 10) * 7));
-}
-
 function lovedPercentForMovie(movie: MovieSummary) {
   return Math.min(98, Math.max(62, Math.round((movie.vote_average ?? 7.4) * 10)));
 }
@@ -66,24 +63,27 @@ function movieArtworkUrl(movie: MovieSummary) {
   return posterUrl(movie.poster_path) ?? backdropUrl(movie.backdrop_path);
 }
 
-function HeroVisual({ movies }: { movies: MovieSummary[] }) {
+function HeroVisual({
+  movies,
+  stats,
+}: {
+  movies: MovieSummary[];
+  stats: Awaited<ReturnType<typeof getSiteEngagementTotals>>;
+}) {
   const heroMovies = movies.filter((movie) => movie.poster_path).slice(0, 3);
 
   return (
-    <div className="relative min-h-[250px] overflow-hidden rounded-[1.5rem] border border-slate-800/80 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.24),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-black/40 sm:min-h-[340px] sm:rounded-[2rem] sm:p-6 lg:min-h-[470px]">
+    <div className="relative min-h-[250px] overflow-hidden rounded-[1.5rem] border border-slate-800/80 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.24),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-black/40 sm:min-h-[340px] sm:rounded-[2rem] sm:p-6 lg:min-h-[420px] lg:max-w-[720px] lg:justify-self-end">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(250,204,21,0.18),transparent_28%),radial-gradient(circle_at_15%_80%,rgba(59,130,246,0.16),transparent_30%)]" />
-      <div className="absolute left-8 top-12 hidden rounded-2xl border border-yellow-400/25 bg-black/45 px-4 py-3 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 md:block">
-        🍿 {fanCountForMovie(heroMovies[0] ?? movies[0] ?? { popularity: 95 } as MovieSummary).toLocaleString()}
+      <div className="absolute left-3 top-3 z-30 rounded-2xl border border-yellow-400/25 bg-black/55 px-2.5 py-1.5 text-xs font-black text-yellow-300 shadow-lg shadow-yellow-400/10 backdrop-blur md:left-5 md:top-5 md:px-4 md:py-2.5 md:text-sm">
+        🍿 {stats.totalRatings.toLocaleString()}
       </div>
-      <div className="absolute right-8 top-7 hidden rounded-2xl border border-red-400/25 bg-black/45 px-4 py-3 text-sm font-black text-red-300 shadow-lg shadow-red-500/10 md:block">
-        ♡ {(fanCountForMovie(heroMovies[1] ?? movies[1] ?? { popularity: 170 } as MovieSummary) / 1000).toFixed(1)}K
-      </div>
-      <div className="absolute bottom-12 right-5 hidden rounded-2xl border border-yellow-400/25 bg-black/45 px-4 py-3 text-sm font-black text-yellow-200 shadow-lg shadow-yellow-400/10 md:block">
-        🔥 {lovedPercentForMovie(heroMovies[2] ?? movies[2] ?? { vote_average: 8.8 } as MovieSummary)}% Loved It
+      <div className="absolute right-3 top-3 z-30 rounded-2xl border border-red-400/25 bg-black/55 px-2.5 py-1.5 text-xs font-black text-red-300 shadow-lg shadow-red-500/10 backdrop-blur md:right-5 md:top-5 md:px-4 md:py-2.5 md:text-sm">
+        🔥 {stats.totalReactions.toLocaleString()}
       </div>
 
       <div className="relative z-10 flex h-full items-center justify-center">
-        <div className="relative h-[210px] w-full max-w-[320px] sm:h-[280px] sm:max-w-[420px] lg:h-[380px] lg:max-w-[460px]">
+        <div className="relative h-[210px] w-full max-w-[320px] sm:h-[280px] sm:max-w-[420px] lg:h-[340px] lg:max-w-[440px]">
           {heroMovies.map((movie, index) => {
             const offsets = [
               "left-[3%] top-[22%] z-10 rotate-[-8deg] scale-[0.86] md:left-[0%] md:top-[18%]",
@@ -121,18 +121,8 @@ function HeroVisual({ movies }: { movies: MovieSummary[] }) {
             );
           })}
 
-          <div className="absolute bottom-2 left-1/2 z-30 hidden w-[82%] -translate-x-1/2 rounded-2xl border border-white/10 bg-black/45 p-3 text-center shadow-2xl shadow-black/50 backdrop-blur md:block">
-            <div className="flex justify-center -space-x-2">
-              {["J", "M", "A"].map((initial) => (
-                <span
-                  key={initial}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/50 bg-slate-900 text-xs font-black text-yellow-300"
-                >
-                  {initial}
-                </span>
-              ))}
-            </div>
-            <p className="mt-2 text-sm font-bold text-slate-200">
+          <div className="absolute bottom-2 left-1/2 z-30 w-[86%] -translate-x-1/2 rounded-2xl border border-white/10 bg-black/50 p-2 text-center shadow-2xl shadow-black/50 backdrop-blur md:w-[82%] md:p-3">
+            <p className="text-[11px] font-bold leading-4 text-slate-200 md:text-sm md:leading-5">
               Join fans rating movies by what they{" "}
               <span className="text-yellow-300">actually love.</span>
             </p>
@@ -189,7 +179,10 @@ export default async function Home({
   const activeGenre = MOVIE_GENRE_FILTERS.find(
     (genre) => genre.id === params.genre
   );
-  const movies = await getMovies(query, 200, activeGenre?.id);
+  const [movies, siteStats] = await Promise.all([
+    getMovies(query, 200, activeGenre?.id),
+    getSiteEngagementTotals(),
+  ]);
   const displayMovies = movies.filter(hasMovieArtwork);
   const hasMissingToken = !isTmdbConfigured();
   const currentPageParams = new URLSearchParams();
@@ -253,7 +246,7 @@ export default async function Home({
             </div>
           </div>
 
-          <HeroVisual movies={displayMovies} />
+          <HeroVisual movies={displayMovies} stats={siteStats} />
         </section>
 
         <section id="genres" className="border-t border-white/10 pt-7">
