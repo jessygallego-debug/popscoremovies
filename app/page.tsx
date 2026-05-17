@@ -59,7 +59,7 @@ function lovedPercentForMovie(movie: MovieSummary) {
 }
 
 function hasMovieArtwork(movie: MovieSummary) {
-  return Boolean(movie.poster_path || movie.backdrop_path);
+  return Boolean(movieArtworkUrl(movie));
 }
 
 function movieArtworkUrl(movie: MovieSummary) {
@@ -86,9 +86,9 @@ function HeroVisual({ movies }: { movies: MovieSummary[] }) {
         <div className="relative h-[210px] w-full max-w-[320px] sm:h-[280px] sm:max-w-[420px] lg:h-[380px] lg:max-w-[460px]">
           {heroMovies.map((movie, index) => {
             const offsets = [
-              "left-[3%] top-[22%] z-10 rotate-[-8deg] scale-[0.86]",
-              "left-[32%] top-[4%] z-20 rotate-[2deg] scale-100",
-              "right-[1%] top-[24%] z-10 rotate-[8deg] scale-[0.88]",
+              "left-[3%] top-[22%] z-10 rotate-[-8deg] scale-[0.86] md:left-[0%] md:top-[18%]",
+              "left-[32%] top-[4%] z-20 rotate-[2deg] scale-100 md:left-[27%] md:top-[1%]",
+              "right-[1%] top-[24%] z-10 rotate-[8deg] scale-[0.88] md:right-[0%] md:top-[20%]",
             ];
 
             return (
@@ -96,15 +96,17 @@ function HeroVisual({ movies }: { movies: MovieSummary[] }) {
                 key={movie.id}
                 data-remember-scroll
                 href={`/movie/${movie.id}`}
-                className={`absolute block w-[42%] overflow-hidden rounded-[1.35rem] border border-white/15 bg-slate-950 shadow-2xl shadow-black/60 transition duration-500 motion-safe:animate-[popFloat_8s_ease-in-out_infinite] hover:z-30 hover:-translate-y-2 hover:rotate-0 hover:border-yellow-400/70 ${offsets[index]}`}
+                className={`absolute block w-[42%] overflow-hidden rounded-[1.35rem] border border-white/15 bg-slate-950 shadow-2xl shadow-black/60 transition duration-500 motion-safe:animate-[popFloat_8s_ease-in-out_infinite] hover:z-30 hover:-translate-y-2 hover:rotate-0 hover:border-yellow-400/70 md:w-[48%] ${offsets[index]}`}
                 style={{ animationDelay: `${index * 0.8}s` }}
               >
                 <div className="relative aspect-[2/3]">
                   <MoviePosterImage
                     src={posterUrl(movie.poster_path)}
                     alt={movie.title}
-                    sizes="(min-width: 1024px) 16vw, 34vw"
+                    sizes="(min-width: 1024px) 19vw, 34vw"
                     className="object-cover"
+                    fallbackMovieId={String(movie.id)}
+                    unoptimized
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
                   <div className="absolute bottom-3 left-3 right-3 hidden md:block">
@@ -319,6 +321,8 @@ export default async function Home({
                           alt={movie.title}
                           sizes="(min-width: 1536px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 50vw"
                           className="object-cover transition duration-500 group-hover:scale-105"
+                          fallbackMovieId={String(movie.id)}
+                          unoptimized
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/25 to-transparent" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />

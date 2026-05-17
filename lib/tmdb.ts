@@ -45,6 +45,18 @@ type TmdbListResponse = {
   status_message?: string;
 };
 
+type TmdbMovieImage = {
+  file_path: string | null;
+  iso_639_1: string | null;
+  vote_average?: number;
+  vote_count?: number;
+};
+
+type TmdbMovieImagesResponse = {
+  backdrops?: TmdbMovieImage[];
+  posters?: TmdbMovieImage[];
+};
+
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const MAX_MOVIE_RESULTS = 300;
@@ -98,7 +110,25 @@ export function posterUrl(path: string | null, size = "w500") {
 }
 
 export function backdropUrl(path: string | null, size = "w1280") {
-  return path ? `${TMDB_IMAGE_BASE_URL}/${size}${path}` : null;
+  const trimmedPath = path?.trim();
+
+  if (
+    !trimmedPath ||
+    trimmedPath.toLowerCase() === "null" ||
+    trimmedPath.toLowerCase() === "undefined"
+  ) {
+    return null;
+  }
+
+  if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
+    return trimmedPath;
+  }
+
+  const normalizedPath = trimmedPath.startsWith("/")
+    ? trimmedPath
+    : `/${trimmedPath}`;
+
+  return `${TMDB_IMAGE_BASE_URL}/${size}${normalizedPath}`;
 }
 
 export function formatReleaseMonthYear(releaseDate: string) {
@@ -273,6 +303,38 @@ export async function getMovie(id: string) {
   return tmdbFetch<MovieDetails>(
     `/movie/${id}?language=en-US&append_to_response=credits,videos`
   );
+}
+
+function bestImagePath(images: TmdbMovieImage[] = []) {
+  return [...images]
+    .filter((image) => posterUrl(image.file_path))
+    .sort((a, b) => {
+      const languageScore =
+        Number(b.iso_639_1 === "en") - Number(a.iso_639_1 === "en");
+
+      if (languageScore !== 0) {
+        return languageScore;
+      }
+
+      const voteCountDifference = (b.vote_count ?? 0) - (a.vote_count ?? 0);
+
+      if (voteCountDifference !== 0) {
+        return voteCountDifference;
+      }
+
+      return (b.vote_average ?? 0) - (a.vote_average ?? 0);
+    })[0]?.file_path ?? null;
+}
+
+export async function getMovieImageFallbacks(id: string) {
+  const images = await tmdbFetch<TmdbMovieImagesResponse>(
+    `/movie/${id}/images?include_image_language=en,null`
+  );
+
+  return {
+    backdropPath: bestImagePath(images?.backdrops),
+    posterPath: bestImagePath(images?.posters),
+  };
 }
 
 export function isTmdbConfigured() {
