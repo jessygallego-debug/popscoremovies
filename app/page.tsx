@@ -23,22 +23,18 @@ const TMDB_GENRE_LABELS = new Map(
 
 const whyPopScoreCards = [
   {
-    icon: "◎",
     title: "Genre-Specific Ratings",
     description: "Horror shouldn't be rated like romance.",
   },
   {
-    icon: "♡",
     title: "Real Fan Reactions",
     description: "See how real fans actually feel about movies.",
   },
   {
-    icon: "◇",
     title: "Built For Movie Fans",
     description: "No critics. No agendas. Just fans.",
   },
   {
-    icon: "☆",
     title: "Discover Your Next Favorite",
     description: "Recommendations based on your taste.",
   },
@@ -85,7 +81,6 @@ function HeroVisual({ movies }: { movies: MovieSummary[] }) {
               "left-[32%] top-[4%] z-20 rotate-[2deg] scale-100",
               "right-[1%] top-[24%] z-10 rotate-[8deg] scale-[0.88]",
             ];
-            const genre = genreLabelsForMovie(movie)[0] ?? "Movie";
 
             return (
               <Link
@@ -104,17 +99,11 @@ function HeroVisual({ movies }: { movies: MovieSummary[] }) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
                   <div className="absolute bottom-3 left-3 right-3">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-lg font-black text-white shadow-lg shadow-yellow-400/20">
-                        {lovedPercentForMovie(movie)}
-                      </span>
-                      <span className="min-w-0 text-[11px] font-black text-white">
-                        {genre} Fans
-                        <span className="block text-[10px] font-bold text-slate-300">
-                          PopScore
-                        </span>
-                      </span>
-                    </div>
+                    <PopScoreDisplay
+                      movieId={String(movie.id)}
+                      variant="posterBadge"
+                      className="flex h-12 w-12 flex-col items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center font-black text-white shadow-lg shadow-yellow-400/20"
+                    />
                   </div>
                 </div>
               </Link>
@@ -159,12 +148,9 @@ function WhyPopScore() {
           {whyPopScoreCards.map((card) => (
             <article
               key={card.title}
-              className="flex h-full min-h-[150px] rounded-2xl border border-slate-800/80 bg-white/[0.03] p-5 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06]"
+              className="flex h-full min-h-[132px] rounded-2xl border border-slate-800/80 bg-white/[0.03] p-5 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06]"
             >
-              <div className="flex h-full flex-col gap-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-yellow-400/35 bg-yellow-400/10 text-2xl font-black text-yellow-300">
-                  {card.icon}
-                </span>
+              <div className="flex h-full flex-col justify-center">
                 <div>
                   <h3 className="text-lg font-black leading-snug text-yellow-300">
                     {card.title}
@@ -304,7 +290,6 @@ export default async function Home({
                   ? formatReleaseMonthYear(movie.release_date)
                   : "";
                 const genreLabels = genreLabelsForMovie(movie);
-                const primaryGenre = genreLabels[0] ?? "Movie";
                 const movieHref = `/movie/${
                   movie.id
                 }?returnTo=${encodeURIComponent(currentPagePath)}`;
@@ -327,20 +312,18 @@ export default async function Home({
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/25 to-transparent" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                        <div className="absolute left-4 top-4 flex items-center gap-3">
-                          <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/70 text-xl font-black text-white shadow-lg shadow-yellow-400/20">
-                            {lovedPercentForMovie(movie)}
-                          </span>
-                          <span className="rounded-full border border-white/15 bg-black/45 px-3 py-1 text-xs font-black text-white backdrop-blur">
-                            {primaryGenre} Fans
-                          </span>
+                        <div className="absolute left-4 top-4">
+                          <PopScoreDisplay
+                            movieId={String(movie.id)}
+                            variant="posterBadge"
+                          />
                         </div>
                         <div className="absolute bottom-4 left-4 right-4">
                           <h3 className="line-clamp-2 text-2xl font-black leading-tight text-white">
                             {movie.title}
                           </h3>
                           <p className="mt-1 text-sm font-bold text-slate-300">
-                            {releaseDate || "TBA"} · {fanCountForMovie(movie).toLocaleString()} fan reactions
+                            {releaseDate || "TBA"}
                           </p>
                         </div>
                       </div>

@@ -14,7 +14,7 @@ import {
   GENRE_RATING_CONFIGS,
   type GenreKey as RatingGenreKey,
 } from "@/lib/genre-rating-config";
-import { ratingToPercent, savePopScore } from "@/lib/popscore-store";
+import { notifyPopScoreUpdates, ratingToPercent } from "@/lib/popscore-store";
 
 const genreConfigs = GENRE_RATING_CONFIGS;
 
@@ -196,10 +196,7 @@ export default function RateClient({
           return Promise.reject(new Error("Missing profile"));
         }
 
-        return savePopScore(movieId, selectedGenre, ratings, currentGenre.questions);
-      })
-      .then(() =>
-        saveUserMovieRating({
+        return saveUserMovieRating({
           genre: selectedGenre,
           movie: {
             genreNames: movieGenreNames ?? [],
@@ -211,10 +208,12 @@ export default function RateClient({
           popscore: popScore,
           questions: currentGenre.questions,
           ratings,
-        })
-          .then(() => removeFromWatchlist(movieId).catch(() => null))
-          .catch(() => null)
-      )
+        });
+      })
+      .then(() => {
+        notifyPopScoreUpdates();
+        return removeFromWatchlist(movieId).catch(() => null);
+      })
       .then(() => {
         setSubmittedScore(popScore);
         router.push(submitHref);

@@ -61,35 +61,27 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
   return response;
 }
 
-export async function savePopScore(
-  movieId: string,
-  genre: string,
-  ratings: Record<string, number>,
-  questions: readonly RatingQuestion[]
-) {
-  await supabaseFetch("/ratings", {
-    method: "POST",
-    headers: {
-      Prefer: "return=minimal",
-    },
-    body: JSON.stringify({
-      movie_id: movieId,
-      genre,
-      ratings,
-      weights: questions,
-    }),
-  });
-
+export function notifyPopScoreUpdates() {
   window.dispatchEvent(new Event(UPDATE_EVENT));
+}
+
+function hasCompletedRating(submission: RatingRow) {
+  return Boolean(
+    submission.weights.length &&
+      submission.ratings &&
+      Object.keys(submission.ratings).length > 0
+  );
 }
 
 export async function getPopScore(movieId: string) {
   const response = await supabaseFetch(
-    `/ratings?movie_id=eq.${encodeURIComponent(
+    `/movie_ratings?movie_id=eq.${encodeURIComponent(
       movieId
     )}&select=id,genre,ratings,weights,created_at,movie_id`
   );
-  const submissions = (await response.json()) as RatingRow[];
+  const submissions = ((await response.json()) as RatingRow[]).filter(
+    hasCompletedRating
+  );
 
   if (submissions.length === 0) {
     return null;

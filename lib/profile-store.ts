@@ -50,7 +50,7 @@ export type UserMovieRating = MovieMeta & {
   ratings: Record<string, number>;
   weights: { key: string; weight: number }[];
   popscore: number;
-  quick_reaction: ProfileQuickReaction;
+  quick_reaction: ProfileQuickReaction | null;
   created_at: string;
   updated_at: string;
 };
@@ -590,12 +590,6 @@ export async function upsertProfile(profile: {
   return rows[0];
 }
 
-function quickReactionForScore(popscore: number): ProfileQuickReaction {
-  if (popscore >= 75) return "loved_it";
-  if (popscore >= 40) return "worth_watching";
-  return "trash";
-}
-
 function mapRatingRow(row: {
   id: string;
   user_id: string;
@@ -608,7 +602,7 @@ function mapRatingRow(row: {
   ratings: Record<string, number>;
   weights: { key: string; weight: number }[];
   popscore: number;
-  quick_reaction: ProfileQuickReaction;
+  quick_reaction: ProfileQuickReaction | null;
   created_at: string;
   updated_at: string;
 }): UserMovieRating {
@@ -658,6 +652,39 @@ export async function saveUserMovieRating({
     return null;
   }
 
+  const ratingBody = {
+    genre,
+    genre_names: movie.genreNames ?? [],
+    movie_id: movie.movieId,
+    movie_title: movie.movieTitle,
+    popscore,
+    poster_path: movie.posterPath ?? null,
+    ratings,
+    release_date: movie.releaseDate ?? null,
+    user_id: user.id,
+    weights: questions,
+  };
+  const existingRows = await supabaseFetch<{ id: string }[]>(
+    `/movie_ratings?user_id=eq.${encodeURIComponent(
+      user.id
+    )}&movie_id=eq.${encodeURIComponent(movie.movieId)}&select=id`
+  );
+
+  if (existingRows[0]) {
+    const rows = await supabaseFetch<unknown[]>(
+      `/movie_ratings?id=eq.${encodeURIComponent(existingRows[0].id)}`,
+      {
+        method: "PATCH",
+        headers: {
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(ratingBody),
+      }
+    );
+
+    return rows[0] ?? existingRows[0];
+  }
+
   const rows = await supabaseFetch<unknown[]>(
     "/movie_ratings?on_conflict=user_id,movie_id",
     {
@@ -665,19 +692,7 @@ export async function saveUserMovieRating({
       headers: {
         Prefer: "resolution=merge-duplicates,return=representation",
       },
-      body: JSON.stringify({
-        genre,
-        genre_names: movie.genreNames ?? [],
-        movie_id: movie.movieId,
-        movie_title: movie.movieTitle,
-        popscore,
-        poster_path: movie.posterPath ?? null,
-        quick_reaction: quickReactionForScore(popscore),
-        ratings,
-        release_date: movie.releaseDate ?? null,
-        user_id: user.id,
-        weights: questions,
-      }),
+      body: JSON.stringify(ratingBody),
     }
   );
 

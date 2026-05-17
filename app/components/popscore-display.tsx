@@ -8,7 +8,7 @@ type PopScoreDisplayProps = {
   movieId: string;
   className?: string;
   showNumericScore?: boolean;
-  variant?: "inline" | "card";
+  variant?: "inline" | "card" | "posterBadge";
 };
 
 function getPopScoreTitle(score: number) {
@@ -36,7 +36,7 @@ function getPopScoreTitle(score: number) {
 
 export default function PopScoreDisplay({
   movieId,
-  className = "mt-1 text-sm font-bold text-yellow-400",
+  className,
   showNumericScore = true,
   variant = "inline",
 }: PopScoreDisplayProps) {
@@ -71,6 +71,24 @@ export default function PopScoreDisplay({
     };
   }, [movieId]);
 
+  if (variant === "posterBadge") {
+    return (
+      <span
+        className={
+          className ??
+          "flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center font-black text-white shadow-lg shadow-yellow-400/20"
+        }
+      >
+        <span className="text-lg leading-none text-white">
+          {score ? score.score : "NR"}
+        </span>
+        <span className="mt-0.5 text-[8px] uppercase tracking-[0.08em] text-yellow-200">
+          PopScore
+        </span>
+      </span>
+    );
+  }
+
   if (!score && variant === "card") {
     return (
       <div className="flex items-center gap-2 sm:gap-3">
@@ -95,7 +113,11 @@ export default function PopScoreDisplay({
   }
 
   if (!score) {
-    return <p className={className}>PopScore: Not rated yet</p>;
+    return (
+      <p className={className ?? "mt-1 text-sm font-bold text-yellow-400"}>
+        PopScore: Not rated yet
+      </p>
+    );
   }
 
   const popScoreTitle = getPopScoreTitle(score.score);
@@ -131,7 +153,7 @@ export default function PopScoreDisplay({
   }
 
   return (
-    <div className={className}>
+    <div className={className ?? "mt-1 text-sm font-bold text-yellow-400"}>
       <div className="flex items-center gap-2">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-yellow-400/10">
           <span className="relative block h-7 w-7">
