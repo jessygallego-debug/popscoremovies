@@ -23,7 +23,6 @@ import { posterUrl } from "@/lib/tmdb";
 type TabKey =
   | "stats"
   | "ratings"
-  | "achievements"
   | "activity";
 
 type ProfileStatSummary = {
@@ -196,7 +195,7 @@ const ACHIEVEMENTS: Achievement[] = [
   {
     id: "buttery_fan",
     name: "Buttery Fan",
-    description: "You know a great movie when you see one.",
+    description: "You are in the top 1% of raters.",
     icon: "🍿",
     color: "butter",
     requirementType: "ratings_90_plus",
@@ -565,7 +564,6 @@ function ProfileSidebar({
   const navItems: { key: TabKey; label: string }[] = [
     { key: "stats", label: "Overview" },
     { key: "ratings", label: "Ratings" },
-    { key: "achievements", label: "Achievements" },
   ];
 
   return (
@@ -839,18 +837,15 @@ function MiniMetric({
 }
 
 function StatCard({
-  icon,
   label,
   value,
 }: {
-  icon: string;
   label: string;
   value: string | number;
 }) {
   return (
     <div className="min-h-28 rounded-2xl border border-slate-800 bg-black/35 p-4">
-      <span className="text-2xl font-black text-yellow-400">{icon}</span>
-      <p className="mt-3 break-words text-2xl font-black text-white">{value}</p>
+      <p className="break-words text-2xl font-black text-white">{value}</p>
       <p className="mt-1 text-xs font-bold text-slate-500">{label}</p>
     </div>
   );
@@ -866,32 +861,26 @@ function ProfileStatsCard({
       <h2 className="text-xl font-black text-white">Your Stats</h2>
       <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
-          icon="▣"
           label="Total Movies Rated"
           value={summary.totalMoviesRated}
         />
         <StatCard
-          icon="♡"
           label="Total Movie Reactions"
           value={summary.totalMovieReactions}
         />
         <StatCard
-          icon="↗"
           label="Average PopScore"
           value={summary.totalMoviesRated ? `${summary.average}%` : "NR"}
         />
         <StatCard
-          icon="☆"
           label="Most Rated Genre"
           value={summary.mostRatedGenre}
         />
         <StatCard
-          icon="♕"
           label="Highest Rated Genre"
           value={summary.highestGenre}
         />
         <StatCard
-          icon="↘"
           label="Lowest Rated Genre"
           value={summary.lowestGenre}
         />
@@ -1040,10 +1029,8 @@ function AchievementBadge({
 }
 
 function AchievementsCard({
-  onViewAll,
   summary,
 }: {
-  onViewAll: () => void;
   summary: ProfileStatSummary;
 }) {
   const featured = ACHIEVEMENTS.slice(0, 4);
@@ -1053,13 +1040,6 @@ function AchievementsCard({
     <section className={profilePanelClass("p-5")}>
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-xl font-black text-white">Achievements</h2>
-        <button
-          type="button"
-          onClick={onViewAll}
-          className="text-sm font-black text-purple-300 transition hover:text-yellow-300"
-        >
-          View all
-        </button>
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-3">
@@ -1426,7 +1406,6 @@ export default function ProfileTabs({ username }: { username: string }) {
   const requestedTab = searchParams.get("tab");
   const initialTab: TabKey =
     requestedTab === "ratings" ||
-    requestedTab === "achievements" ||
     requestedTab === "activity"
       ? requestedTab
       : "stats";
@@ -1511,14 +1490,14 @@ export default function ProfileTabs({ username }: { username: string }) {
         />
         <ProfileStatsCard summary={summary} />
 
+        {activeTab === "stats" ? (
+          <SectionCard title="All Achievements">
+            <AllAchievements summary={summary} />
+          </SectionCard>
+        ) : null}
         {activeTab === "ratings" ? (
           <SectionCard title="Ratings History">
             <RatingsHistory ratings={fullRatings} />
-          </SectionCard>
-        ) : null}
-        {activeTab === "achievements" ? (
-          <SectionCard title="All Achievements">
-            <AllAchievements summary={summary} />
           </SectionCard>
         ) : null}
         {activeTab === "activity" ? (
@@ -1527,10 +1506,7 @@ export default function ProfileTabs({ username }: { username: string }) {
       </main>
 
       <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
-        <AchievementsCard
-          summary={summary}
-          onViewAll={() => setActiveTab("achievements")}
-        />
+        <AchievementsCard summary={summary} />
         <RecentActivityCard
           ratings={ratings}
           onViewAll={() => setActiveTab("activity")}
