@@ -25,7 +25,29 @@ type PopScoreAggregate = {
 };
 
 export function ratingToPercent(rating: number) {
-  return Math.min(Math.max((rating - 1) / 4, 0), 1);
+  const anchors = [
+    { rating: 1, percent: 0 },
+    { rating: 2, percent: 0.4 },
+    { rating: 3, percent: 0.6 },
+    { rating: 4, percent: 0.8 },
+    { rating: 5, percent: 1 },
+  ];
+
+  if (rating <= anchors[0].rating) {
+    return anchors[0].percent;
+  }
+
+  if (rating >= anchors[anchors.length - 1].rating) {
+    return anchors[anchors.length - 1].percent;
+  }
+
+  const upperIndex = anchors.findIndex((anchor) => rating <= anchor.rating);
+  const lower = anchors[upperIndex - 1];
+  const upper = anchors[upperIndex];
+  const rangeProgress =
+    (rating - lower.rating) / (upper.rating - lower.rating);
+
+  return lower.percent + (upper.percent - lower.percent) * rangeProgress;
 }
 
 function getSupabaseConfig() {
