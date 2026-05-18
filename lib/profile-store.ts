@@ -585,7 +585,6 @@ export async function getCurrentProfile() {
 
 export async function upsertProfile(profile: {
   userId: string;
-  email?: string | null;
   username: string;
   avatarKey: string;
   favoriteGenre: string;
@@ -621,7 +620,6 @@ export async function upsertProfile(profile: {
       },
       body: JSON.stringify({
         avatar_key: profile.avatarKey,
-        email: profile.email ?? existingProfile?.email ?? currentUser.email ?? null,
         favorite_genre: favoriteGenre,
         user_id: userId,
         username,

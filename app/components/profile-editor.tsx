@@ -262,7 +262,6 @@ export default function ProfileEditor() {
           setMessage("");
           upsertProfile({
             avatarKey: selectedAvatar.key,
-            email: user.email ?? null,
             favoriteGenre,
             userId: user.id,
             username,
