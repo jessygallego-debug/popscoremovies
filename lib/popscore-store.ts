@@ -24,6 +24,10 @@ type PopScoreAggregate = {
   score: number;
 };
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
 export function ratingToPercent(rating: number) {
   const anchors = [
     { rating: 1, percent: 0 },
@@ -48,6 +52,30 @@ export function ratingToPercent(rating: number) {
     (rating - lower.rating) / (upper.rating - lower.rating);
 
   return lower.percent + (upper.percent - lower.percent) * rangeProgress;
+}
+
+function calculateSubmissionScore(submission: RatingRow) {
+  const score = submission.weights.reduce(
+    (total, question) => {
+      const rating = submission.ratings[question.key];
+
+      if (!rating) {
+        return total;
+      }
+
+      return {
+        percent: total.percent + question.weight * ratingToPercent(rating),
+        weight: total.weight + question.weight,
+      };
+    },
+    { percent: 0, weight: 0 }
+  );
+
+  if (score.weight === 0) {
+    return null;
+  }
+
+  return clamp(score.percent / score.weight, 0, 1);
 }
 
 function getSupabaseConfig() {
@@ -122,49 +150,21 @@ function calculatePopScore(submissions: RatingRow[]): PopScoreAggregate | null {
     return null;
   }
 
-  const questionTotals = new Map<
-    string,
-    {
-      count: number;
-      total: number;
-      weight: number;
-    }
-  >();
+  const submissionScores = submissions
+    .map(calculateSubmissionScore)
+    .filter((score): score is number => score !== null);
 
-  submissions.forEach((submission) => {
-    submission.weights.forEach((question) => {
-      const rating = submission.ratings[question.key];
+  if (submissionScores.length === 0) {
+    return null;
+  }
 
-      if (!rating) {
-        return;
-      }
-
-      const current = questionTotals.get(question.key) ?? {
-        count: 0,
-        total: 0,
-        weight: question.weight,
-      };
-
-      questionTotals.set(question.key, {
-        count: current.count + 1,
-        total: current.total + rating,
-        weight: question.weight,
-      });
-    });
-  });
-
-  const weightedScore = Array.from(questionTotals.values()).reduce(
-    (total, question) => {
-      const averageRating = question.total / question.count;
-
-      return total + question.weight * ratingToPercent(averageRating);
-    },
-    0
-  );
+  const weightedScore =
+    submissionScores.reduce((total, score) => total + score, 0) /
+    submissionScores.length;
 
   return {
-    score: Math.round(weightedScore * 100),
-    count: submissions.length,
+    score: clamp(Math.round(weightedScore * 100), 0, 100),
+    count: submissionScores.length,
   };
 }
 
