@@ -36,6 +36,8 @@ const profileReactionMap: Record<CoStarReaction, ProfileQuickReaction> = {
   worth: "worth_watching",
 };
 
+const REACTION_UPDATE_EVENT = "popscore-reactions-updated";
+
 export default function CoStarReactions({
   movie,
   movieId,
@@ -102,7 +104,19 @@ export default function CoStarReactions({
         });
       })
       .then(() => {
-        getCoStarCounts(movieId).then(setCounts).catch(() => null);
+        getCoStarCounts(movieId)
+          .then((nextCounts) => {
+            setCounts(nextCounts);
+            window.dispatchEvent(
+              new CustomEvent(REACTION_UPDATE_EVENT, {
+                detail: {
+                  counts: nextCounts,
+                  movieId,
+                },
+              })
+            );
+          })
+          .catch(() => null);
         setSelectedReaction(key);
       })
       .catch((error: Error) => {

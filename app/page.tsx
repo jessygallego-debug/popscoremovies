@@ -1,6 +1,7 @@
 import Link from "next/link";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import CoStarReactions from "@/app/components/co-star-reactions";
+import LovedItBadge from "@/app/components/loved-it-badge";
 import MovieSearch from "@/app/components/movie-search";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
@@ -49,10 +50,6 @@ function genreLabelsForMovie(movie: MovieSummary) {
       .filter((genreName): genreName is string => Boolean(genreName))
       .slice(0, 3) ?? []
   );
-}
-
-function lovedPercentForMovie(movie: MovieSummary) {
-  return Math.min(98, Math.max(62, Math.round((movie.vote_average ?? 7.4) * 10)));
 }
 
 function hasMovieArtwork(movie: MovieSummary) {
@@ -338,7 +335,7 @@ export default async function Home({
                     </Link>
 
                     <div className="flex flex-1 flex-col space-y-3 p-3 sm:space-y-4 sm:p-4">
-                      <div className="grid gap-2 sm:gap-3 md:grid-cols-[1fr_auto] md:items-center">
+                      <div className="grid gap-2 sm:gap-3">
                         <Link
                           data-remember-scroll
                           href={rateHref}
@@ -347,9 +344,7 @@ export default async function Home({
                         >
                           <PopScoreDisplay movieId={String(movie.id)} variant="card" />
                         </Link>
-                        <div className="rounded-2xl border border-slate-800 bg-black/25 px-2 py-2 text-center text-[11px] font-black text-yellow-300 sm:px-3 sm:text-sm">
-                          🔥 {lovedPercentForMovie(movie)}% Loved It
-                        </div>
+                        <LovedItBadge movieId={String(movie.id)} />
                       </div>
 
                       <div className="min-h-[4.25rem] md:min-h-0">
