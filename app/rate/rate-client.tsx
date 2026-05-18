@@ -374,6 +374,7 @@ export default function RateClient({
                             src={option.iconSrc}
                             alt={`${option.label} rating icon`}
                             fill
+                            unoptimized
                             sizes={
                               option.value === 5
                                 ? "(min-width: 640px) 80px, 40px"
