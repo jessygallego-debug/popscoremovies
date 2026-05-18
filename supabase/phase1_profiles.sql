@@ -34,8 +34,16 @@ create table if not exists public.movie_ratings (
   humor_score int,
   popscore numeric not null,
   quick_reaction text check (quick_reaction in ('loved_it', 'worth_watching', 'trash')),
+  review_comment text,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null,
+  constraint movie_ratings_review_comment_length
+    check (review_comment is null or char_length(review_comment) <= 300),
+  constraint movie_ratings_review_comment_clean
+    check (
+      review_comment is null
+      or review_comment !~* '(f[[:punct:][:space:]_]*u[[:punct:][:space:]_]*c[[:punct:][:space:]_]*k|sh[i1]t[[:alnum:]_]*|b[i1]tch[[:alnum:]_]*|asshole[[:alnum:]_]*|cunt[[:alnum:]_]*|whore[[:alnum:]_]*|slut[[:alnum:]_]*|dick[[:alnum:]_]*|bastard[[:alnum:]_]*|motherfucker[[:alnum:]_]*)'
+    ),
   unique(user_id, movie_id)
 );
 

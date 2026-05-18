@@ -6,6 +6,7 @@ import BrandHomeLink from "@/app/components/brand-home-link";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import ProfileMenu from "@/app/components/profile-menu";
+import { getMovieFanReviews } from "@/lib/fan-reviews-store";
 import {
   backdropUrl,
   formatReleaseMonthYear,
@@ -34,6 +35,20 @@ function getTrailerUrl(movie: NonNullable<Awaited<ReturnType<typeof getMovie>>>)
     youtubeVideos[0];
 
   return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+}
+
+function formatFanReviewDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 }
 
 export default async function MoviePage({
@@ -92,6 +107,7 @@ export default async function MoviePage({
     closeHref
   )}`;
   const trailerUrl = getTrailerUrl(movie);
+  const fanReviews = await getMovieFanReviews(String(movie.id));
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -218,6 +234,62 @@ export default async function MoviePage({
               ) : null}
             </div>
           </div>
+
+          {fanReviews.length > 0 ? (
+            <section className="mt-10 rounded-3xl border border-yellow-400/20 bg-black/55 p-5 shadow-2xl shadow-yellow-400/10 backdrop-blur sm:p-7">
+              <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-yellow-300">
+                    Community
+                  </p>
+                  <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">
+                    Fan Reviews
+                  </h2>
+                </div>
+                <p className="text-sm font-bold text-gray-400">
+                  Clean, spoiler-free thoughts from PopScore raters.
+                </p>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                {fanReviews.map((review) => (
+                  <article
+                    key={review.id}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/30"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-yellow-400/35 bg-yellow-400/10 text-2xl shadow-lg shadow-yellow-400/10">
+                        {review.avatar}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <h3 className="font-black text-white">
+                              @{review.username}
+                            </h3>
+                            <p className="text-xs font-bold text-gray-500">
+                              {formatFanReviewDate(review.createdAt)}
+                            </p>
+                          </div>
+                          <div className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-right">
+                            <p className="text-sm font-black text-yellow-300">
+                              {review.popscore}%
+                            </p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-yellow-100">
+                              {review.ratingLabel}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="mt-4 text-sm font-semibold leading-6 text-gray-200 sm:text-base">
+                          {review.reviewComment}
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       </section>
     </main>

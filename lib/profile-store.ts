@@ -1,6 +1,7 @@
 "use client";
 
 import { profileGenreDbValue } from "@/lib/profile-config";
+import { validateReviewComment } from "@/lib/review-comments";
 
 const SESSION_KEY = "popscore_supabase_session";
 const SESSION_MAX_IDLE_SECONDS = 90 * 24 * 60 * 60;
@@ -53,6 +54,7 @@ export type UserMovieRating = MovieMeta & {
   weights: { key: string; weight: number }[];
   popscore: number;
   quick_reaction: ProfileQuickReaction | null;
+  reviewComment: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -649,6 +651,7 @@ function mapRatingRow(row: {
   weights: { key: string; weight: number }[];
   popscore: number;
   quick_reaction: ProfileQuickReaction | null;
+  review_comment: string | null;
   created_at: string;
   updated_at: string;
 }): UserMovieRating {
@@ -664,6 +667,7 @@ function mapRatingRow(row: {
     quick_reaction: row.quick_reaction,
     ratings: row.ratings,
     releaseDate: row.release_date,
+    reviewComment: row.review_comment,
     updated_at: row.updated_at,
     user_id: row.user_id,
     weights: row.weights,
@@ -685,12 +689,14 @@ export async function saveUserMovieRating({
   popscore,
   questions,
   ratings,
+  reviewComment = "",
 }: {
   genre: string;
   movie: MovieMeta;
   popscore: number;
   questions: readonly RatingQuestion[];
   ratings: Record<string, number>;
+  reviewComment?: string;
 }) {
   const user = await getCurrentUser();
 
@@ -698,7 +704,25 @@ export async function saveUserMovieRating({
     return null;
   }
 
-  const ratingBody = {
+  const reviewValidation = validateReviewComment(reviewComment);
+
+  if (reviewValidation.error) {
+    throw new Error(reviewValidation.error);
+  }
+
+  const ratingBody: {
+    genre: string;
+    genre_names: string[];
+    movie_id: string;
+    movie_title: string;
+    popscore: number;
+    poster_path: string | null;
+    ratings: Record<string, number>;
+    release_date: string | null;
+    review_comment?: string;
+    user_id: string;
+    weights: readonly RatingQuestion[];
+  } = {
     genre,
     genre_names: movie.genreNames ?? [],
     movie_id: movie.movieId,
@@ -710,6 +734,10 @@ export async function saveUserMovieRating({
     user_id: user.id,
     weights: questions,
   };
+
+  if (reviewValidation.reviewComment) {
+    ratingBody.review_comment = reviewValidation.reviewComment;
+  }
   const existingRows = await supabaseFetch<{ id: string }[]>(
     `/movie_ratings?user_id=eq.${encodeURIComponent(
       user.id

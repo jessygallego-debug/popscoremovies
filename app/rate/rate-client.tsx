@@ -15,6 +15,10 @@ import {
   type GenreKey as RatingGenreKey,
 } from "@/lib/genre-rating-config";
 import { notifyPopScoreUpdates, ratingToPercent } from "@/lib/popscore-store";
+import {
+  REVIEW_COMMENT_MAX_LENGTH,
+  validateReviewComment,
+} from "@/lib/review-comments";
 
 const genreConfigs = GENRE_RATING_CONFIGS;
 
@@ -157,6 +161,8 @@ export default function RateClient({
   const router = useRouter();
   const [selectedGenre, setSelectedGenre] = useState<GenreKey>(initialGenre);
   const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewCommentError, setReviewCommentError] = useState("");
   const [submittedScore, setSubmittedScore] = useState<number | null>(null);
   const [submitMessage, setSubmitMessage] = useState("");
 
@@ -185,6 +191,15 @@ export default function RateClient({
       return;
     }
 
+    const reviewValidation = validateReviewComment(reviewComment);
+
+    if (reviewValidation.error) {
+      setReviewCommentError(reviewValidation.error);
+      setSubmitMessage("");
+      return;
+    }
+
+    setReviewCommentError("");
     setSubmitMessage("");
 
     getCurrentProfile()
@@ -208,6 +223,7 @@ export default function RateClient({
           popscore: popScore,
           questions: currentGenre.questions,
           ratings,
+          reviewComment: reviewValidation.reviewComment ?? "",
         });
       })
       .then(() => {
@@ -221,7 +237,13 @@ export default function RateClient({
       .catch((error: Error) => {
         if (error.message !== "Missing profile") {
           setSubmittedScore(null);
-          setSubmitMessage("Could not submit rating. Please try again.");
+          setSubmitMessage(
+            error.message === "Please keep comments clean before submitting."
+              ? error.message
+              : error.message.includes("review_comment")
+                ? "Review comments need the latest database update before submitting."
+              : "Could not submit rating. Please try again."
+          );
         }
       });
   };
@@ -301,14 +323,14 @@ export default function RateClient({
           ))}
         </div>
 
-        <div className="space-y-4 sm:space-y-8">
+        <div className="space-y-3 sm:space-y-5">
           {currentGenre.questions.map((question) => (
             <div
               key={question.key}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 shadow-xl shadow-black/40 sm:rounded-3xl sm:p-6"
+              className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 shadow-xl shadow-black/40 sm:p-4"
             >
-              <div className="mb-3 flex items-center gap-2 sm:mb-5">
-                <h2 className="text-lg font-bold text-white sm:text-2xl">
+              <div className="mb-2 flex items-center gap-2 sm:mb-3">
+                <h2 className="text-base font-bold text-white sm:text-xl">
                   {question.name}
                 </h2>
                 <span
@@ -320,13 +342,13 @@ export default function RateClient({
                 </span>
               </div>
 
-              <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5">
                 {scoreOptions.map((option) => {
                   const isSelected = ratings[question.key] === option.value;
                   const imageSize =
                     option.value === 5
-                      ? "h-12 w-12 sm:h-28 sm:w-28"
-                      : "h-9 w-9 sm:h-20 sm:w-20";
+                      ? "h-10 w-10 sm:h-20 sm:w-20"
+                      : "h-8 w-8 sm:h-14 sm:w-14";
 
                   return (
                     <button
@@ -338,15 +360,15 @@ export default function RateClient({
                         });
                         setSubmittedScore(null);
                       }}
-                      className={`flex min-h-24 flex-col items-center rounded-xl border p-1.5 text-center transition sm:min-h-44 sm:rounded-2xl sm:p-4 ${
+                      className={`flex min-h-20 flex-col items-center rounded-xl border p-1.5 text-center transition sm:min-h-32 sm:p-3 ${
                         isSelected
                           ? "border-yellow-300 bg-yellow-400/15 text-yellow-300 shadow-[0_0_34px_rgba(250,204,21,0.35)]"
                           : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
                       }`}
                     >
-                      <span className="flex h-12 w-full items-center justify-center sm:h-28">
+                      <span className="flex h-10 w-full items-center justify-center sm:h-20">
                         <span
-                          className={`relative block overflow-hidden rounded-lg sm:rounded-2xl ${imageSize}`}
+                          className={`relative block overflow-hidden rounded-lg ${imageSize}`}
                         >
                           <Image
                             src={option.iconSrc}
@@ -354,21 +376,21 @@ export default function RateClient({
                             fill
                             sizes={
                               option.value === 5
-                                ? "(min-width: 640px) 112px, 48px"
-                                : "(min-width: 640px) 80px, 36px"
+                                ? "(min-width: 640px) 80px, 40px"
+                                : "(min-width: 640px) 56px, 32px"
                             }
                             className="object-contain"
                           />
                         </span>
                       </span>
-                      <span className="mt-1 block text-lg font-black sm:mt-4 sm:text-4xl">
+                      <span className="mt-0.5 block text-base font-black sm:mt-2 sm:text-3xl">
                         {option.value}
                       </span>
-                      <span className="mt-1 block text-[9px] font-black leading-tight sm:mt-3 sm:text-sm">
+                      <span className="mt-0.5 block text-[9px] font-black leading-tight sm:mt-1.5 sm:text-xs">
                         {option.label}
                       </span>
                       <span
-                        className={`mx-auto my-1.5 block h-px w-8 sm:my-4 sm:w-12 ${
+                        className={`mx-auto my-1 block h-px w-7 sm:my-2 sm:w-10 ${
                           isSelected ? "bg-yellow-300/70" : "bg-white/15"
                         }`}
                       />
@@ -384,13 +406,13 @@ export default function RateClient({
         </div>
 
         {allAnswered && (
-          <div className="mt-10 rounded-3xl border border-yellow-400/40 bg-yellow-400/10 p-8 text-white shadow-xl shadow-yellow-400/20">
-            <p className="text-lg font-bold">Your PopScore</p>
-            <h2 className="text-6xl font-black text-yellow-300">
+          <div className="mt-6 rounded-3xl border border-yellow-400/40 bg-yellow-400/10 p-4 text-white shadow-xl shadow-yellow-400/20 sm:p-6">
+            <p className="text-base font-bold sm:text-lg">Your PopScore</p>
+            <h2 className="text-5xl font-black text-yellow-300 sm:text-6xl">
               {popScore}%
             </h2>
-            <div className="mt-4 flex flex-wrap items-center gap-4">
-              <span className="relative block h-20 w-20 overflow-hidden rounded-full border border-yellow-300/40 bg-yellow-400/10 shadow-[0_0_24px_rgba(250,204,21,0.25)]">
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="relative block h-16 w-16 overflow-hidden rounded-full border border-yellow-300/40 bg-yellow-400/10 shadow-[0_0_24px_rgba(250,204,21,0.25)] sm:h-20 sm:w-20">
                 <Image
                   src={popRating.iconSrc}
                   alt={`${popRating.label} PopScore icon`}
@@ -399,22 +421,57 @@ export default function RateClient({
                   className="object-contain"
                 />
               </span>
-              <p className="text-2xl font-bold text-yellow-200">
+              <p className="text-xl font-bold text-yellow-200 sm:text-2xl">
                 {popRating.label}
               </p>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-5 text-gray-200">
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/40 p-4 text-gray-200">
               <p className="font-bold text-yellow-300">
                 {popRating.label} = {popRating.description}
               </p>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-yellow-400/30 bg-black/40 p-4 shadow-inner shadow-yellow-400/10">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <h3 className="text-lg font-black text-yellow-300">
+                    💬 Optional Review Comment
+                  </h3>
+                  <p className="mt-1 text-sm font-bold text-gray-300">
+                    What stood out about this movie? (Optional)
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-gray-400">
+                  {reviewComment.length} / {REVIEW_COMMENT_MAX_LENGTH} characters
+                </span>
+              </div>
+              <textarea
+                value={reviewComment}
+                maxLength={REVIEW_COMMENT_MAX_LENGTH}
+                onChange={(event) => {
+                  setReviewComment(event.target.value);
+                  setReviewCommentError("");
+                  setSubmitMessage("");
+                }}
+                placeholder="Share your thoughts..."
+                className="mt-3 min-h-28 w-full resize-y rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-gray-500 focus:border-yellow-400/60 focus:bg-yellow-400/5 focus:shadow-[0_0_22px_rgba(250,204,21,0.18)]"
+              />
+              <p className="mt-2 text-xs font-bold text-gray-400">
+                Please keep comments respectful and spoiler-free.
+              </p>
+              {reviewCommentError ? (
+                <p className="mt-2 text-sm font-black text-yellow-200">
+                  {reviewCommentError}
+                </p>
+              ) : null}
             </div>
 
             {movieId ? (
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="mt-6 min-h-14 w-full rounded-2xl bg-yellow-400 px-6 text-lg font-black text-black shadow-[0_0_28px_rgba(250,204,21,0.42)] hover:bg-yellow-300 sm:w-auto"
+                className="mt-5 min-h-14 w-full rounded-2xl bg-yellow-400 px-6 text-lg font-black text-black shadow-[0_0_28px_rgba(250,204,21,0.42)] hover:bg-yellow-300 sm:w-auto"
               >
                 Submit Rating ★
               </button>
