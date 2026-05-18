@@ -1,5 +1,7 @@
 "use client";
 
+import { profileGenreDbValue } from "@/lib/profile-config";
+
 const SESSION_KEY = "popscore_supabase_session";
 const SESSION_MAX_IDLE_SECONDS = 90 * 24 * 60 * 60;
 const SESSION_REFRESH_BUFFER_SECONDS = 60;
@@ -217,7 +219,12 @@ async function supabaseFetch<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`Supabase request failed with ${response.status}.`);
+    throw new Error(
+      await readSupabaseRestError(
+        response,
+        `Supabase request failed with ${response.status}.`
+      )
+    );
   }
 
   if (response.status === 204) {
@@ -225,6 +232,47 @@ async function supabaseFetch<T>(
   }
 
   return response.json() as Promise<T>;
+}
+
+async function readSupabaseRestError(response: Response, fallback: string) {
+  let responseText = "";
+
+  try {
+    responseText = await response.text();
+  } catch {
+    return fallback;
+  }
+
+  if (!responseText) {
+    return fallback;
+  }
+
+  try {
+    const errorBody = JSON.parse(responseText) as {
+      code?: string;
+      details?: string;
+      error?: string;
+      error_description?: string;
+      hint?: string;
+      message?: string;
+      msg?: string;
+    };
+    const message =
+      errorBody.error_description ??
+      errorBody.message ??
+      errorBody.msg ??
+      errorBody.error;
+    const details = [
+      message,
+      errorBody.details ? `Details: ${errorBody.details}` : null,
+      errorBody.hint ? `Hint: ${errorBody.hint}` : null,
+      errorBody.code ? `Code: ${errorBody.code}` : null,
+    ].filter(Boolean);
+
+    return details.length ? `${fallback} ${details.join(" ")}` : fallback;
+  } catch {
+    return `${fallback} ${responseText.slice(0, 1000)}`;
+  }
 }
 
 async function readSupabaseAuthError(
@@ -542,31 +590,25 @@ export async function upsertProfile(profile: {
   avatarKey: string;
   favoriteGenre: string;
 }) {
-  const existingProfile = await getProfileByUserId(profile.userId);
+  const currentUser = await getCurrentUser();
 
-  if (existingProfile) {
-    const rows = await supabaseFetch<ProfileRecord[]>(
-      `/profiles?user_id=eq.${encodeURIComponent(profile.userId)}`,
-      {
-        method: "PATCH",
-        headers: {
-          Prefer: "return=representation",
-        },
-        body: JSON.stringify({
-          avatar_key: profile.avatarKey,
-          email: profile.email ?? existingProfile.email ?? null,
-          favorite_genre: profile.favoriteGenre,
-        }),
-      }
-    );
-
-    return rows[0] ?? existingProfile;
+  if (!currentUser) {
+    throw new Error("Please sign in before saving your PopFile.");
   }
 
+  if (currentUser.id !== profile.userId) {
+    throw new Error(
+      "Your PopFile session does not match the signed-in user. Please sign out and sign in again."
+    );
+  }
+
+  const userId = currentUser.id;
+  const favoriteGenre = profileGenreDbValue(profile.favoriteGenre);
+  const existingProfile = await getProfileByUserId(userId);
   const username = validateUsername(profile.username);
   const usernameProfile = await getProfileByUsername(username);
 
-  if (usernameProfile) {
+  if (usernameProfile && usernameProfile.user_id !== userId) {
     throw new Error("That username is already taken.");
   }
 
@@ -579,15 +621,21 @@ export async function upsertProfile(profile: {
       },
       body: JSON.stringify({
         avatar_key: profile.avatarKey,
-        email: profile.email ?? null,
-        favorite_genre: profile.favoriteGenre,
-        user_id: profile.userId,
+        email: profile.email ?? existingProfile?.email ?? currentUser.email ?? null,
+        favorite_genre: favoriteGenre,
+        user_id: userId,
         username,
       }),
     }
   );
 
-  return rows[0];
+  const savedProfile = rows[0] ?? existingProfile;
+
+  if (!savedProfile) {
+    throw new Error("PopFile saved but could not be loaded. Please refresh and try again.");
+  }
+
+  return savedProfile;
 }
 
 function mapRatingRow(row: {

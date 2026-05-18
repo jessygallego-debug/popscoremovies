@@ -54,6 +54,23 @@ export const PROFILE_GENRES = [
   { key: "war", label: "War", tmdbId: "10752" },
 ];
 
+const PROFILE_GENRE_KEY_ALIASES: Record<string, string> = {
+  animation: "animated",
+  animated: "animated",
+  rom_com: "romcom",
+  romcom: "romcom",
+  romantic_comedy: "romcom",
+  sci_fi: "scifi",
+  scifi: "scifi",
+  science_fiction: "scifi",
+};
+
+const PROFILE_GENRE_DB_VALUES: Record<string, string> = {
+  animated: "animation",
+  romcom: "rom_com",
+  scifi: "sci_fi",
+};
+
 export const QUICK_REACTIONS = {
   loved_it: { label: "Loved It", icon: "🔥" },
   worth_watching: { label: "Worth Watching", icon: "🍿" },
@@ -82,10 +99,54 @@ export function firstUnlockedAvatarKey(ratedMovieCount: number) {
   );
 }
 
+function compactGenreKey(key: string) {
+  return key
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+export function normalizeProfileGenreKey(key?: string | null) {
+  if (!key) {
+    return "";
+  }
+
+  const compactKey = compactGenreKey(key);
+  const normalizedKey = PROFILE_GENRE_KEY_ALIASES[compactKey] ?? compactKey;
+
+  return PROFILE_GENRES.some((genre) => genre.key === normalizedKey)
+    ? normalizedKey
+    : "";
+}
+
+export function safeProfileGenreKey(key?: string | null) {
+  return normalizeProfileGenreKey(key) || "horror";
+}
+
+export function profileGenreDbValue(key?: string | null) {
+  const normalizedKey = normalizeProfileGenreKey(key);
+
+  if (!normalizedKey) {
+    throw new Error("Choose a valid favorite genre before saving your PopFile.");
+  }
+
+  return PROFILE_GENRE_DB_VALUES[normalizedKey] ?? normalizedKey;
+}
+
 export function genreLabelForKey(key?: string | null) {
-  return PROFILE_GENRES.find((genre) => genre.key === key)?.label ?? key ?? "";
+  const normalizedKey = normalizeProfileGenreKey(key);
+
+  return (
+    PROFILE_GENRES.find((genre) => genre.key === normalizedKey)?.label ??
+    key ??
+    ""
+  );
 }
 
 export function genreTmdbIdForKey(key: string) {
-  return PROFILE_GENRES.find((genre) => genre.key === key)?.tmdbId ?? "";
+  const normalizedKey = normalizeProfileGenreKey(key);
+
+  return PROFILE_GENRES.find((genre) => genre.key === normalizedKey)?.tmdbId ?? "";
 }

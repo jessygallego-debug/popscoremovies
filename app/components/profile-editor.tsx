@@ -10,6 +10,7 @@ import {
   firstUnlockedAvatarKey,
   genreLabelForKey,
   isAvatarUnlocked,
+  safeProfileGenreKey,
 } from "@/lib/profile-config";
 import {
   consumeAuthRedirect,
@@ -98,7 +99,7 @@ export default function ProfileEditor() {
               ? nextAvatar.key
               : firstUnlockedAvatarKey(nextRatedMovieCount)
           );
-          setFavoriteGenre(nextProfile?.favorite_genre ?? "horror");
+          setFavoriteGenre(safeProfileGenreKey(nextProfile?.favorite_genre));
         });
       }
     });
@@ -271,7 +272,13 @@ export default function ProfileEditor() {
               setUsername(nextProfile.username);
               setMessage("PopFile saved.");
             })
-            .catch((error: Error) => setMessage(error.message))
+            .catch((error: Error) => {
+              if (process.env.NODE_ENV !== "production") {
+                console.error("Save PopFile failed", error);
+              }
+
+              setMessage(error.message);
+            })
             .finally(() => setIsSaving(false));
         }}
       >
