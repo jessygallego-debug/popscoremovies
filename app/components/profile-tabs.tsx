@@ -908,6 +908,7 @@ function ButteryFanIcon({ isUnlocked }: { isUnlocked: boolean }) {
         fill
         sizes="96px"
         src="/rating-icons/extra-buttery-v2.png"
+        unoptimized
       />
     </span>
   );
