@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import BrandHomeLink from "@/app/components/brand-home-link";
+import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import ProfileMenu from "@/app/components/profile-menu";
 import {
@@ -66,8 +67,8 @@ export default async function MoviePage({
     );
   }
 
-  const poster = posterUrl(movie.poster_path);
   const backdrop = backdropUrl(movie.backdrop_path);
+  const poster = posterUrl(movie.poster_path) ?? backdrop;
   const releaseDate = movie.release_date
     ? formatReleaseMonthYear(movie.release_date)
     : "";
@@ -125,13 +126,13 @@ export default async function MoviePage({
           <div className="mt-8 grid gap-8 md:grid-cols-[280px_1fr]">
             <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-900">
               {poster ? (
-                <Image
+                <MoviePosterImage
                   src={poster}
                   alt={movie.title}
-                  fill
-                  priority
                   sizes="280px"
                   className="object-cover"
+                  fallbackMovieId={String(movie.id)}
+                  unoptimized
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-gray-500">
