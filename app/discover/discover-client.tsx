@@ -33,6 +33,21 @@ type RecommendationResponse = {
   movies: DiscoveryRecommendation[];
 };
 
+function limitRecommendations(movies: DiscoveryRecommendation[]) {
+  const seenMovieIds = new Set<number>();
+
+  return movies
+    .filter((movie) => {
+      if (seenMovieIds.has(movie.id)) {
+        return false;
+      }
+
+      seenMovieIds.add(movie.id);
+      return true;
+    })
+    .slice(0, DISCOVERY_RECOMMENDATION_LIMIT);
+}
+
 function DiscoveryPoster({ movie }: { movie: DiscoveryRecommendation }) {
   const poster = posterUrl(movie.poster_path);
 
@@ -64,7 +79,7 @@ export default function DiscoverClient() {
     [genre]
   );
   const visibleMovies = useMemo(
-    () => movies.slice(0, DISCOVERY_RECOMMENDATION_LIMIT),
+    () => limitRecommendations(movies),
     [movies]
   );
 
@@ -115,7 +130,7 @@ export default function DiscoverClient() {
           return;
         }
 
-        setMovies((data.movies ?? []).slice(0, DISCOVERY_RECOMMENDATION_LIMIT));
+        setMovies(limitRecommendations(data.movies ?? []));
         setRecommendationMessage(data.message ?? "");
         setRecommendationMode(data.mode ?? "fallback");
         setStatus("");
