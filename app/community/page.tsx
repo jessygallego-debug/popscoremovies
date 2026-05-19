@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CommunityPostComments from "@/app/components/community-post-comments";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import SiteHeader from "@/app/components/site-header";
 import { posterUrl } from "@/lib/tmdb";
@@ -588,6 +589,11 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
               </div>
             </div>
           ) : null}
+
+          <CommunityPostComments
+            initialCommentCount={post.commentCount}
+            postId={post.id}
+          />
         </div>
       </div>
     </article>
