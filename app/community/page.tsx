@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import CommunityPostComments from "@/app/components/community-post-comments";
 import CommunityPostLikeButton from "@/app/components/community-post-like-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
@@ -316,6 +316,12 @@ function getVisibleFeedPosts(selectedGenre: string, selectedTrend: string) {
   );
 }
 
+function communityRateHref(movieId: string) {
+  return `/rate?movie=${movieId}&returnTo=${encodeURIComponent(
+    "/community"
+  )}&from=community`;
+}
+
 function Avatar({
   label,
   size = "md",
@@ -341,20 +347,26 @@ function Avatar({
 function MovieThumb({
   alt,
   fallbackMovieId,
+  href,
   imagePath,
   wide = false,
 }: {
   alt: string;
   fallbackMovieId: string;
+  href?: string;
   imagePath: string | null;
   wide?: boolean;
 }) {
-  return (
+  const thumb = (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-slate-900 ${
+      className={`relative overflow-hidden rounded-2xl bg-slate-900 transition ${
         wide
           ? "mx-auto aspect-[2/3] w-full max-w-[145px] sm:mx-0 sm:max-w-none"
           : "aspect-[4/3]"
+      } ${
+        href
+          ? "shadow-lg shadow-black/25 hover:-translate-y-0.5 hover:shadow-yellow-400/10"
+          : ""
       }`}
     >
       <MoviePosterImage
@@ -367,6 +379,16 @@ function MovieThumb({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
     </div>
+  );
+
+  if (!href) {
+    return thumb;
+  }
+
+  return (
+    <Link href={href} aria-label={`Rate ${alt}`} className="block">
+      {thumb}
+    </Link>
   );
 }
 
@@ -447,8 +469,54 @@ function FilterMenu({
   options: string[];
   selectedOption: string;
 }) {
+  const menuRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    const closeMenu = (event: PointerEvent) => {
+      const menu = menuRef.current;
+
+      if (menu && !menu.contains(event.target as Node)) {
+        menu.removeAttribute("open");
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        menuRef.current?.removeAttribute("open");
+      }
+    };
+
+    document.addEventListener("pointerdown", closeMenu);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  const closeOtherMenus = () => {
+    const currentMenu = menuRef.current;
+
+    if (!currentMenu?.open) {
+      return;
+    }
+
+    document
+      .querySelectorAll<HTMLDetailsElement>("[data-community-filter-menu]")
+      .forEach((menu) => {
+        if (menu !== currentMenu) {
+          menu.removeAttribute("open");
+        }
+      });
+  };
+
   return (
-    <details className="group relative z-[70]">
+    <details
+      ref={menuRef}
+      data-community-filter-menu
+      onToggle={closeOtherMenus}
+      className="group relative z-[70]"
+    >
       <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/90 px-4 text-sm font-black text-slate-100 shadow-inner shadow-black/20 outline-none transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200 [&::-webkit-details-marker]:hidden">
         {selectedOption}
         <span
@@ -496,23 +564,9 @@ function CommunityFilters({
   selectedGenre: string;
   selectedTrend: string;
 }) {
-  const isAllGenres = selectedGenre === "All Genres";
-
   return (
     <section className={cardClass("relative z-[60] overflow-visible p-3")}>
       <div className="flex flex-wrap gap-2 sm:gap-3">
-        <button
-          type="button"
-          aria-pressed={isAllGenres}
-          onClick={() => onGenreChange("All Genres")}
-          className={`inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-black transition ${
-            isAllGenres
-              ? "border-yellow-400 bg-yellow-400/10 text-yellow-300 hover:bg-yellow-400 hover:text-black"
-              : "border-slate-700 bg-slate-950/90 text-slate-100 hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200"
-          }`}
-        >
-          All
-        </button>
         <FilterMenu
           onSelect={onGenreChange}
           options={genreFilters}
@@ -570,6 +624,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             <MovieThumb
               alt={post.movie.title}
               fallbackMovieId={post.movie.fallbackMovieId}
+              href={communityRateHref(post.movie.fallbackMovieId)}
               imagePath={post.movie.imagePath}
               wide
             />
@@ -662,6 +717,7 @@ function TrendingDiscussionsCard() {
             <MovieThumb
               alt={discussion.title}
               fallbackMovieId={discussion.fallbackMovieId}
+              href={communityRateHref(discussion.fallbackMovieId)}
               imagePath={discussion.imagePath}
             />
             <div className="min-w-0">
