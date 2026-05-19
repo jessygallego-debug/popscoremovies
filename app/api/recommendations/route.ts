@@ -114,10 +114,26 @@ function normalize(value?: string | null) {
   return value?.trim().toLowerCase() ?? "";
 }
 
+function normalizeMovieId(value: number | string | null | undefined) {
+  return String(value ?? "").trim();
+}
+
 function ratingHasPopScore(row: MovieRatingRow) {
   return Boolean(
     row.weights?.length && row.ratings && Object.keys(row.ratings).length > 0
   );
+}
+
+function buildCompletedRatingMovieIds(rows: MovieRatingRow[]) {
+  return rows.reduce((movieIds, row) => {
+    const movieId = normalizeMovieId(row.movie_id);
+
+    if (movieId && ratingHasPopScore(row)) {
+      movieIds.add(movieId);
+    }
+
+    return movieIds;
+  }, new Set<string>());
 }
 
 function rowMatchesGenre(row: MovieRatingRow, genre: GenreKey) {
@@ -441,7 +457,7 @@ export async function GET(request: NextRequest) {
   const userRows = userId
     ? allRatingRows.filter((row) => row.user_id === userId)
     : [];
-  const userRatedMovieIds = new Set(userRows.map((row) => row.movie_id));
+  const userRatedMovieIds = buildCompletedRatingMovieIds(userRows);
   const userGenreRows = userRows.filter(
     (row) => rowMatchesGenre(row, genre) && ratingHasPopScore(row)
   );
@@ -449,7 +465,7 @@ export async function GET(request: NextRequest) {
     (row) => Number(row.popscore ?? 0) >= 75
   );
   const candidateMovies = uniqueMovies(movies).filter(
-    (movie) => !userRatedMovieIds.has(String(movie.id))
+    (movie) => !userRatedMovieIds.has(normalizeMovieId(movie.id))
   );
   const aggregates = buildMovieAggregates(genreRatingRows, questions);
 

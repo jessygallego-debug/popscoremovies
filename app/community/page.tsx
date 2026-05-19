@@ -41,7 +41,6 @@ type SuggestedFollow = CommunityUser & {
 };
 
 type TopReviewer = CommunityUser & {
-  averagePopScore: number;
   totalReviews: number;
 };
 
@@ -236,35 +235,30 @@ const topReviewers: TopReviewer[] = [
     displayName: "CinemaKing",
     username: "cinemaking",
     totalReviews: 136,
-    averagePopScore: 96,
   },
   {
     avatar: "🔥",
     displayName: "Jessi Lee",
     username: "jessilee",
     totalReviews: 124,
-    averagePopScore: 94,
   },
   {
     avatar: "🎬",
     displayName: "MovieMike",
     username: "moviemike",
     totalReviews: 112,
-    averagePopScore: 93,
   },
   {
     avatar: "🎥",
     displayName: "FilmFanatic",
     username: "filmfanatic",
     totalReviews: 98,
-    averagePopScore: 91,
   },
   {
     avatar: "👻",
     displayName: "Lina Rose",
     username: "linarose",
     totalReviews: 87,
-    averagePopScore: 90,
   },
 ];
 
@@ -660,9 +654,6 @@ function WhoToFollowCard() {
           <div key={user.username} className="flex items-center gap-3">
             <Avatar label={user.avatar} size="lg" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-400">
-                @{user.username}
-              </p>
               <p className="font-black text-white">{user.displayName}</p>
               <p className="mt-1 text-xs font-bold text-slate-300">
                 Favorite: {user.favoriteGenre}
@@ -681,18 +672,17 @@ function WhoToFollowCard() {
   );
 }
 
-function ReviewerBadge({ score }: { score: number }) {
+function ReviewCountBadge({ count }: { count: number }) {
   return (
     <span
-      className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border text-sm font-black shadow-lg ${scoreBadgeClass(
-        score
-      )}`}
+      aria-label={`${count} reviews`}
+      className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-yellow-400/40 bg-yellow-400/20 text-sm font-black text-yellow-200 shadow-lg shadow-yellow-400/10"
       style={{
         clipPath:
           "polygon(50% 0%, 92% 25%, 92% 75%, 50% 100%, 8% 75%, 8% 25%)",
       }}
     >
-      {score}
+      {count}
     </span>
   );
 }
@@ -709,9 +699,6 @@ function TopReviewersCard() {
             <span className="text-sm font-black text-white">{index + 1}</span>
             <Avatar label={reviewer.avatar} />
             <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-400">
-                @{reviewer.username}
-              </p>
               <p className="truncate font-black text-white">
                 {reviewer.displayName}
               </p>
@@ -719,7 +706,7 @@ function TopReviewersCard() {
                 {reviewer.totalReviews} reviews
               </p>
             </div>
-            <ReviewerBadge score={reviewer.averagePopScore} />
+            <ReviewCountBadge count={reviewer.totalReviews} />
           </div>
         ))}
       </div>

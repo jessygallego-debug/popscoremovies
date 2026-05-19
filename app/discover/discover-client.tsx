@@ -14,10 +14,6 @@ function yearFromDate(releaseDate?: string | null) {
   return releaseDate?.slice(0, 4) || "TBA";
 }
 
-function lovedPercentForMovie(movie: MovieSummary) {
-  return Math.min(98, Math.max(62, Math.round((movie.vote_average ?? 7.4) * 10)));
-}
-
 type DiscoveryRecommendation = MovieSummary & {
   explanation: string;
   overallPopScore: number;
@@ -269,7 +265,7 @@ export default function DiscoverClient() {
                   </div>
                   <div className="absolute bottom-3 left-3 flex items-center gap-2 sm:bottom-4 sm:left-4 sm:gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/70 text-sm font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl">
-                      {movie.overallPopScore || lovedPercentForMovie(movie)}
+                      {movie.totalRatings > 0 ? movie.overallPopScore : "NR"}
                     </span>
                     <span className="text-[10px] font-black text-white sm:text-xs">
                       PopScore
