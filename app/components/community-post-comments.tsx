@@ -188,7 +188,7 @@ export default function CommunityPostComments({
       ) : null}
 
       <form onSubmit={handleSubmit} className="mt-2">
-        <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_136px] sm:items-stretch">
           <label className="block">
             <span className="sr-only">Add a comment</span>
             <textarea
@@ -199,7 +199,7 @@ export default function CommunityPostComments({
                 setMessage("");
               }}
               placeholder="Add a comment..."
-              className="min-h-14 w-full resize-none rounded-xl border border-slate-800 bg-black/35 px-3 py-2 text-sm font-semibold leading-5 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70 sm:min-h-16"
+              className="h-12 w-full resize-none rounded-xl border border-slate-800 bg-black/35 px-3 py-2 text-sm font-semibold leading-5 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70 sm:h-12"
             />
           </label>
           <button
@@ -210,7 +210,7 @@ export default function CommunityPostComments({
               !draft.trim() ||
               Boolean(validationMessage)
             }
-            className="min-h-11 rounded-xl bg-yellow-400 px-4 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
+            className="h-12 rounded-xl bg-yellow-400 px-4 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
           >
             {isSubmitting ? "Posting..." : "Comment"}
           </button>

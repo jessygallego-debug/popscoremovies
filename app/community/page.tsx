@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import CommunityPostComments from "@/app/components/community-post-comments";
 import CommunityPostLikeButton from "@/app/components/community-post-like-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
@@ -15,6 +18,7 @@ type CommunityFeedPost = {
   activity: string;
   comment?: string;
   commentCount: number;
+  genres: string[];
   id: string;
   interactedAvatars: string[];
   extraInteractions: number;
@@ -89,6 +93,7 @@ const feedPosts: CommunityFeedPost[] = [
     reaction: "🔥 Loved It",
     comment:
       "A masterpiece. The visuals, the story, the emotions... everything about this movie hits differently.",
+    genres: ["Adventure", "Drama", "Sci-Fi"],
     likeCount: 24,
     commentCount: 7,
     interactedAvatars: ["🎬", "🌹", "⭐", "🚀"],
@@ -112,6 +117,7 @@ const feedPosts: CommunityFeedPost[] = [
     reaction: "🍿 Worth Watching",
     comment:
       "Great music, strong performances and a fresh take on the genre. Third act was wild!",
+    genres: ["Drama", "Horror", "Thriller"],
     likeCount: 16,
     commentCount: 3,
     interactedAvatars: ["🔥", "🎥", "👻", "🎟️"],
@@ -133,6 +139,7 @@ const feedPosts: CommunityFeedPost[] = [
     },
     comment:
       "Heath Ledger delivered something the world has never seen before. Still gives me chills.",
+    genres: ["Action", "Crime", "Drama", "Thriller"],
     likeCount: 21,
     commentCount: 4,
     replyLink: "View 4 replies",
@@ -154,6 +161,7 @@ const feedPosts: CommunityFeedPost[] = [
       imagePath: "/tRNlZbgNCNOpLpbPEz5L8G8A0JN.jpg",
     },
     comment: "Discovered this gem through PopScore Discovery ✨",
+    genres: ["Drama", "Mystery", "Thriller"],
     likeCount: 18,
     commentCount: 2,
     interactedAvatars: ["🔥", "🎬", "🎥", "👻"],
@@ -176,6 +184,7 @@ const feedPosts: CommunityFeedPost[] = [
     popscore: 90,
     reaction: "🔥 Loved It",
     comment: "Absolutely stunning. Villeneuve is in a league of his own.",
+    genres: ["Action", "Adventure", "Drama", "Sci-Fi"],
     likeCount: 31,
     commentCount: 5,
     interactedAvatars: ["🚀", "🎬", "🔥", "🎥"],
@@ -280,6 +289,33 @@ function scoreBadgeClass(score: number) {
   return "border-orange-400/40 bg-orange-500/20 text-orange-200 shadow-orange-400/10";
 }
 
+function getVisibleFeedPosts(selectedGenre: string, selectedTrend: string) {
+  const matchingPosts =
+    selectedGenre === "All Genres"
+      ? feedPosts
+      : feedPosts.filter((post) => post.genres.includes(selectedGenre));
+  const sortedPosts = [...matchingPosts];
+
+  if (selectedTrend === "Most Liked") {
+    return sortedPosts.sort((a, b) => b.likeCount - a.likeCount);
+  }
+
+  if (selectedTrend === "Most Commented") {
+    return sortedPosts.sort((a, b) => b.commentCount - a.commentCount);
+  }
+
+  if (selectedTrend === "Newest") {
+    return sortedPosts;
+  }
+
+  return sortedPosts.sort(
+    (a, b) =>
+      b.likeCount +
+      b.commentCount * 2 -
+      (a.likeCount + a.commentCount * 2)
+  );
+}
+
 function Avatar({
   label,
   size = "md",
@@ -317,7 +353,7 @@ function MovieThumb({
     <div
       className={`relative overflow-hidden rounded-2xl bg-slate-900 ${
         wide
-          ? "mx-auto aspect-[2/3] w-full max-w-[170px] sm:mx-0 sm:max-w-none"
+          ? "mx-auto aspect-[2/3] w-full max-w-[145px] sm:mx-0 sm:max-w-none"
           : "aspect-[4/3]"
       }`}
     >
@@ -325,7 +361,7 @@ function MovieThumb({
         alt={alt}
         className="object-cover"
         fallbackMovieId={fallbackMovieId}
-        sizes={wide ? "(min-width: 1024px) 145px, 170px" : "96px"}
+        sizes={wide ? "(min-width: 1024px) 120px, 145px" : "96px"}
         src={posterUrl(imagePath)}
         unoptimized
       />
@@ -403,16 +439,18 @@ function CreatePostBox() {
 }
 
 function FilterMenu({
-  label,
+  onSelect,
   options,
+  selectedOption,
 }: {
-  label: string;
+  onSelect: (option: string) => void;
   options: string[];
+  selectedOption: string;
 }) {
   return (
     <details className="group relative z-[70]">
       <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/90 px-4 text-sm font-black text-slate-100 shadow-inner shadow-black/20 outline-none transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200 [&::-webkit-details-marker]:hidden">
-        {label}
+        {selectedOption}
         <span
           aria-hidden="true"
           className="text-yellow-300 transition group-open:rotate-180"
@@ -421,36 +459,70 @@ function FilterMenu({
         </span>
       </summary>
       <div className="absolute left-0 z-[90] mt-2 grid max-h-72 min-w-52 gap-1 overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-2 shadow-2xl shadow-black/60">
-        {options.map((option, index) => (
-          <button
-            key={option}
-            type="button"
-            className={`rounded-xl px-3 py-2 text-left text-sm font-black transition ${
-              index === 0
-                ? "bg-yellow-400 text-black"
-                : "text-slate-200 hover:bg-yellow-400/10 hover:text-yellow-300"
-            }`}
-          >
-            {option}
-          </button>
-        ))}
+        {options.map((option) => {
+          const isSelected = option === selectedOption;
+
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={(event) => {
+                onSelect(option);
+                event.currentTarget.closest("details")?.removeAttribute("open");
+              }}
+              className={`rounded-xl px-3 py-2 text-left text-sm font-black transition ${
+                isSelected
+                  ? "bg-yellow-400 text-black"
+                  : "text-slate-200 hover:bg-yellow-400/10 hover:text-yellow-300"
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
       </div>
     </details>
   );
 }
 
-function CommunityFilters() {
+function CommunityFilters({
+  onGenreChange,
+  onTrendChange,
+  selectedGenre,
+  selectedTrend,
+}: {
+  onGenreChange: (genre: string) => void;
+  onTrendChange: (trend: string) => void;
+  selectedGenre: string;
+  selectedTrend: string;
+}) {
+  const isAllGenres = selectedGenre === "All Genres";
+
   return (
     <section className={cardClass("relative z-[60] overflow-visible p-3")}>
       <div className="flex flex-wrap gap-2 sm:gap-3">
         <button
           type="button"
-          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-yellow-400 bg-yellow-400/10 px-4 text-sm font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-black"
+          aria-pressed={isAllGenres}
+          onClick={() => onGenreChange("All Genres")}
+          className={`inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-black transition ${
+            isAllGenres
+              ? "border-yellow-400 bg-yellow-400/10 text-yellow-300 hover:bg-yellow-400 hover:text-black"
+              : "border-slate-700 bg-slate-950/90 text-slate-100 hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200"
+          }`}
         >
           All
         </button>
-        <FilterMenu label="All Genres" options={genreFilters} />
-        <FilterMenu label="Trending" options={trendFilters} />
+        <FilterMenu
+          onSelect={onGenreChange}
+          options={genreFilters}
+          selectedOption={selectedGenre}
+        />
+        <FilterMenu
+          onSelect={onTrendChange}
+          options={trendFilters}
+          selectedOption={selectedTrend}
+        />
       </div>
     </section>
   );
@@ -460,7 +532,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
   const isCommentPost = Boolean(post.replyLink);
 
   return (
-    <article className={cardClass("p-4 sm:p-5")}>
+    <article className={cardClass("p-3 sm:p-4")}>
       <div className="flex items-start gap-3">
         <Avatar label={post.user.avatar} size="lg" />
         <div className="min-w-0 flex-1">
@@ -494,7 +566,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             </button>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-[135px_1fr] lg:grid-cols-[145px_1fr]">
+          <div className="mt-3 grid gap-3 sm:grid-cols-[110px_1fr] lg:grid-cols-[120px_1fr]">
             <MovieThumb
               alt={post.movie.title}
               fallbackMovieId={post.movie.fallbackMovieId}
@@ -515,9 +587,9 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
               ) : null}
               {post.comment ? (
                 <p
-                  className={`mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-300 ${
+                  className={`mt-2 max-w-2xl text-sm font-semibold leading-5 text-slate-300 ${
                     isCommentPost
-                      ? "rounded-2xl border border-slate-800 bg-black/25 p-4"
+                      ? "rounded-xl border border-slate-800 bg-black/25 p-3"
                       : ""
                   }`}
                 >
@@ -676,6 +748,13 @@ function TopReviewersCard() {
 }
 
 export default function CommunityPage() {
+  const [selectedGenre, setSelectedGenre] = useState("All Genres");
+  const [selectedTrend, setSelectedTrend] = useState("Trending");
+  const visibleFeedPosts = useMemo(
+    () => getVisibleFeedPosts(selectedGenre, selectedTrend),
+    [selectedGenre, selectedTrend]
+  );
+
   return (
     <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.14),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_38%,#000_74%,#020617_100%)] text-white">
       <div className="pointer-events-none fixed inset-0 opacity-35 [background-image:radial-gradient(rgba(250,204,21,0.24)_1px,transparent_1px)] [background-size:42px_42px]" />
@@ -703,10 +782,21 @@ export default function CommunityPage() {
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
           <div className="space-y-4 sm:space-y-5">
             <CreatePostBox />
-            <CommunityFilters />
-            {feedPosts.map((post) => (
-              <CommunityFeedCard key={post.id} post={post} />
-            ))}
+            <CommunityFilters
+              onGenreChange={setSelectedGenre}
+              onTrendChange={setSelectedTrend}
+              selectedGenre={selectedGenre}
+              selectedTrend={selectedTrend}
+            />
+            {visibleFeedPosts.length > 0 ? (
+              visibleFeedPosts.map((post) => (
+                <CommunityFeedCard key={post.id} post={post} />
+              ))
+            ) : (
+              <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
+                No posts match that filter yet.
+              </section>
+            )}
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-6">
