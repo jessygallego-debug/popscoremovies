@@ -317,7 +317,7 @@ function MovieThumb({
     <div
       className={`relative overflow-hidden rounded-2xl bg-slate-900 ${
         wide
-          ? "mx-auto aspect-[2/3] w-full max-w-[220px] sm:mx-0 sm:max-w-none"
+          ? "mx-auto aspect-[2/3] w-full max-w-[170px] sm:mx-0 sm:max-w-none"
           : "aspect-[4/3]"
       }`}
     >
@@ -325,7 +325,7 @@ function MovieThumb({
         alt={alt}
         className="object-cover"
         fallbackMovieId={fallbackMovieId}
-        sizes={wide ? "(min-width: 1024px) 190px, 220px" : "96px"}
+        sizes={wide ? "(min-width: 1024px) 145px, 170px" : "96px"}
         src={posterUrl(imagePath)}
         unoptimized
       />
@@ -410,7 +410,7 @@ function FilterMenu({
   options: string[];
 }) {
   return (
-    <details className="group relative">
+    <details className="group relative z-[70]">
       <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/90 px-4 text-sm font-black text-slate-100 shadow-inner shadow-black/20 outline-none transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200 [&::-webkit-details-marker]:hidden">
         {label}
         <span
@@ -420,7 +420,7 @@ function FilterMenu({
           ▾
         </span>
       </summary>
-      <div className="absolute left-0 z-30 mt-2 grid max-h-72 min-w-52 gap-1 overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-2 shadow-2xl shadow-black/60">
+      <div className="absolute left-0 z-[90] mt-2 grid max-h-72 min-w-52 gap-1 overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-2 shadow-2xl shadow-black/60">
         {options.map((option, index) => (
           <button
             key={option}
@@ -441,7 +441,7 @@ function FilterMenu({
 
 function CommunityFilters() {
   return (
-    <section className={cardClass("p-3")}>
+    <section className={cardClass("relative z-[60] overflow-visible p-3")}>
       <div className="flex flex-wrap gap-2 sm:gap-3">
         <button
           type="button"
@@ -453,35 +453,6 @@ function CommunityFilters() {
         <FilterMenu label="Trending" options={trendFilters} />
       </div>
     </section>
-  );
-}
-
-function InteractionAvatars({
-  avatars,
-  extra,
-}: {
-  avatars: string[];
-  extra: number;
-}) {
-  if (avatars.length === 0 && extra === 0) {
-    return null;
-  }
-
-  return (
-    <div className="flex items-center">
-      {avatars.map((avatar, index) => (
-        <span
-          key={`${avatar}-${index}`}
-          className="-ml-2 first:ml-0"
-          style={{ zIndex: avatars.length - index }}
-        >
-          <Avatar label={avatar} size="sm" />
-        </span>
-      ))}
-      {extra > 0 ? (
-        <span className="ml-2 text-xs font-bold text-slate-400">+{extra}</span>
-      ) : null}
-    </div>
   );
 }
 
@@ -523,7 +494,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             </button>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-[180px_1fr] lg:grid-cols-[190px_1fr]">
+          <div className="mt-4 grid gap-4 sm:grid-cols-[135px_1fr] lg:grid-cols-[145px_1fr]">
             <MovieThumb
               alt={post.movie.title}
               fallbackMovieId={post.movie.fallbackMovieId}
@@ -573,15 +544,6 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
               ) : null}
             </div>
           </div>
-
-          {!isCommentPost ? (
-            <div className="mt-4 flex justify-end">
-              <InteractionAvatars
-                avatars={post.interactedAvatars}
-                extra={post.extraInteractions}
-              />
-            </div>
-          ) : null}
 
           <CommunityPostComments
             initialCommentCount={post.commentCount}

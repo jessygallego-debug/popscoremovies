@@ -88,13 +88,35 @@ export default function CommunityPostLikeButton({
         aria-pressed={summary.likedByCurrentUser}
         disabled={isSaving}
         onClick={handleLike}
-        className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 text-sm font-black transition ${
+        className={`inline-flex min-h-9 items-center gap-2 rounded-full border py-1 pl-1.5 pr-3 text-sm font-black shadow-lg transition ${
           summary.likedByCurrentUser
-            ? "border-red-400/40 bg-red-500/15 text-red-200"
-            : "border-slate-700 bg-black/25 text-slate-300 hover:border-yellow-400/60 hover:text-yellow-300"
+            ? "border-red-400/55 bg-red-500/18 text-red-100 shadow-red-500/10"
+            : "border-slate-700 bg-black/25 text-slate-300 shadow-black/20 hover:border-red-400/50 hover:text-red-200"
         } disabled:cursor-not-allowed disabled:opacity-60`}
       >
-        <span className="text-red-400">♥</span>
+        <span
+          className={`inline-flex h-6 w-6 items-center justify-center rounded-full transition ${
+            summary.likedByCurrentUser
+              ? "bg-red-500 text-white"
+              : "bg-red-500/10 text-red-300"
+          }`}
+        >
+          <svg
+            aria-hidden="true"
+            className={`h-4 w-4 ${
+              summary.likedByCurrentUser ? "fill-current" : "fill-transparent"
+            }`}
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M20.4 5.2c-1.7-1.8-4.5-1.8-6.3 0L12 7.3 9.9 5.2c-1.8-1.8-4.6-1.8-6.3 0-1.8 1.9-1.7 4.8.1 6.7L12 20l8.3-8.1c1.8-1.9 1.9-4.8.1-6.7Z"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+            />
+          </svg>
+        </span>
         {summary.likeCount}
       </button>
       {message ? (

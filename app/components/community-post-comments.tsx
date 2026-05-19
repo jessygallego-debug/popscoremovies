@@ -142,8 +142,8 @@ export default function CommunityPostComments({
   };
 
   return (
-    <section className="mt-4 border-t border-white/10 pt-4">
-      <div className="mb-3 flex items-center justify-between gap-3 text-xs font-black text-slate-400">
+    <section className="mt-3 border-t border-white/10 pt-3">
+      <div className="mb-2 flex items-center justify-between gap-3 text-xs font-black text-slate-400">
         <span>{totalCommentCount} comments</span>
         {isLoading ? <span>Loading...</span> : null}
       </div>
@@ -187,28 +187,21 @@ export default function CommunityPostComments({
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="mt-4">
-        <label className="block">
-          <span className="sr-only">Add a comment</span>
-          <textarea
-            value={draft}
-            maxLength={COMMUNITY_COMMENT_MAX_LENGTH + 20}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              setMessage("");
-            }}
-            placeholder="Add a comment..."
-            className="min-h-20 w-full resize-none rounded-2xl border border-slate-800 bg-black/35 px-4 py-3 text-sm font-semibold leading-6 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
-          />
-        </label>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <span
-            className={`text-xs font-bold ${
-              isDraftTooLong ? "text-red-300" : "text-slate-500"
-            }`}
-          >
-            {Math.max(remainingCharacters, 0)} characters left
-          </span>
+      <form onSubmit={handleSubmit} className="mt-2">
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+          <label className="block">
+            <span className="sr-only">Add a comment</span>
+            <textarea
+              value={draft}
+              maxLength={COMMUNITY_COMMENT_MAX_LENGTH + 20}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setMessage("");
+              }}
+              placeholder="Add a comment..."
+              className="min-h-14 w-full resize-none rounded-xl border border-slate-800 bg-black/35 px-3 py-2 text-sm font-semibold leading-5 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70 sm:min-h-16"
+            />
+          </label>
           <button
             type="submit"
             disabled={
@@ -217,11 +210,20 @@ export default function CommunityPostComments({
               !draft.trim() ||
               Boolean(validationMessage)
             }
-            className="ml-auto rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
+            className="min-h-11 rounded-xl bg-yellow-400 px-4 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
           >
             {isSubmitting ? "Posting..." : "Comment"}
           </button>
         </div>
+        {draft ? (
+          <p
+            className={`mt-1 text-xs font-bold ${
+              isDraftTooLong ? "text-red-300" : "text-slate-500"
+            }`}
+          >
+            {Math.max(remainingCharacters, 0)} characters left
+          </p>
+        ) : null}
       </form>
 
       {message || validationMessage ? (
