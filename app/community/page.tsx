@@ -31,7 +31,6 @@ type CommunityFeedPost = {
 
 type Discussion = {
   commentCount: number;
-  emoji: string;
   fallbackMovieId: string;
   imagePath: string | null;
   title: string;
@@ -74,7 +73,7 @@ const feedPosts: CommunityFeedPost[] = [
   {
     id: "interstellar-rating",
     user: {
-      avatar: "J",
+      avatar: "🔥",
       displayName: "Jessy",
       username: "jessy",
     },
@@ -91,13 +90,13 @@ const feedPosts: CommunityFeedPost[] = [
       "A masterpiece. The visuals, the story, the emotions... everything about this movie hits differently.",
     likeCount: 24,
     commentCount: 7,
-    interactedAvatars: ["M", "L", "A", "C"],
+    interactedAvatars: ["🎬", "🌹", "⭐", "🚀"],
     extraInteractions: 18,
   },
   {
     id: "sinners-worth-watching",
     user: {
-      avatar: "M",
+      avatar: "🎬",
       displayName: "Mike",
       username: "moviemike",
     },
@@ -114,13 +113,13 @@ const feedPosts: CommunityFeedPost[] = [
       "Great music, strong performances and a fresh take on the genre. Third act was wild!",
     likeCount: 16,
     commentCount: 3,
-    interactedAvatars: ["J", "F", "N", "R"],
+    interactedAvatars: ["🔥", "🎥", "👻", "🎟️"],
     extraInteractions: 12,
   },
   {
     id: "dark-knight-comment",
     user: {
-      avatar: "S",
+      avatar: "🌹",
       displayName: "Sarah",
       username: "sarahscreens",
     },
@@ -142,7 +141,7 @@ const feedPosts: CommunityFeedPost[] = [
   {
     id: "prestige-discovery",
     user: {
-      avatar: "C",
+      avatar: "🚀",
       displayName: "Chris",
       username: "cinephilechris",
     },
@@ -156,13 +155,13 @@ const feedPosts: CommunityFeedPost[] = [
     comment: "Discovered this gem through PopScore Discovery ✨",
     likeCount: 18,
     commentCount: 2,
-    interactedAvatars: ["J", "M", "F", "L"],
+    interactedAvatars: ["🔥", "🎬", "🎥", "👻"],
     extraInteractions: 7,
   },
   {
     id: "dune-rating",
     user: {
-      avatar: "L",
+      avatar: "👻",
       displayName: "Lina",
       username: "linarose",
     },
@@ -178,7 +177,7 @@ const feedPosts: CommunityFeedPost[] = [
     comment: "Absolutely stunning. Villeneuve is in a league of his own.",
     likeCount: 31,
     commentCount: 5,
-    interactedAvatars: ["C", "M", "J", "F"],
+    interactedAvatars: ["🚀", "🎬", "🔥", "🎥"],
     extraInteractions: 22,
   },
 ];
@@ -187,21 +186,18 @@ const discussions: Discussion[] = [
   {
     title: "Was Interstellar Nolan's best movie?",
     commentCount: 68,
-    emoji: "🔥",
     fallbackMovieId: "157336",
     imagePath: "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
   },
   {
     title: "The ending of Sinners explained (spoilers)",
     commentCount: 42,
-    emoji: "🍿",
     fallbackMovieId: "1233413",
     imagePath: null,
   },
   {
     title: "Best plot twists of all time?",
     commentCount: 91,
-    emoji: "🔥",
     fallbackMovieId: "1124",
     imagePath: "/tRNlZbgNCNOpLpbPEz5L8G8A0JN.jpg",
   },
@@ -209,25 +205,25 @@ const discussions: Discussion[] = [
 
 const suggestedFollows: SuggestedFollow[] = [
   {
-    avatar: "L",
+    avatar: "👻",
     displayName: "Lina Rose",
     username: "linarose",
     favoriteGenre: "Horror",
   },
   {
-    avatar: "M",
+    avatar: "🎬",
     displayName: "MovieMike",
     username: "moviemike",
     favoriteGenre: "Action",
   },
   {
-    avatar: "F",
+    avatar: "🎥",
     displayName: "FilmFanatic",
     username: "filmfanatic",
     favoriteGenre: "Drama",
   },
   {
-    avatar: "C",
+    avatar: "🚀",
     displayName: "CinephileChris",
     username: "cinephilechris",
     favoriteGenre: "Sci-Fi",
@@ -236,35 +232,35 @@ const suggestedFollows: SuggestedFollow[] = [
 
 const topReviewers: TopReviewer[] = [
   {
-    avatar: "C",
+    avatar: "⭐",
     displayName: "CinemaKing",
     username: "cinemaking",
     totalReviews: 136,
     averagePopScore: 96,
   },
   {
-    avatar: "J",
+    avatar: "🔥",
     displayName: "Jessi Lee",
     username: "jessilee",
     totalReviews: 124,
     averagePopScore: 94,
   },
   {
-    avatar: "M",
+    avatar: "🎬",
     displayName: "MovieMike",
     username: "moviemike",
     totalReviews: 112,
     averagePopScore: 93,
   },
   {
-    avatar: "F",
+    avatar: "🎥",
     displayName: "FilmFanatic",
     username: "filmfanatic",
     totalReviews: 98,
     averagePopScore: 91,
   },
   {
-    avatar: "L",
+    avatar: "👻",
     displayName: "Lina Rose",
     username: "linarose",
     totalReviews: 87,
@@ -296,14 +292,14 @@ function Avatar({
   size?: "sm" | "md" | "lg";
 }) {
   const sizeClass = {
-    lg: "h-12 w-12 text-base",
-    md: "h-10 w-10 text-sm",
-    sm: "h-7 w-7 text-xs",
+    lg: "h-12 w-12 text-2xl",
+    md: "h-10 w-10 text-xl",
+    sm: "h-7 w-7 text-sm",
   }[size];
 
   return (
     <span
-      className={`${sizeClass} inline-flex shrink-0 items-center justify-center rounded-full border border-yellow-400/20 bg-[radial-gradient(circle_at_35%_25%,rgba(250,204,21,0.82),rgba(15,23,42,0.96)_58%)] font-black text-white shadow-lg shadow-yellow-400/10`}
+      className={`${sizeClass} inline-flex shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-[radial-gradient(circle_at_35%_25%,rgba(250,204,21,0.22),rgba(15,23,42,0.96)_58%)] font-black text-white shadow-lg shadow-yellow-400/10`}
     >
       {label}
     </span>
@@ -331,7 +327,7 @@ function MovieThumb({
         alt={alt}
         className="object-cover"
         fallbackMovieId={fallbackMovieId}
-        sizes={wide ? "(min-width: 1024px) 230px, 100vw" : "96px"}
+        sizes={wide ? "(min-width: 1024px) 300px, 100vw" : "96px"}
         src={posterUrl(imagePath)}
         unoptimized
       />
@@ -379,7 +375,7 @@ function CreatePostBox() {
   return (
     <section className={cardClass("p-4 sm:p-5")}>
       <div className="flex items-center gap-3">
-        <Avatar label="J" size="lg" />
+        <Avatar label="🔥" size="lg" />
         <p className="text-base font-semibold text-slate-300">
           What movie is on your mind?
         </p>
@@ -408,6 +404,43 @@ function CreatePostBox() {
   );
 }
 
+function FilterMenu({
+  label,
+  options,
+}: {
+  label: string;
+  options: string[];
+}) {
+  return (
+    <details className="group relative">
+      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/90 px-4 text-sm font-black text-slate-100 shadow-inner shadow-black/20 outline-none transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200 [&::-webkit-details-marker]:hidden">
+        {label}
+        <span
+          aria-hidden="true"
+          className="text-yellow-300 transition group-open:rotate-180"
+        >
+          ▾
+        </span>
+      </summary>
+      <div className="absolute left-0 z-30 mt-2 grid max-h-72 min-w-52 gap-1 overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-2 shadow-2xl shadow-black/60">
+        {options.map((option, index) => (
+          <button
+            key={option}
+            type="button"
+            className={`rounded-xl px-3 py-2 text-left text-sm font-black transition ${
+              index === 0
+                ? "bg-yellow-400 text-black"
+                : "text-slate-200 hover:bg-yellow-400/10 hover:text-yellow-300"
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 function CommunityFilters() {
   return (
     <section className={cardClass("p-3")}>
@@ -418,28 +451,8 @@ function CommunityFilters() {
         >
           All
         </button>
-        <label className="relative">
-          <span className="sr-only">Genre filter</span>
-          <select className="min-h-11 appearance-none rounded-xl border border-slate-700 bg-slate-950 px-4 pr-10 text-sm font-black text-white outline-none transition hover:border-yellow-400/60">
-            {genreFilters.map((genre) => (
-              <option key={genre}>{genre}</option>
-            ))}
-          </select>
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-yellow-300">
-            ▾
-          </span>
-        </label>
-        <label className="relative">
-          <span className="sr-only">Trending filter</span>
-          <select className="min-h-11 appearance-none rounded-xl border border-slate-700 bg-slate-950 px-4 pr-10 text-sm font-black text-white outline-none transition hover:border-yellow-400/60">
-            {trendFilters.map((filter) => (
-              <option key={filter}>{filter}</option>
-            ))}
-          </select>
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-yellow-300">
-            ▾
-          </span>
-        </label>
+        <FilterMenu label="All Genres" options={genreFilters} />
+        <FilterMenu label="Trending" options={trendFilters} />
       </div>
     </section>
   );
@@ -475,7 +488,7 @@ function InteractionAvatars({
 }
 
 function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
-  const isCommentOnly = !post.popscore && post.comment;
+  const isCommentPost = Boolean(post.replyLink);
 
   return (
     <article className={cardClass("p-4 sm:p-5")}>
@@ -486,7 +499,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             <div>
               <p className="text-base font-semibold text-slate-200">
                 <span className="font-black text-white">
-                  {post.user.displayName}
+                  @{post.user.username}
                 </span>{" "}
                 {post.activity}
                 {post.popscore ? (
@@ -512,7 +525,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             </button>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-[230px_1fr]">
+          <div className="mt-4 grid gap-4 sm:grid-cols-[300px_1fr]">
             <MovieThumb
               alt={post.movie.title}
               fallbackMovieId={post.movie.fallbackMovieId}
@@ -534,7 +547,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
               {post.comment ? (
                 <p
                   className={`mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-300 ${
-                    isCommentOnly
+                    isCommentPost
                       ? "rounded-2xl border border-slate-800 bg-black/25 p-4"
                       : ""
                   }`}
@@ -542,11 +555,18 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
                   {post.comment}
                 </p>
               ) : null}
-              {post.replyLink ? (
+              {isCommentPost ? (
                 <div className="mt-3 flex flex-wrap items-center gap-5 text-sm font-bold">
                   <button
                     type="button"
-                    className="text-slate-400 transition hover:text-yellow-300"
+                    className="inline-flex items-center gap-2 text-slate-300 transition hover:text-yellow-300"
+                  >
+                    <span className="text-red-400">♥</span>
+                    {post.likeCount}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-slate-300 transition hover:text-yellow-300"
                   >
                     Reply
                   </button>
@@ -558,20 +578,22 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-5 text-sm font-bold text-slate-400">
-            <span className="inline-flex items-center gap-2">
-              <span className="text-red-400">♥</span> {post.likeCount}
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span>○</span> {post.commentCount}
-            </span>
-            <div className="ml-auto">
-              <InteractionAvatars
-                avatars={post.interactedAvatars}
-                extra={post.extraInteractions}
-              />
+          {!isCommentPost ? (
+            <div className="mt-4 flex flex-wrap items-center gap-5 text-sm font-bold text-slate-400">
+              <span className="inline-flex items-center gap-2">
+                <span className="text-red-400">♥</span> {post.likeCount}
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span>○</span> {post.commentCount}
+              </span>
+              <div className="ml-auto">
+                <InteractionAvatars
+                  avatars={post.interactedAvatars}
+                  extra={post.extraInteractions}
+                />
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
     </article>
@@ -608,7 +630,7 @@ function TrendingDiscussionsCard() {
         {discussions.map((discussion) => (
           <div
             key={discussion.title}
-            className="grid grid-cols-[76px_1fr_auto] items-center gap-3 border-b border-white/10 pb-4 last:border-b-0 last:pb-0"
+            className="grid grid-cols-[82px_1fr] items-center gap-3 border-b border-white/10 pb-4 last:border-b-0 last:pb-0"
           >
             <MovieThumb
               alt={discussion.title}
@@ -623,7 +645,6 @@ function TrendingDiscussionsCard() {
                 {discussion.commentCount} comments
               </p>
             </div>
-            <span className="text-lg">{discussion.emoji}</span>
           </div>
         ))}
       </div>
@@ -639,10 +660,10 @@ function WhoToFollowCard() {
           <div key={user.username} className="flex items-center gap-3">
             <Avatar label={user.avatar} size="lg" />
             <div className="min-w-0 flex-1">
-              <p className="font-black text-white">{user.displayName}</p>
               <p className="text-xs font-bold text-slate-400">
                 @{user.username}
               </p>
+              <p className="font-black text-white">{user.displayName}</p>
               <p className="mt-1 text-xs font-bold text-slate-300">
                 Favorite: {user.favoriteGenre}
               </p>
@@ -688,11 +709,11 @@ function TopReviewersCard() {
             <span className="text-sm font-black text-white">{index + 1}</span>
             <Avatar label={reviewer.avatar} />
             <div className="min-w-0">
-              <p className="truncate font-black text-white">
-                {reviewer.displayName}
-              </p>
               <p className="text-xs font-bold text-slate-400">
                 @{reviewer.username}
+              </p>
+              <p className="truncate font-black text-white">
+                {reviewer.displayName}
               </p>
               <p className="mt-1 text-xs font-bold text-slate-300">
                 {reviewer.totalReviews} reviews
