@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import CommunityPostComments from "@/app/components/community-post-comments";
 import CommunityPostLikeButton from "@/app/components/community-post-like-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import SiteHeader from "@/app/components/site-header";
+import {
+  getRecentCommunityRatings,
+  getTopReviewers,
+  type CommunityRatingFeedItem,
+  type TopReviewerSummary,
+} from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
 
 type CommunityUser = {
@@ -46,8 +53,10 @@ type SuggestedFollow = CommunityUser & {
   favoriteGenre: string;
 };
 
-type TopReviewer = CommunityUser & {
-  totalReviews: number;
+type MovieSuggestion = {
+  id: number;
+  releaseDate: string;
+  title: string;
 };
 
 const feedTabs = ["Feed", "Following", "Discussions", "People"] as const;
@@ -244,39 +253,6 @@ const suggestedFollows: SuggestedFollow[] = [
   },
 ];
 
-const topReviewers: TopReviewer[] = [
-  {
-    avatar: "⭐",
-    displayName: "CinemaKing",
-    username: "cinemaking",
-    totalReviews: 136,
-  },
-  {
-    avatar: "🔥",
-    displayName: "Jessi Lee",
-    username: "jessilee",
-    totalReviews: 124,
-  },
-  {
-    avatar: "🎬",
-    displayName: "MovieMike",
-    username: "moviemike",
-    totalReviews: 112,
-  },
-  {
-    avatar: "🎥",
-    displayName: "FilmFanatic",
-    username: "filmfanatic",
-    totalReviews: 98,
-  },
-  {
-    avatar: "👻",
-    displayName: "Lina Rose",
-    username: "linarose",
-    totalReviews: 87,
-  },
-];
-
 function cardClass(extra = "") {
   return `rounded-3xl border border-slate-800/90 bg-slate-950/78 shadow-2xl shadow-black/30 backdrop-blur ${extra}`;
 }
@@ -293,11 +269,15 @@ function scoreBadgeClass(score: number) {
   return "border-orange-400/40 bg-orange-500/20 text-orange-200 shadow-orange-400/10";
 }
 
-function getVisibleFeedPosts(selectedGenre: string, selectedTrend: string) {
+function getVisibleFeedPosts(
+  posts: CommunityFeedPost[],
+  selectedGenre: string,
+  selectedTrend: string
+) {
   const matchingPosts =
     selectedGenre === "All Genres"
-      ? feedPosts
-      : feedPosts.filter((post) => post.genres.includes(selectedGenre));
+      ? posts
+      : posts.filter((post) => post.genres.includes(selectedGenre));
   const sortedPosts = [...matchingPosts];
 
   if (selectedTrend === "Most Liked") {
@@ -322,6 +302,120 @@ function getVisibleFeedPosts(selectedGenre: string, selectedTrend: string) {
 
 function communityMovieHref(movieId: string) {
   return `/movie/${movieId}?returnTo=${encodeURIComponent("/community")}`;
+}
+
+function communityRateHref(movieId: string) {
+  return `/rate?movie=${movieId}&returnTo=${encodeURIComponent(
+    "/community"
+  )}&from=community`;
+}
+
+function formatRelativePostTime(value: string) {
+  const time = new Date(value).getTime();
+
+  if (Number.isNaN(time)) {
+    return "Just now";
+  }
+
+  const minutesAgo = Math.max(0, Math.floor((Date.now() - time) / 60000));
+
+  if (minutesAgo < 1) {
+    return "Just now";
+  }
+
+  if (minutesAgo < 60) {
+    return `${minutesAgo}m ago`;
+  }
+
+  const hoursAgo = Math.floor(minutesAgo / 60);
+
+  if (hoursAgo < 24) {
+    return `${hoursAgo}h ago`;
+  }
+
+  return `${Math.floor(hoursAgo / 24)}d ago`;
+}
+
+function reactionForScore(score: number) {
+  if (score >= 90) {
+    return "🔥 Loved It";
+  }
+
+  if (score >= 75) {
+    return "🍿 Worth Watching";
+  }
+
+  if (score >= 60) {
+    return "⭐ Fresh Pick";
+  }
+
+  return "🎬 Rated";
+}
+
+function normalizeCommunityGenres(genreNames: string[], ratingGenre: string) {
+  const aliases: Record<string, string> = {
+    animated: "Animation",
+    animation: "Animation",
+    rom_com: "Rom-Com",
+    romcom: "Rom-Com",
+    sci_fi: "Sci-Fi",
+    scifi: "Sci-Fi",
+    "science fiction": "Sci-Fi",
+  };
+  const genres = [...genreNames, ratingGenre]
+    .map((genre) => {
+      const normalizedGenre = genre.toLowerCase().trim();
+
+      return aliases[normalizedGenre] ?? genre;
+    })
+    .filter((genre) => genreFilters.includes(genre));
+
+  return Array.from(new Set(genres));
+}
+
+function mapCommunityRatingToPost(
+  rating: CommunityRatingFeedItem
+): CommunityFeedPost {
+  return {
+    activity: `rated ${rating.movieTitle}`,
+    comment: rating.reviewComment ?? undefined,
+    commentCount: 0,
+    extraInteractions: 0,
+    genres: normalizeCommunityGenres(rating.genreNames, rating.genre),
+    id: `rating-${rating.id}`,
+    interactedAvatars: [],
+    likeCount: 0,
+    movie: {
+      fallbackMovieId: rating.movieId,
+      imagePath: rating.posterPath ?? null,
+      title: rating.movieTitle,
+    },
+    popscore: rating.popscore,
+    reaction: reactionForScore(rating.popscore),
+    timestamp: formatRelativePostTime(rating.updated_at ?? rating.created_at),
+    user: {
+      avatar: rating.avatar,
+      displayName: rating.username,
+      username: rating.username,
+    },
+  };
+}
+
+function formatSuggestionDate(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 function Avatar({
@@ -441,33 +535,173 @@ function CommunitySearch() {
   );
 }
 
-function CreatePostBox() {
+function SelectMovieDialog({
+  onClose,
+}: {
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<MovieSuggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery.length < 2) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      setIsSearching(true);
+
+      fetch(
+        `/api/search-suggestions?${new URLSearchParams({
+          query: trimmedQuery,
+        }).toString()}`,
+        { signal: controller.signal }
+      )
+        .then((response) => response.json())
+        .then((data: { suggestions?: MovieSuggestion[] }) => {
+          setSuggestions(data.suggestions ?? []);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) {
+            setSuggestions([]);
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setIsSearching(false);
+          }
+        });
+    }, 180);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [query]);
+
+  const selectMovie = (movieId: number) => {
+    router.push(communityRateHref(String(movieId)));
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Select a movie to rate"
+      className="fixed inset-0 z-[120] flex items-start justify-center bg-black/75 px-4 py-24 backdrop-blur-sm sm:py-28"
+      onMouseDown={onClose}
+    >
+      <div
+        className="w-full max-w-2xl rounded-3xl border border-slate-700 bg-slate-950 p-4 shadow-2xl shadow-black/70 sm:p-5"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-black text-white">Select Movie</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-400">
+              Search for a movie, then rate it.
+            </p>
+          </div>
+          <button
+            type="button"
+            aria-label="Close movie selector"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:text-yellow-300"
+          >
+            X
+          </button>
+        </div>
+
+        <label className="mt-4 block">
+          <span className="sr-only">Search movies</span>
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) => {
+              const nextQuery = event.target.value;
+
+              setQuery(nextQuery);
+
+              if (nextQuery.trim().length < 2) {
+                setSuggestions([]);
+                setIsSearching(false);
+              }
+            }}
+            placeholder="Search for a movie..."
+            type="search"
+            className="min-h-12 w-full rounded-2xl border border-slate-700 bg-black/35 px-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
+          />
+        </label>
+
+        <div className="mt-3 max-h-80 overflow-y-auto rounded-2xl border border-slate-800 bg-black/30">
+          {suggestions.length > 0 ? (
+            suggestions.map((movie) => {
+              const releaseDate = formatSuggestionDate(movie.releaseDate);
+
+              return (
+                <button
+                  key={movie.id}
+                  type="button"
+                  onClick={() => selectMovie(movie.id)}
+                  className="block w-full border-b border-slate-900 px-4 py-3 text-left text-sm font-bold text-white transition last:border-b-0 hover:bg-yellow-400 hover:text-black"
+                >
+                  {movie.title}
+                  {releaseDate ? (
+                    <span className="ml-2 font-semibold text-slate-400">
+                      {releaseDate}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })
+          ) : (
+            <p className="px-4 py-5 text-sm font-bold text-slate-500">
+              {query.trim().length < 2
+                ? "Type at least 2 letters to search."
+                : isSearching
+                  ? "Searching..."
+                  : "No movies found."}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreatePostBox({ onSelectMovie }: { onSelectMovie: () => void }) {
   return (
     <section className={cardClass("p-4 sm:p-5")}>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Avatar label="🔥" size="lg" />
-        <p className="text-base font-semibold text-slate-300">
+        <p className="min-w-0 flex-1 text-base font-semibold text-slate-300">
           What movie is on your mind?
         </p>
-      </div>
-      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
-        {["Rating", "Review"].map((action) => (
-          <button
-            key={action}
-            type="button"
-            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-slate-300 transition hover:bg-yellow-400/10 hover:text-yellow-300"
-          >
-            <span aria-hidden="true">
-              {action === "Rating" ? "☆" : "✎"}
-            </span>
-            {action}
-          </button>
-        ))}
         <button
           type="button"
-          className="ml-auto rounded-xl bg-yellow-400 px-6 py-2.5 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+          onClick={onSelectMovie}
+          className="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
         >
-          Post
+          Select Movie
         </button>
       </div>
     </section>
@@ -850,20 +1084,29 @@ function ReviewCountBadge({ count }: { count: number }) {
   );
 }
 
-function TopReviewersCard() {
+function TopReviewersCard({
+  isLoading,
+  reviewers,
+}: {
+  isLoading: boolean;
+  reviewers: TopReviewerSummary[];
+}) {
   return (
     <SidebarCard title="Top Reviewers">
-      <div className="space-y-4">
-        {topReviewers.map((reviewer, index) => (
+      {isLoading ? (
+        <p className="text-sm font-bold text-slate-400">Loading reviewers...</p>
+      ) : reviewers.length > 0 ? (
+        <div className="space-y-4">
+          {reviewers.map((reviewer, index) => (
           <div
-            key={reviewer.username}
+            key={reviewer.userId}
             className="grid grid-cols-[24px_40px_1fr_auto] items-center gap-3"
           >
             <span className="text-sm font-black text-white">{index + 1}</span>
             <Avatar label={reviewer.avatar} />
             <div className="min-w-0">
               <p className="truncate font-black text-white">
-                {reviewer.displayName}
+                {reviewer.username}
               </p>
               <p className="mt-1 text-xs font-bold text-slate-300">
                 {reviewer.totalReviews} reviews
@@ -871,17 +1114,31 @@ function TopReviewersCard() {
             </div>
             <ReviewCountBadge count={reviewer.totalReviews} />
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm font-bold text-slate-400">
+          No reviewer rankings yet.
+        </p>
+      )}
     </SidebarCard>
   );
 }
 
-function PeopleTabContent() {
+function PeopleTabContent({
+  isLoadingReviewers,
+  topReviewers,
+}: {
+  isLoadingReviewers: boolean;
+  topReviewers: TopReviewerSummary[];
+}) {
   return (
     <div className="grid gap-4 xl:grid-cols-2">
       <WhoToFollowCard />
-      <TopReviewersCard />
+      <TopReviewersCard
+        isLoading={isLoadingReviewers}
+        reviewers={topReviewers}
+      />
     </div>
   );
 }
@@ -890,9 +1147,20 @@ export default function CommunityPage() {
   const [selectedTab, setSelectedTab] = useState<CommunityTab>("Feed");
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
   const [selectedTrend, setSelectedTrend] = useState("Trending");
+  const [isMovieDialogOpen, setIsMovieDialogOpen] = useState(false);
+  const [communityRatings, setCommunityRatings] = useState<
+    CommunityRatingFeedItem[]
+  >([]);
+  const [topReviewers, setTopReviewers] = useState<TopReviewerSummary[]>([]);
+  const [isLoadingReviewers, setIsLoadingReviewers] = useState(true);
+  const realFeedPosts = useMemo(
+    () => communityRatings.map(mapCommunityRatingToPost),
+    [communityRatings]
+  );
+  const feedPostsToShow = realFeedPosts.length > 0 ? realFeedPosts : feedPosts;
   const visibleFeedPosts = useMemo(
-    () => getVisibleFeedPosts(selectedGenre, selectedTrend),
-    [selectedGenre, selectedTrend]
+    () => getVisibleFeedPosts(feedPostsToShow, selectedGenre, selectedTrend),
+    [feedPostsToShow, selectedGenre, selectedTrend]
   );
   const visibleFollowingPosts = useMemo(
     () =>
@@ -901,6 +1169,33 @@ export default function CommunityPage() {
   );
   const tabFeedPosts =
     selectedTab === "Following" ? visibleFollowingPosts : visibleFeedPosts;
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    Promise.all([getRecentCommunityRatings(30), getTopReviewers(5)])
+      .then(([ratings, reviewers]) => {
+        if (isCurrent) {
+          setCommunityRatings(ratings);
+          setTopReviewers(reviewers);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setCommunityRatings([]);
+          setTopReviewers([]);
+        }
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setIsLoadingReviewers(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   return (
     <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.14),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_38%,#000_74%,#020617_100%)] text-white">
@@ -928,7 +1223,7 @@ export default function CommunityPage() {
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
           <div className="space-y-4 sm:space-y-5">
-            <CreatePostBox />
+            <CreatePostBox onSelectMovie={() => setIsMovieDialogOpen(true)} />
             {selectedTab === "Feed" || selectedTab === "Following" ? (
               <>
                 <CommunityFilters
@@ -949,17 +1244,26 @@ export default function CommunityPage() {
             ) : selectedTab === "Discussions" ? (
               <DiscussionsTabContent />
             ) : (
-              <PeopleTabContent />
+              <PeopleTabContent
+                isLoadingReviewers={isLoadingReviewers}
+                topReviewers={topReviewers}
+              />
             )}
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-6">
             <TrendingDiscussionsCard />
             <WhoToFollowCard />
-            <TopReviewersCard />
+            <TopReviewersCard
+              isLoading={isLoadingReviewers}
+              reviewers={topReviewers}
+            />
           </aside>
         </section>
       </section>
+      {isMovieDialogOpen ? (
+        <SelectMovieDialog onClose={() => setIsMovieDialogOpen(false)} />
+      ) : null}
     </main>
   );
 }

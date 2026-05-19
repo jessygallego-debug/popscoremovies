@@ -1,6 +1,6 @@
 "use client";
 
-import { profileGenreDbValue } from "@/lib/profile-config";
+import { avatarForKey, profileGenreDbValue } from "@/lib/profile-config";
 import { validateReviewComment } from "@/lib/review-comments";
 
 const SESSION_KEY = "popscore_supabase_session";
@@ -70,6 +70,18 @@ export type WatchlistMovie = MovieMeta & {
 export type UserRatingCount = {
   userId: string;
   ratingsCount: number;
+};
+
+export type CommunityRatingFeedItem = UserMovieRating & {
+  avatar: string;
+  username: string;
+};
+
+export type TopReviewerSummary = {
+  avatar: string;
+  totalReviews: number;
+  userId: string;
+  username: string;
 };
 
 type RatingQuestion = {
@@ -683,6 +695,26 @@ function rowHasPopScoreRating(row: {
   );
 }
 
+function inList(values: string[]) {
+  return values.map((value) => encodeURIComponent(value)).join(",");
+}
+
+async function getProfilesByUserIds(userIds: string[]) {
+  const uniqueUserIds = Array.from(new Set(userIds));
+
+  if (uniqueUserIds.length === 0) {
+    return new Map<string, ProfileRecord>();
+  }
+
+  const profiles = await supabaseFetch<ProfileRecord[]>(
+    `/profiles?user_id=in.(${inList(
+      uniqueUserIds
+    )})&select=user_id,username,avatar_key,id,email,favorite_genre,created_at,updated_at`
+  ).catch(() => []);
+
+  return new Map(profiles.map((profile) => [profile.user_id, profile]));
+}
+
 export async function saveUserMovieRating({
   genre,
   movie,
@@ -916,6 +948,62 @@ export async function getAllUserRatingCounts(): Promise<UserRatingCount[]> {
     ratingsCount: movieIds.size,
     userId,
   }));
+}
+
+export async function getRecentCommunityRatings(
+  limit = 20
+): Promise<CommunityRatingFeedItem[]> {
+  const rows = await supabaseFetch<Parameters<typeof mapRatingRow>[0][]>(
+    `/movie_ratings?select=*&order=updated_at.desc&limit=${Math.max(
+      limit * 2,
+      limit
+    )}`
+  ).catch(() => []);
+  const ratings = rows.filter(rowHasPopScoreRating).slice(0, limit).map(mapRatingRow);
+  const profilesByUserId = await getProfilesByUserIds(
+    ratings.map((rating) => rating.user_id)
+  );
+
+  return ratings.map((rating) => {
+    const profile = profilesByUserId.get(rating.user_id);
+
+    return {
+      ...rating,
+      avatar: avatarForKey(profile?.avatar_key ?? "").icon,
+      username: profile?.username ?? "popscorefan",
+    };
+  });
+}
+
+export async function getTopReviewers(
+  limit = 5
+): Promise<TopReviewerSummary[]> {
+  const counts = await getAllUserRatingCounts().catch(() => []);
+  const sortedCounts = [...counts]
+    .sort((a, b) => b.ratingsCount - a.ratingsCount)
+    .slice(0, Math.max(limit * 2, limit));
+  const profilesByUserId = await getProfilesByUserIds(
+    sortedCounts.map((count) => count.userId)
+  );
+
+  const reviewers: TopReviewerSummary[] = [];
+
+  sortedCounts.forEach((count) => {
+    const profile = profilesByUserId.get(count.userId);
+
+    if (!profile) {
+      return;
+    }
+
+    reviewers.push({
+      avatar: avatarForKey(profile.avatar_key).icon,
+      totalReviews: count.ratingsCount,
+      userId: count.userId,
+      username: profile.username,
+    });
+  });
+
+  return reviewers.slice(0, limit);
 }
 
 export async function addToWatchlist(movie: MovieMeta & { genre?: string }) {

@@ -5,7 +5,9 @@ type MovieRatingReviewRow = {
   id: string;
   user_id: string;
   popscore: number | string;
+  ratings: Record<string, number> | null;
   review_comment: string | null;
+  weights: { key: string; weight: number }[] | null;
   created_at: string;
   updated_at: string;
 };
@@ -92,7 +94,7 @@ export async function getMovieFanReviews(movieId: string): Promise<FanReview[]> 
     const rows = await supabaseFetch<MovieRatingReviewRow[]>(
       `/movie_ratings?movie_id=eq.${encodeURIComponent(
         movieId
-      )}&review_comment=not.is.null&select=id,user_id,popscore,review_comment,created_at,updated_at&order=updated_at.desc&limit=12`
+      )}&select=id,user_id,popscore,ratings,weights,review_comment,created_at,updated_at&order=updated_at.desc&limit=12`
     );
     const cleanRows = rows
       .map((row) => ({
@@ -100,7 +102,11 @@ export async function getMovieFanReviews(movieId: string): Promise<FanReview[]> 
         review_comment: normalizeReviewComment(row.review_comment ?? ""),
       }))
       .filter(
-        (row) => row.review_comment && !containsProfanity(row.review_comment)
+        (row) =>
+          row.weights?.length &&
+          row.ratings &&
+          Object.keys(row.ratings).length > 0 &&
+          !containsProfanity(row.review_comment)
       );
 
     if (cleanRows.length === 0) {
@@ -128,7 +134,7 @@ export async function getMovieFanReviews(movieId: string): Promise<FanReview[]> 
         id: row.id,
         popscore: score,
         ratingLabel: getRatingLabel(score),
-        reviewComment: row.review_comment,
+        reviewComment: row.review_comment || "Rated this movie on PopScore.",
         username: profile?.username ?? "PopScore Fan",
       };
     });
