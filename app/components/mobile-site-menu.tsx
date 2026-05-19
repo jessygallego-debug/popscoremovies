@@ -12,7 +12,7 @@ import {
 
 const mobileNavItems = [
   { href: "/#trending", label: "Movies" },
-  { href: "/#why-popscore", label: "Community" },
+  { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/discover", label: "Discovery" },
 ];
