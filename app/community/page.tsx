@@ -50,7 +50,9 @@ type TopReviewer = CommunityUser & {
   totalReviews: number;
 };
 
-const feedTabs = ["Feed", "Following", "Trending", "Discussions", "People"];
+const feedTabs = ["Feed", "Following", "Discussions", "People"] as const;
+
+type CommunityTab = (typeof feedTabs)[number];
 
 const genreFilters = [
   "All Genres",
@@ -73,6 +75,8 @@ const genreFilters = [
 ];
 
 const trendFilters = ["Trending", "Newest", "Most Liked", "Most Commented"];
+
+const followedUsernames = new Set(["jessy", "moviemike", "linarose"]);
 
 const feedPosts: CommunityFeedPost[] = [
   {
@@ -316,10 +320,8 @@ function getVisibleFeedPosts(selectedGenre: string, selectedTrend: string) {
   );
 }
 
-function communityRateHref(movieId: string) {
-  return `/rate?movie=${movieId}&returnTo=${encodeURIComponent(
-    "/community"
-  )}&from=community`;
+function communityMovieHref(movieId: string) {
+  return `/movie/${movieId}?returnTo=${encodeURIComponent("/community")}`;
 }
 
 function Avatar({
@@ -386,28 +388,40 @@ function MovieThumb({
   }
 
   return (
-    <Link href={href} aria-label={`Rate ${alt}`} className="block">
+    <Link href={href} aria-label={`View ${alt}`} className="block">
       {thumb}
     </Link>
   );
 }
 
-function CommunityTabs() {
+function CommunityTabs({
+  onSelect,
+  selectedTab,
+}: {
+  onSelect: (tab: CommunityTab) => void;
+  selectedTab: CommunityTab;
+}) {
   return (
     <div className="flex gap-5 overflow-x-auto border-b border-white/10 text-sm font-black text-slate-400 sm:gap-8">
-      {feedTabs.map((tab, index) => (
-        <button
-          key={tab}
-          type="button"
-          className={`shrink-0 border-b-2 px-0 pb-3 transition hover:text-yellow-300 ${
-            index === 0
-              ? "border-yellow-400 text-yellow-300"
-              : "border-transparent"
-          }`}
-        >
-          {tab}
-        </button>
-      ))}
+      {feedTabs.map((tab) => {
+        const isSelected = tab === selectedTab;
+
+        return (
+          <button
+            key={tab}
+            type="button"
+            aria-pressed={isSelected}
+            onClick={() => onSelect(tab)}
+            className={`shrink-0 border-b-2 px-0 pb-3 transition hover:text-yellow-300 ${
+              isSelected
+                ? "border-yellow-400 text-yellow-300"
+                : "border-transparent"
+            }`}
+          >
+            {tab}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -437,14 +451,14 @@ function CreatePostBox() {
         </p>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
-        {["Photo", "Rating", "Review"].map((action) => (
+        {["Rating", "Review"].map((action) => (
           <button
             key={action}
             type="button"
             className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-slate-300 transition hover:bg-yellow-400/10 hover:text-yellow-300"
           >
             <span aria-hidden="true">
-              {action === "Photo" ? "▧" : action === "Rating" ? "☆" : "✎"}
+              {action === "Rating" ? "☆" : "✎"}
             </span>
             {action}
           </button>
@@ -624,7 +638,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             <MovieThumb
               alt={post.movie.title}
               fallbackMovieId={post.movie.fallbackMovieId}
-              href={communityRateHref(post.movie.fallbackMovieId)}
+              href={communityMovieHref(post.movie.fallbackMovieId)}
               imagePath={post.movie.imagePath}
               wide
             />
@@ -682,6 +696,30 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
   );
 }
 
+function FeedPostsList({
+  emptyMessage,
+  posts,
+}: {
+  emptyMessage: string;
+  posts: CommunityFeedPost[];
+}) {
+  if (posts.length === 0) {
+    return (
+      <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
+        {emptyMessage}
+      </section>
+    );
+  }
+
+  return (
+    <>
+      {posts.map((post) => (
+        <CommunityFeedCard key={post.id} post={post} />
+      ))}
+    </>
+  );
+}
+
 function SidebarCard({
   children,
   title,
@@ -705,6 +743,42 @@ function SidebarCard({
   );
 }
 
+function DiscussionsTabContent() {
+  return (
+    <section className={cardClass("p-4 sm:p-5")}>
+      <div className="mb-4">
+        <h2 className="text-lg font-black text-white">Discussions</h2>
+        <p className="mt-1 text-sm font-semibold text-slate-400">
+          Jump into movie conversations happening right now.
+        </p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {discussions.map((discussion) => (
+          <article
+            key={discussion.title}
+            className="grid grid-cols-[92px_1fr] items-center gap-3 rounded-2xl border border-slate-800 bg-black/25 p-3"
+          >
+            <MovieThumb
+              alt={discussion.title}
+              fallbackMovieId={discussion.fallbackMovieId}
+              href={communityMovieHref(discussion.fallbackMovieId)}
+              imagePath={discussion.imagePath}
+            />
+            <div className="min-w-0">
+              <h3 className="text-sm font-black leading-5 text-white">
+                {discussion.title}
+              </h3>
+              <p className="mt-1 text-xs font-bold text-slate-400">
+                {discussion.commentCount} comments
+              </p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function TrendingDiscussionsCard() {
   return (
     <SidebarCard title="Trending Discussions">
@@ -717,7 +791,7 @@ function TrendingDiscussionsCard() {
             <MovieThumb
               alt={discussion.title}
               fallbackMovieId={discussion.fallbackMovieId}
-              href={communityRateHref(discussion.fallbackMovieId)}
+              href={communityMovieHref(discussion.fallbackMovieId)}
               imagePath={discussion.imagePath}
             />
             <div className="min-w-0">
@@ -803,13 +877,30 @@ function TopReviewersCard() {
   );
 }
 
+function PeopleTabContent() {
+  return (
+    <div className="grid gap-4 xl:grid-cols-2">
+      <WhoToFollowCard />
+      <TopReviewersCard />
+    </div>
+  );
+}
+
 export default function CommunityPage() {
+  const [selectedTab, setSelectedTab] = useState<CommunityTab>("Feed");
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
   const [selectedTrend, setSelectedTrend] = useState("Trending");
   const visibleFeedPosts = useMemo(
     () => getVisibleFeedPosts(selectedGenre, selectedTrend),
     [selectedGenre, selectedTrend]
   );
+  const visibleFollowingPosts = useMemo(
+    () =>
+      visibleFeedPosts.filter((post) => followedUsernames.has(post.user.username)),
+    [visibleFeedPosts]
+  );
+  const tabFeedPosts =
+    selectedTab === "Following" ? visibleFollowingPosts : visibleFeedPosts;
 
   return (
     <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.14),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_38%,#000_74%,#020617_100%)] text-white">
@@ -831,27 +922,34 @@ export default function CommunityPage() {
             <CommunitySearch />
           </div>
           <div className="mt-6">
-            <CommunityTabs />
+            <CommunityTabs selectedTab={selectedTab} onSelect={setSelectedTab} />
           </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
           <div className="space-y-4 sm:space-y-5">
             <CreatePostBox />
-            <CommunityFilters
-              onGenreChange={setSelectedGenre}
-              onTrendChange={setSelectedTrend}
-              selectedGenre={selectedGenre}
-              selectedTrend={selectedTrend}
-            />
-            {visibleFeedPosts.length > 0 ? (
-              visibleFeedPosts.map((post) => (
-                <CommunityFeedCard key={post.id} post={post} />
-              ))
+            {selectedTab === "Feed" || selectedTab === "Following" ? (
+              <>
+                <CommunityFilters
+                  onGenreChange={setSelectedGenre}
+                  onTrendChange={setSelectedTrend}
+                  selectedGenre={selectedGenre}
+                  selectedTrend={selectedTrend}
+                />
+                <FeedPostsList
+                  posts={tabFeedPosts}
+                  emptyMessage={
+                    selectedTab === "Following"
+                      ? "No followed posts match that filter yet."
+                      : "No posts match that filter yet."
+                  }
+                />
+              </>
+            ) : selectedTab === "Discussions" ? (
+              <DiscussionsTabContent />
             ) : (
-              <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
-                No posts match that filter yet.
-              </section>
+              <PeopleTabContent />
             )}
           </div>
 
