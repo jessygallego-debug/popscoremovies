@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CommunityPostComments from "@/app/components/community-post-comments";
+import CommunityPostLikeButton from "@/app/components/community-post-like-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import SiteHeader from "@/app/components/site-header";
 import { posterUrl } from "@/lib/tmdb";
@@ -315,14 +316,16 @@ function MovieThumb({
   return (
     <div
       className={`relative overflow-hidden rounded-2xl bg-slate-900 ${
-        wide ? "aspect-[16/9]" : "aspect-[4/3]"
+        wide
+          ? "mx-auto aspect-[2/3] w-full max-w-[220px] sm:mx-0 sm:max-w-none"
+          : "aspect-[4/3]"
       }`}
     >
       <MoviePosterImage
         alt={alt}
         className="object-cover"
         fallbackMovieId={fallbackMovieId}
-        sizes={wide ? "(min-width: 1024px) 300px, 100vw" : "96px"}
+        sizes={wide ? "(min-width: 1024px) 190px, 220px" : "96px"}
         src={posterUrl(imagePath)}
         unoptimized
       />
@@ -520,7 +523,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             </button>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-[300px_1fr]">
+          <div className="mt-4 grid gap-4 sm:grid-cols-[180px_1fr] lg:grid-cols-[190px_1fr]">
             <MovieThumb
               alt={post.movie.title}
               fallbackMovieId={post.movie.fallbackMovieId}
@@ -550,15 +553,13 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
                   {post.comment}
                 </p>
               ) : null}
+              <CommunityPostLikeButton
+                className="mt-3"
+                initialLikeCount={post.likeCount}
+                postId={post.id}
+              />
               {isCommentPost ? (
                 <div className="mt-3 flex flex-wrap items-center gap-5 text-sm font-bold">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 text-slate-300 transition hover:text-yellow-300"
-                  >
-                    <span className="text-red-400">♥</span>
-                    {post.likeCount}
-                  </button>
                   <button
                     type="button"
                     className="text-slate-300 transition hover:text-yellow-300"
@@ -574,19 +575,11 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
           </div>
 
           {!isCommentPost ? (
-            <div className="mt-4 flex flex-wrap items-center gap-5 text-sm font-bold text-slate-400">
-              <span className="inline-flex items-center gap-2">
-                <span className="text-red-400">♥</span> {post.likeCount}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <span>○</span> {post.commentCount}
-              </span>
-              <div className="ml-auto">
-                <InteractionAvatars
-                  avatars={post.interactedAvatars}
-                  extra={post.extraInteractions}
-                />
-              </div>
+            <div className="mt-4 flex justify-end">
+              <InteractionAvatars
+                avatars={post.interactedAvatars}
+                extra={post.extraInteractions}
+              />
             </div>
           ) : null}
 

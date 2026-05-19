@@ -46,6 +46,11 @@ type CommunityCommentLikeRow = {
   user_id: string;
 };
 
+type CommunityPostLikeRow = {
+  post_id: string;
+  user_id: string;
+};
+
 type CommunityProfileRow = {
   avatar_key: string;
   user_id: string;
@@ -63,6 +68,12 @@ export type CommunityComment = {
   postId: string;
   userId: string;
   username: string;
+};
+
+export type CommunityPostLikeSummary = {
+  likedByCurrentUser: boolean;
+  likeCount: number;
+  postId: string;
 };
 
 function getSupabaseConfig() {
@@ -248,6 +259,24 @@ export async function getCommunityComments(postId: string) {
   });
 }
 
+export async function getCommunityPostLikeSummary(
+  postId: string,
+  initialLikeCount: number
+): Promise<CommunityPostLikeSummary> {
+  const currentUser = await getCurrentUser().catch(() => null);
+  const likes = await supabaseFetch<CommunityPostLikeRow[]>(
+    `/community_post_likes?post_id=eq.${encodeURIComponent(
+      postId
+    )}&select=post_id,user_id`
+  );
+
+  return {
+    likedByCurrentUser: likes.some((like) => like.user_id === currentUser?.id),
+    likeCount: initialLikeCount + likes.length,
+    postId,
+  };
+}
+
 export async function addCommunityComment(postId: string, comment: string) {
   const validation = validateCommunityComment(comment);
 
@@ -274,6 +303,47 @@ export async function addCommunityComment(postId: string, comment: string) {
   });
 
   return getCommunityComments(postId);
+}
+
+export async function toggleCommunityPostLike(
+  summary: CommunityPostLikeSummary,
+  initialLikeCount: number
+) {
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser) {
+    throw new Error("Create or sign in to your PopFile to like posts.");
+  }
+
+  if (summary.likedByCurrentUser) {
+    await supabaseFetch<null>(
+      `/community_post_likes?post_id=eq.${encodeURIComponent(
+        summary.postId
+      )}&user_id=eq.${encodeURIComponent(currentUser.id)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Prefer: "return=minimal",
+        },
+      }
+    );
+  } else {
+    await supabaseFetch<null>(
+      "/community_post_likes?on_conflict=post_id,user_id",
+      {
+        method: "POST",
+        headers: {
+          Prefer: "resolution=ignore-duplicates,return=minimal",
+        },
+        body: JSON.stringify({
+          post_id: summary.postId,
+          user_id: currentUser.id,
+        }),
+      }
+    );
+  }
+
+  return getCommunityPostLikeSummary(summary.postId, initialLikeCount);
 }
 
 export async function toggleCommunityCommentLike(comment: CommunityComment) {

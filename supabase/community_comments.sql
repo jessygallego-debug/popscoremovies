@@ -28,8 +28,20 @@ create table if not exists public.community_comment_likes (
 create index if not exists community_comment_likes_comment_idx
 on public.community_comment_likes (comment_id);
 
+create table if not exists public.community_post_likes (
+  id uuid primary key default gen_random_uuid(),
+  post_id text not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  created_at timestamptz default now() not null,
+  unique(post_id, user_id)
+);
+
+create index if not exists community_post_likes_post_idx
+on public.community_post_likes (post_id);
+
 alter table public.community_comments enable row level security;
 alter table public.community_comment_likes enable row level security;
+alter table public.community_post_likes enable row level security;
 
 drop policy if exists "Community comments are public" on public.community_comments;
 create policy "Community comments are public"
@@ -67,4 +79,19 @@ with check (
 drop policy if exists "Users delete their own community comment likes" on public.community_comment_likes;
 create policy "Users delete their own community comment likes"
 on public.community_comment_likes for delete
+using (auth.uid() = user_id);
+
+drop policy if exists "Community post likes are public" on public.community_post_likes;
+create policy "Community post likes are public"
+on public.community_post_likes for select
+using (true);
+
+drop policy if exists "Users create their own community post likes" on public.community_post_likes;
+create policy "Users create their own community post likes"
+on public.community_post_likes for insert
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users delete their own community post likes" on public.community_post_likes;
+create policy "Users delete their own community post likes"
+on public.community_post_likes for delete
 using (auth.uid() = user_id);
