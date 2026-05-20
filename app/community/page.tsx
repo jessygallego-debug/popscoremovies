@@ -556,40 +556,6 @@ function Avatar({
   );
 }
 
-function initialsForName(name: string) {
-  const initials = name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-
-  return initials || "PS";
-}
-
-function InitialAvatar({
-  label,
-  size = "md",
-}: {
-  label: string;
-  size?: "sm" | "md" | "lg";
-}) {
-  const sizeClass = {
-    lg: "h-12 w-12 text-sm",
-    md: "h-10 w-10 text-xs",
-    sm: "h-7 w-7 text-[10px]",
-  }[size];
-
-  return (
-    <span
-      className={`${sizeClass} inline-flex shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-[radial-gradient(circle_at_35%_25%,rgba(250,204,21,0.22),rgba(15,23,42,0.96)_58%)] font-black text-yellow-100 shadow-lg shadow-yellow-400/10`}
-    >
-      {initialsForName(label)}
-    </span>
-  );
-}
-
 function MovieThumb({
   alt,
   fallbackMovieId,
@@ -1050,7 +1016,7 @@ function StartDiscussionModal({
       moviePosterUrl: selectedMovie.posterPath ?? null,
       movieTitle: selectedMovie.title,
       movieYear: releaseYear(selectedMovie.releaseDate),
-      startedByAvatarUrl: "J",
+      startedByAvatarUrl: "🔥",
       startedByDisplayName: "Jessy",
       startedByUserId: "current-user",
       startedByUsername: "jessyg305",
@@ -1618,7 +1584,7 @@ function DiscussionCard({
           </div>
 
           <div className="mt-3 flex items-center gap-2">
-            <InitialAvatar label={discussion.startedByDisplayName} size="sm" />
+            <Avatar label={discussion.startedByAvatarUrl} size="sm" />
             <p className="text-sm font-bold text-slate-300">
               Started by{" "}
               <span className="font-black text-white">
@@ -1761,30 +1727,40 @@ function TrendingDiscussionsCard({
   );
 }
 
-function WhoToFollowCard() {
+function WhoToFollowCard({
+  emptyMessage = "No users match those filters yet.",
+  users = suggestedFollows.slice(0, 4),
+}: {
+  emptyMessage?: string;
+  users?: SuggestedFollow[];
+}) {
   return (
     <SidebarCard title="Who to Follow">
       <div className="space-y-4">
-        {suggestedFollows.map((user) => (
-          <div key={user.username} className="flex items-center gap-3">
-            <Avatar label={user.avatar} size="lg" />
-            <div className="min-w-0 flex-1">
-              <p className="font-black text-white">{user.displayName}</p>
-              <p className="mt-0.5 truncate text-xs font-bold text-slate-500">
-                @{user.username}
-              </p>
-              <p className="mt-1 text-xs font-bold text-slate-300">
-                Favorite: {user.favoriteGenre}
-              </p>
+        {users.length > 0 ? (
+          users.slice(0, 4).map((user) => (
+            <div key={user.username} className="flex items-center gap-3">
+              <Avatar label={user.avatar} size="lg" />
+              <div className="min-w-0 flex-1">
+                <p className="font-black text-white">{user.displayName}</p>
+                <p className="mt-0.5 truncate text-xs font-bold text-slate-500">
+                  @{user.username}
+                </p>
+                <p className="mt-1 text-xs font-bold text-slate-300">
+                  Favorite: {user.favoriteGenre}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="rounded-xl border border-yellow-400/70 px-4 py-2 text-sm font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-black"
+              >
+                Follow
+              </button>
             </div>
-            <button
-              type="button"
-              className="rounded-xl border border-yellow-400/70 px-4 py-2 text-sm font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-black"
-            >
-              Follow
-            </button>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="text-sm font-bold text-slate-400">{emptyMessage}</p>
+        )}
       </div>
     </SidebarCard>
   );
@@ -1916,9 +1892,50 @@ function TopReviewersCard({
 }
 
 function FollowingTabContent() {
+  const [userSearch, setUserSearch] = useState("");
+  const [selectedFavoriteGenre, setSelectedFavoriteGenre] =
+    useState("All Genres");
+  const visibleUsers = useMemo(() => {
+    const normalizedSearch = userSearch.trim().toLowerCase();
+
+    return suggestedFollows.filter((user) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        user.displayName.toLowerCase().includes(normalizedSearch) ||
+        user.username.toLowerCase().includes(normalizedSearch);
+      const matchesGenre =
+        selectedFavoriteGenre === "All Genres" ||
+        user.favoriteGenre === selectedFavoriteGenre;
+
+      return matchesSearch && matchesGenre;
+    });
+  }, [selectedFavoriteGenre, userSearch]);
+
   return (
-    <div className="w-full">
-      <WhoToFollowCard />
+    <div className="w-full space-y-4 sm:space-y-5">
+      <section className={cardClass("relative z-[60] overflow-visible p-4 sm:p-5")}>
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
+          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-800 bg-black/35 px-4 text-sm font-bold text-slate-400 shadow-inner shadow-black/20">
+            <span aria-hidden="true" className="text-lg">
+              ⌕
+            </span>
+            <input
+              value={userSearch}
+              onChange={(event) => setUserSearch(event.target.value)}
+              className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-slate-500"
+              placeholder="Search users..."
+              type="search"
+            />
+          </label>
+          <FilterMenu
+            onSelect={setSelectedFavoriteGenre}
+            options={genreFilters}
+            selectedOption={selectedFavoriteGenre}
+          />
+        </div>
+      </section>
+
+      <WhoToFollowCard users={visibleUsers} />
     </div>
   );
 }

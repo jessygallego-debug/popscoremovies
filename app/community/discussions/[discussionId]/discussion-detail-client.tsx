@@ -20,22 +20,10 @@ function cardClass(extra = "") {
   return `rounded-3xl border border-slate-800/90 bg-slate-950/78 shadow-2xl shadow-black/30 backdrop-blur ${extra}`;
 }
 
-function initialsForName(name: string) {
-  const initials = name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-
-  return initials || "PS";
-}
-
-function InitialAvatar({ label }: { label: string }) {
+function Avatar({ label }: { label: string }) {
   return (
-    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-[radial-gradient(circle_at_35%_25%,rgba(250,204,21,0.22),rgba(15,23,42,0.96)_58%)] text-xs font-black text-yellow-100 shadow-lg shadow-yellow-400/10">
-      {initialsForName(label)}
+    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-[radial-gradient(circle_at_35%_25%,rgba(250,204,21,0.22),rgba(15,23,42,0.96)_58%)] text-xl font-black text-white shadow-lg shadow-yellow-400/10">
+      {label}
     </span>
   );
 }
@@ -119,7 +107,7 @@ function ReplyCard({ reply }: { reply: CommunityDiscussionReply }) {
   return (
     <article className="rounded-2xl border border-slate-800 bg-black/25 p-4">
       <div className="flex gap-3">
-        <InitialAvatar label={reply.userDisplayName} />
+        <Avatar label={reply.userAvatarUrl} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <p className="font-black text-white">{reply.userDisplayName}</p>
@@ -238,7 +226,7 @@ export default function DiscussionDetailClient({
         createdAt: new Date().toISOString(),
         id: `reply-${Date.now()}`,
         likeCount: 0,
-        userAvatarUrl: "J",
+        userAvatarUrl: "🔥",
         userDisplayName: "Jessy",
         username: "jessyg305",
       },
@@ -294,7 +282,7 @@ export default function DiscussionDetailClient({
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
-                <InitialAvatar label={discussion.startedByDisplayName} />
+                <Avatar label={discussion.startedByAvatarUrl} />
                 <div>
                   <p className="text-sm font-bold text-slate-400">
                     Started by{" "}
