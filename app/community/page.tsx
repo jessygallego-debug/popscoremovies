@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -21,6 +22,12 @@ type CommunityUser = {
   username: string;
 };
 
+type PopScoreReaction = {
+  accentClass: string;
+  iconSrc: string;
+  label: string;
+};
+
 type CommunityFeedPost = {
   activity: string;
   comment?: string;
@@ -36,7 +43,7 @@ type CommunityFeedPost = {
     title: string;
   };
   popscore?: number;
-  reaction?: string;
+  reaction?: PopScoreReaction;
   replyLink?: string;
   timestamp: string;
   user: CommunityUser;
@@ -103,7 +110,7 @@ const feedPosts: CommunityFeedPost[] = [
       imagePath: "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
     },
     popscore: 94,
-    reaction: "🔥 Loved It",
+    reaction: reactionForScore(94),
     comment:
       "A masterpiece. The visuals, the story, the emotions... everything about this movie hits differently.",
     genres: ["Adventure", "Drama", "Sci-Fi"],
@@ -127,7 +134,7 @@ const feedPosts: CommunityFeedPost[] = [
       imagePath: null,
     },
     popscore: 78,
-    reaction: "🍿 Worth Watching",
+    reaction: reactionForScore(78),
     comment:
       "Great music, strong performances and a fresh take on the genre. Third act was wild!",
     genres: ["Drama", "Horror", "Thriller"],
@@ -195,7 +202,7 @@ const feedPosts: CommunityFeedPost[] = [
       imagePath: "/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
     },
     popscore: 90,
-    reaction: "🔥 Loved It",
+    reaction: reactionForScore(90),
     comment: "Absolutely stunning. Villeneuve is in a league of his own.",
     genres: ["Action", "Adventure", "Drama", "Sci-Fi"],
     likeCount: 31,
@@ -336,20 +343,44 @@ function formatRelativePostTime(value: string) {
   return `${Math.floor(hoursAgo / 24)}d ago`;
 }
 
-function reactionForScore(score: number) {
+function reactionForScore(score: number): PopScoreReaction {
   if (score >= 90) {
-    return "🔥 Loved It";
+    return {
+      accentClass: "text-yellow-200",
+      iconSrc: "/rating-icons/extra-buttery-v2.png",
+      label: "Extra Buttery",
+    };
   }
 
   if (score >= 75) {
-    return "🍿 Worth Watching";
+    return {
+      accentClass: "text-yellow-300",
+      iconSrc: "/rating-icons/buttery.png",
+      label: "Buttery",
+    };
   }
 
   if (score >= 60) {
-    return "⭐ Fresh Pick";
+    return {
+      accentClass: "text-yellow-100",
+      iconSrc: "/rating-icons/fresh-popcorn.png",
+      label: "Fresh Popcorn",
+    };
   }
 
-  return "🎬 Rated";
+  if (score >= 40) {
+    return {
+      accentClass: "text-orange-200",
+      iconSrc: "/rating-icons/salty.png",
+      label: "Salty",
+    };
+  }
+
+  return {
+    accentClass: "text-red-200",
+    iconSrc: "/rating-icons/burnt.png",
+    label: "Burnt",
+  };
 }
 
 function normalizeCommunityGenres(genreNames: string[], ratingGenre: string) {
@@ -880,15 +911,23 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             />
             <div className="flex min-w-0 flex-col justify-center">
               {post.reaction ? (
-                <p
-                  className={`text-base font-black ${
-                    post.reaction.includes("Loved")
-                      ? "text-red-300"
-                      : "text-yellow-300"
-                  }`}
-                >
-                  {post.reaction}
-                </p>
+                <div className="flex items-center gap-2">
+                  <span className="relative block h-7 w-7 overflow-hidden rounded-full border border-yellow-400/25 bg-black/30 shadow-lg shadow-yellow-400/10">
+                    <Image
+                      src={post.reaction.iconSrc}
+                      alt=""
+                      fill
+                      sizes="28px"
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </span>
+                  <p
+                    className={`text-base font-black ${post.reaction.accentClass}`}
+                  >
+                    {post.reaction.label}
+                  </p>
+                </div>
               ) : null}
               {post.comment ? (
                 <p
@@ -1019,9 +1058,24 @@ function DiscussionsTabContent() {
   );
 }
 
-function TrendingDiscussionsCard() {
+function TrendingDiscussionsCard({
+  onSeeAll,
+}: {
+  onSeeAll: () => void;
+}) {
   return (
-    <SidebarCard title="Trending Discussions">
+    <SidebarCard
+      title="Trending Discussions"
+      action={
+        <button
+          type="button"
+          onClick={onSeeAll}
+          className="text-sm font-black text-yellow-300 transition hover:text-yellow-200"
+        >
+          See All
+        </button>
+      }
+    >
       <div className="space-y-4">
         {discussions.map((discussion) => (
           <div
@@ -1031,6 +1085,7 @@ function TrendingDiscussionsCard() {
             <MovieThumb
               alt={discussion.title}
               fallbackMovieId={discussion.fallbackMovieId}
+              fit="contain"
               href={communityMovieHref(discussion.fallbackMovieId)}
               imagePath={discussion.imagePath}
             />
@@ -1244,6 +1299,12 @@ export default function CommunityPage() {
   );
   const tabFeedPosts =
     selectedTab === "Following" ? visibleFollowingPosts : visibleFeedPosts;
+  const showDiscussions = () => {
+    setSelectedTab("Discussions");
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ behavior: "smooth", top: 0 });
+    });
+  };
 
   useEffect(() => {
     let isCurrent = true;
@@ -1327,7 +1388,7 @@ export default function CommunityPage() {
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-6">
-            <TrendingDiscussionsCard />
+            <TrendingDiscussionsCard onSeeAll={showDiscussions} />
             <WhoToFollowCard />
             <TopReviewersCard
               isLoading={isLoadingReviewers}
