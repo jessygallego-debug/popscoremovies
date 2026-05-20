@@ -66,7 +66,7 @@ type MovieSuggestion = {
   title: string;
 };
 
-const feedTabs = ["Feed", "Following", "Discussions", "People"] as const;
+const feedTabs = ["Feed", "Following", "Discussions"] as const;
 
 type CommunityTab = (typeof feedTabs)[number];
 
@@ -91,8 +91,6 @@ const genreFilters = [
 ];
 
 const trendFilters = ["Trending", "Newest", "Most Liked", "Most Commented"];
-
-const followedUsernames = new Set(["jessy", "moviemike", "linarose"]);
 
 const feedPosts: CommunityFeedPost[] = [
   {
@@ -257,6 +255,30 @@ const suggestedFollows: SuggestedFollow[] = [
     displayName: "CinephileChris",
     username: "cinephilechris",
     favoriteGenre: "Sci-Fi",
+  },
+  {
+    avatar: "⭐",
+    displayName: "Dreddock",
+    username: "dreddock",
+    favoriteGenre: "Thriller",
+  },
+  {
+    avatar: "🎭",
+    displayName: "Reels2Rants",
+    username: "reels2rantsdawk88",
+    favoriteGenre: "Horror",
+  },
+  {
+    avatar: "🍿",
+    displayName: "PopcornPat",
+    username: "popcornpat",
+    favoriteGenre: "Comedy",
+  },
+  {
+    avatar: "🎟️",
+    displayName: "ScreenQueen",
+    username: "screenqueen",
+    favoriteGenre: "Romance",
   },
 ];
 
@@ -1255,20 +1277,10 @@ function TopReviewersCard({
   );
 }
 
-function PeopleTabContent({
-  isLoadingReviewers,
-  topReviewers,
-}: {
-  isLoadingReviewers: boolean;
-  topReviewers: TopReviewerSummary[];
-}) {
+function FollowingTabContent() {
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
+    <div className="w-full">
       <WhoToFollowCard />
-      <TopReviewersCard
-        isLoading={isLoadingReviewers}
-        reviewers={topReviewers}
-      />
     </div>
   );
 }
@@ -1292,13 +1304,7 @@ export default function CommunityPage() {
     () => getVisibleFeedPosts(feedPostsToShow, selectedGenre, selectedTrend),
     [feedPostsToShow, selectedGenre, selectedTrend]
   );
-  const visibleFollowingPosts = useMemo(
-    () =>
-      visibleFeedPosts.filter((post) => followedUsernames.has(post.user.username)),
-    [visibleFeedPosts]
-  );
-  const tabFeedPosts =
-    selectedTab === "Following" ? visibleFollowingPosts : visibleFeedPosts;
+  const isFollowingTab = selectedTab === "Following";
   const showDiscussions = () => {
     setSelectedTab("Discussions");
     window.requestAnimationFrame(() => {
@@ -1359,9 +1365,9 @@ export default function CommunityPage() {
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
           <div className="space-y-4 sm:space-y-5">
-            <CreatePostBox onSelectMovie={() => setIsMovieDialogOpen(true)} />
-            {selectedTab === "Feed" || selectedTab === "Following" ? (
+            {selectedTab === "Feed" ? (
               <>
+                <CreatePostBox onSelectMovie={() => setIsMovieDialogOpen(true)} />
                 <CommunityFilters
                   onGenreChange={setSelectedGenre}
                   onTrendChange={setSelectedTrend}
@@ -1369,27 +1375,24 @@ export default function CommunityPage() {
                   selectedTrend={selectedTrend}
                 />
                 <FeedPostsList
-                  posts={tabFeedPosts}
-                  emptyMessage={
-                    selectedTab === "Following"
-                      ? "No followed posts match that filter yet."
-                      : "No posts match that filter yet."
-                  }
+                  posts={visibleFeedPosts}
+                  emptyMessage="No posts match that filter yet."
                 />
               </>
             ) : selectedTab === "Discussions" ? (
               <DiscussionsTabContent />
             ) : (
-              <PeopleTabContent
-                isLoadingReviewers={isLoadingReviewers}
-                topReviewers={topReviewers}
-              />
+              <FollowingTabContent />
             )}
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-6">
-            <TrendingDiscussionsCard onSeeAll={showDiscussions} />
-            <WhoToFollowCard />
+            {isFollowingTab ? null : (
+              <>
+                <TrendingDiscussionsCard onSeeAll={showDiscussions} />
+                <WhoToFollowCard />
+              </>
+            )}
             <TopReviewersCard
               isLoading={isLoadingReviewers}
               reviewers={topReviewers}
