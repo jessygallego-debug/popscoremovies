@@ -6,10 +6,20 @@ import {
   toggleCommunityPostLike,
 } from "@/lib/community-comments";
 import type { CommunityPostLikeSummary } from "@/lib/community-comments";
+import {
+  createNotification,
+  getCurrentNotificationActor,
+  type NotificationEntityType,
+} from "@/lib/notifications";
 
 type CommunityPostLikeButtonProps = {
   className?: string;
   initialLikeCount: number;
+  notificationEntityId?: string;
+  notificationEntityType?: NotificationEntityType;
+  notificationMovieTitle?: string;
+  notificationRecipientUserId?: string;
+  notificationRecipientUsername?: string;
   postId: string;
 };
 
@@ -48,6 +58,11 @@ function shouldKeepLocalLike(error: Error) {
 export default function CommunityPostLikeButton({
   className = "",
   initialLikeCount,
+  notificationEntityId,
+  notificationEntityType = "review",
+  notificationMovieTitle,
+  notificationRecipientUserId,
+  notificationRecipientUsername,
   postId,
 }: CommunityPostLikeButtonProps) {
   const [summary, setSummary] = useState<CommunityPostLikeSummary>({
@@ -85,6 +100,7 @@ export default function CommunityPostLikeButton({
 
   const handleLike = () => {
     const currentSummary = summary;
+    const isCreatingLike = !currentSummary.likedByCurrentUser;
     const optimisticSummary = {
       ...currentSummary,
       likedByCurrentUser: !currentSummary.likedByCurrentUser,
@@ -98,13 +114,37 @@ export default function CommunityPostLikeButton({
     setMessage("");
     setSummary(optimisticSummary);
 
+    const createLikeNotification = async () => {
+      if (!isCreatingLike || !notificationRecipientUserId) {
+        return;
+      }
+
+      const actor = await getCurrentNotificationActor();
+      const movieText = notificationMovieTitle
+        ? ` of ${notificationMovieTitle}`
+        : "";
+
+      await createNotification({
+        actorUserId: actor.userId,
+        actorUsername: actor.username,
+        entityId: notificationEntityId ?? postId,
+        entityType: notificationEntityType,
+        message: `${actor.displayName} liked your review${movieText}.`,
+        recipientUserId: notificationRecipientUserId,
+        recipientUsername: notificationRecipientUsername,
+        type: "comment_reaction",
+      });
+    };
+
     toggleCommunityPostLike(currentSummary, initialLikeCount)
       .then((nextSummary) => {
         setSummary(nextSummary);
+        void createLikeNotification();
       })
       .catch((error: Error) => {
         if (shouldKeepLocalLike(error)) {
           setMessage("");
+          void createLikeNotification();
           return;
         }
 

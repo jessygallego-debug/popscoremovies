@@ -12,6 +12,10 @@ import {
   type CommunityDiscussion,
   type CommunityDiscussionReply,
 } from "@/lib/community-discussions";
+import {
+  createNotification,
+  getCurrentNotificationActor,
+} from "@/lib/notifications";
 import { posterUrl } from "@/lib/tmdb";
 
 type ReplySort = "Top" | "Newest";
@@ -89,6 +93,16 @@ function formatFullDate(value: string) {
     day: "numeric",
     year: "numeric",
   }).format(date);
+}
+
+function mentionedUsernames(value: string) {
+  return Array.from(
+    new Set(
+      value
+        .match(/@([a-zA-Z0-9_]+)/g)
+        ?.map((mention) => mention.slice(1).toLowerCase()) ?? []
+    )
+  );
 }
 
 function findStoredDiscussion(discussionId: string) {
@@ -233,6 +247,56 @@ export default function DiscussionDetailClient({
       ...currentReplies,
     ]);
     setReplyBody("");
+    void getCurrentNotificationActor().then(async (actor) => {
+      await createNotification({
+        actorUserId: actor.userId,
+        actorUsername: actor.username,
+        entityId: discussion.id,
+        entityType: "discussion",
+        message: `${actor.displayName} commented on your discussion: ${discussion.title}`,
+        recipientUserId: discussion.startedByUserId,
+        recipientUsername: discussion.startedByUsername,
+        type: "discussion_comment",
+      });
+
+      await Promise.all(
+        mentionedUsernames(trimmedReply).map((username) =>
+          createNotification({
+            actorUserId: actor.userId,
+            actorUsername: actor.username,
+            entityId: discussion.id,
+            entityType: "discussion",
+            message: `${actor.displayName} mentioned you in a discussion.`,
+            recipientUserId: `mention-${username}`,
+            recipientUsername: username,
+            type: "mention",
+          })
+        )
+      );
+    });
+  };
+
+  const toggleDiscussionLike = () => {
+    const nextIsLiked = !isLiked;
+
+    setIsLiked(nextIsLiked);
+
+    if (!nextIsLiked) {
+      return;
+    }
+
+    void getCurrentNotificationActor().then((actor) =>
+      createNotification({
+        actorUserId: actor.userId,
+        actorUsername: actor.username,
+        entityId: discussion.id,
+        entityType: "discussion",
+        message: `${actor.displayName} liked your discussion: ${discussion.title}`,
+        recipientUserId: discussion.startedByUserId,
+        recipientUsername: discussion.startedByUsername,
+        type: "comment_reaction",
+      })
+    );
   };
 
   return (
@@ -333,7 +397,7 @@ export default function DiscussionDetailClient({
                   <button
                     type="button"
                     aria-pressed={isLiked}
-                    onClick={() => setIsLiked((current) => !current)}
+                    onClick={toggleDiscussionLike}
                     className={`rounded-xl border px-4 py-2 text-sm font-black transition ${
                       isLiked
                         ? "border-red-400/60 bg-red-500/20 text-red-200"

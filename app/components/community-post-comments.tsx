@@ -12,6 +12,8 @@ import {
 
 type CommunityPostCommentsProps = {
   initialCommentCount: number;
+  movieId?: string;
+  movieTitle?: string;
   postId: string;
 };
 
@@ -79,6 +81,8 @@ function shouldKeepLocalLike(error: Error) {
 
 export default function CommunityPostComments({
   initialCommentCount,
+  movieId,
+  movieTitle,
   postId,
 }: CommunityPostCommentsProps) {
   const [comments, setComments] = useState<CommunityComment[]>([]);
@@ -177,7 +181,7 @@ export default function CommunityPostComments({
     setMessage("");
     updateCommentLike(nextLikedByCurrentUser);
 
-    toggleCommunityCommentLike(comment)
+    toggleCommunityCommentLike(comment, { movieId, movieTitle })
       .then((nextComments) => {
         setComments(nextComments);
       })

@@ -20,6 +20,10 @@ import {
   type DiscussionType,
 } from "@/lib/community-discussions";
 import {
+  createNotification,
+  getCurrentNotificationActor,
+} from "@/lib/notifications";
+import {
   getRecentCommunityRatings,
   getTopReviewers,
   type CommunityRatingFeedItem,
@@ -30,6 +34,7 @@ import { posterUrl } from "@/lib/tmdb";
 type CommunityUser = {
   avatar: string;
   displayName: string;
+  userId?: string;
   username: string;
 };
 
@@ -64,6 +69,7 @@ type CommunityFeedPost = {
 
 type SuggestedFollow = CommunityUser & {
   favoriteGenre: string;
+  userId: string;
 };
 
 type MovieSuggestion = {
@@ -106,6 +112,7 @@ const feedPosts: CommunityFeedPost[] = [
     user: {
       avatar: "🔥",
       displayName: "Jessy",
+      userId: "user-jessy",
       username: "jessy",
     },
     activity: "rated Interstellar",
@@ -130,6 +137,7 @@ const feedPosts: CommunityFeedPost[] = [
     user: {
       avatar: "🎬",
       displayName: "Mike",
+      userId: "user-moviemike",
       username: "moviemike",
     },
     activity: "marked Sinners as Worth Watching",
@@ -154,6 +162,7 @@ const feedPosts: CommunityFeedPost[] = [
     user: {
       avatar: "🌹",
       displayName: "Sarah",
+      userId: "user-sarahscreens",
       username: "sarahscreens",
     },
     activity: "commented on The Dark Knight",
@@ -177,6 +186,7 @@ const feedPosts: CommunityFeedPost[] = [
     user: {
       avatar: "🚀",
       displayName: "Chris",
+      userId: "user-cinephilechris",
       username: "cinephilechris",
     },
     activity: "discovered The Prestige",
@@ -198,6 +208,7 @@ const feedPosts: CommunityFeedPost[] = [
     user: {
       avatar: "👻",
       displayName: "Lina",
+      userId: "user-linarose",
       username: "linarose",
     },
     activity: "rated Dune: Part Two",
@@ -222,50 +233,58 @@ const suggestedFollows: SuggestedFollow[] = [
   {
     avatar: "👻",
     displayName: "Lina Rose",
-    username: "linarose",
     favoriteGenre: "Horror",
+    userId: "user-linarose",
+    username: "linarose",
   },
   {
     avatar: "🎬",
     displayName: "MovieMike",
-    username: "moviemike",
     favoriteGenre: "Action",
+    userId: "user-moviemike",
+    username: "moviemike",
   },
   {
     avatar: "🎥",
     displayName: "FilmFanatic",
-    username: "filmfanatic",
     favoriteGenre: "Drama",
+    userId: "user-filmfanatic",
+    username: "filmfanatic",
   },
   {
     avatar: "🚀",
     displayName: "CinephileChris",
-    username: "cinephilechris",
     favoriteGenre: "Sci-Fi",
+    userId: "user-cinephilechris",
+    username: "cinephilechris",
   },
   {
     avatar: "⭐",
     displayName: "Dreddock",
-    username: "dreddock",
     favoriteGenre: "Thriller",
+    userId: "user-dreddock",
+    username: "dreddock",
   },
   {
     avatar: "🎭",
     displayName: "Reels2Rants",
-    username: "reels2rantsdawk88",
     favoriteGenre: "Horror",
+    userId: "user-reels2rantsdawk88",
+    username: "reels2rantsdawk88",
   },
   {
     avatar: "🍿",
     displayName: "PopcornPat",
-    username: "popcornpat",
     favoriteGenre: "Comedy",
+    userId: "user-popcornpat",
+    username: "popcornpat",
   },
   {
     avatar: "🎟️",
     displayName: "ScreenQueen",
-    username: "screenqueen",
     favoriteGenre: "Romance",
+    userId: "user-screenqueen",
+    username: "screenqueen",
   },
 ];
 
@@ -421,6 +440,7 @@ function discussionToFeedPost(discussion: CommunityDiscussion): CommunityFeedPos
     user: {
       avatar: discussion.startedByAvatarUrl,
       displayName: discussion.startedByDisplayName,
+      userId: discussion.startedByUserId,
       username:
         discussion.startedByUsername ??
         discussion.startedByDisplayName.toLowerCase().replace(/[^a-z0-9]+/g, ""),
@@ -512,6 +532,7 @@ function mapCommunityRatingToPost(
     user: {
       avatar: rating.avatar,
       displayName: rating.username,
+      userId: rating.user_id,
       username: rating.username,
     },
   };
@@ -1389,6 +1410,11 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
               <CommunityPostLikeButton
                 className="mt-3"
                 initialLikeCount={post.likeCount}
+                notificationEntityId={post.movie.fallbackMovieId}
+                notificationEntityType={post.popscore ? "review" : "movie"}
+                notificationMovieTitle={post.movie.title}
+                notificationRecipientUserId={post.user.userId}
+                notificationRecipientUsername={post.user.username}
                 postId={post.id}
               />
               {post.actionHref && post.actionLabel ? (
@@ -1417,6 +1443,8 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
 
           <CommunityPostComments
             initialCommentCount={post.commentCount}
+            movieId={post.movie.fallbackMovieId}
+            movieTitle={post.movie.title}
             postId={post.id}
           />
         </div>
@@ -1733,30 +1761,69 @@ function WhoToFollowCard({
   emptyMessage?: string;
   users?: SuggestedFollow[];
 }) {
+  const [followedUsers, setFollowedUsers] = useState<Set<string>>(new Set());
+
+  const followUser = async (user: SuggestedFollow) => {
+    if (followedUsers.has(user.username)) {
+      return;
+    }
+
+    setFollowedUsers((currentUsers) => {
+      const nextUsers = new Set(currentUsers);
+
+      nextUsers.add(user.username);
+
+      return nextUsers;
+    });
+
+    const actor = await getCurrentNotificationActor();
+
+    await createNotification({
+      actorUserId: actor.userId,
+      actorUsername: actor.username,
+      entityId: actor.username ?? actor.userId,
+      entityType: "user_profile",
+      message: `${actor.displayName} started following you.`,
+      recipientUserId: user.userId,
+      recipientUsername: user.username,
+      type: "follow",
+    });
+  };
+
   return (
     <SidebarCard title="Who to Follow">
       <div className="space-y-4">
         {users.length > 0 ? (
-          users.slice(0, 4).map((user) => (
-            <div key={user.username} className="flex items-center gap-3">
-              <Avatar label={user.avatar} size="lg" />
-              <div className="min-w-0 flex-1">
-                <p className="font-black text-white">{user.displayName}</p>
-                <p className="mt-0.5 truncate text-xs font-bold text-slate-500">
-                  @{user.username}
-                </p>
-                <p className="mt-1 text-xs font-bold text-slate-300">
-                  Favorite: {user.favoriteGenre}
-                </p>
+          users.slice(0, 4).map((user) => {
+            const isFollowing = followedUsers.has(user.username);
+
+            return (
+              <div key={user.username} className="flex items-center gap-3">
+                <Avatar label={user.avatar} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-black text-white">{user.displayName}</p>
+                  <p className="mt-0.5 truncate text-xs font-bold text-slate-500">
+                    @{user.username}
+                  </p>
+                  <p className="mt-1 text-xs font-bold text-slate-300">
+                    Favorite: {user.favoriteGenre}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={isFollowing}
+                  onClick={() => void followUser(user)}
+                  className={`rounded-xl border px-4 py-2 text-sm font-black transition ${
+                    isFollowing
+                      ? "border-slate-700 bg-slate-800 text-slate-400"
+                      : "border-yellow-400/70 text-yellow-300 hover:bg-yellow-400 hover:text-black"
+                  }`}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </button>
               </div>
-              <button
-                type="button"
-                className="rounded-xl border border-yellow-400/70 px-4 py-2 text-sm font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-black"
-              >
-                Follow
-              </button>
-            </div>
-          ))
+            );
+          })
         ) : (
           <p className="text-sm font-bold text-slate-400">{emptyMessage}</p>
         )}

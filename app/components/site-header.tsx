@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import MobileSiteMenu from "@/app/components/mobile-site-menu";
+import NotificationBell from "@/app/components/notification-bell";
 import ProfileMenu from "@/app/components/profile-menu";
 
 const navItems = [
@@ -62,27 +63,43 @@ export default function SiteHeader() {
           </Link>
         ))}
       </nav>
-      <Suspense
-        fallback={
-          <div className="hidden shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 md:inline-flex">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
-              ★
-            </span>
-            My PopFile
-          </div>
-        }
-      >
-        <div className="hidden md:block">
+      <div className="hidden items-center gap-3 md:flex">
+        <Suspense
+          fallback={
+            <div className="h-11 w-11 rounded-2xl border border-slate-700/90 bg-slate-950/85" />
+          }
+        >
+          <NotificationBell />
+        </Suspense>
+        <Suspense
+          fallback={
+            <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
+                ★
+              </span>
+              My PopFile
+            </div>
+          }
+        >
           <ProfileMenu />
-        </div>
-      </Suspense>
-      <Suspense
-        fallback={
-          <div className="h-11 w-11 rounded-2xl border border-slate-700/90 bg-slate-950/85 md:hidden" />
-        }
-      >
-        <MobileSiteMenu />
-      </Suspense>
+        </Suspense>
+      </div>
+      <div className="flex items-center gap-2 md:hidden">
+        <Suspense
+          fallback={
+            <div className="h-11 w-11 rounded-2xl border border-slate-700/90 bg-slate-950/85" />
+          }
+        >
+          <NotificationBell />
+        </Suspense>
+        <Suspense
+          fallback={
+            <div className="h-11 w-11 rounded-2xl border border-slate-700/90 bg-slate-950/85" />
+          }
+        >
+          <MobileSiteMenu />
+        </Suspense>
+      </div>
     </header>
   );
 }

@@ -2,6 +2,10 @@
 
 import { avatarForKey } from "@/lib/profile-config";
 import {
+  createNotification,
+  getCurrentNotificationActor,
+} from "@/lib/notifications";
+import {
   getCurrentProfile,
   getCurrentUser,
   getSupabaseAccessToken,
@@ -409,7 +413,13 @@ export async function toggleCommunityPostLike(
   return getCommunityPostLikeSummary(summary.postId, initialLikeCount);
 }
 
-export async function toggleCommunityCommentLike(comment: CommunityComment) {
+export async function toggleCommunityCommentLike(
+  comment: CommunityComment,
+  notificationContext?: {
+    movieId?: string;
+    movieTitle?: string;
+  }
+) {
   const currentUser = await getCurrentUser().catch(() => null);
 
   if (!currentUser) {
@@ -446,6 +456,23 @@ export async function toggleCommunityCommentLike(comment: CommunityComment) {
         }),
       }
     );
+
+    const actor = await getCurrentNotificationActor();
+
+    const movieText = notificationContext?.movieTitle
+      ? ` on ${notificationContext.movieTitle}`
+      : "";
+
+    await createNotification({
+      actorUserId: actor.userId,
+      actorUsername: actor.username,
+      entityId: notificationContext?.movieId ?? "/community",
+      entityType: "movie_comment",
+      message: `${actor.displayName} liked your comment${movieText}.`,
+      recipientUserId: comment.userId,
+      recipientUsername: comment.username,
+      type: "comment_reaction",
+    });
   }
 
   return getCommunityComments(comment.postId);
