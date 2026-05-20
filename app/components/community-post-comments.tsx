@@ -67,6 +67,16 @@ function userFriendlyError(error: Error) {
   return error.message || "Could not update comments. Please try again.";
 }
 
+function shouldKeepLocalLike(error: Error) {
+  const message = error.message.toLowerCase();
+
+  return (
+    !message.includes("create or sign in") &&
+    !message.includes("sign in") &&
+    !message.includes("popfile")
+  );
+}
+
 export default function CommunityPostComments({
   initialCommentCount,
   postId,
@@ -137,14 +147,47 @@ export default function CommunityPostComments({
   };
 
   const handleLike = (comment: CommunityComment) => {
+    const nextLikedByCurrentUser = !comment.likedByCurrentUser;
+    const updateCommentLike = (likedByCurrentUser: boolean) => {
+      setComments((currentComments) =>
+        currentComments.map((currentComment) => {
+          if (currentComment.id !== comment.id) {
+            return currentComment;
+          }
+
+          const wasLiked = currentComment.likedByCurrentUser;
+
+          if (wasLiked === likedByCurrentUser) {
+            return currentComment;
+          }
+
+          return {
+            ...currentComment,
+            likedByCurrentUser,
+            likeCount: Math.max(
+              0,
+              currentComment.likeCount + (likedByCurrentUser ? 1 : -1)
+            ),
+          };
+        })
+      );
+    };
+
     setSavingLikeId(comment.id);
     setMessage("");
+    updateCommentLike(nextLikedByCurrentUser);
 
     toggleCommunityCommentLike(comment)
       .then((nextComments) => {
         setComments(nextComments);
       })
       .catch((error: Error) => {
+        if (shouldKeepLocalLike(error)) {
+          setMessage("");
+          return;
+        }
+
+        updateCommentLike(comment.likedByCurrentUser);
         setMessage(userFriendlyError(error));
       })
       .finally(() => {
@@ -181,15 +224,44 @@ export default function CommunityPostComments({
                 <button
                   type="button"
                   aria-pressed={comment.likedByCurrentUser}
-                  disabled={comment.isOwnComment || savingLikeId === comment.id}
-                  onClick={() => handleLike(comment)}
-                  className={`mt-2 inline-flex items-center gap-2 text-xs font-black transition ${
+                  aria-label={
                     comment.likedByCurrentUser
-                      ? "text-red-300"
-                      : "text-slate-400 hover:text-yellow-300"
-                  } disabled:cursor-not-allowed disabled:text-slate-600`}
+                      ? "Unlike this comment"
+                      : "Like this comment"
+                  }
+                  disabled={savingLikeId === comment.id}
+                  onClick={() => handleLike(comment)}
+                  className={`mt-2 inline-flex min-h-8 items-center gap-2 rounded-full border py-1 pl-1.5 pr-3 text-xs font-black shadow-lg transition ${
+                    comment.likedByCurrentUser
+                      ? "border-red-400/55 bg-red-500/18 text-red-100 shadow-red-500/10"
+                      : "border-slate-700 bg-black/25 text-slate-300 shadow-black/20 hover:border-red-400/50 hover:text-red-200"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
                 >
-                  <span className="text-red-400">♥</span>
+                  <span
+                    className={`inline-flex h-5 w-5 items-center justify-center rounded-full transition ${
+                      comment.likedByCurrentUser
+                        ? "bg-red-500 text-white"
+                        : "bg-red-500/10 text-red-300"
+                    }`}
+                  >
+                    <svg
+                      aria-hidden="true"
+                      className={`h-3.5 w-3.5 ${
+                        comment.likedByCurrentUser
+                          ? "fill-current"
+                          : "fill-transparent"
+                      }`}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M20.4 5.2c-1.7-1.8-4.5-1.8-6.3 0L12 7.3 9.9 5.2c-1.8-1.8-4.6-1.8-6.3 0-1.8 1.9-1.7 4.8.1 6.7L12 20l8.3-8.1c1.8-1.9 1.9-4.8.1-6.7Z"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  </span>
                   {comment.likeCount}
                 </button>
               </div>

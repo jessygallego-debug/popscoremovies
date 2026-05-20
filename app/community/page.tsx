@@ -575,7 +575,7 @@ function MovieThumb({
     <div
       className={`relative overflow-hidden rounded-2xl bg-slate-900 transition ${
         wide
-          ? "mx-auto aspect-[2/3] w-full max-w-[145px] sm:mx-0 sm:max-w-none"
+          ? "mx-auto aspect-[2/3] w-full max-w-[112px] sm:mx-0 sm:max-w-none"
           : "aspect-[4/3]"
       } ${
         href
@@ -587,7 +587,7 @@ function MovieThumb({
         alt={alt}
         className={fit === "contain" ? "object-contain" : "object-cover"}
         fallbackMovieId={fallbackMovieId}
-        sizes={wide ? "(min-width: 1024px) 120px, 145px" : "96px"}
+        sizes={wide ? "(min-width: 1024px) 120px, 112px" : "96px"}
         src={posterUrl(imagePath)}
         unoptimized
       />
@@ -1170,16 +1170,15 @@ function StartDiscussionModal({
 
 function CreatePostBox({ onSelectMovie }: { onSelectMovie: () => void }) {
   return (
-    <section className={cardClass("p-4 sm:p-5")}>
+    <section className={cardClass("p-3 sm:p-4")}>
       <div className="flex flex-wrap items-center gap-3">
-        <Avatar label="🔥" size="lg" />
-        <p className="min-w-0 flex-1 text-base font-semibold text-slate-300">
+        <p className="min-w-0 flex-1 text-sm font-semibold text-slate-300 sm:text-base">
           What movie is on your mind?
         </p>
         <button
           type="button"
           onClick={onSelectMovie}
-          className="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+          className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:px-5"
         >
           Select Movie
         </button>
@@ -2063,8 +2062,8 @@ export default function CommunityPage() {
                 Community
               </h1>
               <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:text-base">
-                See what PopScore fans are rating, reviewing, and discovering
-                right now.
+                Discover what movie fans are loving, debating, rating, and
+                talking about right now.
               </p>
             </div>
             <CommunitySearch />

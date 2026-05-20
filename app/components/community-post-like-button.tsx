@@ -35,6 +35,16 @@ function userFriendlyError(error: Error) {
   return error.message || "Could not update likes. Please try again.";
 }
 
+function shouldKeepLocalLike(error: Error) {
+  const message = error.message.toLowerCase();
+
+  return (
+    !message.includes("create or sign in") &&
+    !message.includes("sign in") &&
+    !message.includes("popfile")
+  );
+}
+
 export default function CommunityPostLikeButton({
   className = "",
   initialLikeCount,
@@ -74,14 +84,31 @@ export default function CommunityPostLikeButton({
   }, [initialLikeCount, postId]);
 
   const handleLike = () => {
+    const currentSummary = summary;
+    const optimisticSummary = {
+      ...currentSummary,
+      likedByCurrentUser: !currentSummary.likedByCurrentUser,
+      likeCount: Math.max(
+        0,
+        currentSummary.likeCount + (currentSummary.likedByCurrentUser ? -1 : 1)
+      ),
+    };
+
     setIsSaving(true);
     setMessage("");
+    setSummary(optimisticSummary);
 
-    toggleCommunityPostLike(summary, initialLikeCount)
+    toggleCommunityPostLike(currentSummary, initialLikeCount)
       .then((nextSummary) => {
         setSummary(nextSummary);
       })
       .catch((error: Error) => {
+        if (shouldKeepLocalLike(error)) {
+          setMessage("");
+          return;
+        }
+
+        setSummary(currentSummary);
         setMessage(userFriendlyError(error));
       })
       .finally(() => {
