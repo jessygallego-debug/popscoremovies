@@ -713,7 +713,7 @@ async function getProfilesByUserIds(userIds: string[]) {
   const profiles = await supabaseFetch<ProfileRecord[]>(
     `/profiles?user_id=in.(${inList(
       uniqueUserIds
-    )})&select=user_id,username,avatar_key,id,email,favorite_genre,created_at,updated_at`
+    )})&select=user_id,username,avatar_key,id,favorite_genre,created_at,updated_at`
   ).catch(() => []);
 
   return new Map(profiles.map((profile) => [profile.user_id, profile]));
@@ -960,11 +960,14 @@ export async function getRecentCommunityRatings(
   const currentProfile = await getCurrentProfile().catch(() => null);
   const rows = await supabaseFetch<Parameters<typeof mapRatingRow>[0][]>(
     `/movie_ratings?select=*&order=updated_at.desc&limit=${Math.max(
-      limit * 2,
+      limit * 4,
       limit
     )}`
   ).catch(() => []);
-  const ratings = rows.filter(rowHasPopScoreRating).slice(0, limit).map(mapRatingRow);
+  const ratings = rows
+    .filter((row) => rowHasPopScoreRating(row) && row.review_comment?.trim())
+    .slice(0, limit)
+    .map(mapRatingRow);
   const profilesByUserId = await getProfilesByUserIds(
     ratings.map((rating) => rating.user_id)
   );

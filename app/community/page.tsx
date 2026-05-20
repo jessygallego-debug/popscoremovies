@@ -1001,7 +1001,6 @@ function DiscussionsTabContent() {
             <MovieThumb
               alt={discussion.title}
               fallbackMovieId={discussion.fallbackMovieId}
-              fit="contain"
               href={communityMovieHref(discussion.fallbackMovieId)}
               imagePath={discussion.imagePath}
             />
@@ -1032,7 +1031,6 @@ function TrendingDiscussionsCard() {
             <MovieThumb
               alt={discussion.title}
               fallbackMovieId={discussion.fallbackMovieId}
-              fit="contain"
               href={communityMovieHref(discussion.fallbackMovieId)}
               imagePath={discussion.imagePath}
             />

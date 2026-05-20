@@ -106,6 +106,7 @@ export async function getMovieFanReviews(movieId: string): Promise<FanReview[]> 
           row.weights?.length &&
           row.ratings &&
           Object.keys(row.ratings).length > 0 &&
+          row.review_comment &&
           !containsProfanity(row.review_comment)
       );
 
@@ -134,7 +135,7 @@ export async function getMovieFanReviews(movieId: string): Promise<FanReview[]> 
         id: row.id,
         popscore: score,
         ratingLabel: getRatingLabel(score),
-        reviewComment: row.review_comment || "Rated this movie on PopScore.",
+        reviewComment: row.review_comment,
         username: profile?.username ?? "PopScore Fan",
       };
     });
