@@ -231,11 +231,13 @@ export function validateCommunityComment(comment: string): {
 
 function mapComments({
   comments,
+  currentProfile,
   currentUserId,
   likes,
   profiles,
 }: {
   comments: CommunityCommentRow[];
+  currentProfile?: CommunityProfileRow | null;
   currentUserId?: string | null;
   likes: CommunityCommentLikeRow[];
   profiles: CommunityProfileRow[];
@@ -255,7 +257,9 @@ function mapComments({
   });
 
   return comments.map((comment) => {
-    const profile = profilesByUserId.get(comment.user_id);
+    const profile =
+      profilesByUserId.get(comment.user_id) ??
+      (currentProfile?.user_id === comment.user_id ? currentProfile : null);
 
     return {
       avatar: avatarForKey(profile?.avatar_key ?? "").icon,
@@ -267,13 +271,19 @@ function mapComments({
       likedByCurrentUser: currentUserLikedCommentIds.has(comment.id),
       postId: comment.post_id,
       userId: comment.user_id,
-      username: profile?.username ?? "popscorefan",
+      username: profile?.username ?? `user_${comment.user_id.slice(0, 8)}`,
     };
   });
 }
 
-export async function getCommunityComments(postId: string) {
+export async function getCommunityComments(
+  postId: string,
+  currentProfileOverride?: CommunityProfileRow | null
+) {
   const currentUser = await getCurrentUser().catch(() => null);
+  const currentProfile =
+    currentProfileOverride ??
+    (currentUser ? await getCurrentProfile().catch(() => null) : null);
   const comments = await supabaseFetch<CommunityCommentRow[]>(
     `/community_comments?post_id=eq.${encodeURIComponent(
       postId
@@ -305,6 +315,7 @@ export async function getCommunityComments(postId: string) {
 
   return mapComments({
     comments,
+    currentProfile,
     currentUserId: currentUser?.id,
     likes,
     profiles,
@@ -354,7 +365,7 @@ export async function addCommunityComment(postId: string, comment: string) {
     }),
   });
 
-  return getCommunityComments(postId);
+  return getCommunityComments(postId, profile);
 }
 
 export async function toggleCommunityPostLike(

@@ -955,9 +955,11 @@ function FeedPostsList({
 }
 
 function SidebarCard({
+  action,
   children,
   title,
 }: {
+  action?: React.ReactNode;
   children: React.ReactNode;
   title: string;
 }) {
@@ -965,12 +967,14 @@ function SidebarCard({
     <section className={cardClass("p-4 sm:p-5")}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-lg font-black text-white">{title}</h2>
-        <Link
-          href="/community"
-          className="text-sm font-black text-yellow-300 transition hover:text-yellow-200"
-        >
-          See All
-        </Link>
+        {action ?? (
+          <Link
+            href="/community"
+            className="text-sm font-black text-yellow-300 transition hover:text-yellow-200"
+          >
+            See All
+          </Link>
+        )}
       </div>
       {children}
     </section>
@@ -1069,10 +1073,14 @@ function WhoToFollowCard() {
   );
 }
 
-function ReviewCountBadge({ count }: { count: number }) {
+function ratingCountText(count: number) {
+  return `${count} rated movie${count === 1 ? "" : "s"}`;
+}
+
+function RatingCountBadge({ count }: { count: number }) {
   return (
     <span
-      aria-label={`${count} reviews`}
+      aria-label={ratingCountText(count)}
       className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-yellow-400/40 bg-yellow-400/20 text-sm font-black text-yellow-200 shadow-lg shadow-yellow-400/10"
       style={{
         clipPath:
@@ -1084,6 +1092,33 @@ function ReviewCountBadge({ count }: { count: number }) {
   );
 }
 
+function TopReviewersList({
+  reviewers,
+}: {
+  reviewers: TopReviewerSummary[];
+}) {
+  return (
+    <div className="space-y-3">
+      {reviewers.map((reviewer, index) => (
+        <div
+          key={reviewer.userId}
+          className="grid grid-cols-[24px_40px_1fr_auto] items-center gap-3"
+        >
+          <span className="text-sm font-black text-white">{index + 1}</span>
+          <Avatar label={reviewer.avatar} />
+          <div className="min-w-0">
+            <p className="truncate font-black text-white">{reviewer.username}</p>
+            <p className="mt-1 text-xs font-bold text-slate-300">
+              {ratingCountText(reviewer.totalReviews)}
+            </p>
+          </div>
+          <RatingCountBadge count={reviewer.totalReviews} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function TopReviewersCard({
   isLoading,
   reviewers,
@@ -1091,36 +1126,74 @@ function TopReviewersCard({
   isLoading: boolean;
   reviewers: TopReviewerSummary[];
 }) {
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const previewReviewers = reviewers.slice(0, 5);
+  const leaderboardReviewers = reviewers.slice(0, 150);
+
   return (
-    <SidebarCard title="Top Reviewers">
+    <SidebarCard
+      title="Top Reviewers"
+      action={
+        reviewers.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setIsLeaderboardOpen(true)}
+            className="text-sm font-black text-yellow-300 transition hover:text-yellow-200"
+          >
+            See All
+          </button>
+        ) : (
+          <span />
+        )
+      }
+    >
       {isLoading ? (
         <p className="text-sm font-bold text-slate-400">Loading reviewers...</p>
-      ) : reviewers.length > 0 ? (
-        <div className="space-y-4">
-          {reviewers.map((reviewer, index) => (
-          <div
-            key={reviewer.userId}
-            className="grid grid-cols-[24px_40px_1fr_auto] items-center gap-3"
-          >
-            <span className="text-sm font-black text-white">{index + 1}</span>
-            <Avatar label={reviewer.avatar} />
-            <div className="min-w-0">
-              <p className="truncate font-black text-white">
-                {reviewer.username}
-              </p>
-              <p className="mt-1 text-xs font-bold text-slate-300">
-                {reviewer.totalReviews} reviews
-              </p>
-            </div>
-            <ReviewCountBadge count={reviewer.totalReviews} />
-          </div>
-          ))}
-        </div>
+      ) : previewReviewers.length > 0 ? (
+        <TopReviewersList reviewers={previewReviewers} />
       ) : (
         <p className="text-sm font-bold text-slate-400">
           No reviewer rankings yet.
         </p>
       )}
+
+      {isLeaderboardOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Top 150 raters"
+          className="fixed inset-0 z-[140] flex items-start justify-center overflow-y-auto bg-black/75 px-4 py-16 backdrop-blur-sm"
+          onMouseDown={() => setIsLeaderboardOpen(false)}
+        >
+          <div
+            className="w-full max-w-3xl rounded-3xl border border-slate-700 bg-slate-950 p-4 shadow-2xl shadow-black/70 sm:p-5"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-white">
+                  Top 150 Raters
+                </h2>
+                <p className="mt-1 text-sm font-semibold text-slate-400">
+                  Ranked by total rated movies submitted.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close top raters"
+                onClick={() => setIsLeaderboardOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:text-yellow-300"
+              >
+                X
+              </button>
+            </div>
+
+            <div className="max-h-[70vh] overflow-y-auto rounded-2xl border border-slate-800 bg-black/25 p-3">
+              <TopReviewersList reviewers={leaderboardReviewers} />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </SidebarCard>
   );
 }
@@ -1173,7 +1246,7 @@ export default function CommunityPage() {
   useEffect(() => {
     let isCurrent = true;
 
-    Promise.all([getRecentCommunityRatings(30), getTopReviewers(5)])
+    Promise.all([getRecentCommunityRatings(30), getTopReviewers(150)])
       .then(([ratings, reviewers]) => {
         if (isCurrent) {
           setCommunityRatings(ratings);
