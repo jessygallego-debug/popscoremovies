@@ -13,6 +13,7 @@ const LOCAL_ACTOR_ID = "current-user";
 
 export type NotificationType =
   | "follow"
+  | "new_follower"
   | "comment_reply"
   | "discussion_comment"
   | "comment_reaction"
@@ -398,7 +399,7 @@ export function getNotificationHref(notification: PopScoreNotification) {
     return notification.entityId;
   }
 
-  if (notification.type === "follow") {
+  if (notification.type === "follow" || notification.type === "new_follower") {
     return `/profile/${notification.entityId}`;
   }
 

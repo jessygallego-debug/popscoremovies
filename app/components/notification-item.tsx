@@ -40,6 +40,7 @@ function notificationTypeLabel(type: PopScoreNotification["type"]) {
     discussion_comment: "Discussion",
     follow: "Follow",
     mention: "Mention",
+    new_follower: "New follower",
   };
 
   return labels[type];

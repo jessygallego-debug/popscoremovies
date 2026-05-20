@@ -985,6 +985,40 @@ export async function getRecentCommunityRatings(
   });
 }
 
+export async function getRecentRatingsForUsers(
+  userIds: string[],
+  limit = 50
+): Promise<CommunityRatingFeedItem[]> {
+  const uniqueUserIds = Array.from(new Set(userIds)).filter(Boolean);
+
+  if (uniqueUserIds.length === 0) {
+    return [];
+  }
+
+  const currentProfile = await getCurrentProfile().catch(() => null);
+  const rows = await supabaseFetch<Parameters<typeof mapRatingRow>[0][]>(
+    `/movie_ratings?user_id=in.(${inList(
+      uniqueUserIds
+    )})&select=*&order=updated_at.desc&limit=${limit}`
+  ).catch(() => []);
+  const ratings = rows.filter(rowHasPopScoreRating).map(mapRatingRow);
+  const profilesByUserId = await getProfilesByUserIds(
+    ratings.map((rating) => rating.user_id)
+  );
+
+  return ratings.map((rating) => {
+    const profile =
+      profilesByUserId.get(rating.user_id) ??
+      (currentProfile?.user_id === rating.user_id ? currentProfile : null);
+
+    return {
+      ...rating,
+      avatar: avatarForKey(profile?.avatar_key ?? "").icon,
+      username: profile?.username ?? fallbackUsernameForUserId(rating.user_id),
+    };
+  });
+}
+
 export async function getTopReviewers(
   limit = 5
 ): Promise<TopReviewerSummary[]> {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import CommunityPostComments from "@/app/components/community-post-comments";
+import FollowButton from "@/app/components/follow-button";
 import CommunityPostLikeButton from "@/app/components/community-post-like-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import SiteHeader from "@/app/components/site-header";
@@ -14,16 +15,18 @@ import {
   discussionFilterOptions,
   discussionTypes,
   mockCommunityDiscussions,
+  mockDiscussionReplies,
   parseStoredCommunityDiscussions,
   type CommunityDiscussion,
   type DiscussionFilter,
   type DiscussionType,
 } from "@/lib/community-discussions";
 import {
-  createNotification,
-  getCurrentNotificationActor,
-} from "@/lib/notifications";
+  FOLLOWS_UPDATED_EVENT,
+  getFollowingUserIdsForCurrentUser,
+} from "@/lib/follows";
 import {
+  getRecentRatingsForUsers,
   getRecentCommunityRatings,
   getTopReviewers,
   type CommunityRatingFeedItem,
@@ -68,9 +71,70 @@ type CommunityFeedPost = {
 };
 
 type SuggestedFollow = CommunityUser & {
+  followersCount: number;
   favoriteGenre: string;
+  totalReviews: number;
   userId: string;
 };
+
+type FollowingActivity =
+  | {
+      avatar: string;
+      comment?: string;
+      createdAt: string;
+      genre: string;
+      id: string;
+      movieId: string;
+      moviePoster: string | null;
+      movieTitle: string;
+      popScore: number;
+      type: "rating";
+      userId: string;
+      username: string;
+    }
+  | {
+      avatar: string;
+      createdAt: string;
+      id: string;
+      movieId: string;
+      moviePoster: string | null;
+      movieTitle: string;
+      reaction: "loved_it" | "worth_watching" | "trash";
+      type: "reaction";
+      userId: string;
+      username: string;
+    }
+  | {
+      avatar: string;
+      createdAt: string;
+      discussionId: string;
+      discussionTitle: string;
+      id: string;
+      movieId?: string;
+      movieTitle?: string;
+      replyCount: number;
+      type: "discussion_created";
+      userId: string;
+      username: string;
+    }
+  | {
+      avatar: string;
+      commentPreview: string;
+      createdAt: string;
+      discussionId: string;
+      discussionTitle: string;
+      id: string;
+      movieId?: string;
+      movieTitle?: string;
+      type: "discussion_comment";
+      userId: string;
+      username: string;
+    };
+
+type FollowingReaction = Extract<
+  FollowingActivity,
+  { type: "reaction" }
+>["reaction"];
 
 type MovieSuggestion = {
   genreNames?: string[];
@@ -80,7 +144,7 @@ type MovieSuggestion = {
   title: string;
 };
 
-const feedTabs = ["Feed", "Following", "Discussions"] as const;
+const feedTabs = ["Feed", "Following", "Discussions", "People"] as const;
 
 type CommunityTab = (typeof feedTabs)[number];
 
@@ -234,6 +298,8 @@ const suggestedFollows: SuggestedFollow[] = [
     avatar: "👻",
     displayName: "Lina Rose",
     favoriteGenre: "Horror",
+    followersCount: 1200,
+    totalReviews: 184,
     userId: "user-linarose",
     username: "linarose",
   },
@@ -241,6 +307,8 @@ const suggestedFollows: SuggestedFollow[] = [
     avatar: "🎬",
     displayName: "MovieMike",
     favoriteGenre: "Action",
+    followersCount: 980,
+    totalReviews: 248,
     userId: "user-moviemike",
     username: "moviemike",
   },
@@ -248,6 +316,8 @@ const suggestedFollows: SuggestedFollow[] = [
     avatar: "🎥",
     displayName: "FilmFanatic",
     favoriteGenre: "Drama",
+    followersCount: 860,
+    totalReviews: 213,
     userId: "user-filmfanatic",
     username: "filmfanatic",
   },
@@ -255,6 +325,8 @@ const suggestedFollows: SuggestedFollow[] = [
     avatar: "🚀",
     displayName: "CinephileChris",
     favoriteGenre: "Sci-Fi",
+    followersCount: 730,
+    totalReviews: 167,
     userId: "user-cinephilechris",
     username: "cinephilechris",
   },
@@ -262,6 +334,8 @@ const suggestedFollows: SuggestedFollow[] = [
     avatar: "⭐",
     displayName: "Dreddock",
     favoriteGenre: "Thriller",
+    followersCount: 520,
+    totalReviews: 141,
     userId: "user-dreddock",
     username: "dreddock",
   },
@@ -269,6 +343,8 @@ const suggestedFollows: SuggestedFollow[] = [
     avatar: "🎭",
     displayName: "Reels2Rants",
     favoriteGenre: "Horror",
+    followersCount: 430,
+    totalReviews: 119,
     userId: "user-reels2rantsdawk88",
     username: "reels2rantsdawk88",
   },
@@ -276,6 +352,8 @@ const suggestedFollows: SuggestedFollow[] = [
     avatar: "🍿",
     displayName: "PopcornPat",
     favoriteGenre: "Comedy",
+    followersCount: 390,
+    totalReviews: 104,
     userId: "user-popcornpat",
     username: "popcornpat",
   },
@@ -283,6 +361,8 @@ const suggestedFollows: SuggestedFollow[] = [
     avatar: "🎟️",
     displayName: "ScreenQueen",
     favoriteGenre: "Romance",
+    followersCount: 340,
+    totalReviews: 96,
     userId: "user-screenqueen",
     username: "screenqueen",
   },
@@ -538,6 +618,211 @@ function mapCommunityRatingToPost(
   };
 }
 
+function timeFromFeedTimestamp(value: string) {
+  const match = value.match(/^(\d+)([mhd]) ago$/);
+
+  if (!match) {
+    return new Date().toISOString();
+  }
+
+  const amount = Number(match[1]);
+  const unit = match[2];
+  const minutes =
+    unit === "m" ? amount : unit === "h" ? amount * 60 : amount * 24 * 60;
+
+  return new Date(Date.now() - minutes * 60000).toISOString();
+}
+
+function quickReactionLabel(reaction: FollowingReaction) {
+  const labels: Record<FollowingReaction, string> = {
+    loved_it: "Loved It",
+    trash: "Trash",
+    worth_watching: "Worth Watching",
+  };
+
+  return labels[reaction];
+}
+
+function quickReactionFromScore(score: number): FollowingReaction {
+  if (score >= 85) {
+    return "loved_it";
+  }
+
+  if (score >= 60) {
+    return "worth_watching";
+  }
+
+  return "trash";
+}
+
+function communityUserForUsername(username?: string) {
+  if (!username) {
+    return null;
+  }
+
+  const normalizedUsername = username.toLowerCase();
+
+  return (
+    suggestedFollows.find(
+      (user) => user.username.toLowerCase() === normalizedUsername
+    ) ??
+    feedPosts.find(
+      (post) => post.user.username.toLowerCase() === normalizedUsername
+    )?.user ??
+    null
+  );
+}
+
+function buildFollowingActivities({
+  discussions,
+  followingIds,
+  ratings,
+}: {
+  discussions: CommunityDiscussion[];
+  followingIds: string[];
+  ratings: CommunityRatingFeedItem[];
+}) {
+  const followingSet = new Set(followingIds);
+  const activities: FollowingActivity[] = [];
+  const realRatingActivities = ratings
+    .filter((rating) => followingSet.has(rating.user_id))
+    .flatMap((rating): FollowingActivity[] => {
+      const createdAt = rating.updated_at ?? rating.created_at;
+      const genre = normalizeCommunityGenres(
+        rating.genreNames,
+        rating.genre
+      )[0] ?? rating.genre;
+      const base = {
+        avatar: rating.avatar,
+        createdAt,
+        movieId: rating.movieId,
+        moviePoster: rating.posterPath ?? null,
+        movieTitle: rating.movieTitle,
+        userId: rating.user_id,
+        username: rating.username,
+      };
+      const items: FollowingActivity[] = [
+        {
+          ...base,
+          comment: rating.reviewComment ?? undefined,
+          genre,
+          id: `following-rating-${rating.id}`,
+          popScore: rating.popscore,
+          type: "rating",
+        },
+      ];
+
+      if (rating.quick_reaction) {
+        items.push({
+          ...base,
+          id: `following-reaction-${rating.id}`,
+          reaction: rating.quick_reaction,
+          type: "reaction",
+        });
+      }
+
+      return items;
+    });
+  const mockRatingActivities = feedPosts
+    .filter((post) => followingSet.has(post.user.userId ?? ""))
+    .filter((post) => Boolean(post.popscore))
+    .flatMap((post): FollowingActivity[] => {
+      const createdAt = timeFromFeedTimestamp(post.timestamp);
+      const base = {
+        avatar: post.user.avatar,
+        createdAt,
+        movieId: post.movie.fallbackMovieId,
+        moviePoster: post.movie.imagePath,
+        movieTitle: post.movie.title,
+        userId: post.user.userId ?? post.user.username,
+        username: post.user.username,
+      };
+
+      return [
+        {
+          ...base,
+          comment: post.comment,
+          genre: post.genres[0] ?? "Movie",
+          id: `following-mock-rating-${post.id}`,
+          popScore: post.popscore ?? 0,
+          type: "rating",
+        },
+        {
+          ...base,
+          id: `following-mock-reaction-${post.id}`,
+          reaction: quickReactionFromScore(post.popscore ?? 0),
+          type: "reaction",
+        },
+      ];
+    });
+  const discussionCreatedActivities = discussions
+    .filter((discussion) => followingSet.has(discussion.startedByUserId))
+    .map(
+      (discussion): FollowingActivity => ({
+        avatar: discussion.startedByAvatarUrl,
+        createdAt: discussion.createdAt,
+        discussionId: discussion.id,
+        discussionTitle: discussion.title,
+        id: `following-discussion-${discussion.id}`,
+        movieId: discussion.movieId,
+        movieTitle: discussion.movieTitle,
+        replyCount: discussion.commentCount,
+        type: "discussion_created",
+        userId: discussion.startedByUserId,
+        username:
+          discussion.startedByUsername ??
+          discussion.startedByDisplayName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, ""),
+      })
+    );
+  const discussionCommentActivities = discussions.flatMap((discussion) =>
+    (mockDiscussionReplies[discussion.id] ?? [])
+      .flatMap((reply) => {
+        const user = communityUserForUsername(reply.username);
+
+        if (!user?.userId || !followingSet.has(user.userId)) {
+          return [];
+        }
+
+        return [
+          {
+          avatar: user.avatar,
+          commentPreview: reply.body,
+          createdAt: reply.createdAt,
+          discussionId: discussion.id,
+          discussionTitle: discussion.title,
+          id: `following-discussion-comment-${reply.id}`,
+          movieId: discussion.movieId,
+          movieTitle: discussion.movieTitle,
+          type: "discussion_comment",
+          userId: user.userId,
+          username: user.username,
+          } satisfies FollowingActivity,
+        ];
+      })
+  );
+
+  activities.push(
+    ...realRatingActivities,
+    ...mockRatingActivities,
+    ...discussionCreatedActivities,
+    ...discussionCommentActivities
+  );
+
+  return activities.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+function formatCompactCount(value: number) {
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`;
+  }
+
+  return String(value);
+}
+
 function formatSuggestionDate(value: string) {
   if (!value) {
     return "";
@@ -560,12 +845,13 @@ function Avatar({
   size = "md",
 }: {
   label: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }) {
   const sizeClass = {
     lg: "h-12 w-12 text-2xl",
     md: "h-10 w-10 text-xl",
     sm: "h-7 w-7 text-sm",
+    xl: "h-16 w-16 text-3xl",
   }[size];
 
   return (
@@ -1367,6 +1653,17 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
               ...
             </button>
           </div>
+          {post.user.userId ? (
+            <FollowButton
+              className="mt-2"
+              size="sm"
+              target={{
+                displayName: post.user.displayName,
+                userId: post.user.userId,
+                username: post.user.username,
+              }}
+            />
+          ) : null}
 
           <div className="mt-3 grid gap-3 sm:grid-cols-[110px_1fr] lg:grid-cols-[120px_1fr]">
             <MovieThumb
@@ -1761,69 +2058,32 @@ function WhoToFollowCard({
   emptyMessage?: string;
   users?: SuggestedFollow[];
 }) {
-  const [followedUsers, setFollowedUsers] = useState<Set<string>>(new Set());
-
-  const followUser = async (user: SuggestedFollow) => {
-    if (followedUsers.has(user.username)) {
-      return;
-    }
-
-    setFollowedUsers((currentUsers) => {
-      const nextUsers = new Set(currentUsers);
-
-      nextUsers.add(user.username);
-
-      return nextUsers;
-    });
-
-    const actor = await getCurrentNotificationActor();
-
-    await createNotification({
-      actorUserId: actor.userId,
-      actorUsername: actor.username,
-      entityId: actor.username ?? actor.userId,
-      entityType: "user_profile",
-      message: `${actor.displayName} started following you.`,
-      recipientUserId: user.userId,
-      recipientUsername: user.username,
-      type: "follow",
-    });
-  };
-
   return (
     <SidebarCard title="Who to Follow">
       <div className="space-y-4">
         {users.length > 0 ? (
-          users.slice(0, 4).map((user) => {
-            const isFollowing = followedUsers.has(user.username);
-
-            return (
-              <div key={user.username} className="flex items-center gap-3">
-                <Avatar label={user.avatar} size="lg" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-black text-white">{user.displayName}</p>
-                  <p className="mt-0.5 truncate text-xs font-bold text-slate-500">
-                    @{user.username}
-                  </p>
-                  <p className="mt-1 text-xs font-bold text-slate-300">
-                    Favorite: {user.favoriteGenre}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={isFollowing}
-                  onClick={() => void followUser(user)}
-                  className={`rounded-xl border px-4 py-2 text-sm font-black transition ${
-                    isFollowing
-                      ? "border-slate-700 bg-slate-800 text-slate-400"
-                      : "border-yellow-400/70 text-yellow-300 hover:bg-yellow-400 hover:text-black"
-                  }`}
-                >
-                  {isFollowing ? "Following" : "Follow"}
-                </button>
+          users.slice(0, 4).map((user) => (
+            <div key={user.username} className="flex items-center gap-3">
+              <Avatar label={user.avatar} size="lg" />
+              <div className="min-w-0 flex-1">
+                <p className="font-black text-white">{user.displayName}</p>
+                <p className="mt-0.5 truncate text-xs font-bold text-slate-500">
+                  @{user.username}
+                </p>
+                <p className="mt-1 text-xs font-bold text-slate-300">
+                  Favorite: {user.favoriteGenre}
+                </p>
               </div>
-            );
-          })
+              <FollowButton
+                size="sm"
+                target={{
+                  displayName: user.displayName,
+                  userId: user.userId,
+                  username: user.username,
+                }}
+              />
+            </div>
+          ))
         ) : (
           <p className="text-sm font-bold text-slate-400">{emptyMessage}</p>
         )}
@@ -1861,7 +2121,7 @@ function TopReviewersList({
       {reviewers.map((reviewer, index) => (
         <div
           key={reviewer.userId}
-          className="grid grid-cols-[24px_40px_1fr_auto] items-center gap-3"
+          className="grid grid-cols-[24px_40px_minmax(0,1fr)_auto] items-center gap-3"
         >
           <span className="text-sm font-black text-white">{index + 1}</span>
           <Avatar label={reviewer.avatar} />
@@ -1871,7 +2131,17 @@ function TopReviewersList({
               {ratingCountText(reviewer.totalReviews)}
             </p>
           </div>
-          <RatingCountBadge count={reviewer.totalReviews} />
+          <div className="flex items-center gap-2">
+            <RatingCountBadge count={reviewer.totalReviews} />
+            <FollowButton
+              size="sm"
+              target={{
+                displayName: reviewer.username,
+                userId: reviewer.userId,
+                username: reviewer.username,
+              }}
+            />
+          </div>
         </div>
       ))}
     </div>
@@ -1957,7 +2227,275 @@ function TopReviewersCard({
   );
 }
 
-function FollowingTabContent() {
+function FollowingActivityCard({
+  activity,
+}: {
+  activity: FollowingActivity;
+}) {
+  if (activity.type === "discussion_created") {
+    return (
+      <article className={cardClass("p-4 sm:p-5")}>
+        <div className="flex items-start gap-3">
+          <Avatar label={activity.avatar} size="lg" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-slate-300">
+              <span className="font-black text-white">
+                @{activity.username}
+              </span>{" "}
+              started a discussion
+            </p>
+            <h3 className="mt-2 text-xl font-black leading-tight text-white">
+              {activity.discussionTitle}
+            </h3>
+            <p className="mt-2 text-sm font-bold text-slate-400">
+              {activity.movieTitle ? `${activity.movieTitle} • ` : ""}
+              {activity.replyCount} replies •{" "}
+              {formatRelativePostTime(activity.createdAt)}
+            </p>
+            <Link
+              href={communityDiscussionHref(activity.discussionId)}
+              className="mt-4 inline-flex rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+            >
+              Join Discussion
+            </Link>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  if (activity.type === "discussion_comment") {
+    return (
+      <article className={cardClass("p-4 sm:p-5")}>
+        <div className="flex items-start gap-3">
+          <Avatar label={activity.avatar} size="lg" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-slate-300">
+              <span className="font-black text-white">
+                @{activity.username}
+              </span>{" "}
+              commented in a discussion
+            </p>
+            <h3 className="mt-2 text-lg font-black text-white">
+              {activity.discussionTitle}
+            </h3>
+            <p className="mt-2 rounded-2xl border border-slate-800 bg-black/25 p-3 text-sm font-semibold leading-6 text-slate-300">
+              {activity.commentPreview}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <p className="text-sm font-bold text-slate-400">
+                {activity.movieTitle ? `${activity.movieTitle} • ` : ""}
+                {formatRelativePostTime(activity.createdAt)}
+              </p>
+              <Link
+                href={communityDiscussionHref(activity.discussionId)}
+                className="text-sm font-black text-yellow-300 transition hover:text-yellow-200"
+              >
+                View Discussion
+              </Link>
+            </div>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <article className={cardClass("p-4 sm:p-5")}>
+      <div className="grid gap-3 sm:grid-cols-[96px_1fr]">
+        <MovieThumb
+          alt={activity.movieTitle}
+          fallbackMovieId={activity.movieId}
+          href={communityMovieHref(activity.movieId)}
+          imagePath={activity.moviePoster}
+          wide
+        />
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <Avatar label={activity.avatar} />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-300">
+                <span className="font-black text-white">
+                  @{activity.username}
+                </span>{" "}
+                {activity.type === "rating" ? "rated" : "reacted to"}{" "}
+                {activity.movieTitle}
+              </p>
+              <p className="mt-1 text-xs font-bold text-slate-500">
+                {formatRelativePostTime(activity.createdAt)}
+              </p>
+            </div>
+          </div>
+
+          {activity.type === "rating" ? (
+            <div className="mt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-xl border border-yellow-400/35 bg-yellow-400/15 px-3 py-1 text-sm font-black text-yellow-200">
+                  PopScore: {activity.popScore}
+                </span>
+                <span className="rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-1 text-xs font-black text-slate-300">
+                  {activity.genre}
+                </span>
+              </div>
+              {activity.comment ? (
+                <p className="mt-3 rounded-2xl border border-slate-800 bg-black/25 p-3 text-sm font-semibold leading-6 text-slate-300">
+                  {activity.comment}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <p className="mt-3 inline-flex rounded-xl border border-yellow-400/35 bg-yellow-400/15 px-3 py-2 text-sm font-black text-yellow-200">
+              {quickReactionLabel(activity.reaction)}
+            </p>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function FollowingTabContent({
+  discussions,
+  onFindPeople,
+}: {
+  discussions: CommunityDiscussion[];
+  onFindPeople: () => void;
+}) {
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [ratings, setRatings] = useState<CommunityRatingFeedItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const activities = useMemo(
+    () =>
+      buildFollowingActivities({
+        discussions,
+        followingIds,
+        ratings,
+      }),
+    [discussions, followingIds, ratings]
+  );
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    const loadFollowingFeed = () => {
+      setIsLoading(true);
+      getFollowingUserIdsForCurrentUser()
+        .then(async (nextFollowingIds) => {
+          const nextRatings = nextFollowingIds.length
+            ? await getRecentRatingsForUsers(nextFollowingIds, 60)
+            : [];
+
+          if (!isCurrent) {
+            return;
+          }
+
+          setFollowingIds(nextFollowingIds);
+          setRatings(nextRatings);
+        })
+        .catch(() => {
+          if (isCurrent) {
+            setFollowingIds([]);
+            setRatings([]);
+          }
+        })
+        .finally(() => {
+          if (isCurrent) {
+            setIsLoading(false);
+          }
+        });
+    };
+
+    loadFollowingFeed();
+    window.addEventListener(FOLLOWS_UPDATED_EVENT, loadFollowingFeed);
+
+    return () => {
+      isCurrent = false;
+      window.removeEventListener(FOLLOWS_UPDATED_EVENT, loadFollowingFeed);
+    };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
+        Loading your Following feed...
+      </section>
+    );
+  }
+
+  if (followingIds.length === 0) {
+    return (
+      <section className={cardClass("p-6 text-center sm:p-8")}>
+        <h2 className="text-2xl font-black text-white">
+          Your Following feed is waiting for some movie taste.
+        </h2>
+        <p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-400">
+          Follow other PopScore fans to see the movies they rate, react to, and
+          discuss.
+        </p>
+        <button
+          type="button"
+          onClick={onFindPeople}
+          className="mt-5 rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+        >
+          Find People to Follow
+        </button>
+      </section>
+    );
+  }
+
+  if (activities.length === 0) {
+    return (
+      <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
+        The people you follow have not posted movie activity yet.
+      </section>
+    );
+  }
+
+  return (
+    <div className="space-y-4 sm:space-y-5">
+      {activities.map((activity) => (
+        <FollowingActivityCard key={activity.id} activity={activity} />
+      ))}
+    </div>
+  );
+}
+
+function PeopleCard({ user }: { user: SuggestedFollow }) {
+  return (
+    <article className={cardClass("p-4 sm:p-5")}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <Avatar label={user.avatar} size="xl" />
+        <div className="min-w-0 flex-1">
+          <h3 className="text-xl font-black text-white">{user.displayName}</h3>
+          <p className="mt-1 text-sm font-bold text-slate-500">
+            @{user.username}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs font-black">
+            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-slate-300">
+              Favorite Genre: {user.favoriteGenre}
+            </span>
+            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-slate-300">
+              {user.totalReviews} Reviews
+            </span>
+            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-slate-300">
+              {formatCompactCount(user.followersCount)} Followers
+            </span>
+          </div>
+        </div>
+        <FollowButton
+          className="sm:items-end"
+          target={{
+            displayName: user.displayName,
+            userId: user.userId,
+            username: user.username,
+          }}
+        />
+      </div>
+    </article>
+  );
+}
+
+function PeopleTabContent() {
   const [userSearch, setUserSearch] = useState("");
   const [selectedFavoriteGenre, setSelectedFavoriteGenre] =
     useState("All Genres");
@@ -2001,7 +2539,17 @@ function FollowingTabContent() {
         </div>
       </section>
 
-      <WhoToFollowCard users={visibleUsers} />
+      {visibleUsers.length > 0 ? (
+        <div className="grid gap-4 xl:grid-cols-2">
+          {visibleUsers.map((user) => (
+            <PeopleCard key={user.username} user={user} />
+          ))}
+        </div>
+      ) : (
+        <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
+          No users match those filters yet.
+        </section>
+      )}
     </div>
   );
 }
@@ -2043,7 +2591,8 @@ export default function CommunityPage() {
     () => getVisibleFeedPosts(feedPostsToShow, selectedGenre, selectedTrend),
     [feedPostsToShow, selectedGenre, selectedTrend]
   );
-  const isFollowingTab = selectedTab === "Following";
+  const showSocialSidebar =
+    selectedTab === "Feed" || selectedTab === "Discussions";
   const showDiscussions = () => {
     setSelectedTab("Discussions");
     window.requestAnimationFrame(() => {
@@ -2156,18 +2705,23 @@ export default function CommunityPage() {
                   emptyMessage="No posts match that filter yet."
                 />
               </>
+            ) : selectedTab === "Following" ? (
+              <FollowingTabContent
+                discussions={communityDiscussions}
+                onFindPeople={() => setSelectedTab("People")}
+              />
             ) : selectedTab === "Discussions" ? (
               <DiscussionsTabContent
                 discussions={communityDiscussions}
                 onStartDiscussion={() => setIsDiscussionDialogOpen(true)}
               />
             ) : (
-              <FollowingTabContent />
+              <PeopleTabContent />
             )}
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-6">
-            {isFollowingTab ? null : (
+            {showSocialSidebar ? (
               <>
                 <TrendingDiscussionsCard
                   discussions={communityDiscussions}
@@ -2175,7 +2729,7 @@ export default function CommunityPage() {
                 />
                 <WhoToFollowCard />
               </>
-            )}
+            ) : null}
             <TopReviewersCard
               isLoading={isLoadingReviewers}
               reviewers={topReviewers}

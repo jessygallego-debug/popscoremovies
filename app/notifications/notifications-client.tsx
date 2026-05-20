@@ -34,7 +34,7 @@ const notificationTabs: NotificationTab[] = [
 
 const tabTypes: Record<Exclude<NotificationTab, "All">, NotificationType[]> = {
   Discussions: ["discussion_comment"],
-  Follows: ["follow"],
+  Follows: ["follow", "new_follower"],
   Mentions: ["mention"],
   Reactions: ["comment_reaction"],
   Replies: ["comment_reply"],

@@ -7,6 +7,7 @@ create table if not exists public.notifications (
   type text not null check (
     type in (
       'follow',
+      'new_follower',
       'comment_reply',
       'discussion_comment',
       'comment_reaction',

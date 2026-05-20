@@ -4,8 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import FollowButton from "@/app/components/follow-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import QuickReactionBadge from "@/app/components/quick-reaction-badge";
+import {
+  FOLLOWS_UPDATED_EVENT,
+  getFollowSummary,
+  type FollowSummary,
+} from "@/lib/follows";
 import {
   avatarForKey,
   genreLabelForKey,
@@ -551,12 +557,16 @@ function profilePanelClass(className = "") {
 
 function ProfileSidebar({
   activeTab,
+  followSummary,
   onTabChange,
+  onFollowChange,
   profile,
   summary,
 }: {
   activeTab: TabKey;
+  followSummary: FollowSummary | null;
   onTabChange: (tab: TabKey) => void;
+  onFollowChange: (summary: FollowSummary) => void;
   profile: ProfileRecord;
   summary: ProfileStatSummary;
 }) {
@@ -583,6 +593,20 @@ function ProfileSidebar({
         <p className="mt-2 text-xs font-bold text-slate-400 sm:mt-3 sm:text-sm">
           Member since {formatDate(profile.created_at)}
         </p>
+        <div className="mt-4 grid w-full grid-cols-2 gap-2 rounded-2xl border border-slate-800 bg-black/20 p-2">
+          <div>
+            <p className="text-lg font-black text-white">
+              {followSummary?.followersCount ?? 0}
+            </p>
+            <p className="text-[11px] font-bold text-slate-500">Followers</p>
+          </div>
+          <div>
+            <p className="text-lg font-black text-white">
+              {followSummary?.followingCount ?? 0}
+            </p>
+            <p className="text-[11px] font-bold text-slate-500">Following</p>
+          </div>
+        </div>
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-800 pt-5 sm:mt-6 sm:block sm:space-y-2 sm:pt-6">
@@ -602,12 +626,26 @@ function ProfileSidebar({
         ))}
       </div>
 
-      <Link
-        href="/profile/edit"
-        className="mt-4 flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-black/30 px-4 py-2.5 text-sm font-black text-slate-200 transition hover:border-yellow-400 hover:text-yellow-300 sm:mt-6 sm:py-3"
-      >
-        Edit PopFile
-      </Link>
+      <div className="mt-4 sm:mt-6">
+        {followSummary?.isOwnProfile ? (
+          <Link
+            href="/profile/edit"
+            className="flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-black/30 px-4 py-2.5 text-sm font-black text-slate-200 transition hover:border-yellow-400 hover:text-yellow-300 sm:py-3"
+          >
+            Edit PopFile
+          </Link>
+        ) : (
+          <FollowButton
+            className="w-full [&>button]:w-full"
+            onFollowChange={onFollowChange}
+            target={{
+              displayName: profile.username,
+              userId: profile.user_id,
+              username: profile.username,
+            }}
+          />
+        )}
+      </div>
 
       <div className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3 sm:mt-6 sm:p-4">
         <p className="text-xs font-black text-yellow-300 sm:text-sm">PopFile Momentum</p>
@@ -852,17 +890,39 @@ function StatCard({
 }
 
 function ProfileStatsCard({
+  followSummary,
+  profile,
   summary,
 }: {
+  followSummary: FollowSummary | null;
+  profile: ProfileRecord;
   summary: ProfileStatSummary;
 }) {
   return (
     <section className={profilePanelClass("p-4 sm:p-6")}>
-      <h2 className="text-lg font-black text-white sm:text-xl">Your Stats</h2>
+      <h2 className="text-lg font-black text-white sm:text-xl">
+        PopFile Stats
+      </h2>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-4 xl:grid-cols-3">
         <StatCard
           label="Total Movies Rated"
           value={summary.totalMoviesRated}
+        />
+        <StatCard
+          label="Followers"
+          value={followSummary?.followersCount ?? 0}
+        />
+        <StatCard
+          label="Following"
+          value={followSummary?.followingCount ?? 0}
+        />
+        <StatCard
+          label="Favorite Genre"
+          value={
+            profile.favorite_genre
+              ? genreLabelForKey(profile.favorite_genre)
+              : "Not set"
+          }
         />
         <StatCard
           label="Total Movie Reactions"
@@ -1413,6 +1473,9 @@ export default function ProfileTabs({ username }: { username: string }) {
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [ratings, setRatings] = useState<UserMovieRating[]>([]);
+  const [followSummary, setFollowSummary] = useState<FollowSummary | null>(
+    null
+  );
   const [ratingPopulation, setRatingPopulation] = useState<UserRatingCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -1429,6 +1492,7 @@ export default function ProfileTabs({ username }: { username: string }) {
       }
 
       setProfile(nextProfile);
+      setFollowSummary(null);
       if (!nextProfile) {
         setIsLoading(false);
         return;
@@ -1452,6 +1516,34 @@ export default function ProfileTabs({ username }: { username: string }) {
       isCurrent = false;
     };
   }, [username]);
+
+  useEffect(() => {
+    if (!profile) {
+      return;
+    }
+
+    let isCurrent = true;
+    const target = {
+      displayName: profile.username,
+      userId: profile.user_id,
+      username: profile.username,
+    };
+    const loadFollowSummary = () => {
+      getFollowSummary(target).then((nextSummary) => {
+        if (isCurrent) {
+          setFollowSummary(nextSummary);
+        }
+      });
+    };
+
+    loadFollowSummary();
+    window.addEventListener(FOLLOWS_UPDATED_EVENT, loadFollowSummary);
+
+    return () => {
+      isCurrent = false;
+      window.removeEventListener(FOLLOWS_UPDATED_EVENT, loadFollowSummary);
+    };
+  }, [profile]);
 
   const summary = useMemo(() => getProfileStatSummary(ratings), [ratings]);
 
@@ -1478,7 +1570,9 @@ export default function ProfileTabs({ username }: { username: string }) {
     <div className="grid gap-4 sm:gap-6 xl:grid-cols-[260px_minmax(0,1fr)_380px] 2xl:grid-cols-[280px_minmax(0,1fr)_430px]">
       <ProfileSidebar
         activeTab={activeTab}
+        followSummary={followSummary}
         onTabChange={setActiveTab}
+        onFollowChange={setFollowSummary}
         profile={profile}
         summary={summary}
       />
@@ -1489,7 +1583,11 @@ export default function ProfileTabs({ username }: { username: string }) {
           summary={summary}
           tier={currentTier}
         />
-        <ProfileStatsCard summary={summary} />
+        <ProfileStatsCard
+          followSummary={followSummary}
+          profile={profile}
+          summary={summary}
+        />
 
         {activeTab === "stats" ? (
           <SectionCard title="All Achievements">

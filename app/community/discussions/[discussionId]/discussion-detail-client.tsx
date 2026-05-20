@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import FollowButton from "@/app/components/follow-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import SiteHeader from "@/app/components/site-header";
 import {
@@ -361,6 +362,14 @@ export default function DiscussionDetailClient({
                     Created {formatFullDate(discussion.createdAt)}
                   </p>
                 </div>
+                <FollowButton
+                  size="sm"
+                  target={{
+                    displayName: discussion.startedByDisplayName,
+                    userId: discussion.startedByUserId,
+                    username: discussion.startedByUsername,
+                  }}
+                />
               </div>
             </div>
           </div>
