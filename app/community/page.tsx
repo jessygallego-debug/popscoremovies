@@ -443,12 +443,14 @@ function Avatar({
 function MovieThumb({
   alt,
   fallbackMovieId,
+  fit = "cover",
   href,
   imagePath,
   wide = false,
 }: {
   alt: string;
   fallbackMovieId: string;
+  fit?: "contain" | "cover";
   href?: string;
   imagePath: string | null;
   wide?: boolean;
@@ -467,7 +469,7 @@ function MovieThumb({
     >
       <MoviePosterImage
         alt={alt}
-        className="object-cover"
+        className={fit === "contain" ? "object-contain" : "object-cover"}
         fallbackMovieId={fallbackMovieId}
         sizes={wide ? "(min-width: 1024px) 120px, 145px" : "96px"}
         src={posterUrl(imagePath)}
@@ -999,6 +1001,7 @@ function DiscussionsTabContent() {
             <MovieThumb
               alt={discussion.title}
               fallbackMovieId={discussion.fallbackMovieId}
+              fit="contain"
               href={communityMovieHref(discussion.fallbackMovieId)}
               imagePath={discussion.imagePath}
             />
@@ -1029,6 +1032,7 @@ function TrendingDiscussionsCard() {
             <MovieThumb
               alt={discussion.title}
               fallbackMovieId={discussion.fallbackMovieId}
+              fit="contain"
               href={communityMovieHref(discussion.fallbackMovieId)}
               imagePath={discussion.imagePath}
             />

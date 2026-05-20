@@ -957,6 +957,7 @@ export async function getAllUserRatingCounts(): Promise<UserRatingCount[]> {
 export async function getRecentCommunityRatings(
   limit = 20
 ): Promise<CommunityRatingFeedItem[]> {
+  const currentProfile = await getCurrentProfile().catch(() => null);
   const rows = await supabaseFetch<Parameters<typeof mapRatingRow>[0][]>(
     `/movie_ratings?select=*&order=updated_at.desc&limit=${Math.max(
       limit * 2,
@@ -969,7 +970,9 @@ export async function getRecentCommunityRatings(
   );
 
   return ratings.map((rating) => {
-    const profile = profilesByUserId.get(rating.user_id);
+    const profile =
+      profilesByUserId.get(rating.user_id) ??
+      (currentProfile?.user_id === rating.user_id ? currentProfile : null);
 
     return {
       ...rating,
@@ -982,6 +985,7 @@ export async function getRecentCommunityRatings(
 export async function getTopReviewers(
   limit = 5
 ): Promise<TopReviewerSummary[]> {
+  const currentProfile = await getCurrentProfile().catch(() => null);
   const counts = await getAllUserRatingCounts().catch(() => []);
   const sortedCounts = [...counts]
     .sort((a, b) => b.ratingsCount - a.ratingsCount)
@@ -991,7 +995,9 @@ export async function getTopReviewers(
   );
 
   return sortedCounts.map((count) => {
-    const profile = profilesByUserId.get(count.userId);
+    const profile =
+      profilesByUserId.get(count.userId) ??
+      (currentProfile?.user_id === count.userId ? currentProfile : null);
 
     return {
       avatar: avatarForKey(profile?.avatar_key ?? "").icon,
