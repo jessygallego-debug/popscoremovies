@@ -99,7 +99,6 @@ const genreFilters = [
 ];
 
 const trendFilters = ["Trending", "Newest", "Most Liked", "Most Commented"];
-const myDiscussionGenres = new Set(["Action", "Horror", "Sci-Fi"]);
 
 const feedPosts: CommunityFeedPost[] = [
   {
@@ -330,9 +329,7 @@ function getVisibleDiscussions(
     const matchesFilter =
       selectedFilter === "Spoiler-Free"
         ? !discussion.isSpoiler
-        : selectedFilter === "My Genres"
-          ? discussion.movieGenres.some((genre) => myDiscussionGenres.has(genre))
-          : true;
+        : true;
 
     return matchesGenre && matchesFilter;
   });
@@ -555,6 +552,40 @@ function Avatar({
       className={`${sizeClass} inline-flex shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-[radial-gradient(circle_at_35%_25%,rgba(250,204,21,0.22),rgba(15,23,42,0.96)_58%)] font-black text-white shadow-lg shadow-yellow-400/10`}
     >
       {label}
+    </span>
+  );
+}
+
+function initialsForName(name: string) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+
+  return initials || "PS";
+}
+
+function InitialAvatar({
+  label,
+  size = "md",
+}: {
+  label: string;
+  size?: "sm" | "md" | "lg";
+}) {
+  const sizeClass = {
+    lg: "h-12 w-12 text-sm",
+    md: "h-10 w-10 text-xs",
+    sm: "h-7 w-7 text-[10px]",
+  }[size];
+
+  return (
+    <span
+      className={`${sizeClass} inline-flex shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-[radial-gradient(circle_at_35%_25%,rgba(250,204,21,0.22),rgba(15,23,42,0.96)_58%)] font-black text-yellow-100 shadow-lg shadow-yellow-400/10`}
+    >
+      {initialsForName(label)}
     </span>
   );
 }
@@ -1019,8 +1050,7 @@ function StartDiscussionModal({
       moviePosterUrl: selectedMovie.posterPath ?? null,
       movieTitle: selectedMovie.title,
       movieYear: releaseYear(selectedMovie.releaseDate),
-      reactionEmoji: "💬",
-      startedByAvatarUrl: "🔥",
+      startedByAvatarUrl: "J",
       startedByDisplayName: "Jessy",
       startedByUserId: "current-user",
       startedByUsername: "jessyg305",
@@ -1518,6 +1548,11 @@ function DiscussionFilters({
   return (
     <section className={cardClass("relative z-[60] overflow-visible p-3")}>
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <FilterMenu
+          onSelect={onGenreChange}
+          options={genreFilters}
+          selectedOption={selectedGenre}
+        />
         {discussionFilterOptions.map((filter) => {
           const isSelected = filter === selectedFilter;
 
@@ -1537,11 +1572,6 @@ function DiscussionFilters({
             </button>
           );
         })}
-        <FilterMenu
-          onSelect={onGenreChange}
-          options={genreFilters}
-          selectedOption={selectedGenre}
-        />
       </div>
     </section>
   );
@@ -1588,7 +1618,7 @@ function DiscussionCard({
           </div>
 
           <div className="mt-3 flex items-center gap-2">
-            <Avatar label={discussion.startedByAvatarUrl} size="sm" />
+            <InitialAvatar label={discussion.startedByDisplayName} size="sm" />
             <p className="text-sm font-bold text-slate-300">
               Started by{" "}
               <span className="font-black text-white">
@@ -1718,9 +1748,6 @@ function TrendingDiscussionsCard({
             />
             <div className="min-w-0">
               <p className="text-sm font-black leading-5 text-white">
-                {discussion.reactionEmoji ? (
-                  <span aria-hidden="true">{discussion.reactionEmoji} </span>
-                ) : null}
                 {discussion.title}
               </p>
               <p className="mt-1 text-xs font-bold text-slate-400">

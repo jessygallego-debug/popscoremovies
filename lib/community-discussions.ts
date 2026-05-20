@@ -8,12 +8,10 @@ export const discussionTypes = [
 ] as const;
 
 export const discussionFilterOptions = [
-  "All",
   "Trending",
   "Newest",
   "Most Commented",
   "Spoiler-Free",
-  "My Genres",
 ] as const;
 
 export const communityDiscussionsStorageKey =
@@ -36,7 +34,6 @@ export type CommunityDiscussion = {
   moviePosterUrl: string | null;
   movieTitle: string;
   movieYear: string;
-  reactionEmoji?: string;
   startedByAvatarUrl: string;
   startedByDisplayName: string;
   startedByUserId: string;
@@ -80,8 +77,7 @@ export const mockCommunityDiscussions: CommunityDiscussion[] = [
     moviePosterUrl: "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
     movieTitle: "Interstellar",
     movieYear: "2014",
-    reactionEmoji: "🚀",
-    startedByAvatarUrl: "🔥",
+    startedByAvatarUrl: "J",
     startedByDisplayName: "Jessy",
     startedByUserId: "user-jessy",
     startedByUsername: "jessyg305",
@@ -103,8 +99,7 @@ export const mockCommunityDiscussions: CommunityDiscussion[] = [
     moviePosterUrl: null,
     movieTitle: "Sinners",
     movieYear: "2025",
-    reactionEmoji: "🩸",
-    startedByAvatarUrl: "🎬",
+    startedByAvatarUrl: "MM",
     startedByDisplayName: "MovieMike",
     startedByUserId: "user-moviemike",
     startedByUsername: "moviemike",
@@ -126,8 +121,7 @@ export const mockCommunityDiscussions: CommunityDiscussion[] = [
     moviePosterUrl: "/tRNlZbgNCNOpLpbPEz5L8G8A0JN.jpg",
     movieTitle: "The Prestige",
     movieYear: "2006",
-    reactionEmoji: "🎩",
-    startedByAvatarUrl: "🎥",
+    startedByAvatarUrl: "FF",
     startedByDisplayName: "FilmFanatic",
     startedByUserId: "user-filmfanatic",
     startedByUsername: "filmfanatic",
@@ -149,8 +143,7 @@ export const mockCommunityDiscussions: CommunityDiscussion[] = [
     moviePosterUrl: "/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
     movieTitle: "Dune: Part Two",
     movieYear: "2024",
-    reactionEmoji: "🏜️",
-    startedByAvatarUrl: "👻",
+    startedByAvatarUrl: "LR",
     startedByDisplayName: "Lina Rose",
     startedByUserId: "user-linarose",
     startedByUsername: "linarose",
@@ -172,8 +165,7 @@ export const mockCommunityDiscussions: CommunityDiscussion[] = [
     moviePosterUrl: "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
     movieTitle: "The Dark Knight",
     movieYear: "2008",
-    reactionEmoji: "🃏",
-    startedByAvatarUrl: "🚀",
+    startedByAvatarUrl: "CC",
     startedByDisplayName: "CinephileChris",
     startedByUserId: "user-cinephilechris",
     startedByUsername: "cinephilechris",
@@ -192,7 +184,7 @@ export const mockDiscussionReplies: Record<string, CommunityDiscussionReply[]> =
         createdAt: minutesAgo(80),
         id: "reply-interstellar-1",
         likeCount: 12,
-        userAvatarUrl: "⭐",
+        userAvatarUrl: "D",
         userDisplayName: "Dreddock",
         username: "dreddock",
       },
@@ -202,7 +194,7 @@ export const mockDiscussionReplies: Record<string, CommunityDiscussionReply[]> =
         createdAt: minutesAgo(35),
         id: "reply-interstellar-2",
         likeCount: 7,
-        userAvatarUrl: "🎟️",
+        userAvatarUrl: "SQ",
         userDisplayName: "ScreenQueen",
         username: "screenqueen",
       },
@@ -214,7 +206,7 @@ export const mockDiscussionReplies: Record<string, CommunityDiscussionReply[]> =
         createdAt: minutesAgo(160),
         id: "reply-sinners-1",
         likeCount: 9,
-        userAvatarUrl: "🎭",
+        userAvatarUrl: "RR",
         userDisplayName: "Reels2Rants",
         username: "reels2rantsdawk88",
       },
@@ -226,7 +218,7 @@ export const mockDiscussionReplies: Record<string, CommunityDiscussionReply[]> =
         createdAt: minutesAgo(45),
         id: "reply-prestige-1",
         likeCount: 18,
-        userAvatarUrl: "🍿",
+        userAvatarUrl: "PP",
         userDisplayName: "PopcornPat",
         username: "popcornpat",
       },
@@ -238,7 +230,7 @@ export const mockDiscussionReplies: Record<string, CommunityDiscussionReply[]> =
         createdAt: minutesAgo(220),
         id: "reply-dune-1",
         likeCount: 11,
-        userAvatarUrl: "🔥",
+        userAvatarUrl: "J",
         userDisplayName: "Jessy",
         username: "jessyg305",
       },
@@ -250,7 +242,7 @@ export const mockDiscussionReplies: Record<string, CommunityDiscussionReply[]> =
         createdAt: minutesAgo(20),
         id: "reply-dark-knight-1",
         likeCount: 15,
-        userAvatarUrl: "🎬",
+        userAvatarUrl: "MM",
         userDisplayName: "MovieMike",
         username: "moviemike",
       },
