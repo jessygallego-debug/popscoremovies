@@ -699,6 +699,10 @@ function inList(values: string[]) {
   return values.map((value) => encodeURIComponent(value)).join(",");
 }
 
+function fallbackUsernameForUserId(userId: string) {
+  return `user_${userId.slice(0, 8)}`;
+}
+
 async function getProfilesByUserIds(userIds: string[]) {
   const uniqueUserIds = Array.from(new Set(userIds));
 
@@ -970,7 +974,7 @@ export async function getRecentCommunityRatings(
     return {
       ...rating,
       avatar: avatarForKey(profile?.avatar_key ?? "").icon,
-      username: profile?.username ?? "popscorefan",
+      username: profile?.username ?? fallbackUsernameForUserId(rating.user_id),
     };
   });
 }
@@ -981,29 +985,21 @@ export async function getTopReviewers(
   const counts = await getAllUserRatingCounts().catch(() => []);
   const sortedCounts = [...counts]
     .sort((a, b) => b.ratingsCount - a.ratingsCount)
-    .slice(0, Math.max(limit * 2, limit));
+    .slice(0, limit);
   const profilesByUserId = await getProfilesByUserIds(
     sortedCounts.map((count) => count.userId)
   );
 
-  const reviewers: TopReviewerSummary[] = [];
-
-  sortedCounts.forEach((count) => {
+  return sortedCounts.map((count) => {
     const profile = profilesByUserId.get(count.userId);
 
-    if (!profile) {
-      return;
-    }
-
-    reviewers.push({
-      avatar: avatarForKey(profile.avatar_key).icon,
+    return {
+      avatar: avatarForKey(profile?.avatar_key ?? "").icon,
       totalReviews: count.ratingsCount,
       userId: count.userId,
-      username: profile.username,
-    });
+      username: profile?.username ?? fallbackUsernameForUserId(count.userId),
+    };
   });
-
-  return reviewers.slice(0, limit);
 }
 
 export async function addToWatchlist(movie: MovieMeta & { genre?: string }) {
