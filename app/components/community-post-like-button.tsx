@@ -14,6 +14,17 @@ type CommunityPostLikeButtonProps = {
 };
 
 function userFriendlyError(error: Error) {
+  const message = error.message.toLowerCase();
+
+  if (
+    message.includes("string did not match the expected pattern") ||
+    message.includes("failed to fetch") ||
+    message.includes("load failed") ||
+    message.includes("could not reach popscore")
+  ) {
+    return "Could not update likes. Please try again.";
+  }
+
   if (
     error.message.includes("404") ||
     error.message.includes("community_post_likes")

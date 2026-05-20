@@ -113,16 +113,27 @@ async function supabaseFetch<T>(path: string, options: RequestInit = {}) {
     throw new Error("Supabase is not configured.");
   }
 
-  const response = await fetch(`${config.restUrl}${path}`, {
-    ...options,
-    headers: {
-      ...(await authHeaders()),
-      ...options.headers,
-    },
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${config.restUrl}${path}`, {
+      ...options,
+      headers: {
+        ...(await authHeaders()),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new Error("Could not reach PopScore community services.");
+  }
 
   if (!response.ok) {
-    throw new Error(`Supabase request failed with ${response.status}.`);
+    throw new Error(
+      await readSupabaseRestError(
+        response,
+        `Supabase request failed with ${response.status}.`
+      )
+    );
   }
 
   if (response.status === 204) {
@@ -130,6 +141,47 @@ async function supabaseFetch<T>(path: string, options: RequestInit = {}) {
   }
 
   return response.json() as Promise<T>;
+}
+
+async function readSupabaseRestError(response: Response, fallback: string) {
+  let responseText = "";
+
+  try {
+    responseText = await response.text();
+  } catch {
+    return fallback;
+  }
+
+  if (!responseText) {
+    return fallback;
+  }
+
+  try {
+    const errorBody = JSON.parse(responseText) as {
+      code?: string;
+      details?: string;
+      error?: string;
+      error_description?: string;
+      hint?: string;
+      message?: string;
+      msg?: string;
+    };
+    const message =
+      errorBody.error_description ??
+      errorBody.message ??
+      errorBody.msg ??
+      errorBody.error;
+    const details = [
+      message,
+      errorBody.details ? `Details: ${errorBody.details}` : null,
+      errorBody.hint ? `Hint: ${errorBody.hint}` : null,
+      errorBody.code ? `Code: ${errorBody.code}` : null,
+    ].filter(Boolean);
+
+    return details.length ? `${fallback} ${details.join(" ")}` : fallback;
+  } catch {
+    return `${fallback} ${responseText.slice(0, 1000)}`;
+  }
 }
 
 function inList(values: string[]) {
@@ -309,7 +361,7 @@ export async function toggleCommunityPostLike(
   summary: CommunityPostLikeSummary,
   initialLikeCount: number
 ) {
-  const currentUser = await getCurrentUser();
+  const currentUser = await getCurrentUser().catch(() => null);
 
   if (!currentUser) {
     throw new Error("Create or sign in to your PopFile to like posts.");
@@ -347,14 +399,14 @@ export async function toggleCommunityPostLike(
 }
 
 export async function toggleCommunityCommentLike(comment: CommunityComment) {
-  const currentUser = await getCurrentUser();
+  const currentUser = await getCurrentUser().catch(() => null);
 
   if (!currentUser) {
     throw new Error("Create or sign in to your PopFile to like comments.");
   }
 
   if (comment.userId === currentUser.id) {
-    throw new Error("You can like someone else's comment.");
+    throw new Error("You can only like someone else's comment.");
   }
 
   if (comment.likedByCurrentUser) {

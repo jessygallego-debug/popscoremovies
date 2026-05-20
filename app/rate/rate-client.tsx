@@ -4,12 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileMenu from "@/app/components/profile-menu";
 import {
   getCurrentProfile,
   removeFromWatchlist,
   saveUserMovieRating,
 } from "@/lib/profile-store";
+import { posterUrl } from "@/lib/tmdb";
 import {
   GENRE_RATING_CONFIGS,
   type GenreKey as RatingGenreKey,
@@ -147,6 +149,10 @@ export function isGenreKey(value: string | undefined): value is GenreKey {
   return Boolean(value && value in genreConfigs);
 }
 
+function movieReleaseYear(value?: string | null) {
+  return value?.split("-")[0] ?? "";
+}
+
 export default function RateClient({
   movieId,
   movieGenreNames,
@@ -185,6 +191,8 @@ export default function RateClient({
   const exitHref = submitReturnTo ?? detailExitHref;
   const submitHref = submitReturnTo ?? detailExitHref;
   const popRating = getPopRating(popScore);
+  const moviePosterSrc = posterUrl(moviePosterPath ?? null);
+  const releaseYear = movieReleaseYear(movieReleaseDate);
 
   const handleSubmit = () => {
     if (!movieId || !allAnswered) {
@@ -298,9 +306,34 @@ export default function RateClient({
         </div>
 
         {movieTitle ? (
-          <p className="mb-5 text-center text-base font-bold text-yellow-300 sm:mb-8 sm:text-xl">
-            {movieTitle}
-          </p>
+          <div className="mb-5 flex flex-col items-center justify-center gap-3 text-center sm:mb-8 sm:flex-row sm:gap-4">
+            {movieId ? (
+              <Link
+                href={detailExitHref}
+                aria-label={`View ${movieTitle}`}
+                className="group relative block h-28 w-[74px] overflow-hidden rounded-xl border border-yellow-400/35 bg-slate-950 shadow-xl shadow-black/40 transition hover:-translate-y-0.5 hover:border-yellow-300/80 sm:h-32 sm:w-[86px]"
+              >
+                <MoviePosterImage
+                  src={moviePosterSrc}
+                  alt={`${movieTitle} poster`}
+                  sizes="(min-width: 640px) 86px, 74px"
+                  className="object-cover transition group-hover:scale-105"
+                  fallbackMovieId={movieId}
+                  unoptimized
+                />
+              </Link>
+            ) : null}
+            <div>
+              <p className="text-base font-bold text-yellow-300 sm:text-xl">
+                {movieTitle}
+              </p>
+              {releaseYear ? (
+                <p className="mt-1 text-xs font-bold text-slate-400 sm:text-sm">
+                  {releaseYear}
+                </p>
+              ) : null}
+            </div>
+          </div>
         ) : (
           <div className="mb-5 sm:mb-8" />
         )}

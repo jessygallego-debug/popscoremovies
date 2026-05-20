@@ -147,6 +147,15 @@ export function formatReleaseMonthYear(releaseDate: string) {
   return `${monthName} ${year}`;
 }
 
+async function parseTmdbJson<T>(response: Response) {
+  try {
+    const jsonText = await response.text();
+    return JSON.parse(jsonText) as T;
+  } catch {
+    return null;
+  }
+}
+
 async function tmdbFetch<T>(path: string): Promise<T | null> {
   const token = getToken();
 
@@ -157,7 +166,8 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
   const response = await fetch(`${TMDB_BASE_URL}${path}`, {
     headers: {
       Authorization: `Bearer ${token}`,
-      accept: "application/json",
+      Accept: "application/json",
+      "Accept-Encoding": "identity",
     },
     next: { revalidate: 3600 },
   });
@@ -166,7 +176,7 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
     return null;
   }
 
-  return response.json();
+  return parseTmdbJson<T>(response);
 }
 
 function moviesPath(query: string, page: number, genreId = "") {
