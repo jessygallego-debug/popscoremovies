@@ -9,6 +9,17 @@ import CommunityPostLikeButton from "@/app/components/community-post-like-button
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import SiteHeader from "@/app/components/site-header";
 import {
+  communityDiscussionHref,
+  communityDiscussionsStorageKey,
+  discussionFilterOptions,
+  discussionTypes,
+  mockCommunityDiscussions,
+  parseStoredCommunityDiscussions,
+  type CommunityDiscussion,
+  type DiscussionFilter,
+  type DiscussionType,
+} from "@/lib/community-discussions";
+import {
   getRecentCommunityRatings,
   getTopReviewers,
   type CommunityRatingFeedItem,
@@ -29,6 +40,8 @@ type PopScoreReaction = {
 };
 
 type CommunityFeedPost = {
+  actionHref?: string;
+  actionLabel?: string;
   activity: string;
   comment?: string;
   commentCount: number;
@@ -49,19 +62,14 @@ type CommunityFeedPost = {
   user: CommunityUser;
 };
 
-type Discussion = {
-  commentCount: number;
-  fallbackMovieId: string;
-  imagePath: string | null;
-  title: string;
-};
-
 type SuggestedFollow = CommunityUser & {
   favoriteGenre: string;
 };
 
 type MovieSuggestion = {
+  genreNames?: string[];
   id: number;
+  posterPath?: string | null;
   releaseDate: string;
   title: string;
 };
@@ -91,6 +99,7 @@ const genreFilters = [
 ];
 
 const trendFilters = ["Trending", "Newest", "Most Liked", "Most Commented"];
+const myDiscussionGenres = new Set(["Action", "Horror", "Sci-Fi"]);
 
 const feedPosts: CommunityFeedPost[] = [
   {
@@ -210,27 +219,6 @@ const feedPosts: CommunityFeedPost[] = [
   },
 ];
 
-const discussions: Discussion[] = [
-  {
-    title: "Was Interstellar Nolan's best movie?",
-    commentCount: 68,
-    fallbackMovieId: "157336",
-    imagePath: "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-  },
-  {
-    title: "The ending of Sinners explained (spoilers)",
-    commentCount: 42,
-    fallbackMovieId: "1233413",
-    imagePath: null,
-  },
-  {
-    title: "Best plot twists of all time?",
-    commentCount: 91,
-    fallbackMovieId: "1124",
-    imagePath: "/tRNlZbgNCNOpLpbPEz5L8G8A0JN.jpg",
-  },
-];
-
 const suggestedFollows: SuggestedFollow[] = [
   {
     avatar: "👻",
@@ -329,6 +317,56 @@ function getVisibleFeedPosts(
   );
 }
 
+function getVisibleDiscussions(
+  discussions: CommunityDiscussion[],
+  selectedFilter: DiscussionFilter,
+  selectedGenre: string
+) {
+  const matchingDiscussions = discussions.filter((discussion) => {
+    const matchesGenre =
+      selectedGenre === "All Genres" ||
+      discussion.movieGenres.includes(selectedGenre) ||
+      discussion.tags.includes(selectedGenre);
+    const matchesFilter =
+      selectedFilter === "Spoiler-Free"
+        ? !discussion.isSpoiler
+        : selectedFilter === "My Genres"
+          ? discussion.movieGenres.some((genre) => myDiscussionGenres.has(genre))
+          : true;
+
+    return matchesGenre && matchesFilter;
+  });
+  const sortedDiscussions = [...matchingDiscussions];
+
+  if (selectedFilter === "Newest") {
+    return sortedDiscussions.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  if (selectedFilter === "Most Commented") {
+    return sortedDiscussions.sort((a, b) => b.commentCount - a.commentCount);
+  }
+
+  return sortedDiscussions.sort((a, b) => {
+    const bActivity =
+      new Date(b.lastActiveAt).getTime() / 600000 +
+      b.commentCount * 4 +
+      b.likeCount;
+    const aActivity =
+      new Date(a.lastActiveAt).getTime() / 600000 +
+      a.commentCount * 4 +
+      a.likeCount;
+
+    return bActivity - aActivity;
+  });
+}
+
+function releaseYear(value: string) {
+  return value ? value.slice(0, 4) : "";
+}
+
 function communityMovieHref(movieId: string) {
   return `/movie/${movieId}?returnTo=${encodeURIComponent("/community")}`;
 }
@@ -363,6 +401,34 @@ function formatRelativePostTime(value: string) {
   }
 
   return `${Math.floor(hoursAgo / 24)}d ago`;
+}
+
+function discussionToFeedPost(discussion: CommunityDiscussion): CommunityFeedPost {
+  return {
+    actionHref: communityDiscussionHref(discussion.id),
+    actionLabel: "Join Discussion",
+    activity: `started a discussion about ${discussion.movieTitle}`,
+    comment: discussion.title,
+    commentCount: discussion.commentCount,
+    extraInteractions: 0,
+    genres: discussion.movieGenres,
+    id: `discussion-${discussion.id}`,
+    interactedAvatars: [],
+    likeCount: discussion.likeCount,
+    movie: {
+      fallbackMovieId: discussion.movieId,
+      imagePath: discussion.moviePosterUrl,
+      title: discussion.movieTitle,
+    },
+    timestamp: formatRelativePostTime(discussion.createdAt),
+    user: {
+      avatar: discussion.startedByAvatarUrl,
+      displayName: discussion.startedByDisplayName,
+      username:
+        discussion.startedByUsername ??
+        discussion.startedByDisplayName.toLowerCase().replace(/[^a-z0-9]+/g, ""),
+    },
+  };
 }
 
 function reactionForScore(score: number): PopScoreReaction {
@@ -743,6 +809,369 @@ function SelectMovieDialog({
   );
 }
 
+function MovieSearchSelect({
+  onSelect,
+  selectedMovie,
+}: {
+  onSelect: (movie: MovieSuggestion) => void;
+  selectedMovie: MovieSuggestion | null;
+}) {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<MovieSuggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery.length < 2) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      setIsSearching(true);
+
+      fetch(
+        `/api/search-suggestions?${new URLSearchParams({
+          query: trimmedQuery,
+        }).toString()}`,
+        { signal: controller.signal }
+      )
+        .then((response) => response.json())
+        .then((data: { suggestions?: MovieSuggestion[] }) => {
+          setSuggestions(data.suggestions ?? []);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) {
+            setSuggestions([]);
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setIsSearching(false);
+          }
+        });
+    }, 180);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [query]);
+
+  return (
+    <div>
+      <label className="block">
+        <span className="sr-only">Search for a movie</span>
+        <input
+          value={query}
+          onChange={(event) => {
+            const nextQuery = event.target.value;
+
+            setQuery(nextQuery);
+
+            if (nextQuery.trim().length < 2) {
+              setSuggestions([]);
+              setIsSearching(false);
+            }
+          }}
+          placeholder="Search for a movie..."
+          type="search"
+          className="min-h-12 w-full rounded-2xl border border-slate-700 bg-black/35 px-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
+        />
+      </label>
+
+      <div className="mt-3 max-h-72 overflow-y-auto rounded-2xl border border-slate-800 bg-black/30">
+        {suggestions.length > 0 ? (
+          suggestions.map((movie) => {
+            const genres = movie.genreNames ?? [];
+
+            return (
+              <button
+                key={movie.id}
+                type="button"
+                onClick={() => {
+                  onSelect(movie);
+                  setQuery(movie.title);
+                  setSuggestions([]);
+                }}
+                className="grid w-full grid-cols-[54px_1fr] items-center gap-3 border-b border-slate-900 px-3 py-3 text-left transition last:border-b-0 hover:bg-yellow-400 hover:text-black"
+              >
+                <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-slate-900">
+                  <MoviePosterImage
+                    alt={movie.title}
+                    className="object-cover"
+                    fallbackMovieId={String(movie.id)}
+                    sizes="54px"
+                    src={posterUrl(movie.posterPath ?? null)}
+                    unoptimized
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black">{movie.title}</p>
+                  <p className="mt-1 text-xs font-bold opacity-75">
+                    {[releaseYear(movie.releaseDate), genres[0]]
+                      .filter(Boolean)
+                      .join(" • ") || "Movie"}
+                  </p>
+                </div>
+              </button>
+            );
+          })
+        ) : (
+          <p className="px-4 py-5 text-sm font-bold text-slate-500">
+            {query.trim().length < 2
+              ? "Type at least 2 letters to search."
+              : isSearching
+                ? "Searching..."
+                : "No movies found."}
+          </p>
+        )}
+      </div>
+
+      {selectedMovie ? (
+        <div className="mt-4 grid grid-cols-[76px_1fr] gap-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
+          <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-slate-900">
+            <MoviePosterImage
+              alt={selectedMovie.title}
+              className="object-cover"
+              fallbackMovieId={String(selectedMovie.id)}
+              sizes="76px"
+              src={posterUrl(selectedMovie.posterPath ?? null)}
+              unoptimized
+            />
+          </div>
+          <div className="min-w-0 self-center">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-yellow-300">
+              Selected Movie
+            </p>
+            <h3 className="mt-1 truncate text-lg font-black text-white">
+              {selectedMovie.title}
+            </h3>
+            <p className="mt-1 text-sm font-bold text-slate-300">
+              {[releaseYear(selectedMovie.releaseDate), ...(selectedMovie.genreNames ?? [])]
+                .filter(Boolean)
+                .join(" • ") || "Movie"}
+            </p>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function StartDiscussionModal({
+  onClose,
+  onPost,
+}: {
+  onClose: () => void;
+  onPost: (discussion: CommunityDiscussion) => void;
+}) {
+  const [selectedMovie, setSelectedMovie] = useState<MovieSuggestion | null>(
+    null
+  );
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [discussionType, setDiscussionType] = useState<DiscussionType | "">("");
+  const [isSpoiler, setIsSpoiler] = useState(false);
+  const canPost = Boolean(selectedMovie && title.trim() && discussionType);
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onClose]);
+
+  const postDiscussion = () => {
+    if (!selectedMovie || !title.trim() || !discussionType) {
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const movieGenres =
+      selectedMovie.genreNames && selectedMovie.genreNames.length > 0
+        ? selectedMovie.genreNames
+        : ["Drama"];
+    const idBase = `${selectedMovie.title}-${title}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 48);
+
+    onPost({
+      body: body.trim(),
+      commentCount: 0,
+      createdAt: now,
+      id: `${idBase || "discussion"}-${Date.now()}`,
+      isSpoiler,
+      lastActiveAt: now,
+      likeCount: 0,
+      movieGenres,
+      movieId: String(selectedMovie.id),
+      moviePosterUrl: selectedMovie.posterPath ?? null,
+      movieTitle: selectedMovie.title,
+      movieYear: releaseYear(selectedMovie.releaseDate),
+      reactionEmoji: "💬",
+      startedByAvatarUrl: "🔥",
+      startedByDisplayName: "Jessy",
+      startedByUserId: "current-user",
+      startedByUsername: "jessyg305",
+      tags: movieGenres.slice(0, 2),
+      title: title.trim(),
+      type: discussionType,
+    });
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Start a Movie Discussion"
+      className="fixed inset-0 z-[130] flex items-start justify-center overflow-y-auto bg-black/75 px-4 py-10 backdrop-blur-sm sm:py-16"
+      onMouseDown={onClose}
+    >
+      <div
+        className="w-full max-w-3xl rounded-3xl border border-slate-700 bg-slate-950 p-4 shadow-2xl shadow-black/70 sm:p-5"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-black text-white">
+              Start a Movie Discussion
+            </h2>
+            <p className="mt-1 text-sm font-semibold text-slate-400">
+              Pick a movie first, then add the conversation details.
+            </p>
+          </div>
+          <button
+            type="button"
+            aria-label="Close discussion form"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:text-yellow-300"
+          >
+            X
+          </button>
+        </div>
+
+        <div className="mt-5 space-y-5">
+          <section className="rounded-2xl border border-slate-800 bg-black/25 p-4">
+            <div className="mb-3">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
+                Step 1
+              </p>
+              <h3 className="mt-1 text-base font-black text-white">
+                Select Movie
+              </h3>
+            </div>
+            <MovieSearchSelect
+              onSelect={setSelectedMovie}
+              selectedMovie={selectedMovie}
+            />
+          </section>
+
+          <section
+            className={`rounded-2xl border p-4 transition ${
+              selectedMovie
+                ? "border-slate-800 bg-black/25"
+                : "border-slate-800/60 bg-black/10 opacity-60"
+            }`}
+          >
+            <div className="mb-3">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
+                Step 2
+              </p>
+              <h3 className="mt-1 text-base font-black text-white">
+                Add Discussion Details
+              </h3>
+            </div>
+
+            <div className="grid gap-3">
+              <label className="block">
+                <span className="sr-only">Discussion title</span>
+                <input
+                  disabled={!selectedMovie}
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="What do you want to ask or discuss?"
+                  className="min-h-12 w-full rounded-2xl border border-slate-700 bg-black/35 px-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70 disabled:cursor-not-allowed"
+                />
+              </label>
+
+              <textarea
+                disabled={!selectedMovie}
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                placeholder="Share your thoughts to get the conversation started..."
+                className="min-h-28 w-full resize-none rounded-2xl border border-slate-700 bg-black/35 px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70 disabled:cursor-not-allowed"
+              />
+
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                <label className="block">
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                    Discussion Type
+                  </span>
+                  <select
+                    disabled={!selectedMovie}
+                    value={discussionType}
+                    onChange={(event) =>
+                      setDiscussionType(event.target.value as DiscussionType)
+                    }
+                    className="min-h-12 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-sm font-black text-white outline-none transition focus:border-yellow-400/70 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Choose one</option>
+                    {discussionTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-700 bg-black/35 px-4 text-sm font-black text-white">
+                  <input
+                    checked={isSpoiler}
+                    disabled={!selectedMovie}
+                    onChange={(event) => setIsSpoiler(event.target.checked)}
+                    type="checkbox"
+                    className="h-4 w-4 accent-yellow-400"
+                  />
+                  This discussion contains spoilers
+                </label>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:text-yellow-300"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={!canPost}
+            onClick={postDiscussion}
+            className="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
+          >
+            Post Discussion
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CreatePostBox({ onSelectMovie }: { onSelectMovie: () => void }) {
   return (
     <section className={cardClass("p-4 sm:p-5")}>
@@ -967,6 +1396,14 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
                 initialLikeCount={post.likeCount}
                 postId={post.id}
               />
+              {post.actionHref && post.actionLabel ? (
+                <Link
+                  href={post.actionHref}
+                  className="mt-3 inline-flex w-fit items-center justify-center rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+                >
+                  {post.actionLabel}
+                </Link>
+              ) : null}
               {isCommentPost ? (
                 <div className="mt-3 flex flex-wrap items-center gap-5 text-sm font-bold">
                   <button
@@ -1044,47 +1481,215 @@ function SidebarCard({
   );
 }
 
-function DiscussionsTabContent() {
+function DiscussionBadge({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode;
+  tone?: "default" | "spoiler" | "type";
+}) {
+  const toneClass =
+    tone === "spoiler"
+      ? "border-red-400/40 bg-red-500/15 text-red-200"
+      : tone === "type"
+        ? "border-yellow-400/40 bg-yellow-400/15 text-yellow-200"
+        : "border-slate-700 bg-slate-900/80 text-slate-300";
+
   return (
-    <section className={cardClass("p-4 sm:p-5")}>
-      <div className="mb-4">
-        <h2 className="text-lg font-black text-white">Discussions</h2>
-        <p className="mt-1 text-sm font-semibold text-slate-400">
-          Jump into movie conversations happening right now.
-        </p>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {discussions.map((discussion) => (
-          <article
-            key={discussion.title}
-            className="grid grid-cols-[92px_1fr] items-center gap-3 rounded-2xl border border-slate-800 bg-black/25 p-3"
-          >
-            <MovieThumb
-              alt={discussion.title}
-              fallbackMovieId={discussion.fallbackMovieId}
-              href={communityMovieHref(discussion.fallbackMovieId)}
-              imagePath={discussion.imagePath}
-            />
-            <div className="min-w-0">
-              <h3 className="text-sm font-black leading-5 text-white">
-                {discussion.title}
-              </h3>
-              <p className="mt-1 text-xs font-bold text-slate-400">
-                {discussion.commentCount} comments
-              </p>
-            </div>
-          </article>
-        ))}
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-black ${toneClass}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function DiscussionFilters({
+  onFilterChange,
+  onGenreChange,
+  selectedFilter,
+  selectedGenre,
+}: {
+  onFilterChange: (filter: DiscussionFilter) => void;
+  onGenreChange: (genre: string) => void;
+  selectedFilter: DiscussionFilter;
+  selectedGenre: string;
+}) {
+  return (
+    <section className={cardClass("relative z-[60] overflow-visible p-3")}>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        {discussionFilterOptions.map((filter) => {
+          const isSelected = filter === selectedFilter;
+
+          return (
+            <button
+              key={filter}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onFilterChange(filter)}
+              className={`min-h-11 rounded-xl border px-4 text-sm font-black transition ${
+                isSelected
+                  ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/15"
+                  : "border-slate-700 bg-slate-950/90 text-slate-100 hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200"
+              }`}
+            >
+              {filter}
+            </button>
+          );
+        })}
+        <FilterMenu
+          onSelect={onGenreChange}
+          options={genreFilters}
+          selectedOption={selectedGenre}
+        />
       </div>
     </section>
   );
 }
 
+function DiscussionCard({
+  discussion,
+}: {
+  discussion: CommunityDiscussion;
+}) {
+  return (
+    <article className={cardClass("p-3 transition hover:border-yellow-400/40 hover:bg-slate-950/90 sm:p-4")}>
+      <div className="grid gap-4 sm:grid-cols-[96px_1fr]">
+        <MovieThumb
+          alt={discussion.movieTitle}
+          fallbackMovieId={discussion.movieId}
+          href={communityMovieHref(discussion.movieId)}
+          imagePath={discussion.moviePosterUrl}
+          wide
+        />
+
+        <div className="min-w-0">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <h3 className="text-lg font-black leading-6 text-white">
+                {discussion.title}
+              </h3>
+              <p className="mt-2 text-sm font-bold leading-5 text-slate-400">
+                <span className="text-slate-200">{discussion.movieTitle}</span>
+                {" • "}
+                {discussion.commentCount} comments
+                {" • "}
+                {discussion.likeCount} likes
+                {" • "}
+                Active {formatRelativePostTime(discussion.lastActiveAt)}
+              </p>
+            </div>
+            <Link
+              href={communityDiscussionHref(discussion.id)}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+            >
+              Join Discussion
+            </Link>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2">
+            <Avatar label={discussion.startedByAvatarUrl} size="sm" />
+            <p className="text-sm font-bold text-slate-300">
+              Started by{" "}
+              <span className="font-black text-white">
+                {discussion.startedByDisplayName}
+              </span>
+              {discussion.startedByUsername ? (
+                <span className="text-slate-500">
+                  {" "}
+                  @{discussion.startedByUsername}
+                </span>
+              ) : null}
+            </p>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <DiscussionBadge tone="type">{discussion.type}</DiscussionBadge>
+            {discussion.tags.map((tag) => (
+              <DiscussionBadge key={tag}>{tag}</DiscussionBadge>
+            ))}
+            {discussion.isSpoiler ? (
+              <DiscussionBadge tone="spoiler">Spoilers</DiscussionBadge>
+            ) : (
+              <DiscussionBadge>Spoiler-Free</DiscussionBadge>
+            )}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function DiscussionsTabContent({
+  discussions,
+  onStartDiscussion,
+}: {
+  discussions: CommunityDiscussion[];
+  onStartDiscussion: () => void;
+}) {
+  const [selectedFilter, setSelectedFilter] =
+    useState<DiscussionFilter>("Trending");
+  const [selectedGenre, setSelectedGenre] = useState("All Genres");
+  const visibleDiscussions = useMemo(
+    () => getVisibleDiscussions(discussions, selectedFilter, selectedGenre),
+    [discussions, selectedFilter, selectedGenre]
+  );
+
+  return (
+    <div className="space-y-4 sm:space-y-5">
+      <section className={cardClass("p-4 sm:p-5")}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-black text-white">Discussions</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-400">
+              Jump into movie conversations happening right now.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onStartDiscussion}
+            className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+          >
+            + Start Discussion
+          </button>
+        </div>
+      </section>
+
+      <DiscussionFilters
+        onFilterChange={setSelectedFilter}
+        onGenreChange={setSelectedGenre}
+        selectedFilter={selectedFilter}
+        selectedGenre={selectedGenre}
+      />
+
+      <div className="space-y-4">
+        {visibleDiscussions.length > 0 ? (
+          visibleDiscussions.map((discussion) => (
+            <DiscussionCard key={discussion.id} discussion={discussion} />
+          ))
+        ) : (
+          <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
+            No discussions match those filters yet.
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TrendingDiscussionsCard({
+  discussions,
   onSeeAll,
 }: {
+  discussions: CommunityDiscussion[];
   onSeeAll: () => void;
 }) {
+  const trendingDiscussions = getVisibleDiscussions(
+    discussions,
+    "Trending",
+    "All Genres"
+  ).slice(0, 3);
+
   return (
     <SidebarCard
       title="Trending Discussions"
@@ -1099,20 +1704,23 @@ function TrendingDiscussionsCard({
       }
     >
       <div className="space-y-4">
-        {discussions.map((discussion) => (
+        {trendingDiscussions.map((discussion) => (
           <div
-            key={discussion.title}
+            key={discussion.id}
             className="grid grid-cols-[82px_1fr] items-center gap-3 border-b border-white/10 pb-4 last:border-b-0 last:pb-0"
           >
             <MovieThumb
               alt={discussion.title}
-              fallbackMovieId={discussion.fallbackMovieId}
+              fallbackMovieId={discussion.movieId}
               fit="contain"
-              href={communityMovieHref(discussion.fallbackMovieId)}
-              imagePath={discussion.imagePath}
+              href={communityDiscussionHref(discussion.id)}
+              imagePath={discussion.moviePosterUrl}
             />
             <div className="min-w-0">
               <p className="text-sm font-black leading-5 text-white">
+                {discussion.reactionEmoji ? (
+                  <span aria-hidden="true">{discussion.reactionEmoji} </span>
+                ) : null}
                 {discussion.title}
               </p>
               <p className="mt-1 text-xs font-bold text-slate-400">
@@ -1135,6 +1743,9 @@ function WhoToFollowCard() {
             <Avatar label={user.avatar} size="lg" />
             <div className="min-w-0 flex-1">
               <p className="font-black text-white">{user.displayName}</p>
+              <p className="mt-0.5 truncate text-xs font-bold text-slate-500">
+                @{user.username}
+              </p>
               <p className="mt-1 text-xs font-bold text-slate-300">
                 Favorite: {user.favoriteGenre}
               </p>
@@ -1153,7 +1764,7 @@ function WhoToFollowCard() {
 }
 
 function ratingCountText(count: number) {
-  return `${count} rated movie${count === 1 ? "" : "s"}`;
+  return `${count} review${count === 1 ? "" : "s"} submitted`;
 }
 
 function RatingCountBadge({ count }: { count: number }) {
@@ -1254,7 +1865,7 @@ function TopReviewersCard({
                   Top 150 Raters
                 </h2>
                 <p className="mt-1 text-sm font-semibold text-slate-400">
-                  Ranked by total rated movies submitted.
+                  Ranked by total reviews submitted.
                 </p>
               </div>
               <button
@@ -1290,16 +1901,34 @@ export default function CommunityPage() {
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
   const [selectedTrend, setSelectedTrend] = useState("Trending");
   const [isMovieDialogOpen, setIsMovieDialogOpen] = useState(false);
+  const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = useState(false);
+  const [createdDiscussions, setCreatedDiscussions] = useState<
+    CommunityDiscussion[]
+  >([]);
   const [communityRatings, setCommunityRatings] = useState<
     CommunityRatingFeedItem[]
   >([]);
   const [topReviewers, setTopReviewers] = useState<TopReviewerSummary[]>([]);
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(true);
+  const communityDiscussions = useMemo(
+    () => [...createdDiscussions, ...mockCommunityDiscussions],
+    [createdDiscussions]
+  );
+  const discussionActivityPosts = useMemo(
+    () => createdDiscussions.map(discussionToFeedPost),
+    [createdDiscussions]
+  );
   const realFeedPosts = useMemo(
     () => communityRatings.map(mapCommunityRatingToPost),
     [communityRatings]
   );
-  const feedPostsToShow = realFeedPosts.length > 0 ? realFeedPosts : feedPosts;
+  const feedPostsToShow = useMemo(
+    () =>
+      realFeedPosts.length > 0
+        ? [...discussionActivityPosts, ...realFeedPosts]
+        : [...discussionActivityPosts, ...feedPosts],
+    [discussionActivityPosts, realFeedPosts]
+  );
   const visibleFeedPosts = useMemo(
     () => getVisibleFeedPosts(feedPostsToShow, selectedGenre, selectedTrend),
     [feedPostsToShow, selectedGenre, selectedTrend]
@@ -1311,6 +1940,44 @@ export default function CommunityPage() {
       window.scrollTo({ behavior: "smooth", top: 0 });
     });
   };
+
+  const saveCreatedDiscussions = (nextDiscussions: CommunityDiscussion[]) => {
+    window.localStorage.setItem(
+      communityDiscussionsStorageKey,
+      JSON.stringify(nextDiscussions)
+    );
+  };
+
+  const postDiscussion = (discussion: CommunityDiscussion) => {
+    setCreatedDiscussions((currentDiscussions) => {
+      const nextDiscussions = [
+        discussion,
+        ...currentDiscussions.filter(
+          (currentDiscussion) => currentDiscussion.id !== discussion.id
+        ),
+      ];
+
+      saveCreatedDiscussions(nextDiscussions);
+
+      return nextDiscussions;
+    });
+    setIsDiscussionDialogOpen(false);
+    setSelectedTab("Discussions");
+  };
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setCreatedDiscussions(
+        parseStoredCommunityDiscussions(
+          window.localStorage.getItem(communityDiscussionsStorageKey)
+        )
+      );
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, []);
 
   useEffect(() => {
     let isCurrent = true;
@@ -1380,7 +2047,10 @@ export default function CommunityPage() {
                 />
               </>
             ) : selectedTab === "Discussions" ? (
-              <DiscussionsTabContent />
+              <DiscussionsTabContent
+                discussions={communityDiscussions}
+                onStartDiscussion={() => setIsDiscussionDialogOpen(true)}
+              />
             ) : (
               <FollowingTabContent />
             )}
@@ -1389,7 +2059,10 @@ export default function CommunityPage() {
           <aside className="space-y-5 lg:sticky lg:top-6">
             {isFollowingTab ? null : (
               <>
-                <TrendingDiscussionsCard onSeeAll={showDiscussions} />
+                <TrendingDiscussionsCard
+                  discussions={communityDiscussions}
+                  onSeeAll={showDiscussions}
+                />
                 <WhoToFollowCard />
               </>
             )}
@@ -1402,6 +2075,12 @@ export default function CommunityPage() {
       </section>
       {isMovieDialogOpen ? (
         <SelectMovieDialog onClose={() => setIsMovieDialogOpen(false)} />
+      ) : null}
+      {isDiscussionDialogOpen ? (
+        <StartDiscussionModal
+          onClose={() => setIsDiscussionDialogOpen(false)}
+          onPost={postDiscussion}
+        />
       ) : null}
     </main>
   );

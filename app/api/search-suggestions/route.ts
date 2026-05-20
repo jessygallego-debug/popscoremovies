@@ -1,6 +1,24 @@
 import { NextResponse } from "next/server";
 import { getMovies, type MovieSummary } from "@/lib/tmdb";
 
+const tmdbGenresById: Record<number, string> = {
+  12: "Adventure",
+  14: "Fantasy",
+  16: "Animation",
+  18: "Drama",
+  27: "Horror",
+  28: "Action",
+  35: "Comedy",
+  53: "Thriller",
+  80: "Crime",
+  99: "Documentary",
+  878: "Sci-Fi",
+  9648: "Mystery",
+  10749: "Romance",
+  10751: "Family",
+  10752: "War",
+};
+
 function normalizeSearchText(value: string) {
   return value
     .toLowerCase()
@@ -79,7 +97,12 @@ export async function GET(request: Request) {
     )
     .slice(0, 8)
     .map(({ movie }) => ({
+      genreNames: (movie.genre_ids ?? [])
+        .map((genreId) => tmdbGenresById[genreId])
+        .filter(Boolean)
+        .slice(0, 3),
       id: movie.id,
+      posterPath: movie.poster_path,
       releaseDate: movie.release_date,
       title: movie.title,
     }));
