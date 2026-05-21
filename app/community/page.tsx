@@ -26,10 +26,12 @@ import {
   getFollowingUserIdsForCurrentUser,
 } from "@/lib/follows";
 import {
+  getDiscoverableUsers,
   getRecentRatingsForUsers,
   getRecentCommunityRatings,
   getTopReviewers,
   type CommunityRatingFeedItem,
+  type DiscoverableUserSummary,
   type TopReviewerSummary,
 } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
@@ -70,12 +72,9 @@ type CommunityFeedPost = {
   user: CommunityUser;
 };
 
-type SuggestedFollow = CommunityUser & {
-  followersCount: number;
-  favoriteGenre: string;
-  totalReviews: number;
-  userId: string;
-};
+type SuggestedFollow = DiscoverableUserSummary;
+
+type FollowingReaction = "loved_it" | "worth_watching" | "trash";
 
 type FollowingActivity =
   | {
@@ -88,6 +87,7 @@ type FollowingActivity =
       moviePoster: string | null;
       movieTitle: string;
       popScore: number;
+      reaction?: FollowingReaction;
       type: "rating";
       userId: string;
       username: string;
@@ -99,7 +99,7 @@ type FollowingActivity =
       movieId: string;
       moviePoster: string | null;
       movieTitle: string;
-      reaction: "loved_it" | "worth_watching" | "trash";
+      reaction: FollowingReaction;
       type: "reaction";
       userId: string;
       username: string;
@@ -130,11 +130,6 @@ type FollowingActivity =
       userId: string;
       username: string;
     };
-
-type FollowingReaction = Extract<
-  FollowingActivity,
-  { type: "reaction" }
->["reaction"];
 
 type MovieSuggestion = {
   genreNames?: string[];
@@ -686,74 +681,50 @@ function buildFollowingActivities({
   const activities: FollowingActivity[] = [];
   const realRatingActivities = ratings
     .filter((rating) => followingSet.has(rating.user_id))
-    .flatMap((rating): FollowingActivity[] => {
+    .map((rating): FollowingActivity => {
       const createdAt = rating.updated_at ?? rating.created_at;
       const genre = normalizeCommunityGenres(
         rating.genreNames,
         rating.genre
       )[0] ?? rating.genre;
-      const base = {
+
+      return {
         avatar: rating.avatar,
+        comment: rating.reviewComment ?? undefined,
         createdAt,
+        genre,
+        id: `following-rating-${rating.id}`,
         movieId: rating.movieId,
         moviePoster: rating.posterPath ?? null,
         movieTitle: rating.movieTitle,
+        popScore: rating.popscore,
+        reaction: rating.quick_reaction ?? undefined,
+        type: "rating",
         userId: rating.user_id,
         username: rating.username,
       };
-      const items: FollowingActivity[] = [
-        {
-          ...base,
-          comment: rating.reviewComment ?? undefined,
-          genre,
-          id: `following-rating-${rating.id}`,
-          popScore: rating.popscore,
-          type: "rating",
-        },
-      ];
-
-      if (rating.quick_reaction) {
-        items.push({
-          ...base,
-          id: `following-reaction-${rating.id}`,
-          reaction: rating.quick_reaction,
-          type: "reaction",
-        });
-      }
-
-      return items;
     });
   const mockRatingActivities = feedPosts
     .filter((post) => followingSet.has(post.user.userId ?? ""))
     .filter((post) => Boolean(post.popscore))
-    .flatMap((post): FollowingActivity[] => {
+    .map((post): FollowingActivity => {
       const createdAt = timeFromFeedTimestamp(post.timestamp);
-      const base = {
+
+      return {
         avatar: post.user.avatar,
+        comment: post.comment,
         createdAt,
+        genre: post.genres[0] ?? "Movie",
+        id: `following-mock-rating-${post.id}`,
         movieId: post.movie.fallbackMovieId,
         moviePoster: post.movie.imagePath,
         movieTitle: post.movie.title,
+        popScore: post.popscore ?? 0,
+        reaction: quickReactionFromScore(post.popscore ?? 0),
+        type: "rating",
         userId: post.user.userId ?? post.user.username,
         username: post.user.username,
       };
-
-      return [
-        {
-          ...base,
-          comment: post.comment,
-          genre: post.genres[0] ?? "Movie",
-          id: `following-mock-rating-${post.id}`,
-          popScore: post.popscore ?? 0,
-          type: "rating",
-        },
-        {
-          ...base,
-          id: `following-mock-reaction-${post.id}`,
-          reaction: quickReactionFromScore(post.popscore ?? 0),
-          type: "reaction",
-        },
-      ];
     });
   const discussionCreatedActivities = discussions
     .filter((discussion) => followingSet.has(discussion.startedByUserId))
@@ -821,6 +792,37 @@ function formatCompactCount(value: number) {
   }
 
   return String(value);
+}
+
+function useFollowingIds() {
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isCurrent = true;
+    const loadFollowingIds = () => {
+      getFollowingUserIdsForCurrentUser()
+        .then((nextFollowingIds) => {
+          if (isCurrent) {
+            setFollowingIds(nextFollowingIds);
+          }
+        })
+        .catch(() => {
+          if (isCurrent) {
+            setFollowingIds([]);
+          }
+        });
+    };
+
+    loadFollowingIds();
+    window.addEventListener(FOLLOWS_UPDATED_EVENT, loadFollowingIds);
+
+    return () => {
+      isCurrent = false;
+      window.removeEventListener(FOLLOWS_UPDATED_EVENT, loadFollowingIds);
+    };
+  }, []);
+
+  return followingIds;
 }
 
 function formatSuggestionDate(value: string) {
@@ -2053,16 +2055,23 @@ function TrendingDiscussionsCard({
 
 function WhoToFollowCard({
   emptyMessage = "No users match those filters yet.",
-  users = suggestedFollows.slice(0, 4),
+  users = [],
 }: {
   emptyMessage?: string;
   users?: SuggestedFollow[];
 }) {
+  const followingIds = useFollowingIds();
+  const followingSet = useMemo(() => new Set(followingIds), [followingIds]);
+  const visibleUsers = useMemo(
+    () => users.filter((user) => !followingSet.has(user.userId)).slice(0, 4),
+    [followingSet, users]
+  );
+
   return (
     <SidebarCard title="Who to Follow">
       <div className="space-y-4">
-        {users.length > 0 ? (
-          users.slice(0, 4).map((user) => (
+        {visibleUsers.length > 0 ? (
+          visibleUsers.map((user) => (
             <div key={user.username} className="flex items-center gap-3">
               <Avatar label={user.avatar} size="lg" />
               <div className="min-w-0 flex-1">
@@ -2096,21 +2105,6 @@ function ratingCountText(count: number) {
   return `${count} review${count === 1 ? "" : "s"} submitted`;
 }
 
-function RatingCountBadge({ count }: { count: number }) {
-  return (
-    <span
-      aria-label={ratingCountText(count)}
-      className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-yellow-400/40 bg-yellow-400/20 text-sm font-black text-yellow-200 shadow-lg shadow-yellow-400/10"
-      style={{
-        clipPath:
-          "polygon(50% 0%, 92% 25%, 92% 75%, 50% 100%, 8% 75%, 8% 25%)",
-      }}
-    >
-      {count}
-    </span>
-  );
-}
-
 function TopReviewersList({
   reviewers,
 }: {
@@ -2131,17 +2125,14 @@ function TopReviewersList({
               {ratingCountText(reviewer.totalReviews)}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <RatingCountBadge count={reviewer.totalReviews} />
-            <FollowButton
-              size="sm"
-              target={{
-                displayName: reviewer.username,
-                userId: reviewer.userId,
-                username: reviewer.username,
-              }}
-            />
-          </div>
+          <FollowButton
+            size="sm"
+            target={{
+              displayName: reviewer.username,
+              userId: reviewer.userId,
+              username: reviewer.username,
+            }}
+          />
         </div>
       ))}
     </div>
@@ -2336,6 +2327,11 @@ function FollowingActivityCard({
                 <span className="rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-1 text-xs font-black text-slate-300">
                   {activity.genre}
                 </span>
+                {activity.reaction ? (
+                  <span className="rounded-xl border border-yellow-400/35 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-200">
+                    {quickReactionLabel(activity.reaction)}
+                  </span>
+                ) : null}
               </div>
               {activity.comment ? (
                 <p className="mt-3 rounded-2xl border border-slate-800 bg-black/25 p-3 text-sm font-semibold leading-6 text-slate-300">
@@ -2495,14 +2491,20 @@ function PeopleCard({ user }: { user: SuggestedFollow }) {
   );
 }
 
-function PeopleTabContent() {
+function PeopleTabContent({ users }: { users: SuggestedFollow[] }) {
   const [userSearch, setUserSearch] = useState("");
   const [selectedFavoriteGenre, setSelectedFavoriteGenre] =
     useState("All Genres");
+  const followingIds = useFollowingIds();
   const visibleUsers = useMemo(() => {
     const normalizedSearch = userSearch.trim().toLowerCase();
+    const followingSet = new Set(followingIds);
 
-    return suggestedFollows.filter((user) => {
+    return users.filter((user) => {
+      if (followingSet.has(user.userId)) {
+        return false;
+      }
+
       const matchesSearch =
         !normalizedSearch ||
         user.displayName.toLowerCase().includes(normalizedSearch) ||
@@ -2513,7 +2515,7 @@ function PeopleTabContent() {
 
       return matchesSearch && matchesGenre;
     });
-  }, [selectedFavoriteGenre, userSearch]);
+  }, [followingIds, selectedFavoriteGenre, userSearch, users]);
 
   return (
     <div className="w-full space-y-4 sm:space-y-5">
@@ -2566,6 +2568,9 @@ export default function CommunityPage() {
   const [communityRatings, setCommunityRatings] = useState<
     CommunityRatingFeedItem[]
   >([]);
+  const [discoverableUsers, setDiscoverableUsers] = useState<SuggestedFollow[]>(
+    []
+  );
   const [topReviewers, setTopReviewers] = useState<TopReviewerSummary[]>([]);
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(true);
   const communityDiscussions = useMemo(
@@ -2641,16 +2646,22 @@ export default function CommunityPage() {
   useEffect(() => {
     let isCurrent = true;
 
-    Promise.all([getRecentCommunityRatings(30), getTopReviewers(150)])
-      .then(([ratings, reviewers]) => {
+    Promise.all([
+      getRecentCommunityRatings(30),
+      getTopReviewers(150),
+      getDiscoverableUsers(80),
+    ])
+      .then(([ratings, reviewers, users]) => {
         if (isCurrent) {
           setCommunityRatings(ratings);
           setTopReviewers(reviewers);
+          setDiscoverableUsers(users);
         }
       })
       .catch(() => {
         if (isCurrent) {
           setCommunityRatings([]);
+          setDiscoverableUsers([]);
           setTopReviewers([]);
         }
       })
@@ -2716,7 +2727,7 @@ export default function CommunityPage() {
                 onStartDiscussion={() => setIsDiscussionDialogOpen(true)}
               />
             ) : (
-              <PeopleTabContent />
+              <PeopleTabContent users={discoverableUsers} />
             )}
           </div>
 
@@ -2727,7 +2738,7 @@ export default function CommunityPage() {
                   discussions={communityDiscussions}
                   onSeeAll={showDiscussions}
                 />
-                <WhoToFollowCard />
+                <WhoToFollowCard users={discoverableUsers} />
               </>
             ) : null}
             <TopReviewersCard

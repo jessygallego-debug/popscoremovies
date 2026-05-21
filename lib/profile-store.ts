@@ -1,6 +1,10 @@
 "use client";
 
-import { avatarForKey, profileGenreDbValue } from "@/lib/profile-config";
+import {
+  avatarForKey,
+  genreLabelForKey,
+  profileGenreDbValue,
+} from "@/lib/profile-config";
 import { validateReviewComment } from "@/lib/review-comments";
 
 const SESSION_KEY = "popscore_supabase_session";
@@ -79,6 +83,16 @@ export type CommunityRatingFeedItem = UserMovieRating & {
 
 export type TopReviewerSummary = {
   avatar: string;
+  totalReviews: number;
+  userId: string;
+  username: string;
+};
+
+export type DiscoverableUserSummary = {
+  avatar: string;
+  displayName: string;
+  favoriteGenre: string;
+  followersCount: number;
   totalReviews: number;
   userId: string;
   username: string;
@@ -1043,6 +1057,51 @@ export async function getTopReviewers(
       username: profile?.username ?? fallbackUsernameForUserId(count.userId),
     };
   });
+}
+
+export async function getDiscoverableUsers(
+  limit = 80
+): Promise<DiscoverableUserSummary[]> {
+  type FollowCountRow = {
+    following_id: string;
+  };
+
+  const currentUser = await getCurrentUser().catch(() => null);
+  const [profiles, counts, follows] = await Promise.all([
+    supabaseFetch<ProfileRecord[]>(
+      `/profiles?select=id,user_id,username,avatar_key,favorite_genre,created_at,updated_at&order=username.asc&limit=${limit}`
+    ).catch(() => []),
+    getAllUserRatingCounts().catch(() => []),
+    supabaseFetch<FollowCountRow[]>("/user_follows?select=following_id").catch(
+      () => []
+    ),
+  ]);
+  const reviewsByUser = new Map(
+    counts.map((count) => [count.userId, count.ratingsCount])
+  );
+  const followersByUser = follows.reduce((totals, follow) => {
+    totals.set(follow.following_id, (totals.get(follow.following_id) ?? 0) + 1);
+
+    return totals;
+  }, new Map<string, number>());
+
+  return profiles
+    .filter((profile) => profile.user_id !== currentUser?.id)
+    .map((profile) => ({
+      avatar: avatarForKey(profile.avatar_key).icon,
+      displayName: profile.username,
+      favoriteGenre: profile.favorite_genre
+        ? genreLabelForKey(profile.favorite_genre)
+        : "Not set",
+      followersCount: followersByUser.get(profile.user_id) ?? 0,
+      totalReviews: reviewsByUser.get(profile.user_id) ?? 0,
+      userId: profile.user_id,
+      username: profile.username,
+    }))
+    .sort(
+      (a, b) =>
+        b.totalReviews - a.totalReviews || a.username.localeCompare(b.username)
+    );
 }
 
 export async function addToWatchlist(movie: MovieMeta & { genre?: string }) {
