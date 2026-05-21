@@ -336,7 +336,7 @@ export async function toggleFollow(target: FollowTarget) {
     } started following you.`,
     recipientUserId: target.userId,
     recipientUsername: target.username,
-    type: "new_follower",
+    type: "follow",
   });
 
   if (canUseLocalStorage()) {
