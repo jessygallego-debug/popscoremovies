@@ -93,15 +93,21 @@ export default function NotificationBell({
     };
 
     window.addEventListener(NOTIFICATIONS_UPDATED_EVENT, refreshNotifications);
+    window.addEventListener("focus", refreshNotifications);
+    document.addEventListener("visibilitychange", refreshNotifications);
     document.addEventListener("pointerdown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
+    const refreshInterval = window.setInterval(refreshNotifications, 15000);
 
     return () => {
       isCurrent = false;
+      window.clearInterval(refreshInterval);
       window.removeEventListener(
         NOTIFICATIONS_UPDATED_EVENT,
         refreshNotifications
       );
+      window.removeEventListener("focus", refreshNotifications);
+      document.removeEventListener("visibilitychange", refreshNotifications);
       document.removeEventListener("pointerdown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
     };

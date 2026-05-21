@@ -86,13 +86,19 @@ export default function NotificationsClient() {
     };
 
     window.addEventListener(NOTIFICATIONS_UPDATED_EVENT, refreshNotifications);
+    window.addEventListener("focus", refreshNotifications);
+    document.addEventListener("visibilitychange", refreshNotifications);
+    const refreshInterval = window.setInterval(refreshNotifications, 15000);
 
     return () => {
       isCurrent = false;
+      window.clearInterval(refreshInterval);
       window.removeEventListener(
         NOTIFICATIONS_UPDATED_EVENT,
         refreshNotifications
       );
+      window.removeEventListener("focus", refreshNotifications);
+      document.removeEventListener("visibilitychange", refreshNotifications);
     };
   }, []);
 

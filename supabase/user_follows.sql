@@ -16,6 +16,10 @@ on public.user_follows (follower_id, created_at desc);
 create index if not exists user_follows_following_idx
 on public.user_follows (following_id, created_at desc);
 
+grant usage on schema public to anon, authenticated;
+grant select on public.user_follows to anon, authenticated;
+grant insert, delete on public.user_follows to authenticated;
+
 alter table public.user_follows enable row level security;
 
 drop policy if exists "Anyone can read follow relationships" on public.user_follows;

@@ -114,14 +114,25 @@ async function supabaseFetch<T>(path: string, options: RequestInit = {}) {
   });
 
   if (!response.ok) {
-    throw new Error(`Notification request failed with ${response.status}.`);
+    const responseText = await response.text().catch(() => "");
+    throw new Error(
+      responseText
+        ? `Notification request failed with ${response.status}: ${responseText}`
+        : `Notification request failed with ${response.status}.`
+    );
   }
 
   if (response.status === 204) {
     return null as T;
   }
 
-  return response.json() as Promise<T>;
+  const responseText = await response.text();
+
+  if (!responseText) {
+    return null as T;
+  }
+
+  return JSON.parse(responseText) as T;
 }
 
 function mapNotificationRow(row: NotificationRow): PopScoreNotification {
@@ -296,7 +307,8 @@ export async function createNotification(input: CreateNotificationInput) {
     }
 
     return notification;
-  } catch {
+  } catch (error) {
+    console.warn("Could not save notification in Supabase.", error);
     return createLocalNotification(input);
   }
 }

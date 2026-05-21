@@ -38,6 +38,10 @@ on public.notifications (recipient_user_id, created_at desc);
 create index if not exists notifications_recipient_unread_idx
 on public.notifications (recipient_user_id, is_read, created_at desc);
 
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.notifications to authenticated;
+grant select on public.notifications to anon;
+
 alter table public.notifications enable row level security;
 
 drop policy if exists "Users can read their notifications" on public.notifications;
