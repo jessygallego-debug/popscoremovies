@@ -113,6 +113,16 @@ export default function NotificationBell({
     };
   }, []);
 
+  const refreshNotifications = async () => {
+    setIsLoading(true);
+    const nextUserId = await getCurrentNotificationUserId();
+    const nextNotifications = await getNotificationsForUser(nextUserId, 8);
+
+    setUserId(nextUserId);
+    setNotifications(nextNotifications);
+    setIsLoading(false);
+  };
+
   const selectNotification = async (notification: PopScoreNotification) => {
     const href = getNotificationHref(notification);
 
@@ -138,7 +148,10 @@ export default function NotificationBell({
             : "Open notifications"
         }
         aria-expanded={isOpen}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => {
+          setIsOpen((current) => !current);
+          void refreshNotifications();
+        }}
         className={`relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border shadow-lg transition ${
           hasUnread
             ? "border-yellow-400/55 bg-yellow-400/10 text-yellow-300 shadow-yellow-400/10 hover:bg-yellow-400/20"

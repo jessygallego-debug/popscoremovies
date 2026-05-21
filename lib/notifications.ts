@@ -286,10 +286,10 @@ export async function createNotification(input: CreateNotificationInput) {
   }
 
   try {
-    const rows = await supabaseFetch<NotificationRow[]>("/notifications", {
+    await supabaseFetch<null>("/notifications", {
       method: "POST",
       headers: {
-        Prefer: "return=representation",
+        Prefer: "return=minimal",
       },
       body: JSON.stringify({
         actor_user_id: input.actorUserId,
@@ -301,13 +301,12 @@ export async function createNotification(input: CreateNotificationInput) {
         type: input.type,
       }),
     });
-    const notification = rows[0] ? mapNotificationRow(rows[0]) : null;
 
-    if (notification && canUseLocalStorage()) {
+    if (canUseLocalStorage()) {
       window.dispatchEvent(new Event(NOTIFICATIONS_UPDATED_EVENT));
     }
 
-    return notification;
+    return null;
   } catch (error) {
     console.warn("Could not save notification in Supabase.", error);
     return createLocalNotification(input);

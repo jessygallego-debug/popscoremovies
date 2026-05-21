@@ -13,6 +13,7 @@ import {
 const menuItems = [
   { href: "/profile/edit", label: "Edit PopFile" },
   { href: "stats", label: "PopFile Stats" },
+  { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/discover", label: "Discovery" },
 ];
