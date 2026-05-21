@@ -16,9 +16,11 @@ export default function NotificationDropdown({
   onSelect,
 }: NotificationDropdownProps) {
   return (
-    <div className="absolute right-0 z-50 mt-3 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/95 p-3 shadow-2xl shadow-black/60 backdrop-blur sm:w-96">
-      <div className="mb-3 flex items-center justify-between gap-3 px-1">
-        <h2 className="text-lg font-black text-white">Notifications</h2>
+    <div className="absolute right-0 z-50 mt-2 w-[min(calc(100vw-4rem),20rem)] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl shadow-black/60 backdrop-blur sm:mt-3 sm:w-96 sm:max-w-sm sm:rounded-3xl sm:p-3">
+      <div className="mb-2 flex items-center justify-between gap-3 px-1 sm:mb-3">
+        <h2 className="text-base font-black text-white sm:text-lg">
+          Notifications
+        </h2>
         <Link
           href="/notifications"
           className="text-xs font-black text-yellow-300 transition hover:text-yellow-200"
@@ -27,9 +29,9 @@ export default function NotificationDropdown({
         </Link>
       </div>
 
-      <div className="max-h-[70vh] space-y-2 overflow-y-auto sm:max-h-96">
+      <div className="max-h-[52vh] space-y-1.5 overflow-y-auto sm:max-h-96 sm:space-y-2">
         {isLoading ? (
-          <p className="rounded-2xl border border-slate-800 bg-black/20 p-4 text-sm font-bold text-slate-400">
+          <p className="rounded-2xl border border-slate-800 bg-black/20 p-3 text-xs font-bold text-slate-400 sm:p-4 sm:text-sm">
             Loading notifications...
           </p>
         ) : notifications.length > 0 ? (
@@ -41,7 +43,7 @@ export default function NotificationDropdown({
             />
           ))
         ) : (
-          <p className="rounded-2xl border border-slate-800 bg-black/20 p-4 text-sm font-bold text-slate-400">
+          <p className="rounded-2xl border border-slate-800 bg-black/20 p-3 text-xs font-bold text-slate-400 sm:p-4 sm:text-sm">
             No notifications yet.
           </p>
         )}
@@ -49,7 +51,7 @@ export default function NotificationDropdown({
 
       <Link
         href="/notifications"
-        className="mt-3 block rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-3 text-center text-sm font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-black"
+        className="mt-2 block rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-3 py-2.5 text-center text-xs font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-black sm:mt-3 sm:px-4 sm:py-3 sm:text-sm"
       >
         View all notifications
       </Link>
