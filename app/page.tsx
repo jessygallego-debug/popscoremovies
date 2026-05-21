@@ -246,7 +246,11 @@ export default async function Home({
           <HeroVisual movies={displayMovies} stats={siteStats} />
         </section>
 
-        <section id="genres" className="border-t border-white/10 pt-7">
+        <div className="border-t border-white/10 pt-7">
+          <WhyPopScore />
+        </div>
+
+        <section id="genres" className="mt-8">
           <div
             aria-label="Filter movies by genre"
             className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-8"
@@ -266,10 +270,6 @@ export default async function Home({
             ))}
           </div>
         </section>
-
-        <div className="mt-8">
-          <WhyPopScore />
-        </div>
 
         {hasMissingToken ? (
           <div className="mt-8 rounded-2xl border border-yellow-500/40 bg-yellow-400/10 p-5 text-yellow-100">
