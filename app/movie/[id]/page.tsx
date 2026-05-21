@@ -178,22 +178,6 @@ export default async function MoviePage({
                   movieId={String(movie.id)}
                   className="font-bold text-yellow-400"
                 />
-                <div className="mt-6 max-w-md rounded-2xl border border-slate-800 bg-black/45 p-4 shadow-2xl shadow-black/30 backdrop-blur">
-                  <p className="mb-3 text-sm font-black text-yellow-300">
-                    Co-Star Reactions
-                  </p>
-                  <CoStarReactions
-                    movie={{
-                      genre: movie.genres[0]?.name,
-                      genreNames: movie.genres.map((genre) => genre.name),
-                      movieId: String(movie.id),
-                      movieTitle: movie.title,
-                      posterPath: movie.poster_path,
-                      releaseDate: movie.release_date,
-                    }}
-                    movieId={String(movie.id)}
-                  />
-                </div>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link
                     href={rateHref}
@@ -220,6 +204,21 @@ export default async function MoviePage({
                       posterPath: movie.poster_path,
                       releaseDate: movie.release_date,
                     }}
+                  />
+                </div>
+                <div className="mt-3 max-w-[260px]">
+                  <CoStarReactions
+                    movie={{
+                      genre: movie.genres[0]?.name,
+                      genreNames: movie.genres.map((genre) => genre.name),
+                      movieId: String(movie.id),
+                      movieTitle: movie.title,
+                      posterPath: movie.poster_path,
+                      releaseDate: movie.release_date,
+                    }}
+                    movieId={String(movie.id)}
+                    showTotal={false}
+                    variant="mini"
                   />
                 </div>
               </div>

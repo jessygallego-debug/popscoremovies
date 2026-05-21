@@ -21,7 +21,8 @@ type Reaction = {
 type CoStarReactionsProps = {
   movie?: MovieMeta & { genre?: string };
   movieId: string;
-  variant?: "default" | "compact";
+  showTotal?: boolean;
+  variant?: "default" | "compact" | "mini";
 };
 
 const reactions: Reaction[] = [
@@ -41,6 +42,7 @@ const REACTION_UPDATE_EVENT = "popscore-reactions-updated";
 export default function CoStarReactions({
   movie,
   movieId,
+  showTotal = true,
   variant = "default",
 }: CoStarReactionsProps) {
   const [counts, setCounts] = useState<Record<CoStarReaction, number>>({
@@ -54,6 +56,7 @@ export default function CoStarReactions({
 
   const total = counts.loved + counts.worth + counts.trash;
   const isCompact = variant === "compact";
+  const isMini = variant === "mini";
 
   useEffect(() => {
     let isCurrent = true;
@@ -143,7 +146,9 @@ export default function CoStarReactions({
               type="button"
               onClick={() => handleReaction(reaction.key)}
               className={`grid min-w-0 items-center overflow-hidden border-r border-slate-800 text-center font-bold transition last:border-r-0 hover:bg-yellow-400/10 active:scale-95 ${
-                isCompact
+                isMini
+                  ? "min-h-12 grid-rows-[1rem_1.25rem_1rem] px-1 py-1 text-[8px]"
+                  : isCompact
                   ? "min-h-16 grid-rows-[1.15rem_1.6rem_1.15rem] px-1 py-1.5 text-[9px] sm:min-h-16 sm:grid-rows-[1.25rem_1.7rem_1.25rem] sm:text-[9px]"
                   : "min-h-24 grid-rows-[1.5rem_2.25rem_1.5rem] px-0.5 py-2 text-[9px] sm:min-h-24 sm:grid-rows-[1.75rem_2.5rem_1.75rem] sm:px-1.5 sm:text-[10px]"
               } ${
@@ -152,21 +157,25 @@ export default function CoStarReactions({
             >
               <span
                 className={`flex items-center justify-center leading-none ${
-                  isCompact ? "text-base" : "text-lg sm:text-xl"
+                  isMini
+                    ? "text-sm"
+                    : isCompact
+                      ? "text-base"
+                      : "text-lg sm:text-xl"
                 }`}
               >
                 {reaction.emoji}
               </span>
               <span
                 className={`mx-auto flex items-center justify-center whitespace-normal break-words leading-tight ${
-                  isCompact ? "max-w-12" : "max-w-14 sm:max-w-16"
+                  isMini ? "max-w-10" : isCompact ? "max-w-12" : "max-w-14 sm:max-w-16"
                 }`}
               >
                 {reaction.label}
               </span>
               <span
                 className={`flex items-center justify-center font-black leading-none text-yellow-400 ${
-                  isCompact ? "text-xs" : "text-sm sm:text-base"
+                  isMini ? "text-[10px]" : isCompact ? "text-xs" : "text-sm sm:text-base"
                 }`}
               >
                 {getPercent(reaction.key)}%
@@ -176,15 +185,17 @@ export default function CoStarReactions({
         })}
       </div>
 
-      <p
-        className={`mt-2 text-center font-bold text-slate-500 ${
-          isCompact ? "text-[10px]" : "text-[11px]"
-        }`}
-      >
-        {total === 0
-          ? "Total reactions: 0"
-          : `Total reactions: ${total.toLocaleString()}`}
-      </p>
+      {showTotal ? (
+        <p
+          className={`mt-2 text-center font-bold text-slate-500 ${
+            isCompact ? "text-[10px]" : "text-[11px]"
+          }`}
+        >
+          {total === 0
+            ? "Total reactions: 0"
+            : `Total reactions: ${total.toLocaleString()}`}
+        </p>
+      ) : null}
       {message ? (
         <p className="mt-2 text-center text-[11px] font-bold text-yellow-300">
           {message}

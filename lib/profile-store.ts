@@ -259,7 +259,13 @@ async function supabaseFetch<T>(
     return null as T;
   }
 
-  return response.json() as Promise<T>;
+  const responseText = await response.text();
+
+  if (!responseText) {
+    return null as T;
+  }
+
+  return JSON.parse(responseText) as T;
 }
 
 async function readSupabaseRestError(response: Response, fallback: string) {
