@@ -1817,10 +1817,45 @@ function DiscussionBadge({
 
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-xs font-black ${toneClass}`}
+      className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-black sm:px-3 sm:py-1 ${toneClass}`}
     >
       {children}
     </span>
+  );
+}
+
+function CompactTextPreview({
+  className = "",
+  lines = "three",
+  text,
+}: {
+  className?: string;
+  lines?: "two" | "three";
+  text: string;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const shouldToggle = text.length > 140;
+  const clampClass =
+    lines === "two"
+      ? "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
+      : "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]";
+
+  return (
+    <div>
+      <p className={`${className} ${shouldToggle && !isExpanded ? clampClass : ""}`}>
+        {text}
+      </p>
+      {shouldToggle ? (
+        <button
+          type="button"
+          aria-expanded={isExpanded}
+          onClick={() => setIsExpanded((current) => !current)}
+          className="mt-1 text-xs font-black text-yellow-300 transition hover:text-yellow-200"
+        >
+          {isExpanded ? "Show Less" : "Read More"}
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -1874,7 +1909,7 @@ function DiscussionCard({
 }) {
   return (
     <article className={cardClass("p-3 transition hover:border-yellow-400/40 hover:bg-slate-950/90 sm:p-4")}>
-      <div className="grid gap-4 sm:grid-cols-[96px_1fr]">
+      <div className="grid grid-cols-[82px_minmax(0,1fr)] gap-3 sm:grid-cols-[96px_1fr] sm:gap-4">
         <MovieThumb
           alt={discussion.movieTitle}
           fallbackMovieId={discussion.movieId}
@@ -1884,12 +1919,12 @@ function DiscussionCard({
         />
 
         <div className="min-w-0">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
-              <h3 className="text-lg font-black leading-6 text-white">
+              <h3 className="text-base font-black leading-5 text-white sm:text-lg sm:leading-6">
                 {discussion.title}
               </h3>
-              <p className="mt-2 text-sm font-bold leading-5 text-slate-400">
+              <p className="mt-1 text-xs font-bold leading-5 text-slate-400 sm:text-sm">
                 <span className="text-slate-200">{discussion.movieTitle}</span>
                 {" • "}
                 {discussion.commentCount} comments
@@ -1901,15 +1936,15 @@ function DiscussionCard({
             </div>
             <Link
               href={communityDiscussionHref(discussion.id)}
-              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+              className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-xl bg-yellow-400 px-3 py-1.5 text-xs font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:px-4 sm:py-2 sm:text-sm"
             >
               Join Discussion
             </Link>
           </div>
 
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-2">
             <Avatar label={discussion.startedByAvatarUrl} size="sm" />
-            <p className="text-sm font-bold text-slate-300">
+            <p className="min-w-0 truncate text-xs font-bold text-slate-300 sm:text-sm">
               Started by{" "}
               <span className="font-black text-white">
                 {discussion.startedByDisplayName}
@@ -1923,7 +1958,7 @@ function DiscussionCard({
             </p>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
             <DiscussionBadge tone="type">{discussion.type}</DiscussionBadge>
             {discussion.tags.map((tag) => (
               <DiscussionBadge key={tag}>{tag}</DiscussionBadge>
@@ -1956,19 +1991,21 @@ function DiscussionsTabContent({
   );
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <section className={cardClass("p-4 sm:p-5")}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="space-y-3 sm:space-y-5">
+      <section className={cardClass("p-3 sm:p-5")}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-black text-white">Discussions</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-400">
+            <h2 className="text-xl font-black text-white sm:text-2xl">
+              Discussions
+            </h2>
+            <p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">
               Jump into movie conversations happening right now.
             </p>
           </div>
           <button
             type="button"
             onClick={onStartDiscussion}
-            className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:px-5 sm:py-3"
           >
             + Start Discussion
           </button>
@@ -1982,7 +2019,7 @@ function DiscussionsTabContent({
         selectedGenre={selectedGenre}
       />
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {visibleDiscussions.length > 0 ? (
           visibleDiscussions.map((discussion) => (
             <DiscussionCard key={discussion.id} discussion={discussion} />
@@ -2223,27 +2260,27 @@ function FollowingActivityCard({
 }) {
   if (activity.type === "discussion_created") {
     return (
-      <article className={cardClass("p-4 sm:p-5")}>
-        <div className="flex items-start gap-3">
-          <Avatar label={activity.avatar} size="lg" />
+      <article className={cardClass("p-3 sm:p-4")}>
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          <Avatar label={activity.avatar} size="md" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-300">
+            <p className="text-sm font-semibold leading-5 text-slate-300">
               <span className="font-black text-white">
                 @{activity.username}
               </span>{" "}
               started a discussion
             </p>
-            <h3 className="mt-2 text-xl font-black leading-tight text-white">
+            <h3 className="mt-1 text-base font-black leading-5 text-white sm:text-lg">
               {activity.discussionTitle}
             </h3>
-            <p className="mt-2 text-sm font-bold text-slate-400">
+            <p className="mt-1 text-xs font-bold leading-5 text-slate-400 sm:text-sm">
               {activity.movieTitle ? `${activity.movieTitle} • ` : ""}
               {activity.replyCount} replies •{" "}
               {formatRelativePostTime(activity.createdAt)}
             </p>
             <Link
               href={communityDiscussionHref(activity.discussionId)}
-              className="mt-4 inline-flex rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+              className="mt-2 inline-flex min-h-9 items-center rounded-xl bg-yellow-400 px-3 py-1.5 text-xs font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:mt-3 sm:px-4 sm:py-2 sm:text-sm"
             >
               Join Discussion
             </Link>
@@ -2255,30 +2292,34 @@ function FollowingActivityCard({
 
   if (activity.type === "discussion_comment") {
     return (
-      <article className={cardClass("p-4 sm:p-5")}>
-        <div className="flex items-start gap-3">
-          <Avatar label={activity.avatar} size="lg" />
+      <article className={cardClass("p-3 sm:p-4")}>
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          <Avatar label={activity.avatar} size="md" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-300">
+            <p className="text-sm font-semibold leading-5 text-slate-300">
               <span className="font-black text-white">
                 @{activity.username}
               </span>{" "}
               commented in a discussion
             </p>
-            <h3 className="mt-2 text-lg font-black text-white">
+            <h3 className="mt-1 text-base font-black leading-5 text-white sm:text-lg">
               {activity.discussionTitle}
             </h3>
-            <p className="mt-2 rounded-2xl border border-slate-800 bg-black/25 p-3 text-sm font-semibold leading-6 text-slate-300">
-              {activity.commentPreview}
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <p className="text-sm font-bold text-slate-400">
+            <div className="mt-2 rounded-xl border border-slate-800 bg-black/25 p-2.5">
+              <CompactTextPreview
+                lines="two"
+                text={activity.commentPreview}
+                className="text-sm font-semibold leading-5 text-slate-300"
+              />
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <p className="text-xs font-bold text-slate-400 sm:text-sm">
                 {activity.movieTitle ? `${activity.movieTitle} • ` : ""}
                 {formatRelativePostTime(activity.createdAt)}
               </p>
               <Link
                 href={communityDiscussionHref(activity.discussionId)}
-                className="text-sm font-black text-yellow-300 transition hover:text-yellow-200"
+                className="text-xs font-black text-yellow-300 transition hover:text-yellow-200 sm:text-sm"
               >
                 View Discussion
               </Link>
@@ -2290,8 +2331,8 @@ function FollowingActivityCard({
   }
 
   return (
-    <article className={cardClass("p-4 sm:p-5")}>
-      <div className="grid gap-3 sm:grid-cols-[96px_1fr]">
+    <article className={cardClass("p-3 sm:p-4")}>
+      <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-3 sm:grid-cols-[96px_1fr]">
         <MovieThumb
           alt={activity.movieTitle}
           fallbackMovieId={activity.movieId}
@@ -2300,10 +2341,10 @@ function FollowingActivityCard({
           wide
         />
         <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <Avatar label={activity.avatar} />
+          <div className="flex items-center gap-2">
+            <Avatar label={activity.avatar} size="sm" />
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-300">
+              <p className="text-sm font-semibold leading-5 text-slate-300">
                 <span className="font-black text-white">
                   @{activity.username}
                 </span>{" "}
@@ -2317,28 +2358,32 @@ function FollowingActivityCard({
           </div>
 
           {activity.type === "rating" ? (
-            <div className="mt-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-xl border border-yellow-400/35 bg-yellow-400/15 px-3 py-1 text-sm font-black text-yellow-200">
+            <div className="mt-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="rounded-xl border border-yellow-400/35 bg-yellow-400/15 px-2 py-0.5 text-xs font-black text-yellow-200 sm:px-3 sm:py-1 sm:text-sm">
                   PopScore: {activity.popScore}
                 </span>
-                <span className="rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-1 text-xs font-black text-slate-300">
+                <span className="rounded-xl border border-slate-700 bg-slate-900/70 px-2 py-0.5 text-xs font-black text-slate-300 sm:px-3 sm:py-1">
                   {activity.genre}
                 </span>
                 {activity.reaction ? (
-                  <span className="rounded-xl border border-yellow-400/35 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-200">
+                  <span className="rounded-xl border border-yellow-400/35 bg-yellow-400/10 px-2 py-0.5 text-xs font-black text-yellow-200 sm:px-3 sm:py-1">
                     {quickReactionLabel(activity.reaction)}
                   </span>
                 ) : null}
               </div>
               {activity.comment ? (
-                <p className="mt-3 rounded-2xl border border-slate-800 bg-black/25 p-3 text-sm font-semibold leading-6 text-slate-300">
-                  {activity.comment}
-                </p>
+                <div className="mt-2 rounded-xl border border-slate-800 bg-black/25 p-2.5">
+                  <CompactTextPreview
+                    lines="three"
+                    text={activity.comment}
+                    className="text-sm font-semibold leading-5 text-slate-300"
+                  />
+                </div>
               ) : null}
             </div>
           ) : (
-            <p className="mt-3 inline-flex rounded-xl border border-yellow-400/35 bg-yellow-400/15 px-3 py-2 text-sm font-black text-yellow-200">
+            <p className="mt-2 inline-flex rounded-xl border border-yellow-400/35 bg-yellow-400/15 px-2.5 py-1.5 text-xs font-black text-yellow-200 sm:px-3 sm:py-2 sm:text-sm">
               {quickReactionLabel(activity.reaction)}
             </p>
           )}
@@ -2410,7 +2455,7 @@ function FollowingTabContent({
 
   if (isLoading) {
     return (
-      <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
+      <section className={cardClass("p-4 text-sm font-bold text-slate-300")}>
         Loading your Following feed...
       </section>
     );
@@ -2418,8 +2463,8 @@ function FollowingTabContent({
 
   if (followingIds.length === 0) {
     return (
-      <section className={cardClass("p-6 text-center sm:p-8")}>
-        <h2 className="text-2xl font-black text-white">
+      <section className={cardClass("p-5 text-center sm:p-8")}>
+        <h2 className="text-xl font-black text-white sm:text-2xl">
           Your Following feed is waiting for some movie taste.
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-400">
@@ -2429,7 +2474,7 @@ function FollowingTabContent({
         <button
           type="button"
           onClick={onFindPeople}
-          className="mt-5 rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+          className="mt-4 rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:mt-5 sm:px-5 sm:py-3"
         >
           Find People to Follow
         </button>
@@ -2439,14 +2484,14 @@ function FollowingTabContent({
 
   if (activities.length === 0) {
     return (
-      <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
+      <section className={cardClass("p-4 text-sm font-bold text-slate-300")}>
         The people you follow have not posted movie activity yet.
       </section>
     );
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-3 sm:space-y-5">
       {activities.map((activity) => (
         <FollowingActivityCard key={activity.id} activity={activity} />
       ))}
@@ -2456,28 +2501,31 @@ function FollowingTabContent({
 
 function PeopleCard({ user }: { user: SuggestedFollow }) {
   return (
-    <article className={cardClass("p-4 sm:p-5")}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Avatar label={user.avatar} size="xl" />
+    <article className={cardClass("p-3 sm:p-4")}>
+      <div className="grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3">
+        <Avatar label={user.avatar} size="lg" />
         <div className="min-w-0 flex-1">
-          <h3 className="text-xl font-black text-white">{user.displayName}</h3>
-          <p className="mt-1 text-sm font-bold text-slate-500">
+          <h3 className="truncate text-base font-black text-white sm:text-lg">
+            {user.displayName}
+          </h3>
+          <p className="mt-0.5 truncate text-xs font-bold text-slate-500 sm:text-sm">
             @{user.username}
           </p>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs font-black">
-            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-slate-300">
+          <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-black sm:gap-2">
+            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-2 py-0.5 text-slate-300 sm:px-3 sm:py-1">
               Favorite Genre: {user.favoriteGenre}
             </span>
-            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-slate-300">
+            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-2 py-0.5 text-slate-300 sm:px-3 sm:py-1">
               {user.totalReviews} Reviews
             </span>
-            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-slate-300">
+            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-2 py-0.5 text-slate-300 sm:px-3 sm:py-1">
               {formatCompactCount(user.followersCount)} Followers
             </span>
           </div>
         </div>
         <FollowButton
-          className="sm:items-end"
+          className="shrink-0"
+          size="sm"
           target={{
             displayName: user.displayName,
             userId: user.userId,
@@ -2516,10 +2564,10 @@ function PeopleTabContent({ users }: { users: SuggestedFollow[] }) {
   }, [followingIds, selectedFavoriteGenre, userSearch, users]);
 
   return (
-    <div className="w-full space-y-4 sm:space-y-5">
-      <section className={cardClass("relative z-[60] overflow-visible p-4 sm:p-5")}>
+    <div className="w-full space-y-3 sm:space-y-5">
+      <section className={cardClass("relative z-[60] overflow-visible p-2 sm:p-3")}>
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
-          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-800 bg-black/35 px-4 text-sm font-bold text-slate-400 shadow-inner shadow-black/20">
+          <label className="flex min-h-10 items-center gap-2 rounded-xl border border-slate-800 bg-black/35 px-3 text-sm font-bold text-slate-400 shadow-inner shadow-black/20">
             <span aria-hidden="true" className="text-lg">
               ⌕
             </span>
@@ -2540,13 +2588,13 @@ function PeopleTabContent({ users }: { users: SuggestedFollow[] }) {
       </section>
 
       {visibleUsers.length > 0 ? (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
           {visibleUsers.map((user) => (
             <PeopleCard key={user.username} user={user} />
           ))}
         </div>
       ) : (
-        <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
+        <section className={cardClass("p-4 text-sm font-bold text-slate-300")}>
           No users match those filters yet.
         </section>
       )}
