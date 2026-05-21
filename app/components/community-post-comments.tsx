@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   addCommunityComment,
   COMMUNITY_COMMENT_MAX_LENGTH,
@@ -92,11 +92,22 @@ export default function CommunityPostComments({
   const [comments, setComments] = useState<CommunityComment[]>([]);
   const [draft, setDraft] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [areCommentsOpen, setAreCommentsOpen] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savingLikeId, setSavingLikeId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const totalCommentCount = initialCommentCount + comments.length;
+  const visibleComments = showAllComments
+    ? comments
+    : comments.slice(-2);
+  const hasExtraComments = comments.length > 2;
+  const commentCountLabel = `${totalCommentCount} ${
+    totalCommentCount === 1 ? "comment" : "comments"
+  }`;
   const remainingCharacters = COMMUNITY_COMMENT_MAX_LENGTH - draft.length;
   const isDraftTooLong = remainingCharacters < 0;
   const validation = useMemo(() => validateCommunityComment(draft), [draft]);
@@ -130,6 +141,12 @@ export default function CommunityPostComments({
     };
   }, [postId]);
 
+  useEffect(() => {
+    if (isComposerOpen) {
+      textareaRef.current?.focus();
+    }
+  }, [isComposerOpen]);
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -150,6 +167,8 @@ export default function CommunityPostComments({
       .then((nextComments) => {
         setComments(nextComments);
         setDraft("");
+        setIsComposerOpen(false);
+        setAreCommentsOpen(true);
       })
       .catch((error: Error) => {
         setMessage(userFriendlyError(error));
@@ -209,124 +228,195 @@ export default function CommunityPostComments({
   };
 
   return (
-    <section className="mt-3 border-t border-white/10 pt-3">
-      <div className="mb-2 flex items-center justify-between gap-3 text-xs font-black text-slate-400">
-        <span>{totalCommentCount} comments</span>
+    <>
+      <div className="flex min-h-9 flex-wrap items-center gap-2 text-xs font-black text-slate-400">
+        {totalCommentCount > 0 ? (
+          <button
+            type="button"
+            aria-expanded={areCommentsOpen}
+            onClick={() => {
+              setAreCommentsOpen((isOpen) => !isOpen);
+              setShowAllComments(false);
+            }}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-slate-700 bg-black/25 px-3 transition hover:border-yellow-400/50 hover:text-yellow-300"
+          >
+            <svg
+              aria-hidden="true"
+              className="h-3.5 w-3.5"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M5 6.5h14v9H8.5L5 19v-3.5Z"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              />
+            </svg>
+            {areCommentsOpen ? "Hide comments" : `View ${commentCountLabel}`}
+          </button>
+        ) : (
+          <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-slate-700 bg-black/25 px-3">
+            <svg
+              aria-hidden="true"
+              className="h-3.5 w-3.5"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M5 6.5h14v9H8.5L5 19v-3.5Z"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              />
+            </svg>
+            0 comments
+          </span>
+        )}
+        <button
+          type="button"
+          aria-expanded={isComposerOpen}
+          onClick={() => {
+            setIsComposerOpen((isOpen) => !isOpen);
+            setMessage("");
+          }}
+          className="inline-flex min-h-9 items-center rounded-full border border-slate-700 bg-black/25 px-3 text-slate-200 transition hover:border-yellow-400/50 hover:text-yellow-300"
+        >
+          Comment
+        </button>
         {isLoading ? <span>Loading...</span> : null}
       </div>
 
-      {comments.length > 0 ? (
-        <div className="space-y-3">
-          {comments.map((comment) => (
-            <div key={comment.id} className="flex items-start gap-3">
-              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-yellow-400/10 text-sm font-black text-white">
-                {comment.avatar}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <span className="text-sm font-black text-white">
-                    @{comment.username}
+      {areCommentsOpen || isComposerOpen || message || validationMessage ? (
+        <div className="basis-full border-t border-white/10 pt-2">
+          {areCommentsOpen && visibleComments.length > 0 ? (
+            <div className="space-y-2">
+              {visibleComments.map((comment) => (
+                <div key={comment.id} className="flex items-start gap-3">
+                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-yellow-400/10 text-sm font-black text-white">
+                    {comment.avatar}
                   </span>
-                  <span className="text-[11px] font-bold text-slate-500">
-                    {formatCommentTime(comment.createdAt)}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <span className="text-sm font-black text-white">
+                        @{comment.username}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-500">
+                        {formatCommentTime(comment.createdAt)}
+                      </span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold leading-6 text-slate-300">
+                      {comment.body}
+                    </p>
+                    <button
+                      type="button"
+                      aria-pressed={comment.likedByCurrentUser}
+                      aria-label={
+                        comment.likedByCurrentUser
+                          ? "Unlike this comment"
+                          : "Like this comment"
+                      }
+                      disabled={savingLikeId === comment.id}
+                      onClick={() => handleLike(comment)}
+                      className={`mt-2 inline-flex min-h-8 items-center gap-2 rounded-full border py-1 pl-1.5 pr-3 text-xs font-black shadow-lg transition ${
+                        comment.likedByCurrentUser
+                          ? "border-red-400/55 bg-red-500/18 text-red-100 shadow-red-500/10"
+                          : "border-slate-700 bg-black/25 text-slate-300 shadow-black/20 hover:border-red-400/50 hover:text-red-200"
+                      } disabled:cursor-not-allowed disabled:opacity-60`}
+                    >
+                      <span
+                        className={`inline-flex h-5 w-5 items-center justify-center rounded-full transition ${
+                          comment.likedByCurrentUser
+                            ? "bg-red-500 text-white"
+                            : "bg-red-500/10 text-red-300"
+                        }`}
+                      >
+                        <svg
+                          aria-hidden="true"
+                          className={`h-3.5 w-3.5 ${
+                            comment.likedByCurrentUser
+                              ? "fill-current"
+                              : "fill-transparent"
+                          }`}
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            d="M20.4 5.2c-1.7-1.8-4.5-1.8-6.3 0L12 7.3 9.9 5.2c-1.8-1.8-4.6-1.8-6.3 0-1.8 1.9-1.7 4.8.1 6.7L12 20l8.3-8.1c1.8-1.9 1.9-4.8.1-6.7Z"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                          />
+                        </svg>
+                      </span>
+                      {comment.likeCount}
+                    </button>
+                  </div>
                 </div>
-                <p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold leading-6 text-slate-300">
-                  {comment.body}
-                </p>
+              ))}
+              {hasExtraComments ? (
                 <button
                   type="button"
-                  aria-pressed={comment.likedByCurrentUser}
-                  aria-label={
-                    comment.likedByCurrentUser
-                      ? "Unlike this comment"
-                      : "Like this comment"
-                  }
-                  disabled={savingLikeId === comment.id}
-                  onClick={() => handleLike(comment)}
-                  className={`mt-2 inline-flex min-h-8 items-center gap-2 rounded-full border py-1 pl-1.5 pr-3 text-xs font-black shadow-lg transition ${
-                    comment.likedByCurrentUser
-                      ? "border-red-400/55 bg-red-500/18 text-red-100 shadow-red-500/10"
-                      : "border-slate-700 bg-black/25 text-slate-300 shadow-black/20 hover:border-red-400/50 hover:text-red-200"
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                  onClick={() => setShowAllComments((isShowingAll) => !isShowingAll)}
+                  className="text-xs font-black text-yellow-300 transition hover:text-yellow-200"
                 >
-                  <span
-                    className={`inline-flex h-5 w-5 items-center justify-center rounded-full transition ${
-                      comment.likedByCurrentUser
-                        ? "bg-red-500 text-white"
-                        : "bg-red-500/10 text-red-300"
-                    }`}
-                  >
-                    <svg
-                      aria-hidden="true"
-                      className={`h-3.5 w-3.5 ${
-                        comment.likedByCurrentUser
-                          ? "fill-current"
-                          : "fill-transparent"
-                      }`}
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M20.4 5.2c-1.7-1.8-4.5-1.8-6.3 0L12 7.3 9.9 5.2c-1.8-1.8-4.6-1.8-6.3 0-1.8 1.9-1.7 4.8.1 6.7L12 20l8.3-8.1c1.8-1.9 1.9-4.8.1-6.7Z"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                  </span>
-                  {comment.likeCount}
+                  {showAllComments ? "Show fewer comments" : "View all comments"}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {isComposerOpen ? (
+            <form onSubmit={handleSubmit} className="mt-2">
+              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_136px] sm:items-stretch">
+                <label className="block">
+                  <span className="sr-only">Add a comment</span>
+                  <textarea
+                    ref={textareaRef}
+                    value={draft}
+                    maxLength={COMMUNITY_COMMENT_MAX_LENGTH + 20}
+                    onChange={(event) => {
+                      setDraft(event.target.value);
+                      setMessage("");
+                    }}
+                    placeholder="Add a comment..."
+                    className="h-11 w-full resize-none rounded-xl border border-slate-800 bg-black/35 px-3 py-2 text-sm font-semibold leading-5 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70 sm:h-12"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={
+                    isSubmitting ||
+                    isDraftTooLong ||
+                    !draft.trim() ||
+                    Boolean(validationMessage)
+                  }
+                  className="h-11 rounded-xl bg-yellow-400 px-4 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none sm:h-12"
+                >
+                  {isSubmitting ? "Posting..." : "Comment"}
                 </button>
               </div>
-            </div>
-          ))}
+              {draft ? (
+                <p
+                  className={`mt-1 text-xs font-bold ${
+                    isDraftTooLong ? "text-red-300" : "text-slate-500"
+                  }`}
+                >
+                  {Math.max(remainingCharacters, 0)} characters left
+                </p>
+              ) : null}
+            </form>
+          ) : null}
+
+          {message || validationMessage ? (
+            <p className="mt-2 text-xs font-bold text-yellow-300">
+              {message || validationMessage}
+            </p>
+          ) : null}
         </div>
       ) : null}
-
-      <form onSubmit={handleSubmit} className="mt-2">
-        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_136px] sm:items-stretch">
-          <label className="block">
-            <span className="sr-only">Add a comment</span>
-            <textarea
-              value={draft}
-              maxLength={COMMUNITY_COMMENT_MAX_LENGTH + 20}
-              onChange={(event) => {
-                setDraft(event.target.value);
-                setMessage("");
-              }}
-              placeholder="Add a comment..."
-              className="h-12 w-full resize-none rounded-xl border border-slate-800 bg-black/35 px-3 py-2 text-sm font-semibold leading-5 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70 sm:h-12"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={
-              isSubmitting ||
-              isDraftTooLong ||
-              !draft.trim() ||
-              Boolean(validationMessage)
-            }
-            className="h-12 rounded-xl bg-yellow-400 px-4 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
-          >
-            {isSubmitting ? "Posting..." : "Comment"}
-          </button>
-        </div>
-        {draft ? (
-          <p
-            className={`mt-1 text-xs font-bold ${
-              isDraftTooLong ? "text-red-300" : "text-slate-500"
-            }`}
-          >
-            {Math.max(remainingCharacters, 0)} characters left
-          </p>
-        ) : null}
-      </form>
-
-      {message || validationMessage ? (
-        <p className="mt-2 text-xs font-bold text-yellow-300">
-          {message || validationMessage}
-        </p>
-      ) : null}
-    </section>
+    </>
   );
 }

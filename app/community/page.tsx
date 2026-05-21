@@ -27,6 +27,7 @@ import {
 } from "@/lib/follows";
 import {
   getDiscoverableUsers,
+  getCurrentUser,
   getRecentRatingsForUsers,
   getRecentCommunityRatings,
   getTopReviewers,
@@ -494,35 +495,6 @@ function formatRelativePostTime(value: string) {
   return `${Math.floor(hoursAgo / 24)}d ago`;
 }
 
-function discussionToFeedPost(discussion: CommunityDiscussion): CommunityFeedPost {
-  return {
-    actionHref: communityDiscussionHref(discussion.id),
-    actionLabel: "Join Discussion",
-    activity: `started a discussion about ${discussion.movieTitle}`,
-    comment: discussion.title,
-    commentCount: discussion.commentCount,
-    extraInteractions: 0,
-    genres: discussion.movieGenres,
-    id: `discussion-${discussion.id}`,
-    interactedAvatars: [],
-    likeCount: discussion.likeCount,
-    movie: {
-      fallbackMovieId: discussion.movieId,
-      imagePath: discussion.moviePosterUrl,
-      title: discussion.movieTitle,
-    },
-    timestamp: formatRelativePostTime(discussion.createdAt),
-    user: {
-      avatar: discussion.startedByAvatarUrl,
-      displayName: discussion.startedByDisplayName,
-      userId: discussion.startedByUserId,
-      username:
-        discussion.startedByUsername ??
-        discussion.startedByDisplayName.toLowerCase().replace(/[^a-z0-9]+/g, ""),
-    },
-  };
-}
-
 function reactionForScore(score: number): PopScoreReaction {
   if (score >= 90) {
     return {
@@ -944,21 +916,6 @@ function CommunityTabs({
         );
       })}
     </div>
-  );
-}
-
-function CommunitySearch() {
-  return (
-    <label className="flex min-h-12 w-full items-center gap-3 rounded-2xl border border-slate-800 bg-black/35 px-4 text-sm font-bold text-slate-400 shadow-inner shadow-black/20 sm:max-w-md">
-      <span aria-hidden="true" className="text-lg">
-        ⌕
-      </span>
-      <input
-        className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-slate-500"
-        placeholder="Search movies, users..."
-        type="search"
-      />
-    </label>
   );
 }
 
@@ -1618,24 +1575,36 @@ function CommunityFilters({
   );
 }
 
-function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
+function CommunityFeedCard({
+  currentUserId,
+  post,
+}: {
+  currentUserId?: string | null;
+  post: CommunityFeedPost;
+}) {
   const isCommentPost = Boolean(post.replyLink);
+  const [isReviewExpanded, setIsReviewExpanded] = useState(false);
+  const isOwnPost = Boolean(
+    currentUserId && post.user.userId && post.user.userId === currentUserId
+  );
+  const shouldShowReviewToggle = Boolean(post.comment && post.comment.length > 140);
+  const shouldClampReview = shouldShowReviewToggle && !isReviewExpanded;
 
   return (
-    <article className={cardClass("p-3 sm:p-4")}>
-      <div className="flex items-start gap-3">
-        <Avatar label={post.user.avatar} size="lg" />
+    <article className={cardClass("p-3.5 sm:p-4")}>
+      <div className="flex items-start gap-2.5 sm:gap-3">
+        <Avatar label={post.user.avatar} size="md" />
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-base font-semibold text-slate-200">
+          <div className="flex items-start justify-between gap-2 sm:gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold leading-5 text-slate-200 sm:text-base">
                 <span className="font-black text-white">
                   @{post.user.username}
                 </span>{" "}
                 {post.activity}
                 {post.popscore ? (
                   <span
-                    className={`ml-2 inline-flex rounded-lg border px-2 py-1 text-sm font-black shadow-lg ${scoreBadgeClass(
+                    className={`ml-1.5 inline-flex rounded-lg border px-1.5 py-0.5 text-xs font-black shadow-lg sm:ml-2 sm:px-2 sm:py-1 sm:text-sm ${scoreBadgeClass(
                       post.popscore
                     )}`}
                   >
@@ -1643,21 +1612,23 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
                   </span>
                 ) : null}
               </p>
-              <p className="mt-1 text-xs font-bold text-slate-500">
-                {post.timestamp}
+              <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-500">
+                {isOwnPost ? <span>You</span> : null}
+                {isOwnPost ? <span aria-hidden="true">·</span> : null}
+                <span>{post.timestamp}</span>
               </p>
             </div>
             <button
               type="button"
               aria-label="More options"
-              className="rounded-full px-2 text-xl font-black text-slate-500 transition hover:bg-white/10 hover:text-yellow-300"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-xl font-black text-slate-500 transition hover:bg-white/10 hover:text-yellow-300"
             >
               ...
             </button>
           </div>
-          {post.user.userId ? (
+          {post.user.userId && !isOwnPost ? (
             <FollowButton
-              className="mt-2"
+              className="mt-2 hidden sm:inline-flex"
               size="sm"
               target={{
                 displayName: post.user.displayName,
@@ -1667,7 +1638,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             />
           ) : null}
 
-          <div className="mt-3 grid gap-3 sm:grid-cols-[110px_1fr] lg:grid-cols-[120px_1fr]">
+          <div className="mt-2.5 grid grid-cols-[88px_minmax(0,1fr)] gap-3 sm:mt-3 sm:grid-cols-[110px_1fr] lg:grid-cols-[120px_1fr]">
             <MovieThumb
               alt={post.movie.title}
               fallbackMovieId={post.movie.fallbackMovieId}
@@ -1678,7 +1649,7 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             <div className="flex min-w-0 flex-col justify-center">
               {post.reaction ? (
                 <div className="flex items-center gap-2">
-                  <span className="relative block h-7 w-7 overflow-hidden rounded-full border border-yellow-400/25 bg-black/30 shadow-lg shadow-yellow-400/10">
+                  <span className="relative block h-6 w-6 overflow-hidden rounded-full border border-yellow-400/25 bg-black/30 shadow-lg shadow-yellow-400/10 sm:h-7 sm:w-7">
                     <Image
                       src={post.reaction.iconSrc}
                       alt=""
@@ -1689,33 +1660,41 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
                     />
                   </span>
                   <p
-                    className={`text-base font-black ${post.reaction.accentClass}`}
+                    className={`text-sm font-black sm:text-base ${post.reaction.accentClass}`}
                   >
                     {post.reaction.label}
                   </p>
                 </div>
               ) : null}
               {post.comment ? (
-                <p
-                  className={`mt-2 max-w-2xl text-sm font-semibold leading-5 text-slate-300 ${
-                    isCommentPost
-                      ? "rounded-xl border border-slate-800 bg-black/25 p-3"
-                      : ""
-                  }`}
-                >
-                  {post.comment}
-                </p>
+                <div className="mt-1.5">
+                  <p
+                    className={`max-w-2xl text-sm font-semibold leading-5 text-slate-300 ${
+                      isCommentPost
+                        ? "rounded-xl border border-slate-800 bg-black/25 p-3"
+                        : ""
+                    } ${
+                      shouldClampReview
+                        ? "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]"
+                        : ""
+                    }`}
+                  >
+                    {post.comment}
+                  </p>
+                  {shouldShowReviewToggle ? (
+                    <button
+                      type="button"
+                      aria-expanded={isReviewExpanded}
+                      onClick={() =>
+                        setIsReviewExpanded((isExpanded) => !isExpanded)
+                      }
+                      className="mt-1 text-xs font-black text-yellow-300 transition hover:text-yellow-200"
+                    >
+                      {isReviewExpanded ? "Show Less" : "Read More"}
+                    </button>
+                  ) : null}
+                </div>
               ) : null}
-              <CommunityPostLikeButton
-                className="mt-3"
-                initialLikeCount={post.likeCount}
-                notificationEntityId={post.movie.fallbackMovieId}
-                notificationEntityType={post.popscore ? "review" : "movie"}
-                notificationMovieTitle={post.movie.title}
-                notificationRecipientUserId={post.user.userId}
-                notificationRecipientUsername={post.user.username}
-                postId={post.id}
-              />
               {post.actionHref && post.actionLabel ? (
                 <Link
                   href={post.actionHref}
@@ -1740,14 +1719,25 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             </div>
           </div>
 
-          <CommunityPostComments
-            initialCommentCount={post.commentCount}
-            movieId={post.movie.fallbackMovieId}
-            movieTitle={post.movie.title}
-            postOwnerUserId={post.user.userId}
-            postOwnerUsername={post.user.username}
-            postId={post.id}
-          />
+          <div className="mt-2.5 flex flex-wrap items-center gap-2 sm:mt-3">
+            <CommunityPostLikeButton
+              initialLikeCount={post.likeCount}
+              notificationEntityId={post.movie.fallbackMovieId}
+              notificationEntityType={post.popscore ? "review" : "movie"}
+              notificationMovieTitle={post.movie.title}
+              notificationRecipientUserId={post.user.userId}
+              notificationRecipientUsername={post.user.username}
+              postId={post.id}
+            />
+            <CommunityPostComments
+              initialCommentCount={post.commentCount}
+              movieId={post.movie.fallbackMovieId}
+              movieTitle={post.movie.title}
+              postOwnerUserId={post.user.userId}
+              postOwnerUsername={post.user.username}
+              postId={post.id}
+            />
+          </div>
         </div>
       </div>
     </article>
@@ -1755,9 +1745,11 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
 }
 
 function FeedPostsList({
+  currentUserId,
   emptyMessage,
   posts,
 }: {
+  currentUserId?: string | null;
   emptyMessage: string;
   posts: CommunityFeedPost[];
 }) {
@@ -1772,7 +1764,11 @@ function FeedPostsList({
   return (
     <>
       {posts.map((post) => (
-        <CommunityFeedCard key={post.id} post={post} />
+        <CommunityFeedCard
+          key={post.id}
+          currentUserId={currentUserId}
+          post={post}
+        />
       ))}
     </>
   );
@@ -2575,12 +2571,9 @@ export default function CommunityPage() {
   );
   const [topReviewers, setTopReviewers] = useState<TopReviewerSummary[]>([]);
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const communityDiscussions = useMemo(
     () => [...createdDiscussions, ...mockCommunityDiscussions],
-    [createdDiscussions]
-  );
-  const discussionActivityPosts = useMemo(
-    () => createdDiscussions.map(discussionToFeedPost),
     [createdDiscussions]
   );
   const realFeedPosts = useMemo(
@@ -2588,11 +2581,8 @@ export default function CommunityPage() {
     [communityRatings]
   );
   const feedPostsToShow = useMemo(
-    () =>
-      realFeedPosts.length > 0
-        ? [...discussionActivityPosts, ...realFeedPosts]
-        : [...discussionActivityPosts, ...feedPosts],
-    [discussionActivityPosts, realFeedPosts]
+    () => (realFeedPosts.length > 0 ? realFeedPosts : feedPosts),
+    [realFeedPosts]
   );
   const visibleFeedPosts = useMemo(
     () => getVisibleFeedPosts(feedPostsToShow, selectedGenre, selectedTrend),
@@ -2648,6 +2638,26 @@ export default function CommunityPage() {
   useEffect(() => {
     let isCurrent = true;
 
+    getCurrentUser()
+      .then((user) => {
+        if (isCurrent) {
+          setCurrentUserId(user?.id ?? null);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setCurrentUserId(null);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isCurrent = true;
+
     Promise.all([
       getRecentCommunityRatings(30),
       getTopReviewers(150),
@@ -2695,7 +2705,6 @@ export default function CommunityPage() {
                 talking about right now.
               </p>
             </div>
-            <CommunitySearch />
           </div>
           <div className="mt-6">
             <CommunityTabs selectedTab={selectedTab} onSelect={setSelectedTab} />
@@ -2714,6 +2723,7 @@ export default function CommunityPage() {
                   selectedTrend={selectedTrend}
                 />
                 <FeedPostsList
+                  currentUserId={currentUserId}
                   posts={visibleFeedPosts}
                   emptyMessage="No posts match that filter yet."
                 />
