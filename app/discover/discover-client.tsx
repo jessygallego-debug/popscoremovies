@@ -78,6 +78,16 @@ export default function DiscoverClient() {
     () => limitRecommendations(movies),
     [movies]
   );
+  const handleGenreChange = (nextGenreKey: string) => {
+    if (genre === nextGenreKey) {
+      return;
+    }
+
+    setIsLoadingMovies(true);
+    setRecommendationMessage("");
+    setStatus("");
+    setGenre(nextGenreKey);
+  };
 
   useEffect(() => {
     let isCurrent = true;
@@ -170,19 +180,29 @@ export default function DiscoverClient() {
           ) : null}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 overflow-visible pb-1 sm:grid-cols-4 sm:gap-3 md:grid-cols-5 lg:grid-cols-8">
+        <label className="block md:hidden">
+          <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+            Genre filter
+          </span>
+          <select
+            value={genre}
+            onChange={(event) => handleGenreChange(event.target.value)}
+            className="min-h-12 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-sm font-black text-white outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
+          >
+            {PROFILE_GENRES.map((nextGenre) => (
+              <option key={nextGenre.key} value={nextGenre.key}>
+                {nextGenre.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="hidden gap-2 overflow-visible pb-1 md:grid md:grid-cols-5 md:gap-3 lg:grid-cols-8">
           {PROFILE_GENRES.map((nextGenre) => (
             <button
               key={nextGenre.key}
               type="button"
-              onClick={() => {
-                if (genre !== nextGenre.key) {
-                  setIsLoadingMovies(true);
-                  setRecommendationMessage("");
-                  setStatus("");
-                  setGenre(nextGenre.key);
-                }
-              }}
+              onClick={() => handleGenreChange(nextGenre.key)}
               className={`inline-flex min-h-9 w-full max-w-full items-center justify-center rounded-full border px-2 py-1.5 text-center text-[11px] font-black leading-tight transition sm:min-h-10 sm:px-3 sm:text-sm md:min-h-12 md:px-4 ${
                 genre === nextGenre.key
                   ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/25"

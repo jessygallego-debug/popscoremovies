@@ -380,6 +380,52 @@ function scoreBadgeClass(score: number) {
   return "border-orange-400/40 bg-orange-500/20 text-orange-200 shadow-orange-400/10";
 }
 
+function getFeedTimestampAgeMinutes(value: string) {
+  if (value === "Just now") {
+    return 0;
+  }
+
+  const match = value.match(/^(\d+)([mhd]) ago$/);
+
+  if (!match) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const amount = Number(match[1]);
+  const unit = match[2];
+
+  return unit === "m"
+    ? amount
+    : unit === "h"
+      ? amount * 60
+      : amount * 24 * 60;
+}
+
+function compareFeedPostsByNewest(
+  firstPost: CommunityFeedPost,
+  secondPost: CommunityFeedPost
+) {
+  return (
+    getFeedTimestampAgeMinutes(firstPost.timestamp) -
+    getFeedTimestampAgeMinutes(secondPost.timestamp)
+  );
+}
+
+function getFeedTrendingScore(post: CommunityFeedPost) {
+  const ageMinutes = getFeedTimestampAgeMinutes(post.timestamp);
+  const engagementScore =
+    post.likeCount * 2 + post.commentCount * 3 + post.extraInteractions;
+  const recencyScore =
+    ageMinutes === Number.MAX_SAFE_INTEGER
+      ? 0
+      : Math.max(0, 24 * 60 - ageMinutes) / 120;
+  const popScoreBoost = post.popscore
+    ? Math.max(0, post.popscore - 50) / 25
+    : 0;
+
+  return engagementScore + recencyScore + popScoreBoost;
+}
+
 function getVisibleFeedPosts(
   posts: CommunityFeedPost[],
   selectedGenre: string,
@@ -392,22 +438,26 @@ function getVisibleFeedPosts(
   const sortedPosts = [...matchingPosts];
 
   if (selectedTrend === "Most Liked") {
-    return sortedPosts.sort((a, b) => b.likeCount - a.likeCount);
+    return sortedPosts.sort(
+      (a, b) => b.likeCount - a.likeCount || compareFeedPostsByNewest(a, b)
+    );
   }
 
   if (selectedTrend === "Most Commented") {
-    return sortedPosts.sort((a, b) => b.commentCount - a.commentCount);
+    return sortedPosts.sort(
+      (a, b) =>
+        b.commentCount - a.commentCount || compareFeedPostsByNewest(a, b)
+    );
   }
 
   if (selectedTrend === "Newest") {
-    return sortedPosts;
+    return sortedPosts.sort(compareFeedPostsByNewest);
   }
 
   return sortedPosts.sort(
     (a, b) =>
-      b.likeCount +
-      b.commentCount * 2 -
-      (a.likeCount + a.commentCount * 2)
+      getFeedTrendingScore(b) - getFeedTrendingScore(a) ||
+      compareFeedPostsByNewest(a, b)
   );
 }
 

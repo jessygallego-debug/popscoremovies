@@ -194,7 +194,24 @@ export default function WatchlistClient() {
             {filteredWatchlist.length} shown
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-8">
+        <label className="block md:hidden">
+          <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+            Genre filter
+          </span>
+          <select
+            value={activeGenre}
+            onChange={(event) => setSelectedGenre(event.target.value)}
+            className="min-h-12 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-sm font-black text-white outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
+          >
+            {genreFilters.map((genre) => (
+              <option key={genre} value={genre}>
+                {genre === "all" ? "All Movies" : genre}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="hidden gap-2 sm:gap-3 md:grid md:grid-cols-8">
           {genreFilters.map((genre) => (
             <button
               key={genre}
