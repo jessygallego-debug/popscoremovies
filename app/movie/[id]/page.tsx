@@ -7,6 +7,7 @@ import CoStarReactions from "@/app/components/co-star-reactions";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import ProfileMenu from "@/app/components/profile-menu";
+import TrailerModalButton from "@/app/components/trailer-modal-button";
 import { getMovieFanReviews } from "@/lib/fan-reviews-store";
 import {
   backdropUrl,
@@ -24,7 +25,7 @@ function getSafeReturnPath(returnTo?: string) {
   return returnTo;
 }
 
-function getTrailerUrl(movie: NonNullable<Awaited<ReturnType<typeof getMovie>>>) {
+function getTrailer(movie: NonNullable<Awaited<ReturnType<typeof getMovie>>>) {
   const videos = movie.videos?.results ?? [];
   const youtubeVideos = videos.filter((video) => video.site === "YouTube");
   const trailer =
@@ -35,7 +36,7 @@ function getTrailerUrl(movie: NonNullable<Awaited<ReturnType<typeof getMovie>>>)
     youtubeVideos.find((video) => video.type === "Teaser") ??
     youtubeVideos[0];
 
-  return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+  return trailer ?? null;
 }
 
 function formatFanReviewDate(value: string) {
@@ -107,7 +108,7 @@ export default async function MoviePage({
   const rateHref = `/rate?movie=${movie.id}&returnTo=${encodeURIComponent(
     closeHref
   )}`;
-  const trailerUrl = getTrailerUrl(movie);
+  const trailer = getTrailer(movie);
   const fanReviews = await getMovieFanReviews(String(movie.id));
 
   return (
@@ -185,15 +186,12 @@ export default async function MoviePage({
                   >
                     Rate This Movie
                   </Link>
-                  {trailerUrl ? (
-                    <a
-                      href={trailerUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
-                    >
-                      Watch Trailer
-                    </a>
+                  {trailer ? (
+                    <TrailerModalButton
+                      movieTitle={movie.title}
+                      trailerKey={trailer.key}
+                      trailerTitle={trailer.name}
+                    />
                   ) : null}
                   <AddToWatchlistButton
                     movie={{
