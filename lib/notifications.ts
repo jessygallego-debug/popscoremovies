@@ -241,6 +241,7 @@ function createLocalNotification(input: CreateNotificationInput) {
   const notifications = [notification, ...readLocalNotifications()];
 
   writeLocalNotifications(notifications);
+  window.dispatchEvent(new Event(NOTIFICATIONS_UPDATED_EVENT));
 
   return notification;
 }

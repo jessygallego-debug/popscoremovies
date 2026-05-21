@@ -14,6 +14,8 @@ type CommunityPostCommentsProps = {
   initialCommentCount: number;
   movieId?: string;
   movieTitle?: string;
+  postOwnerUserId?: string;
+  postOwnerUsername?: string;
   postId: string;
 };
 
@@ -83,6 +85,8 @@ export default function CommunityPostComments({
   initialCommentCount,
   movieId,
   movieTitle,
+  postOwnerUserId,
+  postOwnerUsername,
   postId,
 }: CommunityPostCommentsProps) {
   const [comments, setComments] = useState<CommunityComment[]>([]);
@@ -137,7 +141,12 @@ export default function CommunityPostComments({
     setIsSubmitting(true);
     setMessage("");
 
-    addCommunityComment(postId, draft)
+    addCommunityComment(postId, draft, {
+      movieId,
+      movieTitle,
+      recipientUserId: postOwnerUserId,
+      recipientUsername: postOwnerUsername,
+    })
       .then((nextComments) => {
         setComments(nextComments);
         setDraft("");

@@ -1553,7 +1553,7 @@ function FilterMenu({
       onToggle={closeOtherMenus}
       className="group relative z-[70]"
     >
-      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl border border-slate-700 bg-slate-950/90 px-4 text-sm font-black text-slate-100 shadow-inner shadow-black/20 outline-none transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200 [&::-webkit-details-marker]:hidden">
+      <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/90 px-3 text-xs font-black text-slate-100 shadow-inner shadow-black/20 outline-none transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200 sm:text-sm [&::-webkit-details-marker]:hidden">
         {selectedOption}
         <span
           aria-hidden="true"
@@ -1601,8 +1601,8 @@ function CommunityFilters({
   selectedTrend: string;
 }) {
   return (
-    <section className={cardClass("relative z-[60] overflow-visible p-3")}>
-      <div className="flex flex-wrap gap-2 sm:gap-3">
+    <section className={cardClass("relative z-[60] overflow-visible p-2")}>
+      <div className="flex flex-wrap gap-2">
         <FilterMenu
           onSelect={onGenreChange}
           options={genreFilters}
@@ -1744,6 +1744,8 @@ function CommunityFeedCard({ post }: { post: CommunityFeedPost }) {
             initialCommentCount={post.commentCount}
             movieId={post.movie.fallbackMovieId}
             movieTitle={post.movie.title}
+            postOwnerUserId={post.user.userId}
+            postOwnerUsername={post.user.username}
             postId={post.id}
           />
         </div>
@@ -1838,8 +1840,8 @@ function DiscussionFilters({
   selectedGenre: string;
 }) {
   return (
-    <section className={cardClass("relative z-[60] overflow-visible p-3")}>
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+    <section className={cardClass("relative z-[60] overflow-visible p-2")}>
+      <div className="flex flex-wrap items-center gap-2">
         <FilterMenu
           onSelect={onGenreChange}
           options={genreFilters}
@@ -1854,7 +1856,7 @@ function DiscussionFilters({
               type="button"
               aria-pressed={isSelected}
               onClick={() => onFilterChange(filter)}
-              className={`min-h-11 rounded-xl border px-4 text-sm font-black transition ${
+              className={`min-h-10 rounded-xl border px-3 text-xs font-black transition sm:text-sm ${
                 isSelected
                   ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/15"
                   : "border-slate-700 bg-slate-950/90 text-slate-100 hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200"

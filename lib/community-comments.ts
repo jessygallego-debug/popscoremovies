@@ -80,6 +80,13 @@ export type CommunityPostLikeSummary = {
   postId: string;
 };
 
+type CommunityCommentNotificationContext = {
+  movieId?: string;
+  movieTitle?: string;
+  recipientUserId?: string;
+  recipientUsername?: string;
+};
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -344,7 +351,11 @@ export async function getCommunityPostLikeSummary(
   };
 }
 
-export async function addCommunityComment(postId: string, comment: string) {
+export async function addCommunityComment(
+  postId: string,
+  comment: string,
+  notificationContext?: CommunityCommentNotificationContext
+) {
   const validation = validateCommunityComment(comment);
 
   if (validation.error || !validation.body) {
@@ -368,6 +379,23 @@ export async function addCommunityComment(postId: string, comment: string) {
       user_id: profile.user_id,
     }),
   });
+
+  if (notificationContext?.recipientUserId) {
+    const movieText = notificationContext.movieTitle
+      ? ` on ${notificationContext.movieTitle}`
+      : "";
+
+    await createNotification({
+      actorUserId: profile.user_id,
+      actorUsername: profile.username,
+      entityId: notificationContext.movieId ?? "/community",
+      entityType: notificationContext.movieId ? "movie" : "movie_comment",
+      message: `${profile.username} commented on your post${movieText}.`,
+      recipientUserId: notificationContext.recipientUserId,
+      recipientUsername: notificationContext.recipientUsername,
+      type: "comment_reply",
+    });
+  }
 
   return getCommunityComments(postId, profile);
 }
