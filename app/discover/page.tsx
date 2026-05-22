@@ -26,14 +26,13 @@ export default async function DiscoverPage({
               Discover Movies You&rsquo;ll Actually Love
             </h1>
             <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:mt-5 sm:text-lg sm:leading-8">
-              Pick a genre and get movie recommendations based on the films you
-              rated highest.
+              Pick a genre and get personalized movie recommendations.
             </p>
           </div>
 
           <div className="rounded-[1.5rem] border border-slate-800/80 bg-[radial-gradient(circle_at_70%_15%,rgba(250,204,21,0.18),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-black/40 sm:rounded-[2rem] sm:p-6">
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
-              {["Choose Genre", "Get Recommendations", "Rate & Refine"].map((step, index) => (
+              {["Choose Genre", "Get Movie Matches", "Rate & Refine"].map((step, index) => (
                 <div
                   key={step}
                   className="rounded-2xl border border-white/10 bg-black/35 p-3 text-center sm:p-5"
