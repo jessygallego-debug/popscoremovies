@@ -77,7 +77,7 @@ export default function ProfileMenu() {
           ›
         </span>
       </summary>
-      <div className="absolute right-0 z-30 mt-3 w-56 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl shadow-black/50">
+      <div className="absolute right-0 z-30 mt-3 w-56 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-2 shadow-2xl shadow-black/50">
         {menuItems.map((item) => {
           const href = item.href.startsWith("/")
             ? item.href
