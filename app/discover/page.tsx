@@ -1,7 +1,16 @@
 import SiteHeader from "@/app/components/site-header";
 import DiscoverClient from "@/app/discover/discover-client";
+import { PROFILE_GENRES, normalizeProfileGenreKey } from "@/lib/profile-config";
 
-export default function DiscoverPage() {
+export default async function DiscoverPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ genre?: string }>;
+}) {
+  const params = await searchParams;
+  const initialGenre =
+    normalizeProfileGenreKey(params.genre) || PROFILE_GENRES[0].key;
+
   return (
     <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.16),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.16),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_40%,#000_72%,#020617_100%)] text-white">
       <div className="pointer-events-none fixed inset-0 opacity-40 [background-image:radial-gradient(rgba(250,204,21,0.28)_1px,transparent_1px)] [background-size:42px_42px]" />
@@ -45,7 +54,7 @@ export default function DiscoverPage() {
           </div>
         </section>
 
-        <DiscoverClient />
+        <DiscoverClient initialGenre={initialGenre} />
       </section>
     </main>
   );

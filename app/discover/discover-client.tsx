@@ -60,8 +60,16 @@ function DiscoveryPoster({ movie }: { movie: DiscoveryRecommendation }) {
   );
 }
 
-export default function DiscoverClient() {
-  const [genre, setGenre] = useState(PROFILE_GENRES[0].key);
+type DiscoverClientProps = {
+  initialGenre: string;
+};
+
+function discoveryReturnPathForGenre(genreKey: string) {
+  return `/discover?${new URLSearchParams({ genre: genreKey }).toString()}`;
+}
+
+export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
+  const [genre, setGenre] = useState(initialGenre);
   const [movies, setMovies] = useState<DiscoveryRecommendation[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoadingMovies, setIsLoadingMovies] = useState(true);
@@ -258,12 +266,17 @@ export default function DiscoverClient() {
 
       <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
         {visibleMovies.map((movie) => {
+          const discoveryReturnPath = discoveryReturnPathForGenre(genre);
           const detailsHref = `/movie/${movie.id}?returnTo=${encodeURIComponent(
-            "/discover"
+            discoveryReturnPath
           )}`;
-          const rateHref = `/rate?movie=${movie.id}&returnTo=${encodeURIComponent(
-            "/discover"
-          )}&from=discover`;
+          const rateParams = new URLSearchParams({
+            from: "discover",
+            genre,
+            movie: String(movie.id),
+            returnTo: discoveryReturnPath,
+          });
+          const rateHref = `/rate?${rateParams.toString()}`;
 
           return (
             <article

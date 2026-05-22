@@ -82,6 +82,8 @@ export default async function RatePage({
     : null;
   const urlGenre = isGenreKey(params.genre) ? params.genre : null;
   const initialGenre = movieGenre ?? urlGenre ?? "horror";
+  const shouldSubmitToReturnPath =
+    params.from === "home" || params.from === "discover";
 
   return (
     <RateClient
@@ -94,7 +96,7 @@ export default async function RatePage({
       movieTitle={movie?.title}
       returnTo={getSafeReturnPath(params.returnTo)}
       submitReturnTo={
-        params.from === "home" ? getSafeReturnPath(params.returnTo) : undefined
+        shouldSubmitToReturnPath ? getSafeReturnPath(params.returnTo) : undefined
       }
     />
   );
