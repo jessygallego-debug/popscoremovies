@@ -205,7 +205,7 @@ export default function DiscoverClient() {
               onClick={() => handleGenreChange(nextGenre.key)}
               className={`inline-flex min-h-9 w-full max-w-full items-center justify-center rounded-full border px-2 py-1.5 text-center text-[11px] font-black leading-tight transition sm:min-h-10 sm:px-3 sm:text-sm md:min-h-12 md:px-4 ${
                 genre === nextGenre.key
-                  ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/25"
+                  ? "border-yellow-400/60 bg-yellow-400/10 text-yellow-300 shadow-inner shadow-black/20"
                   : "border-slate-700 bg-slate-950 text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
               }`}
             >

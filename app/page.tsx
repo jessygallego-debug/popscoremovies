@@ -261,7 +261,7 @@ export default async function Home({
                 href={genre.href}
                 className={`inline-flex min-h-9 min-w-0 items-center justify-center rounded-full border px-2 py-1.5 text-center text-xs font-black transition duration-300 hover:-translate-y-0.5 sm:min-h-10 sm:px-3 sm:text-sm md:min-h-11 md:px-4 ${
                   genre.isActive
-                    ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/25"
+                    ? "border-yellow-400/60 bg-yellow-400/10 text-yellow-300 shadow-inner shadow-black/20"
                     : "border-slate-700/90 bg-slate-950/80 text-slate-300 hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-200"
                 }`}
               >
