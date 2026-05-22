@@ -1560,11 +1560,11 @@ function FilterMenu({
       onToggle={closeOtherMenus}
       className="group relative z-[70]"
     >
-      <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/90 px-3 text-xs font-black text-slate-100 shadow-inner shadow-black/20 outline-none transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200 sm:text-sm [&::-webkit-details-marker]:hidden">
+      <summary className="inline-flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-full border border-yellow-400/35 bg-yellow-400 px-3 text-[11px] font-black leading-none text-black shadow-lg shadow-yellow-400/15 outline-none transition hover:border-yellow-300 hover:bg-yellow-300 sm:min-h-10 sm:px-4 sm:text-xs [&::-webkit-details-marker]:hidden">
         {selectedOption}
         <span
           aria-hidden="true"
-          className="text-yellow-300 transition group-open:rotate-180"
+          className="transition group-open:rotate-180"
         >
           ▾
         </span>
@@ -1581,7 +1581,7 @@ function FilterMenu({
                 onSelect(option);
                 event.currentTarget.closest("details")?.removeAttribute("open");
               }}
-              className={`rounded-xl px-3 py-2 text-left text-sm font-black transition ${
+              className={`rounded-full px-3 py-2 text-left text-xs font-black transition ${
                 isSelected
                   ? "bg-yellow-400 text-black"
                   : "text-slate-200 hover:bg-yellow-400/10 hover:text-yellow-300"
@@ -1937,7 +1937,7 @@ function DiscussionFilters({
               type="button"
               aria-pressed={isSelected}
               onClick={() => onFilterChange(filter)}
-              className={`min-h-10 rounded-xl border px-3 text-xs font-black transition sm:text-sm ${
+              className={`min-h-9 rounded-full border px-3 text-[11px] font-black transition sm:min-h-10 sm:px-4 sm:text-xs ${
                 isSelected
                   ? "border-yellow-400 bg-yellow-400 text-black shadow-lg shadow-yellow-400/15"
                   : "border-slate-700 bg-slate-950/90 text-slate-100 hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200"
@@ -2617,7 +2617,7 @@ function PeopleTabContent({ users }: { users: SuggestedFollow[] }) {
     <div className="w-full space-y-3 sm:space-y-5">
       <section className={cardClass("relative z-[60] overflow-visible p-2 sm:p-3")}>
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
-          <label className="flex min-h-10 items-center gap-2 rounded-xl border border-slate-800 bg-black/35 px-3 text-sm font-bold text-slate-400 shadow-inner shadow-black/20">
+          <label className="flex min-h-9 items-center gap-2 rounded-full border border-slate-800 bg-black/35 px-3 text-xs font-bold text-slate-400 shadow-inner shadow-black/20 sm:min-h-10 sm:text-sm">
             <span aria-hidden="true" className="text-lg">
               ⌕
             </span>

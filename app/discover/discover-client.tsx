@@ -187,7 +187,7 @@ export default function DiscoverClient() {
           <select
             value={genre}
             onChange={(event) => handleGenreChange(event.target.value)}
-            className="min-h-12 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-sm font-black text-white outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
+            className="min-h-12 w-full rounded-full border border-yellow-400/35 bg-[#020617] px-4 text-sm font-black text-yellow-300 shadow-inner shadow-black/30 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-400/20"
           >
             {PROFILE_GENRES.map((nextGenre) => (
               <option key={nextGenre.key} value={nextGenre.key}>
