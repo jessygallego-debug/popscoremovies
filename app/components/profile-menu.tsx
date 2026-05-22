@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { avatarForKey } from "@/lib/profile-config";
 import {
   getCurrentUser,
@@ -21,6 +21,7 @@ const menuItems = [
 export default function ProfileMenu() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const menuRef = useRef<HTMLDetailsElement>(null);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const currentPath = `${pathname}${
     searchParams.toString() ? `?${searchParams.toString()}` : ""
@@ -49,6 +50,29 @@ export default function ProfileMenu() {
     };
   }, []);
 
+  useEffect(() => {
+    const closeMenu = (event: PointerEvent) => {
+      const menu = menuRef.current;
+
+      if (menu?.open && !menu.contains(event.target as Node)) {
+        menu.removeAttribute("open");
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        menuRef.current?.removeAttribute("open");
+      }
+    };
+
+    document.addEventListener("pointerdown", closeMenu);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
   if (!profile) {
     return (
       <Link
@@ -67,7 +91,7 @@ export default function ProfileMenu() {
   const avatar = avatarForKey(profile.avatar_key);
 
   return (
-    <details className="group relative z-[200] shrink-0">
+    <details ref={menuRef} className="group relative z-[200] shrink-0">
       <summary className="inline-flex list-none items-center gap-2 rounded-full border border-yellow-400/45 bg-yellow-400/10 px-3 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:cursor-pointer hover:border-yellow-300 hover:bg-yellow-400 hover:text-black hover:shadow-yellow-400/30">
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/45 bg-black/40 text-lg">
           {avatar.icon}
@@ -87,6 +111,7 @@ export default function ProfileMenu() {
             <Link
               key={item.label}
               href={href}
+              onClick={() => menuRef.current?.removeAttribute("open")}
               className="block rounded-xl px-3 py-2 text-sm font-bold text-slate-200 transition hover:bg-yellow-400 hover:text-black"
             >
               {item.label}
