@@ -9,7 +9,10 @@ import MoviePosterImage from "@/app/components/movie-poster-image";
 import QuickReactionBadge from "@/app/components/quick-reaction-badge";
 import {
   FOLLOWS_UPDATED_EVENT,
+  getFollowerUsers,
   getFollowSummary,
+  getFollowingUsers,
+  type FollowListUser,
   type FollowSummary,
 } from "@/lib/follows";
 import {
@@ -30,6 +33,8 @@ type TabKey =
   | "stats"
   | "ratings"
   | "activity";
+
+type FollowListMode = "followers" | "following";
 
 type ProfileStatSummary = {
   average: number;
@@ -560,6 +565,7 @@ function ProfileSidebar({
   followSummary,
   onTabChange,
   onFollowChange,
+  onOpenFollowList,
   profile,
   summary,
 }: {
@@ -567,6 +573,7 @@ function ProfileSidebar({
   followSummary: FollowSummary | null;
   onTabChange: (tab: TabKey) => void;
   onFollowChange: (summary: FollowSummary) => void;
+  onOpenFollowList: (mode: FollowListMode) => void;
   profile: ProfileRecord;
   summary: ProfileStatSummary;
 }) {
@@ -594,18 +601,26 @@ function ProfileSidebar({
           Member since {formatDate(profile.created_at)}
         </p>
         <div className="mt-4 grid w-full grid-cols-2 gap-2 rounded-2xl border border-slate-800 bg-black/20 p-2">
-          <div>
+          <button
+            type="button"
+            onClick={() => onOpenFollowList("followers")}
+            className="rounded-xl p-2 text-center transition hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
+          >
             <p className="text-lg font-black text-white">
               {followSummary?.followersCount ?? 0}
             </p>
             <p className="text-[11px] font-bold text-slate-500">Followers</p>
-          </div>
-          <div>
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenFollowList("following")}
+            className="rounded-xl p-2 text-center transition hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
+          >
             <p className="text-lg font-black text-white">
               {followSummary?.followingCount ?? 0}
             </p>
             <p className="text-[11px] font-bold text-slate-500">Following</p>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -876,25 +891,49 @@ function MiniMetric({
 
 function StatCard({
   label,
+  onClick,
   value,
 }: {
   label: string;
+  onClick?: () => void;
   value: string | number;
 }) {
-  return (
-    <div className="min-h-24 rounded-2xl border border-slate-800 bg-black/35 p-3 sm:min-h-28 sm:p-4">
+  const className =
+    "min-h-24 rounded-2xl border border-slate-800 bg-black/35 p-3 text-left transition sm:min-h-28 sm:p-4";
+  const content = (
+    <>
       <p className="break-words text-xl font-black text-white sm:text-2xl">{value}</p>
       <p className="mt-1 text-[11px] font-bold text-slate-500 sm:text-xs">{label}</p>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${className} hover:border-yellow-400/50 hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/40`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className}>
+      {content}
     </div>
   );
 }
 
 function ProfileStatsCard({
   followSummary,
+  onOpenFollowList,
   profile,
   summary,
 }: {
   followSummary: FollowSummary | null;
+  onOpenFollowList: (mode: FollowListMode) => void;
   profile: ProfileRecord;
   summary: ProfileStatSummary;
 }) {
@@ -910,10 +949,12 @@ function ProfileStatsCard({
         />
         <StatCard
           label="Followers"
+          onClick={() => onOpenFollowList("followers")}
           value={followSummary?.followersCount ?? 0}
         />
         <StatCard
           label="Following"
+          onClick={() => onOpenFollowList("following")}
           value={followSummary?.followingCount ?? 0}
         />
         <StatCard
@@ -1462,6 +1503,101 @@ function EmptyState({ text }: { text: string }) {
   );
 }
 
+function FollowListDialog({
+  error,
+  isLoading,
+  mode,
+  onClose,
+  users,
+}: {
+  error: string;
+  isLoading: boolean;
+  mode: FollowListMode;
+  onClose: () => void;
+  users: FollowListUser[];
+}) {
+  const title = mode === "followers" ? "Followers" : "Following";
+  const emptyText =
+    mode === "followers"
+      ? "No followers yet."
+      : "This user is not following anyone yet.";
+
+  return (
+    <div
+      aria-modal="true"
+      className="fixed inset-0 z-[150] flex items-start justify-center bg-black/75 px-4 py-16 backdrop-blur-sm sm:py-24"
+      role="dialog"
+    >
+      <section className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-2xl shadow-black/70">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-800 p-4 sm:p-5">
+          <div>
+            <h2 className="text-xl font-black text-white">{title}</h2>
+            <p className="mt-1 text-xs font-bold text-slate-400">
+              {users.length} {users.length === 1 ? "user" : "users"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 text-lg font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300"
+            aria-label="Close follow list"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="max-h-[60vh] overflow-y-auto p-3 sm:p-4">
+          {isLoading ? (
+            <div className="rounded-2xl border border-slate-800 bg-black/25 p-5 text-sm font-bold text-slate-300">
+              Loading {title.toLowerCase()}...
+            </div>
+          ) : null}
+
+          {!isLoading && error ? (
+            <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-5 text-sm font-bold text-red-100">
+              {error}
+            </div>
+          ) : null}
+
+          {!isLoading && !error && users.length === 0 ? (
+            <div className="rounded-2xl border border-slate-800 bg-black/25 p-5 text-sm font-bold text-slate-300">
+              {emptyText}
+            </div>
+          ) : null}
+
+          {!isLoading && !error && users.length > 0 ? (
+            <div className="grid gap-2">
+              {users.map((user) => (
+                <Link
+                  key={user.userId}
+                  href={`/profile/${user.username}`}
+                  onClick={onClose}
+                  className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-black/25 p-3 transition hover:border-yellow-400/45 hover:bg-yellow-400/10"
+                >
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-yellow-400/35 bg-yellow-400/10 text-2xl">
+                    {user.avatar}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-black text-white">
+                      @{user.username}
+                    </span>
+                    <span className="mt-1 block truncate text-xs font-bold text-slate-400">
+                      Favorite Genre: {user.favoriteGenre}
+                    </span>
+                  </span>
+                  <span className="text-xs font-black text-yellow-300">
+                    View
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function ProfileTabs({ username }: { username: string }) {
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
@@ -1476,6 +1612,11 @@ export default function ProfileTabs({ username }: { username: string }) {
   const [followSummary, setFollowSummary] = useState<FollowSummary | null>(
     null
   );
+  const [followListMode, setFollowListMode] =
+    useState<FollowListMode | null>(null);
+  const [followListUsers, setFollowListUsers] = useState<FollowListUser[]>([]);
+  const [followListError, setFollowListError] = useState("");
+  const [isFollowListLoading, setIsFollowListLoading] = useState(false);
   const [ratingPopulation, setRatingPopulation] = useState<UserRatingCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -1493,6 +1634,9 @@ export default function ProfileTabs({ username }: { username: string }) {
 
       setProfile(nextProfile);
       setFollowSummary(null);
+      setFollowListMode(null);
+      setFollowListUsers([]);
+      setFollowListError("");
       if (!nextProfile) {
         setIsLoading(false);
         return;
@@ -1546,6 +1690,26 @@ export default function ProfileTabs({ username }: { username: string }) {
   }, [profile]);
 
   const summary = useMemo(() => getProfileStatSummary(ratings), [ratings]);
+  const openFollowList = (mode: FollowListMode) => {
+    if (!profile) {
+      return;
+    }
+
+    setFollowListMode(mode);
+    setFollowListUsers([]);
+    setFollowListError("");
+    setIsFollowListLoading(true);
+
+    const loader =
+      mode === "followers" ? getFollowerUsers : getFollowingUsers;
+
+    loader(profile.user_id)
+      .then((users) => setFollowListUsers(users))
+      .catch(() => {
+        setFollowListError("Could not load this list. Please try again.");
+      })
+      .finally(() => setIsFollowListLoading(false));
+  };
 
   if (isLoading) {
     return <EmptyState text="Loading PopFile..." />;
@@ -1573,6 +1737,7 @@ export default function ProfileTabs({ username }: { username: string }) {
         followSummary={followSummary}
         onTabChange={setActiveTab}
         onFollowChange={setFollowSummary}
+        onOpenFollowList={openFollowList}
         profile={profile}
         summary={summary}
       />
@@ -1585,6 +1750,7 @@ export default function ProfileTabs({ username }: { username: string }) {
         />
         <ProfileStatsCard
           followSummary={followSummary}
+          onOpenFollowList={openFollowList}
           profile={profile}
           summary={summary}
         />
@@ -1611,6 +1777,16 @@ export default function ProfileTabs({ username }: { username: string }) {
           onViewAll={() => setActiveTab("activity")}
         />
       </aside>
+
+      {followListMode ? (
+        <FollowListDialog
+          error={followListError}
+          isLoading={isFollowListLoading}
+          mode={followListMode}
+          onClose={() => setFollowListMode(null)}
+          users={followListUsers}
+        />
+      ) : null}
     </div>
   );
 }

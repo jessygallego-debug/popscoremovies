@@ -5,6 +5,7 @@ import {
   getCurrentUser,
   getSupabaseAccessToken,
 } from "@/lib/profile-store";
+import { avatarForKey, genreLabelForKey } from "@/lib/profile-config";
 import { createNotification } from "@/lib/notifications";
 
 export const FOLLOWS_UPDATED_EVENT = "popscore-follows-updated";
@@ -16,6 +17,13 @@ type FollowRow = {
   follower_id: string;
   following_id: string;
   id: string;
+};
+
+type FollowProfileRow = {
+  avatar_key: string;
+  favorite_genre: string | null;
+  user_id: string;
+  username: string;
 };
 
 export type FollowTarget = {
@@ -30,6 +38,14 @@ export type FollowSummary = {
   followingCount: number;
   isFollowing: boolean;
   isOwnProfile: boolean;
+};
+
+export type FollowListUser = {
+  avatar: string;
+  favoriteGenre: string;
+  followedAt: string;
+  userId: string;
+  username: string;
 };
 
 function getSupabaseConfig() {
@@ -129,6 +145,52 @@ function writeLocalFollows(rows: FollowRow[]) {
 
 function localFollowId(followerId: string, followingId: string) {
   return `follow_${followerId}_${followingId}`;
+}
+
+function inList(values: string[]) {
+  return values.map((value) => encodeURIComponent(value)).join(",");
+}
+
+function fallbackUsernameForUserId(userId: string) {
+  return `user_${userId.slice(0, 8)}`;
+}
+
+async function getProfilesByUserIds(userIds: string[]) {
+  const uniqueUserIds = Array.from(new Set(userIds)).filter(Boolean);
+
+  if (uniqueUserIds.length === 0) {
+    return new Map<string, FollowProfileRow>();
+  }
+
+  const profiles = await supabaseFetch<FollowProfileRow[]>(
+    `/profiles?user_id=in.(${inList(
+      uniqueUserIds
+    )})&select=user_id,username,avatar_key,favorite_genre`
+  ).catch(() => []);
+
+  return new Map(profiles.map((profile) => [profile.user_id, profile]));
+}
+
+async function hydrateFollowUsers(
+  rows: FollowRow[],
+  userIdForRow: (row: FollowRow) => string
+) {
+  const profilesByUserId = await getProfilesByUserIds(rows.map(userIdForRow));
+
+  return rows.map((row) => {
+    const userId = userIdForRow(row);
+    const profile = profilesByUserId.get(userId);
+
+    return {
+      avatar: avatarForKey(profile?.avatar_key ?? "").icon,
+      favoriteGenre: profile?.favorite_genre
+        ? genreLabelForKey(profile.favorite_genre)
+        : "Not set",
+      followedAt: row.created_at,
+      userId,
+      username: profile?.username ?? fallbackUsernameForUserId(userId),
+    };
+  });
 }
 
 function targetIsCurrentUser(
@@ -245,6 +307,42 @@ export async function getFollowingUserIdsForCurrentUser() {
     return readLocalFollows()
       .filter((row) => row.follower_id === currentUser.id)
       .map((row) => row.following_id);
+  }
+}
+
+export async function getFollowerUsers(targetUserId: string) {
+  try {
+    const rows = await supabaseFetch<FollowRow[]>(
+      `/user_follows?following_id=eq.${encodeURIComponent(
+        targetUserId
+      )}&select=id,follower_id,following_id,created_at&order=created_at.desc`
+    );
+
+    return hydrateFollowUsers(rows, (row) => row.follower_id);
+  } catch {
+    const rows = readLocalFollows()
+      .filter((row) => row.following_id === targetUserId)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+    return hydrateFollowUsers(rows, (row) => row.follower_id);
+  }
+}
+
+export async function getFollowingUsers(targetUserId: string) {
+  try {
+    const rows = await supabaseFetch<FollowRow[]>(
+      `/user_follows?follower_id=eq.${encodeURIComponent(
+        targetUserId
+      )}&select=id,follower_id,following_id,created_at&order=created_at.desc`
+    );
+
+    return hydrateFollowUsers(rows, (row) => row.following_id);
+  } catch {
+    const rows = readLocalFollows()
+      .filter((row) => row.follower_id === targetUserId)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+    return hydrateFollowUsers(rows, (row) => row.following_id);
   }
 }
 
