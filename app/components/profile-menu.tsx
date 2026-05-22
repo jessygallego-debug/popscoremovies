@@ -67,7 +67,7 @@ export default function ProfileMenu() {
   const avatar = avatarForKey(profile.avatar_key);
 
   return (
-    <details className="group relative shrink-0">
+    <details className="group relative z-[200] shrink-0">
       <summary className="inline-flex list-none items-center gap-2 rounded-full border border-yellow-400/45 bg-yellow-400/10 px-3 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:cursor-pointer hover:border-yellow-300 hover:bg-yellow-400 hover:text-black hover:shadow-yellow-400/30">
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/45 bg-black/40 text-lg">
           {avatar.icon}
@@ -77,7 +77,7 @@ export default function ProfileMenu() {
           ›
         </span>
       </summary>
-      <div className="absolute right-0 z-30 mt-3 w-56 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-2 shadow-2xl shadow-black/50">
+      <div className="absolute right-0 z-[300] mt-3 w-56 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-2 shadow-2xl shadow-black/50">
         {menuItems.map((item) => {
           const href = item.href.startsWith("/")
             ? item.href
