@@ -27,6 +27,11 @@ import {
   getFollowingUserIdsForCurrentUser,
 } from "@/lib/follows";
 import {
+  COMMUNITY_POST_ACTIVITY_UPDATED_EVENT,
+  getCommunityPostActivitySummaries,
+  type CommunityPostActivitySummary,
+} from "@/lib/community-comments";
+import {
   getDiscoverableUsers,
   getCurrentUser,
   getRecentRatingsForUsers,
@@ -57,10 +62,12 @@ type CommunityFeedPost = {
   activity: string;
   comment?: string;
   commentCount: number;
+  createdAt: string;
   genres: string[];
   id: string;
   interactedAvatars: string[];
   extraInteractions: number;
+  lastActivityAt?: string;
   likeCount: number;
   movie: {
     fallbackMovieId: string;
@@ -68,8 +75,12 @@ type CommunityFeedPost = {
     title: string;
   };
   popscore?: number;
+  recentCommentCount?: number;
+  recentLikeCount?: number;
   reaction?: PopScoreReaction;
   replyLink?: string;
+  sortCommentCount?: number;
+  sortLikeCount?: number;
   timestamp: string;
   user: CommunityUser;
 };
@@ -177,6 +188,7 @@ const feedPosts: CommunityFeedPost[] = [
       username: "jessy",
     },
     activity: "rated Interstellar",
+    createdAt: timeFromFeedTimestamp("2h ago"),
     timestamp: "2h ago",
     movie: {
       title: "Interstellar",
@@ -202,6 +214,7 @@ const feedPosts: CommunityFeedPost[] = [
       username: "moviemike",
     },
     activity: "marked Sinners as Worth Watching",
+    createdAt: timeFromFeedTimestamp("5h ago"),
     timestamp: "5h ago",
     movie: {
       title: "Sinners",
@@ -227,6 +240,7 @@ const feedPosts: CommunityFeedPost[] = [
       username: "sarahscreens",
     },
     activity: "commented on The Dark Knight",
+    createdAt: timeFromFeedTimestamp("1d ago"),
     timestamp: "1d ago",
     movie: {
       title: "The Dark Knight",
@@ -251,6 +265,7 @@ const feedPosts: CommunityFeedPost[] = [
       username: "cinephilechris",
     },
     activity: "discovered The Prestige",
+    createdAt: timeFromFeedTimestamp("1d ago"),
     timestamp: "1d ago",
     movie: {
       title: "The Prestige",
@@ -273,6 +288,7 @@ const feedPosts: CommunityFeedPost[] = [
       username: "linarose",
     },
     activity: "rated Dune: Part Two",
+    createdAt: timeFromFeedTimestamp("2d ago"),
     timestamp: "2d ago",
     movie: {
       title: "Dune: Part Two",
@@ -381,25 +397,10 @@ function scoreBadgeClass(score: number) {
   return "border-orange-400/40 bg-orange-500/20 text-orange-200 shadow-orange-400/10";
 }
 
-function getFeedTimestampAgeMinutes(value: string) {
-  if (value === "Just now") {
-    return 0;
-  }
+function getFeedTimeValue(value?: string | null) {
+  const time = value ? new Date(value).getTime() : Number.NaN;
 
-  const match = value.match(/^(\d+)([mhd]) ago$/);
-
-  if (!match) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
-  const amount = Number(match[1]);
-  const unit = match[2];
-
-  return unit === "m"
-    ? amount
-    : unit === "h"
-      ? amount * 60
-      : amount * 24 * 60;
+  return Number.isNaN(time) ? 0 : time;
 }
 
 function compareFeedPostsByNewest(
@@ -407,24 +408,26 @@ function compareFeedPostsByNewest(
   secondPost: CommunityFeedPost
 ) {
   return (
-    getFeedTimestampAgeMinutes(firstPost.timestamp) -
-    getFeedTimestampAgeMinutes(secondPost.timestamp)
+    getFeedTimeValue(secondPost.createdAt) - getFeedTimeValue(firstPost.createdAt)
   );
 }
 
-function getFeedTrendingScore(post: CommunityFeedPost) {
-  const ageMinutes = getFeedTimestampAgeMinutes(post.timestamp);
-  const engagementScore =
-    post.likeCount * 2 + post.commentCount * 3 + post.extraInteractions;
-  const recencyScore =
-    ageMinutes === Number.MAX_SAFE_INTEGER
-      ? 0
-      : Math.max(0, 24 * 60 - ageMinutes) / 120;
-  const popScoreBoost = post.popscore
-    ? Math.max(0, post.popscore - 50) / 25
-    : 0;
+function compareFeedPostsByLastActivity(
+  firstPost: CommunityFeedPost,
+  secondPost: CommunityFeedPost
+) {
+  return (
+    getFeedTimeValue(secondPost.lastActivityAt ?? secondPost.createdAt) -
+    getFeedTimeValue(firstPost.lastActivityAt ?? firstPost.createdAt)
+  );
+}
 
-  return engagementScore + recencyScore + popScoreBoost;
+function getFeedSortCommentCount(post: CommunityFeedPost) {
+  return post.sortCommentCount ?? post.commentCount;
+}
+
+function getFeedSortLikeCount(post: CommunityFeedPost) {
+  return post.sortLikeCount ?? post.likeCount;
 }
 
 function getVisibleFeedPosts(
@@ -440,14 +443,19 @@ function getVisibleFeedPosts(
 
   if (selectedTrend === "Most Liked") {
     return sortedPosts.sort(
-      (a, b) => b.likeCount - a.likeCount || compareFeedPostsByNewest(a, b)
+      (a, b) =>
+        getFeedSortLikeCount(b) - getFeedSortLikeCount(a) ||
+        getFeedSortCommentCount(b) - getFeedSortCommentCount(a) ||
+        compareFeedPostsByNewest(a, b)
     );
   }
 
   if (selectedTrend === "Most Commented") {
     return sortedPosts.sort(
       (a, b) =>
-        b.commentCount - a.commentCount || compareFeedPostsByNewest(a, b)
+        getFeedSortCommentCount(b) - getFeedSortCommentCount(a) ||
+        getFeedSortLikeCount(b) - getFeedSortLikeCount(a) ||
+        compareFeedPostsByNewest(a, b)
     );
   }
 
@@ -457,7 +465,13 @@ function getVisibleFeedPosts(
 
   return sortedPosts.sort(
     (a, b) =>
-      getFeedTrendingScore(b) - getFeedTrendingScore(a) ||
+      (b.recentCommentCount ?? getFeedSortCommentCount(b)) -
+        (a.recentCommentCount ?? getFeedSortCommentCount(a)) ||
+      (b.recentLikeCount ?? getFeedSortLikeCount(b)) -
+        (a.recentLikeCount ?? getFeedSortLikeCount(a)) ||
+      compareFeedPostsByLastActivity(a, b) ||
+      getFeedSortCommentCount(b) - getFeedSortCommentCount(a) ||
+      getFeedSortLikeCount(b) - getFeedSortLikeCount(a) ||
       compareFeedPostsByNewest(a, b)
   );
 }
@@ -610,10 +624,13 @@ function normalizeCommunityGenres(genreNames: string[], ratingGenre: string) {
 function mapCommunityRatingToPost(
   rating: CommunityRatingFeedItem
 ): CommunityFeedPost {
+  const createdAt = rating.created_at;
+
   return {
     activity: `rated ${rating.movieTitle}`,
     comment: rating.reviewComment ?? undefined,
     commentCount: 0,
+    createdAt,
     extraInteractions: 0,
     genres: normalizeCommunityGenres(rating.genreNames, rating.genre),
     id: `rating-${rating.id}`,
@@ -626,7 +643,7 @@ function mapCommunityRatingToPost(
     },
     popscore: rating.popscore,
     reaction: reactionForScore(rating.popscore),
-    timestamp: formatRelativePostTime(rating.updated_at ?? rating.created_at),
+    timestamp: formatRelativePostTime(createdAt),
     user: {
       avatar: rating.avatar,
       displayName: rating.username,
@@ -636,7 +653,33 @@ function mapCommunityRatingToPost(
   };
 }
 
+function applyFeedActivitySummaries(
+  posts: CommunityFeedPost[],
+  summaries: Record<string, CommunityPostActivitySummary>
+) {
+  return posts.map((post) => {
+    const summary = summaries[post.id];
+
+    if (!summary) {
+      return post;
+    }
+
+    return {
+      ...post,
+      lastActivityAt: summary.lastActivityAt,
+      recentCommentCount: summary.recentCommentCount,
+      recentLikeCount: summary.recentLikeCount,
+      sortCommentCount: summary.commentCount,
+      sortLikeCount: summary.likeCount,
+    };
+  });
+}
+
 function timeFromFeedTimestamp(value: string) {
+  if (value === "Just now") {
+    return new Date().toISOString();
+  }
+
   const match = value.match(/^(\d+)([mhd]) ago$/);
 
   if (!match) {
@@ -2717,6 +2760,10 @@ export default function CommunityPage() {
   const [topReviewers, setTopReviewers] = useState<TopReviewerSummary[]>([]);
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [feedActivityRefreshKey, setFeedActivityRefreshKey] = useState(0);
+  const [feedActivitySummaries, setFeedActivitySummaries] = useState<
+    Record<string, CommunityPostActivitySummary>
+  >({});
   const communityDiscussions = useMemo(
     () => [...createdDiscussions, ...mockCommunityDiscussions],
     [createdDiscussions]
@@ -2729,9 +2776,23 @@ export default function CommunityPage() {
     () => (realFeedPosts.length > 0 ? realFeedPosts : feedPosts),
     [realFeedPosts]
   );
+  const feedActivityInputs = useMemo(
+    () =>
+      feedPostsToShow.map((post) => ({
+        createdAt: post.createdAt,
+        initialCommentCount: post.commentCount,
+        initialLikeCount: post.likeCount,
+        postId: post.id,
+      })),
+    [feedPostsToShow]
+  );
+  const feedPostsWithActivity = useMemo(
+    () => applyFeedActivitySummaries(feedPostsToShow, feedActivitySummaries),
+    [feedActivitySummaries, feedPostsToShow]
+  );
   const visibleFeedPosts = useMemo(
-    () => getVisibleFeedPosts(feedPostsToShow, selectedGenre, selectedTrend),
-    [feedPostsToShow, selectedGenre, selectedTrend]
+    () => getVisibleFeedPosts(feedPostsWithActivity, selectedGenre, selectedTrend),
+    [feedPostsWithActivity, selectedGenre, selectedTrend]
   );
   const showSocialSidebar =
     selectedTab === "Feed" || selectedTab === "Discussions";
@@ -2779,6 +2840,50 @@ export default function CommunityPage() {
       window.clearTimeout(timeout);
     };
   }, []);
+
+  useEffect(() => {
+    const refreshFeedActivity = () => {
+      setFeedActivityRefreshKey((currentKey) => currentKey + 1);
+    };
+
+    window.addEventListener(
+      COMMUNITY_POST_ACTIVITY_UPDATED_EVENT,
+      refreshFeedActivity
+    );
+
+    return () => {
+      window.removeEventListener(
+        COMMUNITY_POST_ACTIVITY_UPDATED_EVENT,
+        refreshFeedActivity
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    if (feedActivityInputs.length === 0) {
+      return () => {
+        isCurrent = false;
+      };
+    }
+
+    getCommunityPostActivitySummaries(feedActivityInputs)
+      .then((summaries) => {
+        if (isCurrent) {
+          setFeedActivitySummaries(summaries);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setFeedActivitySummaries({});
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [feedActivityInputs, feedActivityRefreshKey]);
 
   useEffect(() => {
     let isCurrent = true;

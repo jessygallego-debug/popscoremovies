@@ -55,6 +55,16 @@ type CommunityPostLikeRow = {
   user_id: string;
 };
 
+type CommunityCommentActivityRow = {
+  created_at: string;
+  post_id: string;
+};
+
+type CommunityPostLikeActivityRow = {
+  created_at: string;
+  post_id: string;
+};
+
 type CommunityProfileRow = {
   avatar_key: string;
   user_id: string;
@@ -80,12 +90,33 @@ export type CommunityPostLikeSummary = {
   postId: string;
 };
 
+export type CommunityPostActivityInput = {
+  createdAt: string;
+  initialCommentCount: number;
+  initialLikeCount: number;
+  postId: string;
+};
+
+export type CommunityPostActivitySummary = {
+  commentCount: number;
+  lastActivityAt: string;
+  likeCount: number;
+  postId: string;
+  recentCommentCount: number;
+  recentLikeCount: number;
+};
+
 type CommunityCommentNotificationContext = {
   movieId?: string;
   movieTitle?: string;
   recipientUserId?: string;
   recipientUsername?: string;
 };
+
+export const COMMUNITY_POST_ACTIVITY_UPDATED_EVENT =
+  "popscore-community-post-activity-updated";
+
+const RECENT_ACTIVITY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -197,6 +228,42 @@ async function readSupabaseRestError(response: Response, fallback: string) {
 
 function inList(values: string[]) {
   return values.map((value) => encodeURIComponent(value)).join(",");
+}
+
+function isRecentCommunityActivity(value: string) {
+  const activityTime = new Date(value).getTime();
+
+  return (
+    !Number.isNaN(activityTime) &&
+    activityTime >= Date.now() - RECENT_ACTIVITY_WINDOW_MS
+  );
+}
+
+function newerTimestamp(firstValue: string, secondValue: string) {
+  const firstTime = new Date(firstValue).getTime();
+  const secondTime = new Date(secondValue).getTime();
+
+  if (Number.isNaN(firstTime)) {
+    return secondValue;
+  }
+
+  if (Number.isNaN(secondTime)) {
+    return firstValue;
+  }
+
+  return secondTime > firstTime ? secondValue : firstValue;
+}
+
+export function notifyCommunityPostActivityUpdated(postId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(COMMUNITY_POST_ACTIVITY_UPDATED_EVENT, {
+      detail: { postId },
+    })
+  );
 }
 
 export function normalizeCommunityComment(comment: string) {
@@ -331,6 +398,82 @@ export async function getCommunityComments(
     likes,
     profiles,
   });
+}
+
+export async function getCommunityPostActivitySummaries(
+  posts: CommunityPostActivityInput[]
+): Promise<Record<string, CommunityPostActivitySummary>> {
+  const baseSummaries = new Map<string, CommunityPostActivitySummary>();
+
+  posts.forEach((post) => {
+    if (!baseSummaries.has(post.postId)) {
+      baseSummaries.set(post.postId, {
+        commentCount: post.initialCommentCount,
+        lastActivityAt: post.createdAt,
+        likeCount: post.initialLikeCount,
+        postId: post.postId,
+        recentCommentCount: post.initialCommentCount,
+        recentLikeCount: post.initialLikeCount,
+      });
+    }
+  });
+
+  const postIds = Array.from(baseSummaries.keys());
+
+  if (postIds.length === 0) {
+    return {};
+  }
+
+  const [comments, likes] = await Promise.all([
+    supabaseFetch<CommunityCommentActivityRow[]>(
+      `/community_comments?post_id=in.(${inList(
+        postIds
+      )})&select=post_id,created_at&limit=1000`
+    ),
+    supabaseFetch<CommunityPostLikeActivityRow[]>(
+      `/community_post_likes?post_id=in.(${inList(
+        postIds
+      )})&select=post_id,created_at&limit=1000`
+    ),
+  ]);
+
+  comments.forEach((comment) => {
+    const summary = baseSummaries.get(comment.post_id);
+
+    if (!summary) {
+      return;
+    }
+
+    summary.commentCount += 1;
+    summary.lastActivityAt = newerTimestamp(
+      summary.lastActivityAt,
+      comment.created_at
+    );
+
+    if (isRecentCommunityActivity(comment.created_at)) {
+      summary.recentCommentCount += 1;
+    }
+  });
+
+  likes.forEach((like) => {
+    const summary = baseSummaries.get(like.post_id);
+
+    if (!summary) {
+      return;
+    }
+
+    summary.likeCount += 1;
+    summary.lastActivityAt = newerTimestamp(
+      summary.lastActivityAt,
+      like.created_at
+    );
+
+    if (isRecentCommunityActivity(like.created_at)) {
+      summary.recentLikeCount += 1;
+    }
+  });
+
+  return Object.fromEntries(baseSummaries);
 }
 
 export async function getCommunityPostLikeSummary(

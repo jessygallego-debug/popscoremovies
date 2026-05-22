@@ -6,6 +6,7 @@ import {
   COMMUNITY_COMMENT_MAX_LENGTH,
   CommunityComment,
   getCommunityComments,
+  notifyCommunityPostActivityUpdated,
   toggleCommunityCommentLike,
   validateCommunityComment,
 } from "@/lib/community-comments";
@@ -170,6 +171,7 @@ export default function CommunityPostComments({
         setDraft("");
         setIsComposerOpen(false);
         setAreCommentsOpen(true);
+        notifyCommunityPostActivityUpdated(postId);
       })
       .catch((error: Error) => {
         setMessage(userFriendlyError(error));

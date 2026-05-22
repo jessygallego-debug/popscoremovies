@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   getCommunityPostLikeSummary,
+  notifyCommunityPostActivityUpdated,
   toggleCommunityPostLike,
 } from "@/lib/community-comments";
 import type { CommunityPostLikeSummary } from "@/lib/community-comments";
@@ -139,11 +140,13 @@ export default function CommunityPostLikeButton({
     toggleCommunityPostLike(currentSummary, initialLikeCount)
       .then((nextSummary) => {
         setSummary(nextSummary);
+        notifyCommunityPostActivityUpdated(postId);
         void createLikeNotification();
       })
       .catch((error: Error) => {
         if (shouldKeepLocalLike(error)) {
           setMessage("");
+          notifyCommunityPostActivityUpdated(postId);
           void createLikeNotification();
           return;
         }
