@@ -8,6 +8,7 @@ import CommunityPostComments from "@/app/components/community-post-comments";
 import FollowButton from "@/app/components/follow-button";
 import CommunityPostLikeButton from "@/app/components/community-post-like-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import ProfileUsernameLink from "@/app/components/profile-username-link";
 import SiteHeader from "@/app/components/site-header";
 import {
   communityDiscussionHref,
@@ -1648,9 +1649,12 @@ function CommunityFeedCard({
           <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold leading-5 text-slate-200 sm:text-base">
-                <span className="font-black text-white">
+                <ProfileUsernameLink
+                  username={post.user.username}
+                  className="font-black text-white"
+                >
                   @{post.user.username}
-                </span>{" "}
+                </ProfileUsernameLink>{" "}
                 {post.activity}
                 {post.popscore ? (
                   <span
@@ -1996,13 +2000,27 @@ function DiscussionCard({
             <Avatar label={discussion.startedByAvatarUrl} size="sm" />
             <p className="min-w-0 truncate text-xs font-bold text-slate-300 sm:text-sm">
               Started by{" "}
-              <span className="font-black text-white">
-                {discussion.startedByDisplayName}
-              </span>
+              {discussion.startedByUsername ? (
+                <ProfileUsernameLink
+                  username={discussion.startedByUsername}
+                  className="font-black text-white"
+                >
+                  {discussion.startedByDisplayName}
+                </ProfileUsernameLink>
+              ) : (
+                <span className="font-black text-white">
+                  {discussion.startedByDisplayName}
+                </span>
+              )}
               {discussion.startedByUsername ? (
                 <span className="text-slate-500">
                   {" "}
-                  @{discussion.startedByUsername}
+                  <ProfileUsernameLink
+                    username={discussion.startedByUsername}
+                    className="text-slate-500"
+                  >
+                    @{discussion.startedByUsername}
+                  </ProfileUsernameLink>
                 </span>
               ) : null}
             </p>
@@ -2160,9 +2178,18 @@ function WhoToFollowCard({
             <div key={user.username} className="flex items-center gap-3">
               <Avatar label={user.avatar} size="lg" />
               <div className="min-w-0 flex-1">
-                <p className="font-black text-white">{user.displayName}</p>
+                <p className="font-black text-white">
+                  <ProfileUsernameLink username={user.username}>
+                    {user.displayName}
+                  </ProfileUsernameLink>
+                </p>
                 <p className="mt-0.5 truncate text-xs font-bold text-slate-500">
-                  @{user.username}
+                  <ProfileUsernameLink
+                    username={user.username}
+                    className="text-slate-500"
+                  >
+                    @{user.username}
+                  </ProfileUsernameLink>
                 </p>
                 <p className="mt-1 text-xs font-bold text-slate-300">
                   Favorite: {user.favoriteGenre}
@@ -2205,7 +2232,11 @@ function TopReviewersList({
           <span className="text-sm font-black text-white">{index + 1}</span>
           <Avatar label={reviewer.avatar} />
           <div className="min-w-0">
-            <p className="truncate font-black text-white">{reviewer.username}</p>
+            <p className="truncate font-black text-white">
+              <ProfileUsernameLink username={reviewer.username}>
+                {reviewer.username}
+              </ProfileUsernameLink>
+            </p>
             <p className="mt-1 text-xs font-bold text-slate-300">
               {ratingCountText(reviewer.totalReviews)}
             </p>
@@ -2315,9 +2346,12 @@ function FollowingActivityCard({
           <Avatar label={activity.avatar} size="md" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-5 text-slate-300">
-              <span className="font-black text-white">
+              <ProfileUsernameLink
+                username={activity.username}
+                className="font-black text-white"
+              >
                 @{activity.username}
-              </span>{" "}
+              </ProfileUsernameLink>{" "}
               started a discussion
             </p>
             <h3 className="mt-1 text-base font-black leading-5 text-white sm:text-lg">
@@ -2347,9 +2381,12 @@ function FollowingActivityCard({
           <Avatar label={activity.avatar} size="md" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-5 text-slate-300">
-              <span className="font-black text-white">
+              <ProfileUsernameLink
+                username={activity.username}
+                className="font-black text-white"
+              >
                 @{activity.username}
-              </span>{" "}
+              </ProfileUsernameLink>{" "}
               commented in a discussion
             </p>
             <h3 className="mt-1 text-base font-black leading-5 text-white sm:text-lg">
@@ -2395,9 +2432,12 @@ function FollowingActivityCard({
             <Avatar label={activity.avatar} size="sm" />
             <div className="min-w-0">
               <p className="text-sm font-semibold leading-5 text-slate-300">
-                <span className="font-black text-white">
+                <ProfileUsernameLink
+                  username={activity.username}
+                  className="font-black text-white"
+                >
                   @{activity.username}
-                </span>{" "}
+                </ProfileUsernameLink>{" "}
                 {activity.type === "rating" ? "rated" : "reacted to"}{" "}
                 {activity.movieTitle}
               </p>
@@ -2556,10 +2596,17 @@ function PeopleCard({ user }: { user: SuggestedFollow }) {
         <Avatar label={user.avatar} size="lg" />
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-base font-black text-white sm:text-lg">
-            {user.displayName}
+            <ProfileUsernameLink username={user.username}>
+              {user.displayName}
+            </ProfileUsernameLink>
           </h3>
           <p className="mt-0.5 truncate text-xs font-bold text-slate-500 sm:text-sm">
-            @{user.username}
+            <ProfileUsernameLink
+              username={user.username}
+              className="text-slate-500"
+            >
+              @{user.username}
+            </ProfileUsernameLink>
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-black sm:gap-2">
             <span className="rounded-full border border-slate-700 bg-slate-900/70 px-2 py-0.5 text-slate-300 sm:px-3 sm:py-1">

@@ -9,6 +9,7 @@ import {
   toggleCommunityCommentLike,
   validateCommunityComment,
 } from "@/lib/community-comments";
+import ProfileUsernameLink from "@/app/components/profile-username-link";
 
 type CommunityPostCommentsProps = {
   initialCommentCount: number;
@@ -300,9 +301,12 @@ export default function CommunityPostComments({
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                      <span className="text-sm font-black text-white">
+                      <ProfileUsernameLink
+                        username={comment.username}
+                        className="text-sm font-black text-white"
+                      >
                         @{comment.username}
-                      </span>
+                      </ProfileUsernameLink>
                       <span className="text-[11px] font-bold text-slate-500">
                         {formatCommentTime(comment.createdAt)}
                       </span>

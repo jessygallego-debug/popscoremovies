@@ -6,6 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import FollowButton from "@/app/components/follow-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import ProfileUsernameLink, {
+  profileStatsHref,
+} from "@/app/components/profile-username-link";
 import QuickReactionBadge from "@/app/components/quick-reaction-badge";
 import {
   FOLLOWS_UPDATED_EVENT,
@@ -590,7 +593,9 @@ function ProfileSidebar({
           {avatar.icon}
         </span>
         <h1 className="mt-3 break-all text-2xl font-black text-white sm:mt-4 sm:text-3xl">
-          @{profile.username}
+          <ProfileUsernameLink username={profile.username}>
+            @{profile.username}
+          </ProfileUsernameLink>
         </h1>
         {profile.favorite_genre ? (
           <span className="mt-2 rounded-full bg-yellow-400 px-3 py-1 text-xs font-black text-black sm:mt-3 sm:px-4 sm:py-1.5 sm:text-sm">
@@ -1570,7 +1575,7 @@ function FollowListDialog({
               {users.map((user) => (
                 <Link
                   key={user.userId}
-                  href={`/profile/${user.username}`}
+                  href={profileStatsHref(user.username)}
                   onClick={onClose}
                   className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-black/25 p-3 transition hover:border-yellow-400/45 hover:bg-yellow-400/10"
                 >

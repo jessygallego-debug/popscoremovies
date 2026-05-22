@@ -7,6 +7,7 @@ import CoStarReactions from "@/app/components/co-star-reactions";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import ProfileMenu from "@/app/components/profile-menu";
+import ProfileUsernameLink from "@/app/components/profile-username-link";
 import TrailerModalButton from "@/app/components/trailer-modal-button";
 import { getMovieFanReviews } from "@/lib/fan-reviews-store";
 import {
@@ -279,7 +280,9 @@ export default async function MoviePage({
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
                             <h3 className="font-black text-white">
-                              @{review.username}
+                              <ProfileUsernameLink username={review.username}>
+                                @{review.username}
+                              </ProfileUsernameLink>
                             </h3>
                             <p className="text-xs font-bold text-gray-500">
                               {formatFanReviewDate(review.createdAt)}

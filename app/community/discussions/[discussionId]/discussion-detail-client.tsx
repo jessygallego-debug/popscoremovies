@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import FollowButton from "@/app/components/follow-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import ProfileUsernameLink from "@/app/components/profile-username-link";
 import SiteHeader from "@/app/components/site-header";
 import {
   communityDiscussionsStorageKey,
@@ -125,11 +126,23 @@ function ReplyCard({ reply }: { reply: CommunityDiscussionReply }) {
         <Avatar label={reply.userAvatarUrl} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <p className="font-black text-white">{reply.userDisplayName}</p>
             {reply.username ? (
-              <p className="text-xs font-bold text-slate-500">
+              <ProfileUsernameLink
+                username={reply.username}
+                className="font-black text-white"
+              >
+                {reply.userDisplayName}
+              </ProfileUsernameLink>
+            ) : (
+              <p className="font-black text-white">{reply.userDisplayName}</p>
+            )}
+            {reply.username ? (
+              <ProfileUsernameLink
+                username={reply.username}
+                className="text-xs font-bold text-slate-500"
+              >
                 @{reply.username}
-              </p>
+              </ProfileUsernameLink>
             ) : null}
             <p className="text-xs font-bold text-slate-500">
               {formatRelativeTime(reply.createdAt)}
@@ -351,11 +364,27 @@ export default function DiscussionDetailClient({
                 <div>
                   <p className="text-sm font-bold text-slate-400">
                     Started by{" "}
-                    <span className="font-black text-white">
-                      {discussion.startedByDisplayName}
-                    </span>
                     {discussion.startedByUsername ? (
-                      <span> @{discussion.startedByUsername}</span>
+                      <ProfileUsernameLink
+                        username={discussion.startedByUsername}
+                        className="font-black text-white"
+                      >
+                        {discussion.startedByDisplayName}
+                      </ProfileUsernameLink>
+                    ) : (
+                      <span className="font-black text-white">
+                        {discussion.startedByDisplayName}
+                      </span>
+                    )}
+                    {discussion.startedByUsername ? (
+                      <span>
+                        {" "}
+                        <ProfileUsernameLink
+                          username={discussion.startedByUsername}
+                        >
+                          @{discussion.startedByUsername}
+                        </ProfileUsernameLink>
+                      </span>
                     ) : null}
                   </p>
                   <p className="mt-1 text-xs font-bold text-slate-500">
