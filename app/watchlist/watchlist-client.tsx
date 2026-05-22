@@ -181,7 +181,7 @@ export default function WatchlistClient() {
         </div>
       ) : null}
 
-      <div className="rounded-[1.5rem] border border-slate-800/80 bg-slate-950/65 p-4 shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[1.75rem] sm:p-5">
+      <div className="relative z-[250] overflow-visible rounded-[1.5rem] border border-slate-800/80 bg-slate-950/65 p-4 shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[1.75rem] sm:p-5">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-xl font-black text-white sm:text-2xl">
