@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
+import MobileFilterMenu from "@/app/components/mobile-filter-menu";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import { PROFILE_GENRES } from "@/lib/profile-config";
 import { getCurrentUser } from "@/lib/profile-store";
@@ -180,22 +181,15 @@ export default function DiscoverClient() {
           ) : null}
         </div>
 
-        <label className="block md:hidden">
-          <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-slate-400">
-            Genre filter
-          </span>
-          <select
-            value={genre}
-            onChange={(event) => handleGenreChange(event.target.value)}
-            className="min-h-12 w-full rounded-full border border-yellow-400/35 bg-[#020617] px-4 text-sm font-black text-yellow-300 shadow-inner shadow-black/30 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-400/20"
-          >
-            {PROFILE_GENRES.map((nextGenre) => (
-              <option key={nextGenre.key} value={nextGenre.key}>
-                {nextGenre.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <MobileFilterMenu
+          label="Genre filter"
+          onSelect={handleGenreChange}
+          options={PROFILE_GENRES.map((nextGenre) => ({
+            label: nextGenre.label,
+            value: nextGenre.key,
+          }))}
+          selectedValue={genre}
+        />
 
         <div className="hidden gap-2 overflow-visible pb-1 md:grid md:grid-cols-5 md:gap-3 lg:grid-cols-8">
           {PROFILE_GENRES.map((nextGenre) => (

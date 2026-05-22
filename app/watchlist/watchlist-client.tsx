@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import MobileFilterMenu from "@/app/components/mobile-filter-menu";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import { PROFILE_GENRES } from "@/lib/profile-config";
 import {
@@ -194,22 +195,15 @@ export default function WatchlistClient() {
             {filteredWatchlist.length} shown
           </p>
         </div>
-        <label className="block md:hidden">
-          <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-slate-400">
-            Genre filter
-          </span>
-          <select
-            value={activeGenre}
-            onChange={(event) => setSelectedGenre(event.target.value)}
-            className="min-h-12 w-full rounded-full border border-yellow-400/35 bg-[#020617] px-4 text-sm font-black text-yellow-300 shadow-inner shadow-black/30 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-400/20"
-          >
-            {genreFilters.map((genre) => (
-              <option key={genre} value={genre}>
-                {genre === "all" ? "All Movies" : genre}
-              </option>
-            ))}
-          </select>
-        </label>
+        <MobileFilterMenu
+          label="Genre filter"
+          onSelect={setSelectedGenre}
+          options={genreFilters.map((genre) => ({
+            label: genre === "all" ? "All Movies" : genre,
+            value: genre,
+          }))}
+          selectedValue={activeGenre}
+        />
 
         <div className="hidden gap-2 sm:gap-3 md:grid md:grid-cols-8">
           {genreFilters.map((genre) => (
