@@ -363,66 +363,30 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
           ) : null}
         </div>
 
-        <div className="mt-4 grid gap-3 border-t border-slate-800 pt-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-800 pt-3 md:grid-cols-[minmax(160px,240px)_minmax(170px,260px)_auto] md:items-end">
           <MobileFilterMenu
+            className="relative z-[420]"
             label="Movie language"
             onSelect={handlePreferredLanguageChange}
             options={languageOptions}
             selectedValue={preferredLanguage}
           />
           <MobileFilterMenu
+            className="relative z-[410]"
             label="Preferred region"
             onSelect={handlePreferredRegionChange}
             options={regionOptions}
             selectedValue={preferredRegion}
           />
 
-          <label className="hidden md:block">
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
-              Movie language
-            </span>
-            <select
-              value={preferredLanguage}
-              onChange={(event) =>
-                handlePreferredLanguageChange(event.target.value)
-              }
-              className="min-h-11 w-full rounded-full border border-yellow-400/55 bg-[#020617] px-4 text-sm font-black text-yellow-300 outline-none transition hover:border-yellow-300 focus:border-yellow-300"
-            >
-              {languageOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="hidden md:block">
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
-              Preferred region
-            </span>
-            <select
-              value={preferredRegion}
-              onChange={(event) =>
-                handlePreferredRegionChange(event.target.value)
-              }
-              className="min-h-11 w-full rounded-full border border-yellow-400/55 bg-[#020617] px-4 text-sm font-black text-yellow-300 outline-none transition hover:border-yellow-300 focus:border-yellow-300"
-            >
-              {regionOptions.map((option) => (
-                <option key={option.value || "none"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex min-h-11 items-center gap-3 rounded-2xl border border-slate-700 bg-black/30 px-4 text-sm font-black text-slate-200 transition hover:border-yellow-400/50">
+          <label className="col-span-2 flex min-h-9 items-center gap-2 rounded-full border border-slate-700 bg-black/30 px-3 text-xs font-black text-slate-200 transition hover:border-yellow-400/50 sm:text-sm md:col-span-1 md:whitespace-nowrap">
             <input
               type="checkbox"
               checked={includeInternationalMovies}
               onChange={(event) =>
                 handleInternationalToggle(event.target.checked)
               }
-              className="h-4 w-4 accent-yellow-400"
+              className="h-3.5 w-3.5 shrink-0 accent-yellow-400"
             />
             <span>Include international movies</span>
           </label>

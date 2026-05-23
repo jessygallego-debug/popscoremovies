@@ -8,17 +8,25 @@ export type MobileFilterOption = {
 };
 
 type MobileFilterMenuProps = {
+  className?: string;
   label: string;
+  labelClassName?: string;
+  menuClassName?: string;
   onSelect: (value: string) => void;
   options: MobileFilterOption[];
   selectedValue: string;
+  summaryClassName?: string;
 };
 
 export default function MobileFilterMenu({
+  className,
   label,
+  labelClassName,
+  menuClassName,
   onSelect,
   options,
   selectedValue,
+  summaryClassName,
 }: MobileFilterMenuProps) {
   const menuRef = useRef<HTMLDetailsElement>(null);
   const selectedOption =
@@ -48,18 +56,33 @@ export default function MobileFilterMenu({
   }, []);
 
   return (
-    <div className="relative z-[400] block md:hidden">
-      <span className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+    <div className={className ?? "relative z-[400] block md:hidden"}>
+      <span
+        className={
+          labelClassName ??
+          "mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-slate-400"
+        }
+      >
         {label}
       </span>
       <details ref={menuRef} className="group relative z-[500]">
-        <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-full border border-yellow-400/55 bg-[#020617] px-4 text-sm font-black text-yellow-300 shadow-inner shadow-black/30 outline-none transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 [&::-webkit-details-marker]:hidden">
+        <summary
+          className={
+            summaryClassName ??
+            "flex min-h-9 cursor-pointer list-none items-center justify-between gap-2 rounded-full border border-yellow-400/55 bg-[#020617] px-3 text-xs font-black text-yellow-300 shadow-inner shadow-black/30 outline-none transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 sm:min-h-10 sm:text-sm [&::-webkit-details-marker]:hidden"
+          }
+        >
           <span className="truncate">{selectedOption?.label ?? "Select"}</span>
           <span aria-hidden="true" className="transition group-open:rotate-180">
             ▾
           </span>
         </summary>
-        <div className="absolute left-0 right-0 z-[999] mt-1.5 grid max-h-64 gap-1 overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-2 shadow-2xl shadow-black/60">
+        <div
+          className={
+            menuClassName ??
+            "absolute left-0 right-0 z-[999] mt-1.5 grid max-h-60 gap-1 overflow-y-auto rounded-2xl border border-slate-700 bg-[#020617]/95 p-1.5 shadow-2xl shadow-black/70 backdrop-blur-xl"
+          }
+        >
           {options.map((option) => {
             const isSelected = option.value === selectedValue;
 
@@ -75,8 +98,8 @@ export default function MobileFilterMenu({
                 }}
                 className={`rounded-full border px-3 py-1.5 text-left text-sm font-black transition ${
                   isSelected
-                    ? "border-yellow-400/60 bg-yellow-400/10 text-yellow-300"
-                    : "border-transparent text-slate-200 hover:bg-yellow-400/10 hover:text-yellow-300"
+                    ? "border-yellow-400/70 bg-yellow-400/10 text-yellow-300"
+                    : "border-transparent text-slate-200 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-300"
                 }`}
               >
                 {option.label}

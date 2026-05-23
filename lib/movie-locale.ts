@@ -65,7 +65,10 @@ export function normalizeMovieLanguage(value?: string | null) {
 }
 
 export function normalizeMovieRegion(value?: string | null) {
-  const region = cleanLocalePart(value).split("-").find((part) =>
+  const localeParts = cleanLocalePart(value).split("-").filter(Boolean);
+  const candidateParts =
+    localeParts.length > 1 ? localeParts.slice(1) : localeParts;
+  const region = candidateParts.find((part) =>
     /^[a-z]{2}$|^\d{3}$/i.test(part)
   );
 
