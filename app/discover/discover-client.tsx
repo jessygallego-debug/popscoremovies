@@ -5,11 +5,23 @@ import { useEffect, useMemo, useState } from "react";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import MobileFilterMenu from "@/app/components/mobile-filter-menu";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import {
+  FALLBACK_MOVIE_LANGUAGE,
+  movieLanguageOptionsWithSelection,
+  movieLocalePartsFromTag,
+  movieRegionOptionsWithSelection,
+  normalizeMovieLanguage,
+  normalizeMovieRegion,
+} from "@/lib/movie-locale";
 import { PROFILE_GENRES } from "@/lib/profile-config";
-import { getCurrentUser } from "@/lib/profile-store";
+import { getCurrentUser, getProfileByUserId } from "@/lib/profile-store";
 import { MovieSummary, posterUrl } from "@/lib/tmdb";
 
 const DISCOVERY_RECOMMENDATION_LIMIT = 10;
+const DISCOVERY_LANGUAGE_STORAGE_KEY = "popscore-discovery-movie-language";
+const DISCOVERY_REGION_STORAGE_KEY = "popscore-discovery-movie-region";
+const DISCOVERY_INTERNATIONAL_STORAGE_KEY =
+  "popscore-discovery-include-international";
 
 function yearFromDate(releaseDate?: string | null) {
   return releaseDate?.slice(0, 4) || "TBA";
@@ -68,11 +80,31 @@ function discoveryReturnPathForGenre(genreKey: string) {
   return `/discover?${new URLSearchParams({ genre: genreKey }).toString()}`;
 }
 
+function browserMovieLocalePreference() {
+  const browserLocale =
+    typeof navigator !== "undefined"
+      ? navigator.languages?.[0] ?? navigator.language
+      : "";
+  const browserPreference = movieLocalePartsFromTag(browserLocale);
+
+  return {
+    language: browserPreference.language || FALLBACK_MOVIE_LANGUAGE,
+    region: browserPreference.region,
+  };
+}
+
 export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
   const [genre, setGenre] = useState(initialGenre);
+  const [preferredLanguage, setPreferredLanguage] = useState(
+    FALLBACK_MOVIE_LANGUAGE
+  );
+  const [preferredRegion, setPreferredRegion] = useState("");
+  const [includeInternationalMovies, setIncludeInternationalMovies] =
+    useState(false);
   const [movies, setMovies] = useState<DiscoveryRecommendation[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoadingMovies, setIsLoadingMovies] = useState(true);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [recommendationMessage, setRecommendationMessage] = useState("");
   const [recommendationMode, setRecommendationMode] =
@@ -87,6 +119,22 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
     () => limitRecommendations(movies),
     [movies]
   );
+  const languageOptions = useMemo(
+    () =>
+      movieLanguageOptionsWithSelection(preferredLanguage).map((option) => ({
+        label: option.label,
+        value: option.value,
+      })),
+    [preferredLanguage]
+  );
+  const regionOptions = useMemo(
+    () =>
+      movieRegionOptionsWithSelection(preferredRegion).map((option) => ({
+        label: option.label,
+        value: option.value,
+      })),
+    [preferredRegion]
+  );
   const handleGenreChange = (nextGenreKey: string) => {
     if (genre === nextGenreKey) {
       return;
@@ -97,17 +145,93 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
     setStatus("");
     setGenre(nextGenreKey);
   };
+  const handlePreferredLanguageChange = (nextLanguage: string) => {
+    const normalizedLanguage =
+      normalizeMovieLanguage(nextLanguage) || FALLBACK_MOVIE_LANGUAGE;
+
+    setIsLoadingMovies(true);
+    setRecommendationMessage("");
+    setStatus("");
+    setPreferredLanguage(normalizedLanguage);
+    window.localStorage.setItem(
+      DISCOVERY_LANGUAGE_STORAGE_KEY,
+      normalizedLanguage
+    );
+  };
+  const handlePreferredRegionChange = (nextRegion: string) => {
+    const normalizedRegion = normalizeMovieRegion(nextRegion);
+
+    setIsLoadingMovies(true);
+    setRecommendationMessage("");
+    setStatus("");
+    setPreferredRegion(normalizedRegion);
+    window.localStorage.setItem(
+      DISCOVERY_REGION_STORAGE_KEY,
+      normalizedRegion || "none"
+    );
+  };
+  const handleInternationalToggle = (isIncluded: boolean) => {
+    setIsLoadingMovies(true);
+    setRecommendationMessage("");
+    setStatus("");
+    setIncludeInternationalMovies(isIncluded);
+    window.localStorage.setItem(
+      DISCOVERY_INTERNATIONAL_STORAGE_KEY,
+      String(isIncluded)
+    );
+  };
 
   useEffect(() => {
     let isCurrent = true;
 
     getCurrentUser()
-      .then((user) => {
+      .then(async (user) => {
         if (!isCurrent) {
           return;
         }
 
+        const profile = user
+          ? await getProfileByUserId(user.id).catch(() => null)
+          : null;
+
+        if (!isCurrent) {
+          return;
+        }
+
+        const browserPreference = browserMovieLocalePreference();
+        const storedLanguage = normalizeMovieLanguage(
+          window.localStorage.getItem(DISCOVERY_LANGUAGE_STORAGE_KEY)
+        );
+        const storedRegionValue = window.localStorage.getItem(
+          DISCOVERY_REGION_STORAGE_KEY
+        );
+        const hasStoredRegion = storedRegionValue !== null;
+        const storedRegion =
+          storedRegionValue === "none"
+            ? ""
+            : normalizeMovieRegion(storedRegionValue);
+        const storedInternational = window.localStorage.getItem(
+          DISCOVERY_INTERNATIONAL_STORAGE_KEY
+        );
+        const profileLanguage = normalizeMovieLanguage(
+          profile?.preferred_movie_language
+        );
+        const profileRegion = normalizeMovieRegion(
+          profile?.preferred_movie_region
+        );
+
         setUserId(user?.id ?? null);
+        setPreferredLanguage(
+          storedLanguage ||
+            profileLanguage ||
+            browserPreference.language ||
+            FALLBACK_MOVIE_LANGUAGE
+        );
+        setPreferredRegion(
+          hasStoredRegion ? storedRegion : profileRegion || browserPreference.region
+        );
+        setIncludeInternationalMovies(storedInternational === "true");
+        setIsLoadingPreferences(false);
         setIsLoadingUser(false);
       })
       .catch((error: Error) => {
@@ -115,7 +239,12 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
           return;
         }
 
+        const browserPreference = browserMovieLocalePreference();
+
+        setPreferredLanguage(browserPreference.language || FALLBACK_MOVIE_LANGUAGE);
+        setPreferredRegion(browserPreference.region);
         setStatus(error.message);
+        setIsLoadingPreferences(false);
         setIsLoadingUser(false);
       });
 
@@ -128,7 +257,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
     let isCurrent = true;
     const params = new URLSearchParams({ genre });
 
-    if (isLoadingUser) {
+    if (isLoadingUser || isLoadingPreferences) {
       return () => {
         isCurrent = false;
       };
@@ -136,6 +265,13 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
 
     if (userId) {
       params.set("userId", userId);
+    }
+
+    params.set("preferredLanguage", preferredLanguage);
+    params.set("includeInternationalMovies", String(includeInternationalMovies));
+
+    if (preferredRegion) {
+      params.set("preferredRegion", preferredRegion);
     }
 
     fetch(`/api/recommendations?${params.toString()}`)
@@ -168,7 +304,15 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
     return () => {
       isCurrent = false;
     };
-  }, [genre, isLoadingUser, userId]);
+  }, [
+    genre,
+    includeInternationalMovies,
+    isLoadingPreferences,
+    isLoadingUser,
+    preferredLanguage,
+    preferredRegion,
+    userId,
+  ]);
 
   return (
     <section className="space-y-5 sm:space-y-6">
@@ -218,6 +362,71 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
             <span aria-hidden="true" className="hidden lg:block" />
           ) : null}
         </div>
+
+        <div className="mt-4 grid gap-3 border-t border-slate-800 pt-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+          <MobileFilterMenu
+            label="Movie language"
+            onSelect={handlePreferredLanguageChange}
+            options={languageOptions}
+            selectedValue={preferredLanguage}
+          />
+          <MobileFilterMenu
+            label="Preferred region"
+            onSelect={handlePreferredRegionChange}
+            options={regionOptions}
+            selectedValue={preferredRegion}
+          />
+
+          <label className="hidden md:block">
+            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+              Movie language
+            </span>
+            <select
+              value={preferredLanguage}
+              onChange={(event) =>
+                handlePreferredLanguageChange(event.target.value)
+              }
+              className="min-h-11 w-full rounded-full border border-yellow-400/55 bg-[#020617] px-4 text-sm font-black text-yellow-300 outline-none transition hover:border-yellow-300 focus:border-yellow-300"
+            >
+              {languageOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="hidden md:block">
+            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+              Preferred region
+            </span>
+            <select
+              value={preferredRegion}
+              onChange={(event) =>
+                handlePreferredRegionChange(event.target.value)
+              }
+              className="min-h-11 w-full rounded-full border border-yellow-400/55 bg-[#020617] px-4 text-sm font-black text-yellow-300 outline-none transition hover:border-yellow-300 focus:border-yellow-300"
+            >
+              {regionOptions.map((option) => (
+                <option key={option.value || "none"} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex min-h-11 items-center gap-3 rounded-2xl border border-slate-700 bg-black/30 px-4 text-sm font-black text-slate-200 transition hover:border-yellow-400/50">
+            <input
+              type="checkbox"
+              checked={includeInternationalMovies}
+              onChange={(event) =>
+                handleInternationalToggle(event.target.checked)
+              }
+              className="h-4 w-4 accent-yellow-400"
+            />
+            <span>Include international movies</span>
+          </label>
+        </div>
       </div>
 
       {status ? (
@@ -244,7 +453,8 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
             No new picks here yet
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-400">
-            Try another genre or check back after more movies are available.
+            Try another genre, change your movie language, or include
+            international movies.
           </p>
         </div>
       ) : null}

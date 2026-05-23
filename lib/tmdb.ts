@@ -4,6 +4,7 @@ export type MovieSummary = {
   overview: string;
   poster_path: string | null;
   backdrop_path: string | null;
+  original_language?: string;
   popularity: number;
   vote_average: number;
   release_date: string;
@@ -64,6 +65,12 @@ const TMDB_PAGE_SIZE = 20;
 const COMEDY_GENRE_ID = 35;
 const ROMANCE_GENRE_ID = 10749;
 export const ROMCOM_GENRE_FILTER_ID = "romcom";
+
+type RecommendationMovieOptions = {
+  includeInternationalMovies?: boolean;
+  preferredLanguage?: string;
+  preferredRegion?: string;
+};
 
 export const MOVIE_GENRE_FILTERS = [
   { id: "28", name: "Action" },
@@ -189,16 +196,39 @@ function moviesPath(query: string, page: number, genreId = "") {
   const recentCutoffDate = recentCutoff.toISOString().slice(0, 10);
 
   if (trimmedQuery) {
-    return `/search/movie?query=${encodeURIComponent(
-        trimmedQuery
-      )}&include_adult=false&language=en-US&page=${page}`;
+    const params = new URLSearchParams({
+      include_adult: "false",
+      page: String(page),
+      query: trimmedQuery,
+    });
+
+    return `/search/movie?${params.toString()}`;
   }
 
   if (tmdbGenreId) {
-    return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.gte=${recentCutoffDate}&primary_release_date.lte=${today}&sort_by=popularity.desc&with_genres=${tmdbGenreId}`;
+    const params = new URLSearchParams({
+      include_adult: "false",
+      include_video: "false",
+      page: String(page),
+      "primary_release_date.gte": recentCutoffDate,
+      "primary_release_date.lte": today,
+      sort_by: "popularity.desc",
+      with_genres: tmdbGenreId,
+    });
+
+    return `/discover/movie?${params.toString()}`;
   }
 
-  return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&primary_release_date.gte=${recentCutoffDate}&primary_release_date.lte=${today}&sort_by=popularity.desc`;
+  const params = new URLSearchParams({
+    include_adult: "false",
+    include_video: "false",
+    page: String(page),
+    "primary_release_date.gte": recentCutoffDate,
+    "primary_release_date.lte": today,
+    sort_by: "popularity.desc",
+  });
+
+  return `/discover/movie?${params.toString()}`;
 }
 
 function releaseTime(movie: MovieSummary) {
@@ -262,16 +292,45 @@ export async function getMovies(
   return movies.sort(compareLatestPopular).slice(0, requestedLimit);
 }
 
-function recommendationMoviesPath(page: number, genreId: string) {
+function recommendationMoviesPath(
+  page: number,
+  genreId: string,
+  options: RecommendationMovieOptions = {}
+) {
   const tmdbGenreId =
     genreId === ROMCOM_GENRE_FILTER_ID ? String(ROMANCE_GENRE_ID) : genreId;
+  const params = new URLSearchParams({
+    include_adult: "false",
+    include_video: "false",
+    page: String(page),
+    sort_by: "popularity.desc",
+    with_genres: tmdbGenreId,
+  });
 
-  return `/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc&with_genres=${tmdbGenreId}`;
+  if (options.preferredLanguage) {
+    params.set(
+      "language",
+      options.preferredRegion
+        ? `${options.preferredLanguage}-${options.preferredRegion}`
+        : options.preferredLanguage
+    );
+
+    if (!options.includeInternationalMovies) {
+      params.set("with_original_language", options.preferredLanguage);
+    }
+  }
+
+  if (options.preferredRegion) {
+    params.set("region", options.preferredRegion);
+  }
+
+  return `/discover/movie?${params.toString()}`;
 }
 
 export async function getRecommendationMovies(
   genreId: string,
-  limit = MAX_MOVIE_RESULTS
+  limit = MAX_MOVIE_RESULTS,
+  options: RecommendationMovieOptions = {}
 ) {
   const requestedLimit = Math.min(Math.max(limit, 10), MAX_MOVIE_RESULTS);
   const requestedPages = Math.ceil(requestedLimit / TMDB_PAGE_SIZE);
@@ -284,7 +343,7 @@ export async function getRecommendationMovies(
     page++
   ) {
     const data = await tmdbFetch<TmdbListResponse>(
-      recommendationMoviesPath(page, genreId)
+      recommendationMoviesPath(page, genreId, options)
     );
 
     if (!data?.results?.length) {
@@ -311,7 +370,7 @@ export async function getRecommendationMovies(
 
 export async function getMovie(id: string) {
   return tmdbFetch<MovieDetails>(
-    `/movie/${id}?language=en-US&append_to_response=credits,videos`
+    `/movie/${id}?append_to_response=credits,videos`
   );
 }
 
@@ -320,7 +379,7 @@ function bestImagePath(images: TmdbMovieImage[] = []) {
     .filter((image) => posterUrl(image.file_path))
     .sort((a, b) => {
       const languageScore =
-        Number(b.iso_639_1 === "en") - Number(a.iso_639_1 === "en");
+        Number(b.iso_639_1 === null) - Number(a.iso_639_1 === null);
 
       if (languageScore !== 0) {
         return languageScore;
@@ -338,7 +397,7 @@ function bestImagePath(images: TmdbMovieImage[] = []) {
 
 export async function getMovieImageFallbacks(id: string) {
   const images = await tmdbFetch<TmdbMovieImagesResponse>(
-    `/movie/${id}/images?include_image_language=en,null`
+    `/movie/${id}/images`
   );
 
   return {

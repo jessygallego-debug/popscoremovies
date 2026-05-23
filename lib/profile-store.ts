@@ -35,6 +35,8 @@ export type ProfileRecord = {
   username: string;
   avatar_key: string;
   favorite_genre: string | null;
+  preferred_movie_language?: string | null;
+  preferred_movie_region?: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GENRE_RATING_CONFIGS, type GenreKey } from "@/lib/genre-rating-config";
+import {
+  FALLBACK_MOVIE_LANGUAGE,
+  movieLocalePartsFromTag,
+  normalizeMovieLanguage,
+  normalizeMovieRegion,
+} from "@/lib/movie-locale";
 import { genreLabelForKey, genreTmdbIdForKey } from "@/lib/profile-config";
 import { getRecommendationMovies, type MovieSummary } from "@/lib/tmdb";
 
@@ -7,6 +13,12 @@ const RECOMMENDATION_LIMIT = 10;
 const CANDIDATE_LIMIT = 300;
 const FALLBACK_MESSAGE =
   "Rate more movies in this genre to unlock personalized recommendations.";
+
+type MovieLocalePreference = {
+  includeInternationalMovies: boolean;
+  preferredLanguage: string;
+  preferredRegion: string;
+};
 
 type RatingQuestion = {
   key: string;
@@ -116,6 +128,78 @@ function normalize(value?: string | null) {
 
 function normalizeMovieId(value: number | string | null | undefined) {
   return String(value ?? "").trim();
+}
+
+function getPreferredLanguageFromRequest(request: NextRequest) {
+  const requestedLanguage = normalizeMovieLanguage(
+    request.nextUrl.searchParams.get("preferredLanguage")
+  );
+
+  if (requestedLanguage) {
+    return requestedLanguage;
+  }
+
+  const acceptLanguage = request.headers.get("accept-language") ?? "";
+  const firstLocale = acceptLanguage.split(",")[0]?.split(";")[0];
+
+  return (
+    movieLocalePartsFromTag(firstLocale).language || FALLBACK_MOVIE_LANGUAGE
+  );
+}
+
+function getPreferredRegionFromRequest(request: NextRequest) {
+  const requestedRegion = normalizeMovieRegion(
+    request.nextUrl.searchParams.get("preferredRegion")
+  );
+
+  if (requestedRegion) {
+    return requestedRegion;
+  }
+
+  const acceptLanguage = request.headers.get("accept-language") ?? "";
+  const firstLocale = acceptLanguage.split(",")[0]?.split(";")[0];
+
+  return movieLocalePartsFromTag(firstLocale).region;
+}
+
+function getMovieLocalePreference(request: NextRequest): MovieLocalePreference {
+  return {
+    includeInternationalMovies:
+      request.nextUrl.searchParams.get("includeInternationalMovies") === "true",
+    preferredLanguage: getPreferredLanguageFromRequest(request),
+    preferredRegion: getPreferredRegionFromRequest(request),
+  };
+}
+
+function movieMatchesPreferredLanguage(
+  movie: MovieSummary,
+  preferredLanguage: string
+) {
+  return normalizeMovieLanguage(movie.original_language) === preferredLanguage;
+}
+
+function comparePreferredLanguage(
+  preferredLanguage: string,
+  firstMovie: MovieSummary,
+  secondMovie: MovieSummary
+) {
+  return (
+    Number(movieMatchesPreferredLanguage(secondMovie, preferredLanguage)) -
+    Number(movieMatchesPreferredLanguage(firstMovie, preferredLanguage))
+  );
+}
+
+function filterCandidateMoviesByLocale(
+  movies: MovieSummary[],
+  preference: MovieLocalePreference
+) {
+  if (preference.includeInternationalMovies) {
+    return movies;
+  }
+
+  return movies.filter((movie) =>
+    movieMatchesPreferredLanguage(movie, preference.preferredLanguage)
+  );
 }
 
 function ratingHasPopScore(row: MovieRatingRow) {
@@ -307,12 +391,14 @@ function personalizeRecommendations({
   aggregates,
   genre,
   movies,
+  preferredLanguage,
   questions,
   tasteProfile,
 }: {
   aggregates: Map<string, MovieAggregate>;
   genre: GenreKey;
   movies: MovieSummary[];
+  preferredLanguage: string;
   questions: readonly RatingQuestion[];
   tasteProfile: Record<string, number>;
 }) {
@@ -346,6 +432,7 @@ function personalizeRecommendations({
     })
     .sort((first, second) => {
       return (
+        comparePreferredLanguage(preferredLanguage, first, second) ||
         second.tasteMatchScore - first.tasteMatchScore ||
         second.overallPopScore - first.overallPopScore ||
         second.totalRatings - first.totalRatings ||
@@ -359,10 +446,12 @@ function fallbackRecommendations({
   aggregates,
   genre,
   movies,
+  preferredLanguage,
 }: {
   aggregates: Map<string, MovieAggregate>;
   genre: GenreKey;
   movies: MovieSummary[];
+  preferredLanguage: string;
 }) {
   const maxRatings = Math.max(
     1,
@@ -397,6 +486,7 @@ function fallbackRecommendations({
     })
     .sort((first, second) => {
       return (
+        comparePreferredLanguage(preferredLanguage, first, second) ||
         second.fallbackScore - first.fallbackScore ||
         second.overallPopScore - first.overallPopScore ||
         second.totalRatings - first.totalRatings ||
@@ -409,6 +499,7 @@ function fallbackRecommendations({
       explanation: movie.explanation,
       genre_ids: movie.genre_ids,
       id: movie.id,
+      original_language: movie.original_language,
       overview: movie.overview,
       overallPopScore: movie.overallPopScore,
       popularity: movie.popularity,
@@ -425,6 +516,7 @@ function fallbackRecommendations({
 export async function GET(request: NextRequest) {
   const genre = request.nextUrl.searchParams.get("genre") ?? "";
   const userId = request.nextUrl.searchParams.get("userId") ?? "";
+  const movieLocalePreference = getMovieLocalePreference(request);
 
   if (!isGenreKey(genre)) {
     return NextResponse.json({
@@ -448,7 +540,7 @@ export async function GET(request: NextRequest) {
 
   const questions = GENRE_RATING_CONFIGS[genre].questions;
   const [movies, allRatingRows] = await Promise.all([
-    getRecommendationMovies(tmdbGenreId, CANDIDATE_LIMIT),
+    getRecommendationMovies(tmdbGenreId, CANDIDATE_LIMIT, movieLocalePreference),
     getMovieRatingRows(),
   ]);
   const genreRatingRows = allRatingRows.filter((row) =>
@@ -464,9 +556,10 @@ export async function GET(request: NextRequest) {
   const highRatedRows = userGenreRows.filter(
     (row) => Number(row.popscore ?? 0) >= 75
   );
-  const candidateMovies = uniqueMovies(movies).filter(
-    (movie) => !userRatedMovieIds.has(normalizeMovieId(movie.id))
-  );
+  const candidateMovies = filterCandidateMoviesByLocale(
+    uniqueMovies(movies),
+    movieLocalePreference
+  ).filter((movie) => !userRatedMovieIds.has(normalizeMovieId(movie.id)));
   const aggregates = buildMovieAggregates(genreRatingRows, questions);
 
   if (highRatedRows.length < 3) {
@@ -478,6 +571,7 @@ export async function GET(request: NextRequest) {
         aggregates,
         genre,
         movies: candidateMovies,
+        preferredLanguage: movieLocalePreference.preferredLanguage,
       }),
     });
   }
@@ -492,6 +586,7 @@ export async function GET(request: NextRequest) {
       aggregates,
       genre,
       movies: candidateMovies,
+      preferredLanguage: movieLocalePreference.preferredLanguage,
       questions,
       tasteProfile,
     }),
