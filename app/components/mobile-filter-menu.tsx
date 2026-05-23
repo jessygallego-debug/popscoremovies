@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type MobileFilterOption = {
   label: string;
@@ -29,6 +29,7 @@ export default function MobileFilterMenu({
   summaryClassName,
 }: MobileFilterMenuProps) {
   const menuRef = useRef<HTMLDetailsElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const selectedOption =
     options.find((option) => option.value === selectedValue) ?? options[0];
 
@@ -38,11 +39,13 @@ export default function MobileFilterMenu({
 
       if (menu && !menu.contains(event.target as Node)) {
         menu.removeAttribute("open");
+        setIsOpen(false);
       }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         menuRef.current?.removeAttribute("open");
+        setIsOpen(false);
       }
     };
 
@@ -56,7 +59,10 @@ export default function MobileFilterMenu({
   }, []);
 
   return (
-    <div className={className ?? "relative z-[400] block md:hidden"}>
+    <div
+      className={className ?? "relative z-[400] block md:hidden"}
+      style={isOpen ? { zIndex: 1200 } : undefined}
+    >
       <span
         className={
           labelClassName ??
@@ -65,7 +71,11 @@ export default function MobileFilterMenu({
       >
         {label}
       </span>
-      <details ref={menuRef} className="group relative z-[500]">
+      <details
+        ref={menuRef}
+        className="group relative z-[500]"
+        onToggle={(event) => setIsOpen(event.currentTarget.open)}
+      >
         <summary
           className={
             summaryClassName ??
@@ -95,6 +105,7 @@ export default function MobileFilterMenu({
                   event.currentTarget
                     .closest("details")
                     ?.removeAttribute("open");
+                  setIsOpen(false);
                 }}
                 className={`rounded-full border px-3 py-1.5 text-left text-sm font-black transition ${
                   isSelected

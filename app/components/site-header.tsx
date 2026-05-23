@@ -50,7 +50,7 @@ function SiteLogo() {
 
 export default function SiteHeader() {
   return (
-    <header className="flex items-center justify-between gap-5 border-b border-white/10 pb-5">
+    <header className="relative z-[1000] flex items-center justify-between gap-5 border-b border-white/10 pb-5">
       <SiteLogo />
       <nav className="hidden items-center gap-8 text-sm font-black text-slate-200 md:flex">
         {navItems.map((item) => (

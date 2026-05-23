@@ -22,6 +22,7 @@ import {
   type DiscussionFilter,
   type DiscussionType,
 } from "@/lib/community-discussions";
+import { avatarForKey } from "@/lib/profile-config";
 import {
   FOLLOWS_UPDATED_EVENT,
   getFollowingUserIdsForCurrentUser,
@@ -34,6 +35,7 @@ import {
 import {
   getDiscoverableUsers,
   getCurrentUser,
+  getProfileByUserId,
   getRecentRatingsForUsers,
   getRecentCommunityRatings,
   getTopReviewers,
@@ -1331,6 +1333,12 @@ function StartDiscussionModal({
   const [body, setBody] = useState("");
   const [discussionType, setDiscussionType] = useState<DiscussionType | "">("");
   const [isSpoiler, setIsSpoiler] = useState(false);
+  const [author, setAuthor] = useState({
+    avatar: "🔥",
+    displayName: "Jessy",
+    userId: "current-user",
+    username: "jessyg305",
+  });
   const canPost = Boolean(selectedMovie && title.trim() && discussionType);
 
   useEffect(() => {
@@ -1346,6 +1354,40 @@ function StartDiscussionModal({
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [onClose]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    getCurrentUser()
+      .then(async (user) => {
+        if (!user) {
+          return null;
+        }
+
+        const profile = await getProfileByUserId(user.id).catch(() => null);
+
+        return { profile, user };
+      })
+      .then((context) => {
+        if (!isCurrent || !context?.user) {
+          return;
+        }
+
+        const { profile, user } = context;
+
+        setAuthor({
+          avatar: profile ? avatarForKey(profile.avatar_key).icon : "🔥",
+          displayName:
+            profile?.username ?? user.email?.split("@")[0] ?? "PopScore Fan",
+          userId: user.id,
+          username: profile?.username ?? user.email?.split("@")[0] ?? "popscorefan",
+        });
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   const postDiscussion = () => {
     if (!selectedMovie || !title.trim() || !discussionType) {
@@ -1376,10 +1418,10 @@ function StartDiscussionModal({
       moviePosterUrl: selectedMovie.posterPath ?? null,
       movieTitle: selectedMovie.title,
       movieYear: releaseYear(selectedMovie.releaseDate),
-      startedByAvatarUrl: "🔥",
-      startedByDisplayName: "Jessy",
-      startedByUserId: "current-user",
-      startedByUsername: "jessyg305",
+      startedByAvatarUrl: author.avatar,
+      startedByDisplayName: author.displayName,
+      startedByUserId: author.userId,
+      startedByUsername: author.username,
       tags: movieGenres.slice(0, 2),
       title: title.trim(),
       type: discussionType,

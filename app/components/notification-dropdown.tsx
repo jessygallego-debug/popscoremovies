@@ -16,7 +16,7 @@ export default function NotificationDropdown({
   onSelect,
 }: NotificationDropdownProps) {
   return (
-    <div className="absolute right-0 z-50 mt-2 w-[min(calc(100vw-4rem),20rem)] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl shadow-black/60 backdrop-blur sm:mt-3 sm:w-96 sm:max-w-sm sm:rounded-3xl sm:p-3">
+    <div className="absolute right-0 z-[1400] mt-2 w-[min(calc(100vw-4rem),20rem)] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl shadow-black/60 backdrop-blur sm:mt-3 sm:w-96 sm:max-w-sm sm:rounded-3xl sm:p-3">
       <div className="mb-2 flex items-center justify-between gap-3 px-1 sm:mb-3">
         <h2 className="text-base font-black text-white sm:text-lg">
           Notifications

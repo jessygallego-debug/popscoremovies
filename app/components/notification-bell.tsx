@@ -97,7 +97,7 @@ export default function NotificationBell({
     document.addEventListener("visibilitychange", refreshNotifications);
     document.addEventListener("pointerdown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
-    const refreshInterval = window.setInterval(refreshNotifications, 15000);
+    const refreshInterval = window.setInterval(refreshNotifications, 5000);
 
     return () => {
       isCurrent = false;
@@ -139,7 +139,7 @@ export default function NotificationBell({
   };
 
   return (
-    <div ref={wrapperRef} className={`relative ${className}`}>
+    <div ref={wrapperRef} className={`relative z-[1200] ${className}`}>
       <button
         type="button"
         aria-label={
