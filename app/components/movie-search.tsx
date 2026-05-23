@@ -85,7 +85,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
 
   return (
     <form
-      className="relative flex max-w-4xl flex-col gap-2 sm:flex-row sm:gap-3"
+      className="relative z-[1200] flex max-w-4xl flex-col gap-2 sm:flex-row sm:gap-3"
       action="/"
     >
       {genreId ? <input type="hidden" name="genre" value={genreId} /> : null}
@@ -121,7 +121,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
         ) : null}
 
         {showSuggestions ? (
-          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black">
+          <div className="absolute left-0 right-0 top-full z-[1300] mt-2 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black">
             {suggestions.map((movie) => {
               const releaseDate = movie.releaseDate
                 ? formatReleaseMonthYear(movie.releaseDate)
