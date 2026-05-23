@@ -904,11 +904,11 @@ function StatCard({
   value: string | number;
 }) {
   const className =
-    "min-h-24 rounded-2xl border border-slate-800 bg-black/35 p-3 text-left transition sm:min-h-28 sm:p-4";
+    "min-h-[72px] rounded-2xl border border-slate-800 bg-black/35 p-2 text-left transition sm:min-h-28 sm:p-4";
   const content = (
     <>
-      <p className="break-words text-xl font-black text-white sm:text-2xl">{value}</p>
-      <p className="mt-1 text-[11px] font-bold text-slate-500 sm:text-xs">{label}</p>
+      <p className="break-words text-base font-black leading-tight text-white sm:text-2xl">{value}</p>
+      <p className="mt-1 text-[9px] font-bold leading-tight text-slate-500 sm:text-xs">{label}</p>
     </>
   );
 
@@ -947,7 +947,7 @@ function ProfileStatsCard({
       <h2 className="text-lg font-black text-white sm:text-xl">
         PopFile Stats
       </h2>
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-4 xl:grid-cols-3">
+      <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-5 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
         <StatCard
           label="Total Movies Rated"
           value={summary.totalMoviesRated}
@@ -1234,14 +1234,14 @@ function RecentActivityCard({
       </div>
 
       {items.length > 0 ? (
-        <div className="mt-4 divide-y divide-slate-800">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:block sm:divide-y sm:divide-slate-800">
           {items.map((rating) => {
             const isFullRating = hasPopScoreRating(rating);
 
             return (
               <article
                 key={rating.id}
-                className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 py-3 sm:grid-cols-[52px_minmax(0,1fr)_auto] sm:gap-4 sm:py-4"
+                className="grid grid-cols-[52px_minmax(0,1fr)] gap-2 rounded-2xl border border-slate-800 bg-black/25 p-2 sm:grid-cols-[52px_minmax(0,1fr)_auto] sm:gap-4 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:py-4"
               >
                 <MoviePoster
                   movieId={rating.movieId}
@@ -1250,11 +1250,11 @@ function RecentActivityCard({
                   size="small"
                 />
                 <div className="min-w-0">
-                  <p className="line-clamp-2 text-sm font-black text-white sm:text-base">
+                  <p className="line-clamp-2 text-[11px] font-black leading-tight text-white sm:text-base">
                     {isFullRating ? "Rated" : "Reacted to"} {rating.movieTitle}
                   </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-black text-yellow-300 sm:px-2.5 sm:text-sm">
+                  <div className="mt-1 flex flex-wrap items-center gap-1 sm:mt-2 sm:gap-2">
+                    <span className="rounded-full bg-yellow-400/10 px-1.5 py-0.5 text-[10px] font-black text-yellow-300 sm:px-2.5 sm:py-1 sm:text-sm">
                       {isFullRating ? `${rating.popscore}%` : "Reaction"}
                     </span>
                     {rating.quick_reaction ? (
@@ -1262,7 +1262,7 @@ function RecentActivityCard({
                     ) : null}
                   </div>
                 </div>
-                <p className="col-start-2 text-xs font-bold text-slate-500 sm:col-start-auto sm:pt-1 sm:text-right">
+                <p className="col-start-2 text-[10px] font-bold text-slate-500 sm:col-start-auto sm:pt-1 sm:text-right sm:text-xs">
                   {formatDate(rating.updated_at)}
                 </p>
               </article>
@@ -1325,36 +1325,36 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
 
 function AllAchievements({ summary }: { summary: ProfileStatSummary }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
       {ACHIEVEMENTS.map((achievement) => {
         const progress = getAchievementProgress(achievement, summary);
 
         return (
           <article
             key={achievement.id}
-            className="rounded-2xl border border-slate-800 bg-slate-950/90 p-4 sm:p-5"
+            className="rounded-2xl border border-slate-800 bg-slate-950/90 p-2.5 sm:p-5"
           >
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <AchievementBadge
                 achievement={achievement}
-                size="medium"
+                size="small"
                 showCaption={false}
                 summary={summary}
               />
               <div className="min-w-0">
-                <h3 className="text-sm font-black text-white sm:text-base">{achievement.name}</h3>
-                <p className="mt-1 text-xs font-bold text-slate-400 sm:text-sm">
+                <h3 className="line-clamp-2 text-xs font-black leading-tight text-white sm:text-base">{achievement.name}</h3>
+                <p className="mt-1 line-clamp-2 text-[10px] font-bold leading-tight text-slate-400 sm:text-sm">
                   {achievement.description}
                 </p>
               </div>
             </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-800 sm:mt-4 sm:h-2">
               <div
                 className="h-full rounded-full bg-yellow-400"
                 style={{ width: `${progress.percent}%` }}
               />
             </div>
-            <p className="mt-2 text-xs font-black text-slate-400">
+            <p className="mt-1 text-[10px] font-black text-slate-400 sm:mt-2 sm:text-xs">
               {progress.isUnlocked ? "Unlocked" : progress.text}
             </p>
           </article>

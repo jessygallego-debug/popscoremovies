@@ -1975,25 +1975,11 @@ function DiscussionFilters({
           options={genreFilters}
           selectedOption={selectedGenre}
         />
-        {discussionFilterOptions.map((filter) => {
-          const isSelected = filter === selectedFilter;
-
-          return (
-            <button
-              key={filter}
-              type="button"
-              aria-pressed={isSelected}
-              onClick={() => onFilterChange(filter)}
-              className={`min-h-9 rounded-full border px-3 text-[11px] font-black transition sm:min-h-10 sm:px-4 sm:text-xs ${
-                isSelected
-                  ? "border-yellow-400/60 bg-yellow-400/10 text-yellow-300 shadow-inner shadow-black/20"
-                  : "border-slate-700 bg-slate-950/90 text-slate-100 hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-200"
-              }`}
-            >
-              {filter}
-            </button>
-          );
-        })}
+        <FilterMenu
+          onSelect={(filter) => onFilterChange(filter as DiscussionFilter)}
+          options={[...discussionFilterOptions]}
+          selectedOption={selectedFilter}
+        />
       </div>
     </section>
   );
@@ -2172,28 +2158,34 @@ function TrendingDiscussionsCard({
       }
     >
       <div className="space-y-4">
-        {trendingDiscussions.map((discussion) => (
-          <div
-            key={discussion.id}
-            className="grid grid-cols-[82px_1fr] items-center gap-3 border-b border-white/10 pb-4 last:border-b-0 last:pb-0"
-          >
-            <MovieThumb
-              alt={discussion.title}
-              fallbackMovieId={discussion.movieId}
-              fit="contain"
-              href={communityDiscussionHref(discussion.id)}
-              imagePath={discussion.moviePosterUrl}
-            />
-            <div className="min-w-0">
-              <p className="text-sm font-black leading-5 text-white">
-                {discussion.title}
-              </p>
-              <p className="mt-1 text-xs font-bold text-slate-400">
-                {discussion.commentCount} comments
-              </p>
+        {trendingDiscussions.length > 0 ? (
+          trendingDiscussions.map((discussion) => (
+            <div
+              key={discussion.id}
+              className="grid grid-cols-[82px_1fr] items-center gap-3 border-b border-white/10 pb-4 last:border-b-0 last:pb-0"
+            >
+              <MovieThumb
+                alt={discussion.title}
+                fallbackMovieId={discussion.movieId}
+                fit="contain"
+                href={communityDiscussionHref(discussion.id)}
+                imagePath={discussion.moviePosterUrl}
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-black leading-5 text-white">
+                  {discussion.title}
+                </p>
+                <p className="mt-1 text-xs font-bold text-slate-400">
+                  {discussion.commentCount} comments
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="text-sm font-bold text-slate-400">
+            No user discussions yet.
+          </p>
+        )}
       </div>
     </SidebarCard>
   );
@@ -2764,6 +2756,10 @@ export default function CommunityPage() {
   const [feedActivitySummaries, setFeedActivitySummaries] = useState<
     Record<string, CommunityPostActivitySummary>
   >({});
+  const actualDiscussions = useMemo(
+    () => createdDiscussions,
+    [createdDiscussions]
+  );
   const communityDiscussions = useMemo(
     () => [...createdDiscussions, ...mockCommunityDiscussions],
     [createdDiscussions]
@@ -2794,6 +2790,8 @@ export default function CommunityPage() {
     () => getVisibleFeedPosts(feedPostsWithActivity, selectedGenre, selectedTrend),
     [feedPostsWithActivity, selectedGenre, selectedTrend]
   );
+  const sidebarDiscussions =
+    selectedTab === "Discussions" ? actualDiscussions : communityDiscussions;
   const showSocialSidebar =
     selectedTab === "Feed" || selectedTab === "Discussions";
   const showDiscussions = () => {
@@ -2985,7 +2983,7 @@ export default function CommunityPage() {
               />
             ) : selectedTab === "Discussions" ? (
               <DiscussionsTabContent
-                discussions={communityDiscussions}
+                discussions={actualDiscussions}
                 onStartDiscussion={() => setIsDiscussionDialogOpen(true)}
               />
             ) : (
@@ -2997,7 +2995,7 @@ export default function CommunityPage() {
             {showSocialSidebar ? (
               <>
                 <TrendingDiscussionsCard
-                  discussions={communityDiscussions}
+                  discussions={sidebarDiscussions}
                   onSeeAll={showDiscussions}
                 />
                 <WhoToFollowCard users={discoverableUsers} />
