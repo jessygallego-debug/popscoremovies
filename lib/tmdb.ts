@@ -63,13 +63,44 @@ const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const MAX_MOVIE_RESULTS = 300;
 const TMDB_PAGE_SIZE = 20;
 const COMEDY_GENRE_ID = 35;
+const HORROR_GENRE_ID = 27;
+const MUSIC_GENRE_ID = 10402;
 const ROMANCE_GENRE_ID = 10749;
+const SCIENCE_FICTION_GENRE_ID = 878;
+const THRILLER_GENRE_ID = 53;
+const MUSICAL_KEYWORD_ID = 4344;
 export const ROMCOM_GENRE_FILTER_ID = "romcom";
 
 type RecommendationMovieOptions = {
   includeInternationalMovies?: boolean;
   preferredLanguage?: string;
   preferredRegion?: string;
+};
+
+type DiscoverGenreFilter = {
+  searchFallbackGenres?: readonly number[];
+  withGenres?: readonly number[];
+  withKeywords?: readonly number[];
+  withoutGenres?: readonly number[];
+};
+
+const HARD_MISMATCH_GENRE_IDS = [
+  HORROR_GENRE_ID,
+  SCIENCE_FICTION_GENRE_ID,
+  THRILLER_GENRE_ID,
+] as const;
+
+const CUSTOM_GENRE_FILTERS: Record<string, DiscoverGenreFilter> = {
+  [String(MUSIC_GENRE_ID)]: {
+    searchFallbackGenres: [MUSIC_GENRE_ID],
+    withKeywords: [MUSICAL_KEYWORD_ID],
+    withoutGenres: HARD_MISMATCH_GENRE_IDS,
+  },
+  [ROMCOM_GENRE_FILTER_ID]: {
+    searchFallbackGenres: [ROMANCE_GENRE_ID, COMEDY_GENRE_ID],
+    withGenres: [ROMANCE_GENRE_ID, COMEDY_GENRE_ID],
+    withoutGenres: HARD_MISMATCH_GENRE_IDS,
+  },
 };
 
 export const MOVIE_GENRE_FILTERS = [
@@ -82,7 +113,7 @@ export const MOVIE_GENRE_FILTERS = [
   { id: "10751", name: "Family" },
   { id: "27", name: "Horror" },
   { id: "9648", name: "Mystery" },
-  { id: "10402", name: "Musical" },
+  { id: String(MUSIC_GENRE_ID), name: "Musical" },
   { id: "10749", name: "Romance" },
   { id: ROMCOM_GENRE_FILTER_ID, name: "Rom-Com" },
   { id: "878", name: "Sci-Fi" },
@@ -186,18 +217,149 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
   return parseTmdbJson<T>(response);
 }
 
-function moviesPath(query: string, page: number, genreId = "") {
-  const trimmedQuery = query.trim();
-  const tmdbGenreId =
-    genreId === ROMCOM_GENRE_FILTER_ID ? String(ROMANCE_GENRE_ID) : genreId;
+function recentReleaseDates() {
   const today = new Date().toISOString().slice(0, 10);
   const recentCutoff = new Date();
   recentCutoff.setFullYear(recentCutoff.getFullYear() - 2);
-  const recentCutoffDate = recentCutoff.toISOString().slice(0, 10);
+
+  return {
+    recentCutoffDate: recentCutoff.toISOString().slice(0, 10),
+    today,
+  };
+}
+
+function genreFilterForId(genreId = ""): DiscoverGenreFilter | null {
+  const trimmedGenreId = genreId.trim();
+
+  if (!trimmedGenreId) {
+    return null;
+  }
+
+  const customFilter = CUSTOM_GENRE_FILTERS[trimmedGenreId];
+
+  if (customFilter) {
+    return customFilter;
+  }
+
+  const tmdbGenreId = Number(trimmedGenreId);
+
+  if (!Number.isFinite(tmdbGenreId)) {
+    return null;
+  }
+
+  return {
+    searchFallbackGenres: [tmdbGenreId],
+    withGenres: [tmdbGenreId],
+  };
+}
+
+function addDiscoverGenreFilter(
+  params: URLSearchParams,
+  filter: DiscoverGenreFilter | null
+) {
+  if (!filter) {
+    return;
+  }
+
+  if (filter.withGenres?.length) {
+    params.set("with_genres", filter.withGenres.join(","));
+  }
+
+  if (filter.withKeywords?.length) {
+    params.set("with_keywords", filter.withKeywords.join("|"));
+  }
+
+  if (filter.withoutGenres?.length) {
+    params.set("without_genres", filter.withoutGenres.join(","));
+  }
+}
+
+function hasAllGenreIds(movie: MovieSummary, genreIds: readonly number[] = []) {
+  return genreIds.every((genreId) => movie.genre_ids?.includes(genreId));
+}
+
+function hasAnyGenreId(movie: MovieSummary, genreIds: readonly number[] = []) {
+  return genreIds.some((genreId) => movie.genre_ids?.includes(genreId));
+}
+
+function movieMatchesGenreFilter(
+  movie: MovieSummary,
+  genreId = "",
+  source: "discover" | "search" = "discover"
+) {
+  const filter = genreFilterForId(genreId);
+
+  if (!filter) {
+    return true;
+  }
+
+  const requiredGenres =
+    source === "search"
+      ? (filter.searchFallbackGenres ?? filter.withGenres)
+      : filter.withGenres;
+
+  return (
+    hasAllGenreIds(movie, requiredGenres) &&
+    !hasAnyGenreId(movie, filter.withoutGenres)
+  );
+}
+
+function discoverMoviesPath({
+  genreId = "",
+  includeInternationalMovies,
+  includeRecentDates,
+  page,
+  preferredLanguage,
+  preferredRegion,
+}: {
+  genreId?: string;
+  includeRecentDates: boolean;
+  page: number;
+} & RecommendationMovieOptions) {
+  const params = new URLSearchParams({
+    include_adult: "false",
+    include_video: "false",
+    language: "en-US",
+    page: String(page),
+    sort_by: "popularity.desc",
+  });
+
+  if (includeRecentDates) {
+    const { recentCutoffDate, today } = recentReleaseDates();
+
+    params.set("primary_release_date.gte", recentCutoffDate);
+    params.set("primary_release_date.lte", today);
+  }
+
+  addDiscoverGenreFilter(params, genreFilterForId(genreId));
+
+  if (preferredLanguage) {
+    params.set(
+      "language",
+      preferredRegion
+        ? `${preferredLanguage}-${preferredRegion}`
+        : preferredLanguage
+    );
+
+    if (!includeInternationalMovies) {
+      params.set("with_original_language", preferredLanguage);
+    }
+  }
+
+  if (preferredRegion) {
+    params.set("region", preferredRegion);
+  }
+
+  return `/discover/movie?${params.toString()}`;
+}
+
+function moviesPath(query: string, page: number, genreId = "") {
+  const trimmedQuery = query.trim();
 
   if (trimmedQuery) {
     const params = new URLSearchParams({
       include_adult: "false",
+      language: "en-US",
       page: String(page),
       query: trimmedQuery,
     });
@@ -205,30 +367,7 @@ function moviesPath(query: string, page: number, genreId = "") {
     return `/search/movie?${params.toString()}`;
   }
 
-  if (tmdbGenreId) {
-    const params = new URLSearchParams({
-      include_adult: "false",
-      include_video: "false",
-      page: String(page),
-      "primary_release_date.gte": recentCutoffDate,
-      "primary_release_date.lte": today,
-      sort_by: "popularity.desc",
-      with_genres: tmdbGenreId,
-    });
-
-    return `/discover/movie?${params.toString()}`;
-  }
-
-  const params = new URLSearchParams({
-    include_adult: "false",
-    include_video: "false",
-    page: String(page),
-    "primary_release_date.gte": recentCutoffDate,
-    "primary_release_date.lte": today,
-    sort_by: "popularity.desc",
-  });
-
-  return `/discover/movie?${params.toString()}`;
+  return discoverMoviesPath({ genreId, includeRecentDates: true, page });
 }
 
 function releaseTime(movie: MovieSummary) {
@@ -256,6 +395,7 @@ export async function getMovies(
   const requestedPages = Math.ceil(requestedLimit / TMDB_PAGE_SIZE);
   const movies: MovieSummary[] = [];
   let pageLimit = requestedPages;
+  const resultSource = query.trim() ? "search" : "discover";
 
   for (
     let page = 1;
@@ -270,20 +410,9 @@ export async function getMovies(
       break;
     }
 
-    const nextMovies = data.results.filter((movie) => {
-      if (genreId === ROMCOM_GENRE_FILTER_ID) {
-        return (
-          movie.genre_ids?.includes(ROMANCE_GENRE_ID) &&
-          movie.genre_ids.includes(COMEDY_GENRE_ID)
-        );
-      }
-
-      if (query.trim() && genreId) {
-        return movie.genre_ids?.includes(Number(genreId));
-      }
-
-      return true;
-    });
+    const nextMovies = data.results.filter((movie) =>
+      movieMatchesGenreFilter(movie, genreId, resultSource)
+    );
 
     movies.push(...nextMovies);
     pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
@@ -297,34 +426,12 @@ function recommendationMoviesPath(
   genreId: string,
   options: RecommendationMovieOptions = {}
 ) {
-  const tmdbGenreId =
-    genreId === ROMCOM_GENRE_FILTER_ID ? String(ROMANCE_GENRE_ID) : genreId;
-  const params = new URLSearchParams({
-    include_adult: "false",
-    include_video: "false",
-    page: String(page),
-    sort_by: "popularity.desc",
-    with_genres: tmdbGenreId,
+  return discoverMoviesPath({
+    genreId,
+    includeRecentDates: false,
+    page,
+    ...options,
   });
-
-  if (options.preferredLanguage) {
-    params.set(
-      "language",
-      options.preferredRegion
-        ? `${options.preferredLanguage}-${options.preferredRegion}`
-        : options.preferredLanguage
-    );
-
-    if (!options.includeInternationalMovies) {
-      params.set("with_original_language", options.preferredLanguage);
-    }
-  }
-
-  if (options.preferredRegion) {
-    params.set("region", options.preferredRegion);
-  }
-
-  return `/discover/movie?${params.toString()}`;
 }
 
 export async function getRecommendationMovies(
@@ -350,16 +457,9 @@ export async function getRecommendationMovies(
       break;
     }
 
-    const nextMovies = data.results.filter((movie) => {
-      if (genreId === ROMCOM_GENRE_FILTER_ID) {
-        return (
-          movie.genre_ids?.includes(ROMANCE_GENRE_ID) &&
-          movie.genre_ids.includes(COMEDY_GENRE_ID)
-        );
-      }
-
-      return true;
-    });
+    const nextMovies = data.results.filter((movie) =>
+      movieMatchesGenreFilter(movie, genreId)
+    );
 
     movies.push(...nextMovies);
     pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
