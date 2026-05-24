@@ -225,6 +225,25 @@ function rowMatchesGenre(row: MovieRatingRow, genre: GenreKey) {
   const rowGenre = normalize(row.genre);
   const rowGenreLabel = normalize(genreLabelForKey(row.genre));
   const rowGenreNames = row.genre_names?.map(normalize) ?? [];
+  const rowGenreValues = new Set(
+    [rowGenre, rowGenreLabel, ...rowGenreNames].filter(Boolean)
+  );
+
+  if (genre === "family") {
+    return (
+      rowGenreValues.has("family") ||
+      rowGenreValues.has("animation") ||
+      rowGenreValues.has("animated")
+    );
+  }
+
+  if (genre === "romcom") {
+    return (
+      rowGenreValues.has("romcom") ||
+      rowGenreValues.has("rom-com") ||
+      (rowGenreValues.has("romance") && rowGenreValues.has("comedy"))
+    );
+  }
 
   return (
     rowGenre === genre ||

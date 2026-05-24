@@ -12,6 +12,7 @@ const tmdbGenresById: Record<number, string> = {
   53: "Thriller",
   80: "Crime",
   99: "Documentary",
+  10402: "Musical",
   878: "Sci-Fi",
   9648: "Mystery",
   10749: "Romance",

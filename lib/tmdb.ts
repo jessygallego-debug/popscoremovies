@@ -62,12 +62,20 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const MAX_MOVIE_RESULTS = 300;
 const TMDB_PAGE_SIZE = 20;
+const ACTION_GENRE_ID = 28;
+const ADVENTURE_GENRE_ID = 12;
+const ANIMATION_GENRE_ID = 16;
 const COMEDY_GENRE_ID = 35;
+const DOCUMENTARY_GENRE_ID = 99;
+const DRAMA_GENRE_ID = 18;
+const FAMILY_GENRE_ID = 10751;
 const HORROR_GENRE_ID = 27;
 const MUSIC_GENRE_ID = 10402;
+const MYSTERY_GENRE_ID = 9648;
 const ROMANCE_GENRE_ID = 10749;
 const SCIENCE_FICTION_GENRE_ID = 878;
 const THRILLER_GENRE_ID = 53;
+const WAR_GENRE_ID = 10752;
 const MUSICAL_KEYWORD_ID = 4344;
 export const ROMCOM_GENRE_FILTER_ID = "romcom";
 
@@ -78,7 +86,9 @@ type RecommendationMovieOptions = {
 };
 
 type DiscoverGenreFilter = {
+  searchAnyGenres?: readonly number[];
   searchFallbackGenres?: readonly number[];
+  withAnyGenres?: readonly number[];
   withGenres?: readonly number[];
   withKeywords?: readonly number[];
   withoutGenres?: readonly number[];
@@ -91,6 +101,10 @@ const HARD_MISMATCH_GENRE_IDS = [
 ] as const;
 
 const CUSTOM_GENRE_FILTERS: Record<string, DiscoverGenreFilter> = {
+  [String(FAMILY_GENRE_ID)]: {
+    searchAnyGenres: [FAMILY_GENRE_ID, ANIMATION_GENRE_ID],
+    withAnyGenres: [FAMILY_GENRE_ID, ANIMATION_GENRE_ID],
+  },
   [String(MUSIC_GENRE_ID)]: {
     searchFallbackGenres: [MUSIC_GENRE_ID],
     withKeywords: [MUSICAL_KEYWORD_ID],
@@ -104,21 +118,21 @@ const CUSTOM_GENRE_FILTERS: Record<string, DiscoverGenreFilter> = {
 };
 
 export const MOVIE_GENRE_FILTERS = [
-  { id: "28", name: "Action" },
-  { id: "12", name: "Adventure" },
-  { id: "16", name: "Animation" },
-  { id: "35", name: "Comedy" },
-  { id: "99", name: "Documentary" },
-  { id: "18", name: "Drama" },
-  { id: "10751", name: "Family" },
-  { id: "27", name: "Horror" },
-  { id: "9648", name: "Mystery" },
+  { id: String(ACTION_GENRE_ID), name: "Action" },
+  { id: String(ADVENTURE_GENRE_ID), name: "Adventure" },
+  { id: String(ANIMATION_GENRE_ID), name: "Animation" },
+  { id: String(COMEDY_GENRE_ID), name: "Comedy" },
+  { id: String(DOCUMENTARY_GENRE_ID), name: "Documentary" },
+  { id: String(DRAMA_GENRE_ID), name: "Drama" },
+  { id: String(FAMILY_GENRE_ID), name: "Family" },
+  { id: String(HORROR_GENRE_ID), name: "Horror" },
+  { id: String(MYSTERY_GENRE_ID), name: "Mystery" },
   { id: String(MUSIC_GENRE_ID), name: "Musical" },
-  { id: "10749", name: "Romance" },
+  { id: String(ROMANCE_GENRE_ID), name: "Romance" },
   { id: ROMCOM_GENRE_FILTER_ID, name: "Rom-Com" },
-  { id: "878", name: "Sci-Fi" },
-  { id: "53", name: "Thriller" },
-  { id: "10752", name: "War" },
+  { id: String(SCIENCE_FICTION_GENRE_ID), name: "Sci-Fi" },
+  { id: String(THRILLER_GENRE_ID), name: "Thriller" },
+  { id: String(WAR_GENRE_ID), name: "War" },
 ];
 
 function getToken() {
@@ -261,8 +275,13 @@ function addDiscoverGenreFilter(
     return;
   }
 
-  if (filter.withGenres?.length) {
-    params.set("with_genres", filter.withGenres.join(","));
+  if (filter.withGenres?.length || filter.withAnyGenres?.length) {
+    params.set(
+      "with_genres",
+      filter.withGenres?.length
+        ? filter.withGenres.join(",")
+        : filter.withAnyGenres?.join("|") ?? ""
+    );
   }
 
   if (filter.withKeywords?.length) {
@@ -297,9 +316,14 @@ function movieMatchesGenreFilter(
     source === "search"
       ? (filter.searchFallbackGenres ?? filter.withGenres)
       : filter.withGenres;
+  const anyGenres =
+    source === "search"
+      ? (filter.searchAnyGenres ?? filter.withAnyGenres)
+      : filter.withAnyGenres;
 
   return (
     hasAllGenreIds(movie, requiredGenres) &&
+    (!anyGenres?.length || hasAnyGenreId(movie, anyGenres)) &&
     !hasAnyGenreId(movie, filter.withoutGenres)
   );
 }
