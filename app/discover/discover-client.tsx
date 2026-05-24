@@ -449,26 +449,56 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
           ) : null}
         </div>
 
-        <div className="mt-3 grid gap-2 border-t border-slate-800 pt-3 md:grid-cols-[minmax(180px,260px)_minmax(140px,180px)] md:items-end">
-          <div className="grid gap-1.5">
-            <p className="px-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-              Movie Era
-            </p>
-            <MobileFilterMenu
-              className="relative z-[430]"
-              label="Movie Era"
-              labelClassName="sr-only"
-              onSelect={handleMovieEraChange}
-              options={movieEraOptions.map((option) => ({
-                label: option.label,
-                value: option.value,
-              }))}
-              selectedValue={movieEra}
-            />
-          </div>
+        <div className="mt-3 grid grid-cols-2 items-end gap-2 border-t border-slate-800 pt-3 md:grid-cols-[minmax(160px,1fr)_minmax(180px,1fr)_minmax(170px,1fr)_minmax(210px,auto)] md:gap-3">
+          <MobileFilterMenu
+            className="order-3 relative z-[430] w-full md:order-1"
+            label="Movie Era"
+            onSelect={handleMovieEraChange}
+            options={movieEraOptions.map((option) => ({
+              label: option.label,
+              value: option.value,
+            }))}
+            selectedValue={movieEra}
+            summaryClassName="flex min-h-10 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-full border border-yellow-400/55 bg-[#020617] px-3 text-xs font-black text-yellow-300 shadow-inner shadow-black/30 outline-none transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 sm:text-sm [&::-webkit-details-marker]:hidden"
+          />
+          <MobileFilterMenu
+            className="order-1 relative z-[420] w-full md:order-2"
+            label="Preferred Movie Language"
+            onSelect={handlePreferredLanguageChange}
+            options={languageOptions}
+            selectedValue={preferredLanguage}
+            summaryClassName="flex min-h-10 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-full border border-yellow-400/55 bg-[#020617] px-3 text-xs font-black text-yellow-300 shadow-inner shadow-black/30 outline-none transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 sm:text-sm [&::-webkit-details-marker]:hidden"
+          />
+          <MobileFilterMenu
+            className="order-2 relative z-[410] w-full md:order-3"
+            label="Preferred Region"
+            onSelect={handlePreferredRegionChange}
+            options={regionOptions}
+            selectedValue={preferredRegion}
+            summaryClassName="flex min-h-10 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-full border border-yellow-400/55 bg-[#020617] px-3 text-xs font-black text-yellow-300 shadow-inner shadow-black/30 outline-none transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 sm:text-sm [&::-webkit-details-marker]:hidden"
+          />
+
+          <label className="order-4 grid w-full gap-1.5 md:order-4">
+            <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
+              International
+            </span>
+            <span className="flex h-10 min-h-10 w-full items-center gap-2 overflow-hidden rounded-full border border-slate-700 bg-black/30 px-2 text-[10px] font-black text-slate-200 transition hover:border-yellow-400/50 sm:px-3 sm:text-sm md:whitespace-nowrap md:text-xs lg:text-sm">
+              <input
+                type="checkbox"
+                checked={includeInternationalMovies}
+                onChange={(event) =>
+                  handleInternationalToggle(event.target.checked)
+                }
+                className="h-3.5 w-3.5 shrink-0 accent-yellow-400"
+              />
+              <span className="min-w-0 leading-[1.05]">
+                Include international movies
+              </span>
+            </span>
+          </label>
 
           {movieEra === "custom" ? (
-            <label className="grid gap-1.5">
+            <label className="order-5 col-span-2 grid gap-1.5 md:col-span-1 md:col-start-1">
               <span className="px-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
                 Custom year
               </span>
@@ -480,39 +510,10 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
                 value={customYear}
                 onChange={(event) => handleCustomYearChange(event.target.value)}
                 placeholder="1955"
-                className="min-h-9 rounded-full border border-slate-700 bg-black/30 px-3 text-sm font-black text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-yellow-400/70"
+                className="min-h-10 rounded-full border border-slate-700 bg-black/30 px-3 text-sm font-black text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-yellow-400/70"
               />
             </label>
           ) : null}
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-800 pt-3 md:grid-cols-[minmax(180px,260px)_minmax(170px,260px)_auto] md:items-end">
-          <MobileFilterMenu
-            className="relative z-[420]"
-            label="Preferred Movie Language"
-            onSelect={handlePreferredLanguageChange}
-            options={languageOptions}
-            selectedValue={preferredLanguage}
-          />
-          <MobileFilterMenu
-            className="relative z-[410]"
-            label="Preferred region"
-            onSelect={handlePreferredRegionChange}
-            options={regionOptions}
-            selectedValue={preferredRegion}
-          />
-
-          <label className="col-span-2 flex min-h-9 items-center gap-2 rounded-full border border-slate-700 bg-black/30 px-3 text-xs font-black text-slate-200 transition hover:border-yellow-400/50 sm:text-sm md:col-span-1 md:whitespace-nowrap">
-            <input
-              type="checkbox"
-              checked={includeInternationalMovies}
-              onChange={(event) =>
-                handleInternationalToggle(event.target.checked)
-              }
-              className="h-3.5 w-3.5 shrink-0 accent-yellow-400"
-            />
-            <span>Include international movies</span>
-          </label>
         </div>
       </div>
 
