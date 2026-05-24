@@ -7,6 +7,8 @@ import {
 } from "@/lib/profile-store";
 
 export const NOTIFICATIONS_UPDATED_EVENT = "popscore-notifications-updated";
+export const NOTIFICATION_TARGET_CHANGED_EVENT =
+  "popscore-notification-target-changed";
 
 const LOCAL_NOTIFICATIONS_KEY = "popscore-notifications";
 const LOCAL_ACTOR_ID = "current-user";
@@ -421,14 +423,18 @@ export function getNotificationHref(notification: PopScoreNotification) {
     notification.entityType === "discussion" ||
     notification.entityType === "discussion_comment"
   ) {
-    const discussionHash =
+    const shouldFocusComments =
       notification.type === "discussion_comment" ||
       notification.type === "mention" ||
-      notification.entityType === "discussion_comment"
-        ? "#comments"
-        : "";
+      notification.entityType === "discussion_comment";
+    const discussionParams = new URLSearchParams({
+      discussionId: notification.entityId,
+    });
+    const discussionHash = shouldFocusComments ? "#comments" : "";
 
-    return `/community/discussions/${notification.entityId}${discussionHash}`;
+    return `/community/discussions/${
+      notification.entityId
+    }?${discussionParams.toString()}${discussionHash}`;
   }
 
   if (
@@ -437,13 +443,28 @@ export function getNotificationHref(notification: PopScoreNotification) {
     notification.entityType === "movie_comment" ||
     notification.entityType === "review"
   ) {
-    return "/community";
+    const params = new URLSearchParams();
+
+    if (notification.entityId) {
+      if (
+        notification.entityId.startsWith("post-") ||
+        notification.entityId.startsWith("rating-")
+      ) {
+        params.set("postId", notification.entityId);
+      } else {
+        params.set("movieId", notification.entityId);
+      }
+    }
+
+    const query = params.toString();
+
+    return query ? `/community?${query}` : "/community";
   }
 
-  if (
-    notification.entityType === "movie"
-  ) {
-    return `/movie/${notification.entityId}`;
+  if (notification.entityType === "movie") {
+    const params = new URLSearchParams({ movieId: notification.entityId });
+
+    return `/movie/${notification.entityId}?${params.toString()}`;
   }
 
   return "/community";

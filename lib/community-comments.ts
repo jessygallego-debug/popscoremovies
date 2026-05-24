@@ -266,6 +266,34 @@ export function notifyCommunityPostActivityUpdated(postId: string) {
   );
 }
 
+export function communityPostCommentHref({
+  commentId,
+  movieId,
+  postId,
+  replyId,
+}: {
+  commentId?: string;
+  movieId?: string;
+  postId: string;
+  replyId?: string;
+}) {
+  const params = new URLSearchParams({ postId });
+
+  if (commentId) {
+    params.set("commentId", commentId);
+  }
+
+  if (replyId) {
+    params.set("replyId", replyId);
+  }
+
+  if (movieId) {
+    params.set("movieId", movieId);
+  }
+
+  return `/community?${params.toString()}#post-${postId}`;
+}
+
 export function normalizeCommunityComment(comment: string) {
   return comment.replace(/\s+/g, " ").trim();
 }
@@ -511,17 +539,21 @@ export async function addCommunityComment(
     throw new Error("Create or sign in to your PopFile to comment.");
   }
 
-  await supabaseFetch<CommunityCommentRow[]>("/community_comments", {
-    method: "POST",
-    headers: {
-      Prefer: "return=representation",
-    },
-    body: JSON.stringify({
-      body: validation.body,
-      post_id: postId,
-      user_id: profile.user_id,
-    }),
-  });
+  const createdComments = await supabaseFetch<CommunityCommentRow[]>(
+    "/community_comments",
+    {
+      method: "POST",
+      headers: {
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        body: validation.body,
+        post_id: postId,
+        user_id: profile.user_id,
+      }),
+    }
+  );
+  const createdCommentId = createdComments[0]?.id;
 
   if (notificationContext?.recipientUserId) {
     const movieText = notificationContext.movieTitle
@@ -531,7 +563,11 @@ export async function addCommunityComment(
     await createNotification({
       actorUserId: profile.user_id,
       actorUsername: profile.username,
-      entityId: `/community#post-${postId}`,
+      entityId: communityPostCommentHref({
+        commentId: createdCommentId,
+        movieId: notificationContext.movieId,
+        postId,
+      }),
       entityType: notificationContext.movieId ? "movie" : "movie_comment",
       message: `${profile.username} commented on your post${movieText}.`,
       recipientUserId: notificationContext.recipientUserId,
@@ -637,7 +673,11 @@ export async function toggleCommunityCommentLike(
     await createNotification({
       actorUserId: actor.userId,
       actorUsername: actor.username,
-      entityId: `/community#post-${comment.postId}`,
+      entityId: communityPostCommentHref({
+        commentId: comment.id,
+        movieId: notificationContext?.movieId,
+        postId: comment.postId,
+      }),
       entityType: "movie_comment",
       message: `${actor.displayName} liked your comment${movieText}.`,
       recipientUserId: comment.userId,

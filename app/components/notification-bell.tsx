@@ -8,6 +8,7 @@ import {
   getNotificationHref,
   getNotificationsForUser,
   markNotificationAsRead,
+  NOTIFICATION_TARGET_CHANGED_EVENT,
   NOTIFICATIONS_UPDATED_EVENT,
   type PopScoreNotification,
 } from "@/lib/notifications";
@@ -136,6 +137,9 @@ export default function NotificationBell({
     setIsOpen(false);
     void markNotificationAsRead(notification.id);
     router.push(href);
+    window.setTimeout(() => {
+      window.dispatchEvent(new Event(NOTIFICATION_TARGET_CHANGED_EVENT));
+    }, 50);
   };
 
   return (

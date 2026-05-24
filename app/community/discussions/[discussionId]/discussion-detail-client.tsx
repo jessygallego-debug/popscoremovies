@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FollowButton from "@/app/components/follow-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
@@ -17,6 +17,7 @@ import {
 import {
   createNotification,
   getCurrentNotificationActor,
+  NOTIFICATION_TARGET_CHANGED_EVENT,
 } from "@/lib/notifications";
 import { posterUrl } from "@/lib/tmdb";
 
@@ -107,6 +108,127 @@ function mentionedUsernames(value: string) {
   );
 }
 
+const NOTIFICATION_HIGHLIGHT_DURATION_MS = 4000;
+
+type DiscussionNotificationTarget = {
+  commentId: string | null;
+  key: string;
+  movieId: string | null;
+  postId: string | null;
+  replyId: string | null;
+};
+
+function currentLocationKey() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+function discussionCommentHref(discussionId: string, replyId?: string) {
+  const params = new URLSearchParams({ discussionId });
+  const hash = replyId ? `#reply-${replyId}` : "#comments";
+
+  if (replyId) {
+    params.set("replyId", replyId);
+  }
+
+  return `/community/discussions/${discussionId}?${params.toString()}${hash}`;
+}
+
+function readDiscussionNotificationTarget(
+  discussionId: string
+): DiscussionNotificationTarget | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const targetDiscussionId = searchParams.get("discussionId");
+  const commentId = searchParams.get("commentId");
+  const replyId = searchParams.get("replyId");
+  const postId = searchParams.get("postId");
+  const movieId = searchParams.get("movieId");
+  const hash = window.location.hash;
+  const hasDiscussionTarget =
+    targetDiscussionId === discussionId ||
+    hash === "#comments" ||
+    hash.startsWith("#reply-") ||
+    Boolean(commentId || replyId);
+
+  if (!hasDiscussionTarget) {
+    return null;
+  }
+
+  return {
+    commentId,
+    key: `${discussionId}:${commentId ?? ""}:${replyId ?? ""}:${
+      postId ?? ""
+    }:${movieId ?? ""}:${currentLocationKey()}`,
+    movieId,
+    postId,
+    replyId,
+  };
+}
+
+function getNotificationTargetElement(targetIds: string[]) {
+  return targetIds
+    .map((targetId) => document.getElementById(targetId))
+    .find((element): element is HTMLElement => Boolean(element));
+}
+
+function scrollToNotificationTargetElement(targetElement: HTMLElement) {
+  targetElement.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+
+  targetElement.classList.add("notification-highlight");
+
+  window.setTimeout(() => {
+    targetElement.classList.remove("notification-highlight");
+  }, NOTIFICATION_HIGHLIGHT_DURATION_MS);
+}
+
+function waitForNotificationTarget(
+  targetIds: string[],
+  fallbackIds: string[],
+  onTargetFound?: () => void
+) {
+  let attempt = 0;
+  let retryTimeout: number | null = null;
+  const maxAttempts = 12;
+
+  const tryScroll = () => {
+    const targetElement =
+      getNotificationTargetElement(targetIds) ??
+      (attempt >= maxAttempts
+        ? getNotificationTargetElement(fallbackIds)
+        : null);
+
+    if (targetElement) {
+      onTargetFound?.();
+      scrollToNotificationTargetElement(targetElement);
+      return;
+    }
+
+    attempt += 1;
+
+    if (attempt <= maxAttempts) {
+      retryTimeout = window.setTimeout(tryScroll, 150);
+    }
+  };
+
+  retryTimeout = window.setTimeout(tryScroll, 300);
+
+  return () => {
+    if (retryTimeout) {
+      window.clearTimeout(retryTimeout);
+    }
+  };
+}
+
 function findStoredDiscussion(discussionId: string) {
   if (typeof window === "undefined") {
     return null;
@@ -121,7 +243,10 @@ function findStoredDiscussion(discussionId: string) {
 
 function ReplyCard({ reply }: { reply: CommunityDiscussionReply }) {
   return (
-    <article className="rounded-2xl border border-slate-800 bg-black/25 p-4">
+    <article
+      id={`reply-${reply.id}`}
+      className="scroll-mt-28 rounded-2xl border border-slate-800 bg-black/25 p-4 transition"
+    >
       <div className="flex gap-3">
         <Avatar label={reply.userAvatarUrl} />
         <div className="min-w-0 flex-1">
@@ -185,6 +310,8 @@ export default function DiscussionDetailClient({
   const [addedReplies, setAddedReplies] = useState<CommunityDiscussionReply[]>(
     []
   );
+  const [locationKey, setLocationKey] = useState("");
+  const handledNotificationTargetRef = useRef<string | null>(null);
   const mockDiscussion = getMockCommunityDiscussion(discussionId);
   const discussion = storedDiscussion ?? mockDiscussion;
   const mockReplies = useMemo(
@@ -213,6 +340,74 @@ export default function DiscussionDetailClient({
       window.clearTimeout(timeout);
     };
   }, [discussionId]);
+
+  useEffect(() => {
+    const updateLocationKey = () => {
+      setLocationKey(currentLocationKey());
+    };
+
+    updateLocationKey();
+    window.addEventListener("hashchange", updateLocationKey);
+    window.addEventListener("popstate", updateLocationKey);
+    window.addEventListener(
+      NOTIFICATION_TARGET_CHANGED_EVENT,
+      updateLocationKey
+    );
+
+    return () => {
+      window.removeEventListener("hashchange", updateLocationKey);
+      window.removeEventListener("popstate", updateLocationKey);
+      window.removeEventListener(
+        NOTIFICATION_TARGET_CHANGED_EVENT,
+        updateLocationKey
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const target = readDiscussionNotificationTarget(discussionId);
+
+    if (!target || !discussion) {
+      return;
+    }
+
+    if (discussion.isSpoiler && !isSpoilerVisible) {
+      const spoilerTimeout = window.setTimeout(() => {
+        setIsSpoilerVisible(true);
+      }, 0);
+
+      return () => {
+        window.clearTimeout(spoilerTimeout);
+      };
+    }
+
+    if (handledNotificationTargetRef.current === target.key) {
+      return;
+    }
+
+    const targetIds = [
+      target.replyId ? `reply-${target.replyId}` : null,
+      target.commentId ? `comment-${target.commentId}` : null,
+    ].filter((targetId): targetId is string => Boolean(targetId));
+    const fallbackIds = ["comments"];
+    const cancelTargetWait = waitForNotificationTarget(
+      targetIds.length > 0 ? targetIds : fallbackIds,
+      fallbackIds,
+      () => {
+        handledNotificationTargetRef.current = target.key;
+      }
+    );
+
+    return () => {
+      cancelTargetWait();
+    };
+  }, [
+    discussion,
+    discussionId,
+    isSpoilerVisible,
+    locationKey,
+    replies.length,
+  ]);
 
   if (!discussion) {
     return (
@@ -248,11 +443,14 @@ export default function DiscussionDetailClient({
       return;
     }
 
+    const replyId = `${Date.now()}`;
+    const replyHref = discussionCommentHref(discussion.id, replyId);
+
     setAddedReplies((currentReplies) => [
       {
         body: trimmedReply,
         createdAt: new Date().toISOString(),
-        id: `reply-${Date.now()}`,
+        id: replyId,
         likeCount: 0,
         userAvatarUrl: "🔥",
         userDisplayName: "Jessy",
@@ -265,7 +463,7 @@ export default function DiscussionDetailClient({
       await createNotification({
         actorUserId: actor.userId,
         actorUsername: actor.username,
-        entityId: `/community/discussions/${discussion.id}#comments`,
+        entityId: replyHref,
         entityType: "discussion_comment",
         message: `${actor.displayName} commented on your discussion: ${discussion.title}`,
         recipientUserId: discussion.startedByUserId,
@@ -278,7 +476,7 @@ export default function DiscussionDetailClient({
           createNotification({
             actorUserId: actor.userId,
             actorUsername: actor.username,
-            entityId: `/community/discussions/${discussion.id}#comments`,
+            entityId: replyHref,
             entityType: "discussion_comment",
             message: `${actor.displayName} mentioned you in a discussion.`,
             recipientUserId: `mention-${username}`,

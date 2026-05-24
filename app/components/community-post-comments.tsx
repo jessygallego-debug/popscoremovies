@@ -10,6 +10,7 @@ import {
   toggleCommunityCommentLike,
   validateCommunityComment,
 } from "@/lib/community-comments";
+import { NOTIFICATION_TARGET_CHANGED_EVENT } from "@/lib/notifications";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
 
 type CommunityPostCommentsProps = {
@@ -83,6 +84,120 @@ function shouldKeepLocalLike(error: Error) {
   );
 }
 
+const NOTIFICATION_HIGHLIGHT_DURATION_MS = 4000;
+
+type CommunityPostNotificationTarget = {
+  commentId: string | null;
+  key: string;
+  movieId: string | null;
+  replyId: string | null;
+};
+
+function currentLocationKey() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+function hashPostId() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  if (!window.location.hash.startsWith("#post-")) {
+    return null;
+  }
+
+  return window.location.hash.replace("#post-", "");
+}
+
+function readCommunityPostNotificationTarget(
+  postId: string
+): CommunityPostNotificationTarget | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const targetPostId = searchParams.get("postId");
+
+  if (targetPostId !== postId && hashPostId() !== postId) {
+    return null;
+  }
+
+  const commentId = searchParams.get("commentId");
+  const replyId = searchParams.get("replyId");
+  const movieId = searchParams.get("movieId");
+
+  return {
+    commentId,
+    key: `${postId}:${commentId ?? ""}:${replyId ?? ""}:${
+      movieId ?? ""
+    }:${currentLocationKey()}`,
+    movieId,
+    replyId,
+  };
+}
+
+function getNotificationTargetElement(targetIds: string[]) {
+  return targetIds
+    .map((targetId) => document.getElementById(targetId))
+    .find((element): element is HTMLElement => Boolean(element));
+}
+
+function scrollToNotificationTargetElement(targetElement: HTMLElement) {
+  targetElement.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+
+  targetElement.classList.add("notification-highlight");
+
+  window.setTimeout(() => {
+    targetElement.classList.remove("notification-highlight");
+  }, NOTIFICATION_HIGHLIGHT_DURATION_MS);
+}
+
+function waitForNotificationTarget(
+  targetIds: string[],
+  fallbackIds: string[],
+  onTargetFound?: () => void
+) {
+  let attempt = 0;
+  let retryTimeout: number | null = null;
+  const maxAttempts = 12;
+
+  const tryScroll = () => {
+    const targetElement =
+      getNotificationTargetElement(targetIds) ??
+      (attempt >= maxAttempts
+        ? getNotificationTargetElement(fallbackIds)
+        : null);
+
+    if (targetElement) {
+      onTargetFound?.();
+      scrollToNotificationTargetElement(targetElement);
+      return;
+    }
+
+    attempt += 1;
+
+    if (attempt <= maxAttempts) {
+      retryTimeout = window.setTimeout(tryScroll, 150);
+    }
+  };
+
+  retryTimeout = window.setTimeout(tryScroll, 300);
+
+  return () => {
+    if (retryTimeout) {
+      window.clearTimeout(retryTimeout);
+    }
+  };
+}
+
 export default function CommunityPostComments({
   initialCommentCount,
   movieId,
@@ -100,7 +215,9 @@ export default function CommunityPostComments({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savingLikeId, setSavingLikeId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [locationKey, setLocationKey] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const handledNotificationTargetRef = useRef<string | null>(null);
 
   const totalCommentCount = initialCommentCount + comments.length;
   const visibleComments = showAllComments
@@ -150,19 +267,73 @@ export default function CommunityPostComments({
   }, [isComposerOpen]);
 
   useEffect(() => {
-    const openFocusedPostComments = () => {
-      if (window.location.hash === `#post-${postId}`) {
-        setAreCommentsOpen(true);
-      }
+    const updateLocationKey = () => {
+      setLocationKey(currentLocationKey());
     };
 
-    openFocusedPostComments();
-    window.addEventListener("hashchange", openFocusedPostComments);
+    updateLocationKey();
+    window.addEventListener("hashchange", updateLocationKey);
+    window.addEventListener("popstate", updateLocationKey);
+    window.addEventListener(
+      NOTIFICATION_TARGET_CHANGED_EVENT,
+      updateLocationKey
+    );
 
     return () => {
-      window.removeEventListener("hashchange", openFocusedPostComments);
+      window.removeEventListener("hashchange", updateLocationKey);
+      window.removeEventListener("popstate", updateLocationKey);
+      window.removeEventListener(
+        NOTIFICATION_TARGET_CHANGED_EVENT,
+        updateLocationKey
+      );
     };
-  }, [postId]);
+  }, []);
+
+  useEffect(() => {
+    const target = readCommunityPostNotificationTarget(postId);
+
+    if (!target) {
+      return;
+    }
+
+    const openTimeout = window.setTimeout(() => {
+      setAreCommentsOpen(true);
+
+      if (target.commentId || target.replyId) {
+        setShowAllComments(true);
+      }
+    }, 0);
+
+    if (isLoading) {
+      return () => {
+        window.clearTimeout(openTimeout);
+      };
+    }
+
+    if (handledNotificationTargetRef.current === target.key) {
+      return () => {
+        window.clearTimeout(openTimeout);
+      };
+    }
+
+    const targetIds = [
+      target.replyId ? `reply-${target.replyId}` : null,
+      target.commentId ? `comment-${target.commentId}` : null,
+    ].filter((targetId): targetId is string => Boolean(targetId));
+    const fallbackIds = [`post-${postId}`];
+    const cancelTargetWait = waitForNotificationTarget(
+      targetIds.length > 0 ? targetIds : fallbackIds,
+      fallbackIds,
+      () => {
+        handledNotificationTargetRef.current = target.key;
+      }
+    );
+
+    return () => {
+      window.clearTimeout(openTimeout);
+      cancelTargetWait();
+    };
+  }, [comments.length, isLoading, locationKey, postId]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -312,7 +483,11 @@ export default function CommunityPostComments({
           {areCommentsOpen && visibleComments.length > 0 ? (
             <div className="space-y-2">
               {visibleComments.map((comment) => (
-                <div key={comment.id} className="flex items-start gap-3">
+                <div
+                  id={`comment-${comment.id}`}
+                  key={comment.id}
+                  className="flex scroll-mt-28 items-start gap-3 rounded-xl transition"
+                >
                   <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-yellow-400/10 text-sm font-black text-white">
                     {comment.avatar}
                   </span>

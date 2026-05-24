@@ -43,6 +43,7 @@ import {
   type DiscoverableUserSummary,
   type TopReviewerSummary,
 } from "@/lib/profile-store";
+import { NOTIFICATION_TARGET_CHANGED_EVENT } from "@/lib/notifications";
 import { posterUrl } from "@/lib/tmdb";
 
 type CommunityUser = {
@@ -2851,9 +2852,12 @@ export default function CommunityPage() {
 
   useEffect(() => {
     const readFocusedPost = () => {
-      const nextFocusedPostId = window.location.hash.startsWith("#post-")
+      const searchParams = new URLSearchParams(window.location.search);
+      const queryPostId = searchParams.get("postId");
+      const hashFocusedPostId = window.location.hash.startsWith("#post-")
         ? window.location.hash.replace("#post-", "")
         : null;
+      const nextFocusedPostId = queryPostId ?? hashFocusedPostId;
 
       if (nextFocusedPostId) {
         setFocusedPostId(nextFocusedPostId);
@@ -2863,9 +2867,19 @@ export default function CommunityPage() {
 
     readFocusedPost();
     window.addEventListener("hashchange", readFocusedPost);
+    window.addEventListener("popstate", readFocusedPost);
+    window.addEventListener(
+      NOTIFICATION_TARGET_CHANGED_EVENT,
+      readFocusedPost
+    );
 
     return () => {
       window.removeEventListener("hashchange", readFocusedPost);
+      window.removeEventListener("popstate", readFocusedPost);
+      window.removeEventListener(
+        NOTIFICATION_TARGET_CHANGED_EVENT,
+        readFocusedPost
+      );
     };
   }, []);
 

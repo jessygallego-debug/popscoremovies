@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  communityPostCommentHref,
   getCommunityPostLikeSummary,
   notifyCommunityPostActivityUpdated,
   toggleCommunityPostLike,
@@ -130,7 +131,10 @@ export default function CommunityPostLikeButton({
         actorUsername: actor.username,
         entityId: notificationEntityId?.startsWith("/")
           ? notificationEntityId
-          : `/community#post-${postId}`,
+          : communityPostCommentHref({
+              movieId: notificationEntityId,
+              postId,
+            }),
         entityType: notificationEntityType,
         message: `${actor.displayName} liked your review${movieText}.`,
         recipientUserId: notificationRecipientUserId,

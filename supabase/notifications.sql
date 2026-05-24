@@ -246,7 +246,10 @@ begin
         new.user_id,
         'comment_reply',
         'movie',
-        '/community#post-' || new.post_id,
+        '/community?postId=' || new.post_id ||
+          '&commentId=' || new.id ||
+          case when movie_id is not null then '&movieId=' || movie_id else '' end ||
+          '#post-' || new.post_id,
         actor_name || ' commented on your post' ||
           case when movie_title is not null then ' on ' || movie_title else '' end ||
           '.'
@@ -285,7 +288,9 @@ begin
         new.user_id,
         'comment_reaction',
         'review',
-        '/community#post-' || new.post_id,
+        '/community?postId=' || new.post_id ||
+          case when movie_id is not null then '&movieId=' || movie_id else '' end ||
+          '#post-' || new.post_id,
         actor_name || ' liked your review' ||
           case when movie_title is not null then ' of ' || movie_title else '' end ||
           '.'
@@ -333,7 +338,10 @@ begin
       'comment_reaction',
       'movie_comment',
       case
-        when comment_post_id is not null then '/community#post-' || comment_post_id
+        when comment_post_id is not null then '/community?postId=' || comment_post_id ||
+          '&commentId=' || new.comment_id ||
+          case when movie_id is not null then '&movieId=' || movie_id else '' end ||
+          '#post-' || comment_post_id
         else '/community'
       end,
       actor_name || ' liked your comment' ||
