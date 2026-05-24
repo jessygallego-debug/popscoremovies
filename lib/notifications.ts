@@ -421,13 +421,27 @@ export function getNotificationHref(notification: PopScoreNotification) {
     notification.entityType === "discussion" ||
     notification.entityType === "discussion_comment"
   ) {
-    return `/community/discussions/${notification.entityId}`;
+    const discussionHash =
+      notification.type === "discussion_comment" ||
+      notification.type === "mention" ||
+      notification.entityType === "discussion_comment"
+        ? "#comments"
+        : "";
+
+    return `/community/discussions/${notification.entityId}${discussionHash}`;
   }
 
   if (
-    notification.entityType === "movie" ||
+    notification.type === "comment_reply" ||
+    notification.type === "comment_reaction" ||
     notification.entityType === "movie_comment" ||
     notification.entityType === "review"
+  ) {
+    return "/community";
+  }
+
+  if (
+    notification.entityType === "movie"
   ) {
     return `/movie/${notification.entityId}`;
   }

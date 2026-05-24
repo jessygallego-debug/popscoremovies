@@ -265,8 +265,8 @@ export default function DiscussionDetailClient({
       await createNotification({
         actorUserId: actor.userId,
         actorUsername: actor.username,
-        entityId: discussion.id,
-        entityType: "discussion",
+        entityId: `/community/discussions/${discussion.id}#comments`,
+        entityType: "discussion_comment",
         message: `${actor.displayName} commented on your discussion: ${discussion.title}`,
         recipientUserId: discussion.startedByUserId,
         recipientUsername: discussion.startedByUsername,
@@ -278,8 +278,8 @@ export default function DiscussionDetailClient({
           createNotification({
             actorUserId: actor.userId,
             actorUsername: actor.username,
-            entityId: discussion.id,
-            entityType: "discussion",
+            entityId: `/community/discussions/${discussion.id}#comments`,
+            entityType: "discussion_comment",
             message: `${actor.displayName} mentioned you in a discussion.`,
             recipientUserId: `mention-${username}`,
             recipientUsername: username,
@@ -451,7 +451,12 @@ export default function DiscussionDetailClient({
                 </p>
               </article>
 
-              <section className={cardClass("p-4 sm:p-5")}>
+              <section
+                id="comments"
+                className={cardClass(
+                  "scroll-mt-28 p-4 transition target:border-yellow-400/70 target:bg-yellow-400/10 sm:p-5"
+                )}
+              >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-lg font-black text-white">
