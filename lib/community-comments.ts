@@ -531,7 +531,7 @@ export async function addCommunityComment(
     await createNotification({
       actorUserId: profile.user_id,
       actorUsername: profile.username,
-      entityId: notificationContext.movieId ?? "/community",
+      entityId: `/community#post-${postId}`,
       entityType: notificationContext.movieId ? "movie" : "movie_comment",
       message: `${profile.username} commented on your post${movieText}.`,
       recipientUserId: notificationContext.recipientUserId,
@@ -637,7 +637,7 @@ export async function toggleCommunityCommentLike(
     await createNotification({
       actorUserId: actor.userId,
       actorUsername: actor.username,
-      entityId: notificationContext?.movieId ?? "/community",
+      entityId: `/community#post-${comment.postId}`,
       entityType: "movie_comment",
       message: `${actor.displayName} liked your comment${movieText}.`,
       recipientUserId: comment.userId,

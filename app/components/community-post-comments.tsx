@@ -149,6 +149,21 @@ export default function CommunityPostComments({
     }
   }, [isComposerOpen]);
 
+  useEffect(() => {
+    const openFocusedPostComments = () => {
+      if (window.location.hash === `#post-${postId}`) {
+        setAreCommentsOpen(true);
+      }
+    };
+
+    openFocusedPostComments();
+    window.addEventListener("hashchange", openFocusedPostComments);
+
+    return () => {
+      window.removeEventListener("hashchange", openFocusedPostComments);
+    };
+  }, [postId]);
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 

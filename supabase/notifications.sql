@@ -246,7 +246,7 @@ begin
         new.user_id,
         'comment_reply',
         'movie',
-        coalesce(movie_id, new.post_id),
+        '/community#post-' || new.post_id,
         actor_name || ' commented on your post' ||
           case when movie_title is not null then ' on ' || movie_title else '' end ||
           '.'
@@ -285,7 +285,7 @@ begin
         new.user_id,
         'comment_reaction',
         'review',
-        coalesce(movie_id, new.post_id),
+        '/community#post-' || new.post_id,
         actor_name || ' liked your review' ||
           case when movie_title is not null then ' of ' || movie_title else '' end ||
           '.'
@@ -332,7 +332,10 @@ begin
       new.user_id,
       'comment_reaction',
       'movie_comment',
-      coalesce(movie_id, comment_post_id, new.comment_id::text),
+      case
+        when comment_post_id is not null then '/community#post-' || comment_post_id
+        else '/community'
+      end,
       actor_name || ' liked your comment' ||
         case when movie_title is not null then ' on ' || movie_title else '' end ||
         '.'

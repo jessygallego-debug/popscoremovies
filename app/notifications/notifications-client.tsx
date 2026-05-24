@@ -102,7 +102,7 @@ export default function NotificationsClient() {
     };
   }, []);
 
-  const selectNotification = async (notification: PopScoreNotification) => {
+  const selectNotification = (notification: PopScoreNotification) => {
     const href = getNotificationHref(notification);
 
     setNotifications((currentNotifications) =>
@@ -112,7 +112,7 @@ export default function NotificationsClient() {
           : currentNotification
       )
     );
-    await markNotificationAsRead(notification.id);
+    void markNotificationAsRead(notification.id);
     router.push(href);
   };
 

@@ -128,7 +128,9 @@ export default function CommunityPostLikeButton({
       await createNotification({
         actorUserId: actor.userId,
         actorUsername: actor.username,
-        entityId: notificationEntityId ?? postId,
+        entityId: notificationEntityId?.startsWith("/")
+          ? notificationEntityId
+          : `/community#post-${postId}`,
         entityType: notificationEntityType,
         message: `${actor.displayName} liked your review${movieText}.`,
         recipientUserId: notificationRecipientUserId,

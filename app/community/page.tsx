@@ -1727,7 +1727,12 @@ function CommunityFeedCard({
   const shouldClampReview = shouldShowReviewToggle && !isReviewExpanded;
 
   return (
-    <article className={cardClass("p-3.5 sm:p-4")}>
+    <article
+      id={`post-${post.id}`}
+      className={cardClass(
+        "scroll-mt-28 p-3.5 transition target:border-yellow-400/70 target:bg-yellow-400/10 sm:p-4"
+      )}
+    >
       <div className="flex items-start gap-2.5 sm:gap-3">
         <Avatar label={post.user.avatar} size="md" />
         <div className="min-w-0 flex-1">
@@ -2794,6 +2799,7 @@ export default function CommunityPage() {
   const [topReviewers, setTopReviewers] = useState<TopReviewerSummary[]>([]);
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [focusedPostId, setFocusedPostId] = useState<string | null>(null);
   const [feedActivityRefreshKey, setFeedActivityRefreshKey] = useState(0);
   const [feedActivitySummaries, setFeedActivitySummaries] = useState<
     Record<string, CommunityPostActivitySummary>
@@ -2842,6 +2848,42 @@ export default function CommunityPage() {
       window.scrollTo({ behavior: "smooth", top: 0 });
     });
   };
+
+  useEffect(() => {
+    const readFocusedPost = () => {
+      const nextFocusedPostId = window.location.hash.startsWith("#post-")
+        ? window.location.hash.replace("#post-", "")
+        : null;
+
+      if (nextFocusedPostId) {
+        setFocusedPostId(nextFocusedPostId);
+        setSelectedTab("Feed");
+      }
+    };
+
+    readFocusedPost();
+    window.addEventListener("hashchange", readFocusedPost);
+
+    return () => {
+      window.removeEventListener("hashchange", readFocusedPost);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!focusedPostId) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      document
+        .getElementById(`post-${focusedPostId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [focusedPostId, visibleFeedPosts.length]);
 
   const saveCreatedDiscussions = (nextDiscussions: CommunityDiscussion[]) => {
     window.localStorage.setItem(

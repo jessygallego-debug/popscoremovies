@@ -123,7 +123,7 @@ export default function NotificationBell({
     setIsLoading(false);
   };
 
-  const selectNotification = async (notification: PopScoreNotification) => {
+  const selectNotification = (notification: PopScoreNotification) => {
     const href = getNotificationHref(notification);
 
     setNotifications((currentNotifications) =>
@@ -134,7 +134,7 @@ export default function NotificationBell({
       )
     );
     setIsOpen(false);
-    await markNotificationAsRead(notification.id);
+    void markNotificationAsRead(notification.id);
     router.push(href);
   };
 
