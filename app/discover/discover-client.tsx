@@ -22,6 +22,23 @@ const DISCOVERY_LANGUAGE_STORAGE_KEY = "popscore-discovery-movie-language";
 const DISCOVERY_REGION_STORAGE_KEY = "popscore-discovery-movie-region";
 const DISCOVERY_INTERNATIONAL_STORAGE_KEY =
   "popscore-discovery-include-international";
+const DISCOVERY_MOVIE_ERA_STORAGE_KEY = "popscore-discovery-movie-era";
+const DISCOVERY_CUSTOM_YEAR_STORAGE_KEY = "popscore-discovery-custom-year";
+const DEFAULT_MOVIE_ERA = "1960";
+
+const movieEraOptions = [
+  { label: "Any year", value: "any" },
+  { label: "1960s and newer", value: "1960" },
+  { label: "1970s and newer", value: "1970" },
+  { label: "1980s and newer", value: "1980" },
+  { label: "1990s and newer", value: "1990" },
+  { label: "2000s and newer", value: "2000" },
+  { label: "2010s and newer", value: "2010" },
+  { label: "2020s and newer", value: "2020" },
+  { label: "Custom year", value: "custom" },
+] as const;
+
+type MovieEraValue = (typeof movieEraOptions)[number]["value"];
 
 function yearFromDate(releaseDate?: string | null) {
   return releaseDate?.slice(0, 4) || "TBA";
@@ -93,8 +110,27 @@ function browserMovieLocalePreference() {
   };
 }
 
+function isMovieEraValue(value?: string | null): value is MovieEraValue {
+  return movieEraOptions.some((option) => option.value === value);
+}
+
+function normalizeCustomYear(value?: string | null) {
+  const year = value?.trim() ?? "";
+
+  if (!/^\d{4}$/.test(year)) {
+    return "";
+  }
+
+  const yearNumber = Number(year);
+  const nextYear = new Date().getFullYear() + 1;
+
+  return yearNumber >= 1888 && yearNumber <= nextYear ? year : "";
+}
+
 export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
   const [genre, setGenre] = useState(initialGenre);
+  const [movieEra, setMovieEra] = useState<MovieEraValue>(DEFAULT_MOVIE_ERA);
+  const [customYear, setCustomYear] = useState("");
   const [preferredLanguage, setPreferredLanguage] = useState(
     FALLBACK_MOVIE_LANGUAGE
   );
@@ -135,6 +171,17 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
       })),
     [preferredRegion]
   );
+  const minReleaseYear = useMemo(() => {
+    if (movieEra === "any") {
+      return "";
+    }
+
+    if (movieEra === "custom") {
+      return normalizeCustomYear(customYear);
+    }
+
+    return movieEra;
+  }, [customYear, movieEra]);
   const handleGenreChange = (nextGenreKey: string) => {
     if (genre === nextGenreKey) {
       return;
@@ -169,6 +216,29 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
       DISCOVERY_REGION_STORAGE_KEY,
       normalizedRegion || "none"
     );
+  };
+  const handleMovieEraChange = (nextMovieEra: string) => {
+    if (!isMovieEraValue(nextMovieEra)) {
+      return;
+    }
+
+    setIsLoadingMovies(true);
+    setRecommendationMessage("");
+    setStatus("");
+    setMovieEra(nextMovieEra);
+    window.localStorage.setItem(DISCOVERY_MOVIE_ERA_STORAGE_KEY, nextMovieEra);
+  };
+  const handleCustomYearChange = (nextYear: string) => {
+    const numbersOnly = nextYear.replace(/\D/g, "").slice(0, 4);
+
+    setCustomYear(numbersOnly);
+    window.localStorage.setItem(DISCOVERY_CUSTOM_YEAR_STORAGE_KEY, numbersOnly);
+
+    if (movieEra === "custom") {
+      setIsLoadingMovies(true);
+      setRecommendationMessage("");
+      setStatus("");
+    }
   };
   const handleInternationalToggle = (isIncluded: boolean) => {
     setIsLoadingMovies(true);
@@ -213,6 +283,12 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
         const storedInternational = window.localStorage.getItem(
           DISCOVERY_INTERNATIONAL_STORAGE_KEY
         );
+        const storedMovieEra = window.localStorage.getItem(
+          DISCOVERY_MOVIE_ERA_STORAGE_KEY
+        );
+        const storedCustomYear = normalizeCustomYear(
+          window.localStorage.getItem(DISCOVERY_CUSTOM_YEAR_STORAGE_KEY)
+        );
         const profileLanguage = normalizeMovieLanguage(
           profile?.preferred_movie_language
         );
@@ -231,6 +307,10 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
           hasStoredRegion ? storedRegion : profileRegion || browserPreference.region
         );
         setIncludeInternationalMovies(storedInternational === "true");
+        setMovieEra(
+          isMovieEraValue(storedMovieEra) ? storedMovieEra : DEFAULT_MOVIE_ERA
+        );
+        setCustomYear(storedCustomYear);
         setIsLoadingPreferences(false);
         setIsLoadingUser(false);
       })
@@ -243,6 +323,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
 
         setPreferredLanguage(browserPreference.language || FALLBACK_MOVIE_LANGUAGE);
         setPreferredRegion(browserPreference.region);
+        setMovieEra(DEFAULT_MOVIE_ERA);
         setStatus(error.message);
         setIsLoadingPreferences(false);
         setIsLoadingUser(false);
@@ -269,6 +350,10 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
 
     params.set("preferredLanguage", preferredLanguage);
     params.set("includeInternationalMovies", String(includeInternationalMovies));
+
+    if (minReleaseYear) {
+      params.set("minReleaseYear", minReleaseYear);
+    }
 
     if (preferredRegion) {
       params.set("preferredRegion", preferredRegion);
@@ -309,6 +394,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
     includeInternationalMovies,
     isLoadingPreferences,
     isLoadingUser,
+    minReleaseYear,
     preferredLanguage,
     preferredRegion,
     userId,
@@ -363,10 +449,47 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
           ) : null}
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-800 pt-3 md:grid-cols-[minmax(160px,240px)_minmax(170px,260px)_auto] md:items-end">
+        <div className="mt-3 grid gap-2 border-t border-slate-800 pt-3 md:grid-cols-[minmax(180px,260px)_minmax(140px,180px)] md:items-end">
+          <div className="grid gap-1.5">
+            <p className="px-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+              Movie Era
+            </p>
+            <MobileFilterMenu
+              className="relative z-[430]"
+              label="Movie Era"
+              labelClassName="sr-only"
+              onSelect={handleMovieEraChange}
+              options={movieEraOptions.map((option) => ({
+                label: option.label,
+                value: option.value,
+              }))}
+              selectedValue={movieEra}
+            />
+          </div>
+
+          {movieEra === "custom" ? (
+            <label className="grid gap-1.5">
+              <span className="px-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                Custom year
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={customYear}
+                onChange={(event) => handleCustomYearChange(event.target.value)}
+                placeholder="1955"
+                className="min-h-9 rounded-full border border-slate-700 bg-black/30 px-3 text-sm font-black text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-yellow-400/70"
+              />
+            </label>
+          ) : null}
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-800 pt-3 md:grid-cols-[minmax(180px,260px)_minmax(170px,260px)_auto] md:items-end">
           <MobileFilterMenu
             className="relative z-[420]"
-            label="Movie language"
+            label="Preferred Movie Language"
             onSelect={handlePreferredLanguageChange}
             options={languageOptions}
             selectedValue={preferredLanguage}
@@ -417,8 +540,8 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
             No new picks here yet
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-400">
-            Try another genre, change your movie language, or include
-            international movies.
+            Try another genre, adjust the movie era, change your movie
+            language, or include international movies.
           </p>
         </div>
       ) : null}

@@ -171,11 +171,32 @@ function getMovieLocalePreference(request: NextRequest): MovieLocalePreference {
   };
 }
 
+function getMinReleaseYearFromRequest(request: NextRequest) {
+  const value = request.nextUrl.searchParams.get("minReleaseYear") ?? "";
+
+  if (!/^\d{4}$/.test(value)) {
+    return null;
+  }
+
+  const year = Number(value);
+  const nextYear = new Date().getFullYear() + 1;
+
+  return year >= 1888 && year <= nextYear ? year : null;
+}
+
 function movieMatchesPreferredLanguage(
   movie: MovieSummary,
   preferredLanguage: string
 ) {
   return normalizeMovieLanguage(movie.original_language) === preferredLanguage;
+}
+
+function releaseYearForMovie(movie: MovieSummary) {
+  const releaseYear = movie.release_date
+    ? new Date(movie.release_date).getFullYear()
+    : null;
+
+  return releaseYear && Number.isFinite(releaseYear) ? releaseYear : null;
 }
 
 function comparePreferredLanguage(
@@ -200,6 +221,25 @@ function filterCandidateMoviesByLocale(
   return movies.filter((movie) =>
     movieMatchesPreferredLanguage(movie, preference.preferredLanguage)
   );
+}
+
+function filterCandidateMoviesByReleaseYear(
+  movies: MovieSummary[],
+  minReleaseYear: number | null
+) {
+  if (!minReleaseYear) {
+    return movies;
+  }
+
+  return movies.filter((movie) => {
+    const releaseYear = releaseYearForMovie(movie);
+
+    if (!releaseYear) {
+      return false;
+    }
+
+    return releaseYear >= minReleaseYear;
+  });
 }
 
 function ratingHasPopScore(row: MovieRatingRow) {
@@ -536,6 +576,7 @@ export async function GET(request: NextRequest) {
   const genre = request.nextUrl.searchParams.get("genre") ?? "";
   const userId = request.nextUrl.searchParams.get("userId") ?? "";
   const movieLocalePreference = getMovieLocalePreference(request);
+  const minReleaseYear = getMinReleaseYearFromRequest(request);
 
   if (!isGenreKey(genre)) {
     return NextResponse.json({
@@ -575,9 +616,9 @@ export async function GET(request: NextRequest) {
   const highRatedRows = userGenreRows.filter(
     (row) => Number(row.popscore ?? 0) >= 75
   );
-  const candidateMovies = filterCandidateMoviesByLocale(
-    uniqueMovies(movies),
-    movieLocalePreference
+  const candidateMovies = filterCandidateMoviesByReleaseYear(
+    filterCandidateMoviesByLocale(uniqueMovies(movies), movieLocalePreference),
+    minReleaseYear
   ).filter((movie) => !userRatedMovieIds.has(normalizeMovieId(movie.id)));
   const aggregates = buildMovieAggregates(genreRatingRows, questions);
 
