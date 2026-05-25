@@ -1,4 +1,17 @@
-import DiscussionDetailClient from "./discussion-detail-client";
+import type { Metadata } from "next";
+import DiscussionDetailPageContent, {
+  generateDiscussionMetadata,
+} from "@/app/community/discussions/discussion-detail-page";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ discussionId: string }>;
+}): Promise<Metadata> {
+  const { discussionId } = await params;
+
+  return generateDiscussionMetadata(discussionId);
+}
 
 export default async function DiscussionDetailPage({
   params,
@@ -7,5 +20,5 @@ export default async function DiscussionDetailPage({
 }) {
   const { discussionId } = await params;
 
-  return <DiscussionDetailClient discussionId={discussionId} />;
+  return <DiscussionDetailPageContent discussionId={discussionId} />;
 }

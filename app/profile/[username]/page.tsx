@@ -1,6 +1,43 @@
+import type { Metadata } from "next";
 import BrandHomeLink from "@/app/components/brand-home-link";
 import ProfileTabs from "@/app/components/profile-tabs";
+import { getPublicProfileForSeo } from "@/lib/seo-data";
+import { absoluteUrl } from "@/lib/site-url";
 import Link from "next/link";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}): Promise<Metadata> {
+  const { username } = await params;
+  const profile = await getPublicProfileForSeo(username);
+  const displayUsername = profile?.username ?? username;
+  const title = `@${displayUsername} PopFile`;
+  const description = `See @${displayUsername}'s PopScore profile, favorite movie genres, ratings, watch activity, and fan reviews.`;
+  const canonical = absoluteUrl(
+    `/profile/${encodeURIComponent(displayUsername)}`
+  );
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "profile",
+      url: canonical,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  };
+}
 
 export default async function ProfilePage({
   params,

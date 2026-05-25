@@ -28,6 +28,11 @@ export type FanReview = {
   username: string;
 };
 
+export type MovieAggregateRating = {
+  count: number;
+  score: number;
+};
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -87,6 +92,40 @@ function getRatingLabel(score: number) {
 
 function clampScore(score: number) {
   return Math.min(Math.max(Math.round(score), 0), 100);
+}
+
+export async function getMovieAggregateRatingForSeo(
+  movieId: string
+): Promise<MovieAggregateRating | null> {
+  try {
+    const rows = await supabaseFetch<MovieRatingReviewRow[]>(
+      `/movie_ratings?movie_id=eq.${encodeURIComponent(
+        movieId
+      )}&select=popscore,ratings,weights`
+    );
+    const completedRows = rows.filter(
+      (row) =>
+        row.weights?.length &&
+        row.ratings &&
+        Object.keys(row.ratings).length > 0
+    );
+
+    if (completedRows.length === 0) {
+      return null;
+    }
+
+    const totalScore = completedRows.reduce(
+      (total, row) => total + clampScore(Number(row.popscore)),
+      0
+    );
+
+    return {
+      count: completedRows.length,
+      score: clampScore(totalScore / completedRows.length),
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function getMovieFanReviews(movieId: string): Promise<FanReview[]> {

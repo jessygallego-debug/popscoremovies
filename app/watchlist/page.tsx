@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import SiteHeader from "@/app/components/site-header";
 import WatchlistClient from "@/app/watchlist/watchlist-client";
+
+export const metadata: Metadata = {
+  title: "Your PopScore Watchlist",
+  description: "Your saved PopScore movies.",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 export default function WatchlistPage() {
   return (

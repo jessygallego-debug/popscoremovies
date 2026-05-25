@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import CoStarReactions from "@/app/components/co-star-reactions";
@@ -8,6 +9,7 @@ import PopScoreDisplay from "@/app/components/popscore-display";
 import SiteHeader from "@/app/components/site-header";
 import ScrollMemory from "@/app/components/scroll-memory";
 import { getSiteEngagementTotals } from "@/lib/site-stats";
+import { absoluteUrl } from "@/lib/site-url";
 import {
   backdropUrl,
   formatReleaseMonthYear,
@@ -17,6 +19,7 @@ import {
   MovieSummary,
   posterUrl,
 } from "@/lib/tmdb";
+import { genreHref, movieHref as seoMovieHref } from "@/lib/urls";
 
 const TMDB_GENRE_LABELS = new Map(
   MOVIE_GENRE_FILTERS.filter((genre) => Number.isFinite(Number(genre.id))).map(
@@ -92,7 +95,7 @@ function HeroVisual({
               <Link
                 key={movie.id}
                 data-remember-scroll
-                href={`/movie/${movie.id}`}
+                href={seoMovieHref(movie)}
                 className={`absolute block w-[42%] overflow-hidden rounded-[1.35rem] border border-white/15 bg-slate-950 shadow-2xl shadow-black/60 transition duration-500 motion-safe:animate-[popFloat_8s_ease-in-out_infinite] hover:z-30 hover:-translate-y-2 hover:rotate-0 hover:border-yellow-400/70 md:w-[48%] ${offsets[index]}`}
                 style={{ animationDelay: `${index * 0.8}s` }}
               >
@@ -166,6 +169,40 @@ function WhyPopScore() {
   );
 }
 
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ genre?: string; query?: string }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const activeGenre = MOVIE_GENRE_FILTERS.find(
+    (genre) => genre.id === params.genre
+  );
+  const title = activeGenre
+    ? `${activeGenre.name} Movies: Fan Ratings & PopScore Reviews`
+    : "PopScore Movies";
+  const description = activeGenre
+    ? `Browse ${activeGenre.name.toLowerCase()} movies with PopScore fan ratings, recommendations, and community reviews.`
+    : "Movie rating built for true fans - because horror shouldn't be rated like comedy.";
+  const canonical = activeGenre
+    ? absoluteUrl(genreHref(activeGenre.name))
+    : absoluteUrl("/");
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: canonical,
+    },
+  };
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -207,7 +244,7 @@ export default async function Home({
       name: genre.name,
       href: query
         ? `/?query=${encodeURIComponent(query)}&genre=${genre.id}`
-        : `/?genre=${genre.id}`,
+        : genreHref(genre.name),
       isActive: activeGenre?.id === genre.id,
     })),
   ];
@@ -292,9 +329,9 @@ export default async function Home({
                   ? formatReleaseMonthYear(movie.release_date)
                   : "";
                 const genreLabels = genreLabelsForMovie(movie);
-                const movieHref = `/movie/${
-                  movie.id
-                }?returnTo=${encodeURIComponent(currentPagePath)}`;
+                const detailsHref = `${seoMovieHref(
+                  movie
+                )}?returnTo=${encodeURIComponent(currentPagePath)}`;
                 const rateHref = `/rate?movie=${
                   movie.id
                 }&returnTo=${encodeURIComponent(currentPagePath)}&from=home`;
@@ -304,7 +341,7 @@ export default async function Home({
                     key={movie.id}
                     className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/85 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10 sm:rounded-[1.5rem]"
                   >
-                    <Link data-remember-scroll href={movieHref} className="block">
+                    <Link data-remember-scroll href={detailsHref} className="block">
                       <div className="relative aspect-[4/3] overflow-hidden bg-slate-900 sm:aspect-[16/10]">
                         <MoviePosterImage
                           src={poster}

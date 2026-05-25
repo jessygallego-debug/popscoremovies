@@ -17,6 +17,7 @@ import {
 import { PROFILE_GENRES } from "@/lib/profile-config";
 import { updateProfileDiscoveryPreferences } from "@/lib/profile-store";
 import { MovieSummary, posterUrl } from "@/lib/tmdb";
+import { movieHref } from "@/lib/urls";
 
 const DISCOVERY_RECOMMENDATION_LIMIT = 10;
 const DISCOVERY_LANGUAGE_STORAGE_KEY = "popscore-discovery-movie-language";
@@ -621,7 +622,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
       <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
         {visibleMovies.map((movie) => {
           const discoveryReturnPath = discoveryReturnPathForGenre(genre);
-          const detailsHref = `/movie/${movie.id}?returnTo=${encodeURIComponent(
+          const detailsHref = `${movieHref(movie)}?returnTo=${encodeURIComponent(
             discoveryReturnPath
           )}`;
           const rateParams = new URLSearchParams({

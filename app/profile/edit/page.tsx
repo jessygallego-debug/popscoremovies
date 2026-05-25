@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import BrandHomeLink from "@/app/components/brand-home-link";
 import ProfileEditor from "@/app/components/profile-editor";
 import Link from "next/link";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Edit PopFile",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 export default function EditProfilePage() {
   return (

@@ -45,6 +45,7 @@ import {
 } from "@/lib/profile-store";
 import { NOTIFICATION_TARGET_CHANGED_EVENT } from "@/lib/notifications";
 import { posterUrl } from "@/lib/tmdb";
+import { movieHref } from "@/lib/urls";
 
 type CommunityUser = {
   avatar: string;
@@ -527,8 +528,12 @@ function releaseYear(value: string) {
   return value ? value.slice(0, 4) : "";
 }
 
-function communityMovieHref(movieId: string) {
-  return `/movie/${movieId}?returnTo=${encodeURIComponent("/community")}`;
+function communityMovieHref(movieId: string, movieTitle?: string) {
+  const path = movieTitle
+    ? movieHref({ id: movieId, title: movieTitle })
+    : `/movie/${movieId}`;
+
+  return `${path}?returnTo=${encodeURIComponent("/community")}`;
 }
 
 function communityRateHref(movieId: string) {
@@ -1787,7 +1792,10 @@ function CommunityFeedCard({
             <MovieThumb
               alt={post.movie.title}
               fallbackMovieId={post.movie.fallbackMovieId}
-              href={communityMovieHref(post.movie.fallbackMovieId)}
+              href={communityMovieHref(
+                post.movie.fallbackMovieId,
+                post.movie.title
+              )}
               imagePath={post.movie.imagePath}
               wide
             />
@@ -2044,7 +2052,7 @@ function DiscussionCard({
         <MovieThumb
           alt={discussion.movieTitle}
           fallbackMovieId={discussion.movieId}
-          href={communityMovieHref(discussion.movieId)}
+          href={communityMovieHref(discussion.movieId, discussion.movieTitle)}
           imagePath={discussion.moviePosterUrl}
           wide
         />
@@ -2066,7 +2074,7 @@ function DiscussionCard({
               </p>
             </div>
             <Link
-              href={communityDiscussionHref(discussion.id)}
+              href={communityDiscussionHref(discussion.id, discussion.title)}
               className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-xl bg-yellow-400 px-3 py-1.5 text-xs font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:px-4 sm:py-2 sm:text-sm"
             >
               Join Discussion
@@ -2216,7 +2224,7 @@ function TrendingDiscussionsCard({
                 alt={discussion.title}
                 fallbackMovieId={discussion.movieId}
                 fit="contain"
-                href={communityDiscussionHref(discussion.id)}
+                href={communityDiscussionHref(discussion.id, discussion.title)}
                 imagePath={discussion.moviePosterUrl}
               />
               <div className="min-w-0">
@@ -2446,7 +2454,10 @@ function FollowingActivityCard({
               {formatRelativePostTime(activity.createdAt)}
             </p>
             <Link
-              href={communityDiscussionHref(activity.discussionId)}
+              href={communityDiscussionHref(
+                activity.discussionId,
+                activity.discussionTitle
+              )}
               className="mt-2 inline-flex min-h-9 items-center rounded-xl bg-yellow-400 px-3 py-1.5 text-xs font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:mt-3 sm:px-4 sm:py-2 sm:text-sm"
             >
               Join Discussion
@@ -2488,7 +2499,10 @@ function FollowingActivityCard({
                 {formatRelativePostTime(activity.createdAt)}
               </p>
               <Link
-                href={communityDiscussionHref(activity.discussionId)}
+                href={communityDiscussionHref(
+                  activity.discussionId,
+                  activity.discussionTitle
+                )}
                 className="text-xs font-black text-yellow-300 transition hover:text-yellow-200 sm:text-sm"
               >
                 View Discussion
@@ -2506,7 +2520,7 @@ function FollowingActivityCard({
         <MovieThumb
           alt={activity.movieTitle}
           fallbackMovieId={activity.movieId}
-          href={communityMovieHref(activity.movieId)}
+          href={communityMovieHref(activity.movieId, activity.movieTitle)}
           imagePath={activity.moviePoster}
           wide
         />

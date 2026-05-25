@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import { getMovie } from "@/lib/tmdb";
 import RateClient, { GenreKey } from "./rate-client";
+
+export const metadata: Metadata = {
+  title: "Rate a Movie",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 const popGenreKeys = [
   "horror",

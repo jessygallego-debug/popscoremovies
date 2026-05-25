@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { formatReleaseMonthYear } from "@/lib/tmdb";
+import { movieHref } from "@/lib/urls";
 
 type MovieSuggestion = {
   id: number;
@@ -131,7 +132,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
                 <Link
                   key={movie.id}
                   data-remember-scroll
-                  href={`/movie/${movie.id}?returnTo=${encodeURIComponent(
+                  href={`${movieHref(movie)}?returnTo=${encodeURIComponent(
                     returnTo
                   )}`}
                   className="block border-b border-gray-900 px-5 py-3 text-sm font-bold text-white last:border-b-0 hover:bg-yellow-400 hover:text-black"

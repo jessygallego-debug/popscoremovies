@@ -1,3 +1,5 @@
+import { discussionHref } from "@/lib/urls";
+
 export const discussionTypes = [
   "Question",
   "Debate",
@@ -288,8 +290,15 @@ export function parseStoredCommunityDiscussions(value: string | null) {
   }
 }
 
-export function communityDiscussionHref(discussionId: string) {
-  return `/community/discussions/${discussionId}`;
+export function communityDiscussionHref(discussionId: string, title?: string) {
+  const discussion =
+    title !== undefined
+      ? { id: discussionId, title }
+      : getMockCommunityDiscussion(discussionId);
+
+  return discussion
+    ? discussionHref(discussion)
+    : `/community/discussions/${discussionId}`;
 }
 
 export function getMockCommunityDiscussion(discussionId: string) {

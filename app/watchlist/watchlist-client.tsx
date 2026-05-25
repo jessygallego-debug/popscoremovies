@@ -12,6 +12,7 @@ import {
   WatchlistMovie,
 } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
+import { movieHref } from "@/lib/urls";
 
 function yearFromDate(releaseDate?: string | null) {
   return releaseDate?.slice(0, 4) || "TBA";
@@ -260,9 +261,10 @@ export default function WatchlistClient() {
       {isSignedIn && filteredWatchlist.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {filteredWatchlist.map((movie) => {
-            const detailsHref = `/movie/${
-              movie.movieId
-            }?returnTo=${encodeURIComponent("/watchlist")}`;
+            const detailsHref = `${movieHref({
+              id: movie.movieId,
+              title: movie.movieTitle,
+            })}?returnTo=${encodeURIComponent("/watchlist")}`;
             const rateHref = `/rate?movie=${
               movie.movieId
             }&returnTo=${encodeURIComponent("/watchlist")}&from=watchlist`;

@@ -1,6 +1,24 @@
+import type { Metadata } from "next";
 import SiteHeader from "@/app/components/site-header";
 import DiscoverClient from "@/app/discover/discover-client";
 import { PROFILE_GENRES, normalizeProfileGenreKey } from "@/lib/profile-config";
+import { absoluteUrl } from "@/lib/site-url";
+
+export const metadata: Metadata = {
+  title: "Discover Movie Recommendations",
+  description:
+    "Find personalized movie recommendations by genre, era, language, and region on PopScore.",
+  alternates: {
+    canonical: absoluteUrl("/discover"),
+  },
+  openGraph: {
+    title: "Discover Movie Recommendations",
+    description:
+      "Find personalized movie recommendations by genre, era, language, and region on PopScore.",
+    type: "website",
+    url: absoluteUrl("/discover"),
+  },
+};
 
 export default async function DiscoverPage({
   searchParams,
