@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import MobileFilterMenu from "@/app/components/mobile-filter-menu";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import { usePopFile } from "@/app/components/popfile-provider";
 import {
   FALLBACK_MOVIE_LANGUAGE,
   movieLanguageOptionsWithSelection,
@@ -14,7 +15,7 @@ import {
   normalizeMovieRegion,
 } from "@/lib/movie-locale";
 import { PROFILE_GENRES } from "@/lib/profile-config";
-import { getCurrentUser, getProfileByUserId } from "@/lib/profile-store";
+import { updateProfileDiscoveryPreferences } from "@/lib/profile-store";
 import { MovieSummary, posterUrl } from "@/lib/tmdb";
 
 const DISCOVERY_RECOMMENDATION_LIMIT = 10;
@@ -128,6 +129,12 @@ function normalizeCustomYear(value?: string | null) {
 }
 
 export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
+  const {
+    isLoading: isProfileLoading,
+    profile,
+    setCachedProfile,
+    user,
+  } = usePopFile();
   const [genre, setGenre] = useState(initialGenre);
   const [movieEra, setMovieEra] = useState<MovieEraValue>(DEFAULT_MOVIE_ERA);
   const [customYear, setCustomYear] = useState("");
@@ -146,6 +153,27 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
   const [recommendationMode, setRecommendationMode] =
     useState<RecommendationResponse["mode"]>("fallback");
   const [status, setStatus] = useState("");
+  const loadedPreferenceUserIdRef = useRef<string | null>(null);
+
+  const saveProfileDiscoveryPreferences = useCallback(
+    (preferences: Parameters<typeof updateProfileDiscoveryPreferences>[0]) => {
+      if (!user) {
+        return;
+      }
+
+      updateProfileDiscoveryPreferences(preferences)
+        .then((nextProfile) => {
+          if (nextProfile) {
+            setCachedProfile(nextProfile);
+          }
+        })
+        .catch(() => {
+          // Browser storage remains the fallback if account-backed preferences
+          // cannot be saved yet.
+        });
+    },
+    [setCachedProfile, user]
+  );
 
   const selectedGenre = useMemo(
     () => PROFILE_GENRES.find((nextGenre) => nextGenre.key === genre),
@@ -204,6 +232,9 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
       DISCOVERY_LANGUAGE_STORAGE_KEY,
       normalizedLanguage
     );
+    saveProfileDiscoveryPreferences({
+      preferredMovieLanguage: normalizedLanguage,
+    });
   };
   const handlePreferredRegionChange = (nextRegion: string) => {
     const normalizedRegion = normalizeMovieRegion(nextRegion);
@@ -216,6 +247,9 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
       DISCOVERY_REGION_STORAGE_KEY,
       normalizedRegion || "none"
     );
+    saveProfileDiscoveryPreferences({
+      preferredMovieRegion: normalizedRegion || null,
+    });
   };
   const handleMovieEraChange = (nextMovieEra: string) => {
     if (!isMovieEraValue(nextMovieEra)) {
@@ -227,12 +261,18 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
     setStatus("");
     setMovieEra(nextMovieEra);
     window.localStorage.setItem(DISCOVERY_MOVIE_ERA_STORAGE_KEY, nextMovieEra);
+    saveProfileDiscoveryPreferences({
+      preferredMovieEra: nextMovieEra,
+    });
   };
   const handleCustomYearChange = (nextYear: string) => {
     const numbersOnly = nextYear.replace(/\D/g, "").slice(0, 4);
 
     setCustomYear(numbersOnly);
     window.localStorage.setItem(DISCOVERY_CUSTOM_YEAR_STORAGE_KEY, numbersOnly);
+    saveProfileDiscoveryPreferences({
+      preferredMovieCustomYear: normalizeCustomYear(numbersOnly) || null,
+    });
 
     if (movieEra === "custom") {
       setIsLoadingMovies(true);
@@ -249,25 +289,31 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
       DISCOVERY_INTERNATIONAL_STORAGE_KEY,
       String(isIncluded)
     );
+    saveProfileDiscoveryPreferences({
+      includeInternationalMovies: isIncluded,
+    });
   };
 
   useEffect(() => {
+    if (isProfileLoading) {
+      return;
+    }
+
+    const preferenceUserKey = user?.id ?? "guest";
+
+    if (loadedPreferenceUserIdRef.current === preferenceUserKey) {
+      return;
+    }
+
+    loadedPreferenceUserIdRef.current = preferenceUserKey;
     let isCurrent = true;
 
-    getCurrentUser()
-      .then(async (user) => {
-        if (!isCurrent) {
-          return;
-        }
+    Promise.resolve().then(() => {
+      if (!isCurrent) {
+        return;
+      }
 
-        const profile = user
-          ? await getProfileByUserId(user.id).catch(() => null)
-          : null;
-
-        if (!isCurrent) {
-          return;
-        }
-
+      try {
         const browserPreference = browserMovieLocalePreference();
         const storedLanguage = normalizeMovieLanguage(
           window.localStorage.getItem(DISCOVERY_LANGUAGE_STORAGE_KEY)
@@ -295,44 +341,54 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
         const profileRegion = normalizeMovieRegion(
           profile?.preferred_movie_region
         );
+        const profileMovieEra = isMovieEraValue(profile?.preferred_movie_era)
+          ? profile.preferred_movie_era
+          : null;
+        const profileCustomYear = normalizeCustomYear(
+          profile?.preferred_movie_custom_year
+        );
 
         setUserId(user?.id ?? null);
         setPreferredLanguage(
-          storedLanguage ||
-            profileLanguage ||
+          profileLanguage ||
+            storedLanguage ||
             browserPreference.language ||
             FALLBACK_MOVIE_LANGUAGE
         );
         setPreferredRegion(
-          hasStoredRegion ? storedRegion : profileRegion || browserPreference.region
+          profileRegion ||
+            (hasStoredRegion ? storedRegion : browserPreference.region)
         );
-        setIncludeInternationalMovies(storedInternational === "true");
+        setIncludeInternationalMovies(
+          profile?.include_international_movies ?? storedInternational === "true"
+        );
         setMovieEra(
-          isMovieEraValue(storedMovieEra) ? storedMovieEra : DEFAULT_MOVIE_ERA
+          profileMovieEra ??
+            (isMovieEraValue(storedMovieEra)
+              ? storedMovieEra
+              : DEFAULT_MOVIE_ERA)
         );
-        setCustomYear(storedCustomYear);
+        setCustomYear(profileCustomYear || storedCustomYear);
         setIsLoadingPreferences(false);
         setIsLoadingUser(false);
-      })
-      .catch((error: Error) => {
-        if (!isCurrent) {
-          return;
-        }
-
+      } catch (error) {
         const browserPreference = browserMovieLocalePreference();
 
-        setPreferredLanguage(browserPreference.language || FALLBACK_MOVIE_LANGUAGE);
+        setPreferredLanguage(
+          browserPreference.language || FALLBACK_MOVIE_LANGUAGE
+        );
         setPreferredRegion(browserPreference.region);
         setMovieEra(DEFAULT_MOVIE_ERA);
-        setStatus(error.message);
+        setStatus(error instanceof Error ? error.message : "");
         setIsLoadingPreferences(false);
         setIsLoadingUser(false);
-      });
+      }
+    });
 
     return () => {
       isCurrent = false;
     };
-  }, []);
+  }, [isProfileLoading, profile, user]);
 
   useEffect(() => {
     let isCurrent = true;

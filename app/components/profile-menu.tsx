@@ -2,13 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { usePopFile } from "@/app/components/popfile-provider";
 import { avatarForKey } from "@/lib/profile-config";
-import {
-  getCurrentUser,
-  getProfileByUserId,
-  ProfileRecord,
-} from "@/lib/profile-store";
 
 const menuItems = [
   { href: "/profile/edit", label: "Edit PopFile" },
@@ -22,33 +18,13 @@ export default function ProfileMenu() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const menuRef = useRef<HTMLDetailsElement>(null);
-  const [profile, setProfile] = useState<ProfileRecord | null>(null);
+  const { isLoading: isProfileLoading, profile } = usePopFile();
   const currentPath = `${pathname}${
     searchParams.toString() ? `?${searchParams.toString()}` : ""
   }`;
   const signInHref = `/profile/edit?returnTo=${encodeURIComponent(
     currentPath
   )}`;
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    getCurrentUser().then((user) => {
-      if (!user) {
-        return;
-      }
-
-      getProfileByUserId(user.id).then((nextProfile) => {
-        if (isCurrent) {
-          setProfile(nextProfile);
-        }
-      });
-    });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
 
   useEffect(() => {
     const closeMenu = (event: PointerEvent) => {
@@ -72,6 +48,21 @@ export default function ProfileMenu() {
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, []);
+
+  if (isProfileLoading) {
+    return (
+      <button
+        type="button"
+        aria-busy="true"
+        className="inline-flex shrink-0 cursor-wait items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 opacity-80 shadow-lg shadow-yellow-400/10"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
+          ★
+        </span>
+        My PopFile
+      </button>
+    );
+  }
 
   if (!profile) {
     return (

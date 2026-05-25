@@ -2,13 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { usePopFile } from "@/app/components/popfile-provider";
 import { avatarForKey } from "@/lib/profile-config";
-import {
-  getCurrentUser,
-  getProfileByUserId,
-  ProfileRecord,
-} from "@/lib/profile-store";
 
 const mobileNavItems = [
   { href: "/#trending", label: "Movies" },
@@ -21,7 +17,7 @@ export default function MobileSiteMenu() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
-  const [profile, setProfile] = useState<ProfileRecord | null>(null);
+  const { isLoading: isProfileLoading, profile } = usePopFile();
   const currentPath = `${pathname}${
     searchParams.toString() ? `?${searchParams.toString()}` : ""
   }`;
@@ -29,26 +25,6 @@ export default function MobileSiteMenu() {
     ? `/profile/${profile.username}`
     : `/profile/edit?returnTo=${encodeURIComponent(currentPath)}`;
   const popFileAvatar = profile ? avatarForKey(profile.avatar_key).icon : "★";
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    getCurrentUser().then((user) => {
-      if (!user) {
-        return;
-      }
-
-      getProfileByUserId(user.id).then((nextProfile) => {
-        if (isCurrent) {
-          setProfile(nextProfile);
-        }
-      });
-    });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
 
   return (
     <div className="relative md:hidden">
@@ -93,16 +69,29 @@ export default function MobileSiteMenu() {
             ))}
           </div>
           <div className="mt-2 border-t border-white/10 pt-2">
-            <Link
-              href={popFileHref}
-              onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center gap-2 rounded-2xl border border-yellow-400/45 bg-yellow-400 px-4 py-3 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
-            >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-black/15 bg-black/10 text-base">
-                {popFileAvatar}
-              </span>
-              My PopFile
-            </Link>
+            {isProfileLoading ? (
+              <button
+                type="button"
+                aria-busy="true"
+                className="flex w-full cursor-wait items-center justify-center gap-2 rounded-2xl border border-yellow-400/45 bg-yellow-400 px-4 py-3 text-sm font-black text-black opacity-80 shadow-lg shadow-yellow-400/20"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-black/15 bg-black/10 text-base">
+                  ★
+                </span>
+                My PopFile
+              </button>
+            ) : (
+              <Link
+                href={popFileHref}
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center gap-2 rounded-2xl border border-yellow-400/45 bg-yellow-400 px-4 py-3 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-black/15 bg-black/10 text-base">
+                  {popFileAvatar}
+                </span>
+                My PopFile
+              </Link>
+            )}
           </div>
         </div>
       ) : null}

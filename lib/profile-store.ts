@@ -35,6 +35,9 @@ export type ProfileRecord = {
   username: string;
   avatar_key: string;
   favorite_genre: string | null;
+  include_international_movies?: boolean | null;
+  preferred_movie_custom_year?: string | null;
+  preferred_movie_era?: string | null;
   preferred_movie_language?: string | null;
   preferred_movie_region?: string | null;
   created_at: string;
@@ -617,6 +620,61 @@ export async function getCurrentProfile() {
   }
 
   return getProfileByUserId(user.id);
+}
+
+export async function updateProfileDiscoveryPreferences(preferences: {
+  includeInternationalMovies?: boolean;
+  preferredMovieCustomYear?: string | null;
+  preferredMovieEra?: string | null;
+  preferredMovieLanguage?: string | null;
+  preferredMovieRegion?: string | null;
+}) {
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser) {
+    return null;
+  }
+
+  const body: Record<string, boolean | string | null> = {};
+
+  if ("includeInternationalMovies" in preferences) {
+    body.include_international_movies =
+      preferences.includeInternationalMovies ?? false;
+  }
+
+  if ("preferredMovieCustomYear" in preferences) {
+    body.preferred_movie_custom_year =
+      preferences.preferredMovieCustomYear || null;
+  }
+
+  if ("preferredMovieEra" in preferences) {
+    body.preferred_movie_era = preferences.preferredMovieEra || null;
+  }
+
+  if ("preferredMovieLanguage" in preferences) {
+    body.preferred_movie_language = preferences.preferredMovieLanguage || null;
+  }
+
+  if ("preferredMovieRegion" in preferences) {
+    body.preferred_movie_region = preferences.preferredMovieRegion || null;
+  }
+
+  if (Object.keys(body).length === 0) {
+    return getProfileByUserId(currentUser.id);
+  }
+
+  const rows = await supabaseFetch<ProfileRecord[]>(
+    `/profiles?user_id=eq.${encodeURIComponent(currentUser.id)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  return rows[0] ?? null;
 }
 
 export async function upsertProfile(profile: {

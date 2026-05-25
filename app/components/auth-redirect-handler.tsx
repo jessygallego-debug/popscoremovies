@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { usePopFile } from "@/app/components/popfile-provider";
 import {
   consumeAuthRedirect,
   getCurrentUser,
@@ -11,6 +12,7 @@ import {
 export default function AuthRedirectHandler() {
   const pathname = usePathname();
   const router = useRouter();
+  const { refreshProfile } = usePopFile();
 
   useEffect(() => {
     if (pathname === "/profile/edit") {
@@ -27,11 +29,12 @@ export default function AuthRedirectHandler() {
         }
 
         getProfileByUserId(user.id).then((profile) => {
+          void refreshProfile();
           router.replace(profile ? "/" : "/profile/edit");
         });
       });
     }
-  }, [pathname, router]);
+  }, [pathname, refreshProfile, router]);
 
   return null;
 }

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AvatarPicker from "@/app/components/avatar-picker";
 import FavoriteGenreSelector from "@/app/components/favorite-genre-selector";
+import { usePopFile } from "@/app/components/popfile-provider";
 import {
   avatarForKey,
   firstUnlockedAvatarKey,
@@ -58,6 +59,7 @@ function ratingText(count: number) {
 export default function ProfileEditor() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setCachedProfile } = usePopFile();
   const returnTo = getSafeReturnPath(searchParams.get("returnTo"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -220,6 +222,7 @@ export default function ProfileEditor() {
           type="button"
           onClick={() => {
             signOut();
+            setCachedProfile(null);
             window.location.reload();
           }}
           className="rounded-full border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 hover:border-yellow-400 hover:text-yellow-300"
@@ -268,6 +271,7 @@ export default function ProfileEditor() {
           })
             .then((nextProfile) => {
               setProfile(nextProfile);
+              setCachedProfile(nextProfile);
               setUsername(nextProfile.username);
               setMessage("PopFile saved.");
             })

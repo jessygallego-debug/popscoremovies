@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import NotificationDropdown from "@/app/components/notification-dropdown";
+import { usePopFile } from "@/app/components/popfile-provider";
 import {
   getCurrentNotificationUserId,
   getNotificationHref,
@@ -48,6 +49,11 @@ export default function NotificationBell({
   className = "",
 }: NotificationBellProps) {
   const router = useRouter();
+  const {
+    isLoading: isProfileLoading,
+    profile,
+    user,
+  } = usePopFile();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,7 +70,12 @@ export default function NotificationBell({
     let isCurrent = true;
 
     const loadNotifications = async () => {
-      const nextUserId = await getCurrentNotificationUserId();
+      if (isProfileLoading) {
+        return;
+      }
+
+      const nextUserId =
+        profile?.user_id ?? user?.id ?? (await getCurrentNotificationUserId());
       const nextNotifications = await getNotificationsForUser(nextUserId, 8);
 
       if (isCurrent) {
@@ -112,11 +123,16 @@ export default function NotificationBell({
       document.removeEventListener("pointerdown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, []);
+  }, [isProfileLoading, profile?.user_id, user?.id]);
 
   const refreshNotifications = async () => {
+    if (isProfileLoading) {
+      return;
+    }
+
     setIsLoading(true);
-    const nextUserId = await getCurrentNotificationUserId();
+    const nextUserId =
+      profile?.user_id ?? user?.id ?? (await getCurrentNotificationUserId());
     const nextNotifications = await getNotificationsForUser(nextUserId, 8);
 
     setUserId(nextUserId);
