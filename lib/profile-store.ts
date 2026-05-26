@@ -604,6 +604,22 @@ export async function getProfileByUsername(username: string) {
   return rows[0] ?? null;
 }
 
+export async function getProfilesByUsernames(usernames: string[]) {
+  const normalizedUsernames = Array.from(
+    new Set(usernames.map(normalizeUsername))
+  ).filter(Boolean);
+
+  if (normalizedUsernames.length === 0) {
+    return [];
+  }
+
+  return supabaseFetch<ProfileRecord[]>(
+    `/profiles?username=in.(${inList(
+      normalizedUsernames
+    )})&select=id,user_id,username,avatar_key,favorite_genre,created_at,updated_at`
+  ).catch(() => []);
+}
+
 export async function getProfileByUserId(userId: string) {
   const rows = await supabaseFetch<ProfileRecord[]>(
     `/profiles?user_id=eq.${encodeURIComponent(userId)}&select=*`

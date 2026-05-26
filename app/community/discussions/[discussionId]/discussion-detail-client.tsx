@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import FollowButton from "@/app/components/follow-button";
+import MentionText from "@/app/components/mention-text";
+import MentionTextarea from "@/app/components/mention-textarea";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
 import SiteHeader from "@/app/components/site-header";
@@ -19,6 +21,12 @@ import {
   getCurrentNotificationActor,
   NOTIFICATION_TARGET_CHANGED_EVENT,
 } from "@/lib/notifications";
+import { getDiscoverableUsers } from "@/lib/profile-store";
+import {
+  mergeMentionableUsers,
+  notifyMentionedUsers,
+  type MentionableUser,
+} from "@/lib/mentions";
 import { posterUrl } from "@/lib/tmdb";
 
 type ReplySort = "Top" | "Newest";
@@ -96,16 +104,6 @@ function formatFullDate(value: string) {
     day: "numeric",
     year: "numeric",
   }).format(date);
-}
-
-function mentionedUsernames(value: string) {
-  return Array.from(
-    new Set(
-      value
-        .match(/@([a-zA-Z0-9_]+)/g)
-        ?.map((mention) => mention.slice(1).toLowerCase()) ?? []
-    )
-  );
 }
 
 const NOTIFICATION_HIGHLIGHT_DURATION_MS = 4000;
@@ -274,7 +272,7 @@ function ReplyCard({ reply }: { reply: CommunityDiscussionReply }) {
             </p>
           </div>
           <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
-            {reply.body}
+            <MentionText text={reply.body} />
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-bold">
             <button
@@ -307,6 +305,9 @@ export default function DiscussionDetailClient({
   const [isLiked, setIsLiked] = useState(false);
   const [replySort, setReplySort] = useState<ReplySort>("Top");
   const [replyBody, setReplyBody] = useState("");
+  const [mentionableUsers, setMentionableUsers] = useState<MentionableUser[]>(
+    []
+  );
   const [addedReplies, setAddedReplies] = useState<CommunityDiscussionReply[]>(
     []
   );
@@ -330,6 +331,36 @@ export default function DiscussionDetailClient({
 
     return sortedReplies.sort((a, b) => b.likeCount - a.likeCount);
   }, [addedReplies, mockReplies, replySort]);
+  const fallbackMentionableUsers = useMemo(() => {
+    if (!discussion) {
+      return [];
+    }
+
+    const starter = discussion.startedByUsername
+      ? [
+          {
+            avatar: discussion.startedByAvatarUrl,
+            displayName: discussion.startedByDisplayName,
+            userId: discussion.startedByUserId,
+            username: discussion.startedByUsername,
+          },
+        ]
+      : [];
+    const replyUsers = mockReplies
+      .filter((reply) => reply.username)
+      .map((reply) => ({
+        avatar: reply.userAvatarUrl,
+        displayName: reply.userDisplayName,
+        userId: `user-${reply.username}`,
+        username: reply.username ?? "",
+      }));
+
+    return mergeMentionableUsers(starter, replyUsers);
+  }, [discussion, mockReplies]);
+  const resolvedMentionableUsers = useMemo(
+    () => mergeMentionableUsers(mentionableUsers, fallbackMentionableUsers),
+    [fallbackMentionableUsers, mentionableUsers]
+  );
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -340,6 +371,26 @@ export default function DiscussionDetailClient({
       window.clearTimeout(timeout);
     };
   }, [discussionId]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    getDiscoverableUsers(80)
+      .then((users) => {
+        if (isCurrent) {
+          setMentionableUsers(users);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setMentionableUsers([]);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   useEffect(() => {
     const updateLocationKey = () => {
@@ -471,20 +522,16 @@ export default function DiscussionDetailClient({
         type: "discussion_comment",
       });
 
-      await Promise.all(
-        mentionedUsernames(trimmedReply).map((username) =>
-          createNotification({
-            actorUserId: actor.userId,
-            actorUsername: actor.username,
-            entityId: replyHref,
-            entityType: "discussion_comment",
-            message: `${actor.displayName} mentioned you in a discussion.`,
-            recipientUserId: `mention-${username}`,
-            recipientUsername: username,
-            type: "mention",
-          })
-        )
-      );
+      await notifyMentionedUsers({
+        actor,
+        body: trimmedReply,
+        entityId: replyHref,
+        entityType: "discussion_comment",
+        excludeUserIds: [discussion.startedByUserId],
+        excludeUsernames: [discussion.startedByUsername],
+        knownUsers: resolvedMentionableUsers,
+        message: `${actor.displayName} mentioned you in a discussion.`,
+      });
     });
   };
 
@@ -625,7 +672,7 @@ export default function DiscussionDetailClient({
         {!spoilerLocked ? (
           <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
             <div className="space-y-5">
-              <article className={cardClass("p-4 sm:p-5")}>
+      <article className={cardClass("p-4 sm:p-5")}>
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-lg font-black text-white">
                     Original Post
@@ -644,8 +691,11 @@ export default function DiscussionDetailClient({
                   </button>
                 </div>
                 <p className="mt-4 text-sm font-semibold leading-6 text-slate-300">
-                  {discussion.body ||
-                    "No opening comment yet. Jump in and get the conversation started."}
+                  {discussion.body ? (
+                    <MentionText text={discussion.body} />
+                  ) : (
+                    "No opening comment yet. Jump in and get the conversation started."
+                  )}
                 </p>
               </article>
 
@@ -684,9 +734,10 @@ export default function DiscussionDetailClient({
                 </div>
 
                 <div className="mt-4 grid gap-3">
-                  <textarea
+                  <MentionTextarea
+                    mentionableUsers={resolvedMentionableUsers}
                     value={replyBody}
-                    onChange={(event) => setReplyBody(event.target.value)}
+                    onChange={setReplyBody}
                     placeholder="Add your reply..."
                     className="min-h-28 w-full resize-none rounded-2xl border border-slate-700 bg-black/35 px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
                   />

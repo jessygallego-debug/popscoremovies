@@ -7,6 +7,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import CommunityPostComments from "@/app/components/community-post-comments";
 import FollowButton from "@/app/components/follow-button";
 import CommunityPostLikeButton from "@/app/components/community-post-like-button";
+import MentionText from "@/app/components/mention-text";
+import MentionTextarea from "@/app/components/mention-textarea";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
 import SiteHeader from "@/app/components/site-header";
@@ -43,7 +45,15 @@ import {
   type DiscoverableUserSummary,
   type TopReviewerSummary,
 } from "@/lib/profile-store";
-import { NOTIFICATION_TARGET_CHANGED_EVENT } from "@/lib/notifications";
+import {
+  getCurrentNotificationActor,
+  NOTIFICATION_TARGET_CHANGED_EVENT,
+} from "@/lib/notifications";
+import {
+  mergeMentionableUsers,
+  notifyMentionedUsers,
+  type MentionableUser,
+} from "@/lib/mentions";
 import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
 
@@ -1326,9 +1336,11 @@ function MovieSearchSelect({
 }
 
 function StartDiscussionModal({
+  mentionableUsers,
   onClose,
   onPost,
 }: {
+  mentionableUsers: MentionableUser[];
   onClose: () => void;
   onPost: (discussion: CommunityDiscussion) => void;
 }) {
@@ -1509,10 +1521,11 @@ function StartDiscussionModal({
                 />
               </label>
 
-              <textarea
+              <MentionTextarea
                 disabled={!selectedMovie}
+                mentionableUsers={mentionableUsers}
                 value={body}
-                onChange={(event) => setBody(event.target.value)}
+                onChange={setBody}
                 placeholder="Share your thoughts to get the conversation started..."
                 className="min-h-28 w-full resize-none rounded-2xl border border-slate-700 bg-black/35 px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70 disabled:cursor-not-allowed"
               />
@@ -1719,9 +1732,11 @@ function CommunityFilters({
 
 function CommunityFeedCard({
   currentUserId,
+  mentionableUsers,
   post,
 }: {
   currentUserId?: string | null;
+  mentionableUsers: MentionableUser[];
   post: CommunityFeedPost;
 }) {
   const isCommentPost = Boolean(post.replyLink);
@@ -1832,7 +1847,7 @@ function CommunityFeedCard({
                         : ""
                     }`}
                   >
-                    {post.comment}
+                    <MentionText text={post.comment} />
                   </p>
                   {shouldShowReviewToggle ? (
                     <button
@@ -1884,6 +1899,7 @@ function CommunityFeedCard({
             />
             <CommunityPostComments
               initialCommentCount={post.commentCount}
+              mentionableUsers={mentionableUsers}
               movieId={post.movie.fallbackMovieId}
               movieTitle={post.movie.title}
               postOwnerUserId={post.user.userId}
@@ -1900,10 +1916,12 @@ function CommunityFeedCard({
 function FeedPostsList({
   currentUserId,
   emptyMessage,
+  mentionableUsers,
   posts,
 }: {
   currentUserId?: string | null;
   emptyMessage: string;
+  mentionableUsers: MentionableUser[];
   posts: CommunityFeedPost[];
 }) {
   if (posts.length === 0) {
@@ -1920,6 +1938,7 @@ function FeedPostsList({
         <CommunityFeedCard
           key={post.id}
           currentUserId={currentUserId}
+          mentionableUsers={mentionableUsers}
           post={post}
         />
       ))}
@@ -2809,7 +2828,7 @@ export default function CommunityPage() {
     CommunityRatingFeedItem[]
   >([]);
   const [discoverableUsers, setDiscoverableUsers] = useState<SuggestedFollow[]>(
-    []
+    suggestedFollows
   );
   const [topReviewers, setTopReviewers] = useState<TopReviewerSummary[]>([]);
   const [isLoadingReviewers, setIsLoadingReviewers] = useState(true);
@@ -2852,6 +2871,10 @@ export default function CommunityPage() {
   const visibleFeedPosts = useMemo(
     () => getVisibleFeedPosts(feedPostsWithActivity, selectedGenre, selectedTrend),
     [feedPostsWithActivity, selectedGenre, selectedTrend]
+  );
+  const mentionableUsers = useMemo(
+    () => mergeMentionableUsers(discoverableUsers, suggestedFollows),
+    [discoverableUsers]
   );
   const sidebarDiscussions = actualDiscussions;
   const showSocialSidebar =
@@ -2934,6 +2957,19 @@ export default function CommunityPage() {
     });
     setIsDiscussionDialogOpen(false);
     setSelectedTab("Discussions");
+
+    if (discussion.body) {
+      void getCurrentNotificationActor().then((actor) =>
+        notifyMentionedUsers({
+          actor,
+          body: discussion.body,
+          entityId: communityDiscussionHref(discussion.id, discussion.title),
+          entityType: "discussion",
+          knownUsers: mentionableUsers,
+          message: `${actor.displayName} mentioned you in a discussion.`,
+        })
+      );
+    }
   };
 
   useEffect(() => {
@@ -3026,13 +3062,13 @@ export default function CommunityPage() {
         if (isCurrent) {
           setCommunityRatings(ratings);
           setTopReviewers(reviewers);
-          setDiscoverableUsers(users);
+          setDiscoverableUsers(users.length ? users : suggestedFollows);
         }
       })
       .catch(() => {
         if (isCurrent) {
           setCommunityRatings([]);
-          setDiscoverableUsers([]);
+          setDiscoverableUsers(suggestedFollows);
           setTopReviewers([]);
         }
       })
@@ -3085,6 +3121,7 @@ export default function CommunityPage() {
                   currentUserId={currentUserId}
                   posts={visibleFeedPosts}
                   emptyMessage="No posts match that filter yet."
+                  mentionableUsers={mentionableUsers}
                 />
               </>
             ) : selectedTab === "Following" ? (
@@ -3124,6 +3161,7 @@ export default function CommunityPage() {
       ) : null}
       {isDiscussionDialogOpen ? (
         <StartDiscussionModal
+          mentionableUsers={mentionableUsers}
           onClose={() => setIsDiscussionDialogOpen(false)}
           onPost={postDiscussion}
         />

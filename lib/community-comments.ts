@@ -5,6 +5,7 @@ import {
   createNotification,
   getCurrentNotificationActor,
 } from "@/lib/notifications";
+import { notifyMentionedUsers, type MentionableUser } from "@/lib/mentions";
 import {
   getCurrentProfile,
   getCurrentUser,
@@ -107,6 +108,7 @@ export type CommunityPostActivitySummary = {
 };
 
 type CommunityCommentNotificationContext = {
+  mentionableUsers?: MentionableUser[];
   movieId?: string;
   movieTitle?: string;
   recipientUserId?: string;
@@ -554,6 +556,11 @@ export async function addCommunityComment(
     }
   );
   const createdCommentId = createdComments[0]?.id;
+  const commentHref = communityPostCommentHref({
+    commentId: createdCommentId,
+    movieId: notificationContext?.movieId,
+    postId,
+  });
 
   if (notificationContext?.recipientUserId) {
     const movieText = notificationContext.movieTitle
@@ -563,11 +570,7 @@ export async function addCommunityComment(
     await createNotification({
       actorUserId: profile.user_id,
       actorUsername: profile.username,
-      entityId: communityPostCommentHref({
-        commentId: createdCommentId,
-        movieId: notificationContext.movieId,
-        postId,
-      }),
+      entityId: commentHref,
       entityType: notificationContext.movieId ? "movie" : "movie_comment",
       message: `${profile.username} commented on your post${movieText}.`,
       recipientUserId: notificationContext.recipientUserId,
@@ -575,6 +578,21 @@ export async function addCommunityComment(
       type: "comment_reply",
     });
   }
+
+  await notifyMentionedUsers({
+    actor: {
+      displayName: profile.username,
+      userId: profile.user_id,
+      username: profile.username,
+    },
+    body: validation.body,
+    entityId: commentHref,
+    entityType: "movie_comment",
+    excludeUserIds: [notificationContext?.recipientUserId],
+    excludeUsernames: [notificationContext?.recipientUsername],
+    knownUsers: notificationContext?.mentionableUsers,
+    message: `${profile.username} mentioned you in a feed comment.`,
+  });
 
   return getCommunityComments(postId, profile);
 }

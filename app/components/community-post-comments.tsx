@@ -11,10 +11,14 @@ import {
   validateCommunityComment,
 } from "@/lib/community-comments";
 import { NOTIFICATION_TARGET_CHANGED_EVENT } from "@/lib/notifications";
+import type { MentionableUser } from "@/lib/mentions";
+import MentionText from "@/app/components/mention-text";
+import MentionTextarea from "@/app/components/mention-textarea";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
 
 type CommunityPostCommentsProps = {
   initialCommentCount: number;
+  mentionableUsers?: MentionableUser[];
   movieId?: string;
   movieTitle?: string;
   postOwnerUserId?: string;
@@ -200,6 +204,7 @@ function waitForNotificationTarget(
 
 export default function CommunityPostComments({
   initialCommentCount,
+  mentionableUsers = [],
   movieId,
   movieTitle,
   postOwnerUserId,
@@ -347,6 +352,7 @@ export default function CommunityPostComments({
     setMessage("");
 
     addCommunityComment(postId, draft, {
+      mentionableUsers,
       movieId,
       movieTitle,
       recipientUserId: postOwnerUserId,
@@ -504,7 +510,7 @@ export default function CommunityPostComments({
                       </span>
                     </div>
                     <p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold leading-6 text-slate-300">
-                      {comment.body}
+                      <MentionText text={comment.body} />
                     </p>
                     <button
                       type="button"
@@ -569,12 +575,13 @@ export default function CommunityPostComments({
               <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_136px] sm:items-stretch">
                 <label className="block">
                   <span className="sr-only">Add a comment</span>
-                  <textarea
-                    ref={textareaRef}
+                  <MentionTextarea
+                    inputRef={textareaRef}
+                    mentionableUsers={mentionableUsers}
                     value={draft}
                     maxLength={COMMUNITY_COMMENT_MAX_LENGTH + 20}
-                    onChange={(event) => {
-                      setDraft(event.target.value);
+                    onChange={(nextDraft) => {
+                      setDraft(nextDraft);
                       setMessage("");
                     }}
                     placeholder="Add a comment..."
