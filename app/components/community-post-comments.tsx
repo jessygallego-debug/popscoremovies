@@ -10,6 +10,7 @@ import {
   toggleCommunityCommentLike,
   validateCommunityComment,
 } from "@/lib/community-comments";
+import MentionTextarea from "@/app/components/mention-textarea";
 import { NOTIFICATION_TARGET_CHANGED_EVENT } from "@/lib/notifications";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
 
@@ -269,6 +270,10 @@ export default function CommunityPostComments({
   useEffect(() => {
     const updateLocationKey = () => {
       setLocationKey(currentLocationKey());
+
+      if (window.location.hash.startsWith(`#post-${postId}`)) {
+        setAreCommentsOpen(true);
+      }
     };
 
     updateLocationKey();
@@ -287,7 +292,7 @@ export default function CommunityPostComments({
         updateLocationKey
       );
     };
-  }, []);
+  }, [postId]);
 
   useEffect(() => {
     const target = readCommunityPostNotificationTarget(postId);
@@ -569,12 +574,12 @@ export default function CommunityPostComments({
               <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_136px] sm:items-stretch">
                 <label className="block">
                   <span className="sr-only">Add a comment</span>
-                  <textarea
-                    ref={textareaRef}
+                  <MentionTextarea
+                    inputRef={textareaRef}
                     value={draft}
                     maxLength={COMMUNITY_COMMENT_MAX_LENGTH + 20}
-                    onChange={(event) => {
-                      setDraft(event.target.value);
+                    onChange={(nextDraft) => {
+                      setDraft(nextDraft);
                       setMessage("");
                     }}
                     placeholder="Add a comment..."

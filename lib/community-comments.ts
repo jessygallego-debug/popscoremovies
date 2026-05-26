@@ -3,6 +3,7 @@
 import { avatarForKey } from "@/lib/profile-config";
 import {
   createNotification,
+  createMentionNotifications,
   getCurrentNotificationActor,
 } from "@/lib/notifications";
 import {
@@ -575,6 +576,15 @@ export async function addCommunityComment(
       type: "comment_reply",
     });
   }
+
+  await createMentionNotifications({
+    actorUserId: profile.user_id,
+    actorUsername: profile.username,
+    entityId: `/community#post-${postId}`,
+    entityType: "movie_comment",
+    message: `${profile.username} mentioned you in a community comment.`,
+    text: validation.body,
+  });
 
   return getCommunityComments(postId, profile);
 }

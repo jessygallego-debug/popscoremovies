@@ -261,6 +261,51 @@ begin
 end;
 $$;
 
+create or replace function public.popscore_extract_mentions(input_text text)
+returns table(username text)
+language sql
+immutable
+as $$
+  select distinct lower(mention_match[1]) as username
+  from regexp_matches(
+    coalesce(input_text, ''),
+    '@([A-Za-z0-9_]{2,32})',
+    'g'
+  ) as mention_match;
+$$;
+
+create or replace function public.popscore_notify_community_comment_mentions()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  actor_name text;
+  mentioned_profile record;
+begin
+  actor_name := public.popscore_notification_display_name(new.user_id);
+
+  for mentioned_profile in
+    select profiles.user_id, profiles.username
+    from public.popscore_extract_mentions(new.body) mentions
+    join public.profiles
+      on lower(profiles.username) = mentions.username
+  loop
+    perform public.popscore_insert_notification(
+      mentioned_profile.user_id,
+      new.user_id,
+      'mention',
+      'movie_comment',
+      '/community#post-' || new.post_id,
+      actor_name || ' mentioned you in a community comment.'
+    );
+  end loop;
+
+  return new;
+end;
+$$;
+
 create or replace function public.popscore_notify_community_post_like()
 returns trigger
 language plpgsql
@@ -368,6 +413,11 @@ begin
     create trigger community_comments_notify_owner
     after insert on public.community_comments
     for each row execute function public.popscore_notify_community_comment();
+
+    drop trigger if exists community_comments_notify_mentions on public.community_comments;
+    create trigger community_comments_notify_mentions
+    after insert on public.community_comments
+    for each row execute function public.popscore_notify_community_comment_mentions();
   end if;
 
   if to_regclass('public.community_post_likes') is not null then

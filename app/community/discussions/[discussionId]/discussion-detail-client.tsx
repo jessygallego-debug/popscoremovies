@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import FollowButton from "@/app/components/follow-button";
+import MentionTextarea from "@/app/components/mention-textarea";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
 import SiteHeader from "@/app/components/site-header";
@@ -15,6 +16,7 @@ import {
   type CommunityDiscussionReply,
 } from "@/lib/community-discussions";
 import {
+  createMentionNotifications,
   createNotification,
   getCurrentNotificationActor,
   NOTIFICATION_TARGET_CHANGED_EVENT,
@@ -96,16 +98,6 @@ function formatFullDate(value: string) {
     day: "numeric",
     year: "numeric",
   }).format(date);
-}
-
-function mentionedUsernames(value: string) {
-  return Array.from(
-    new Set(
-      value
-        .match(/@([a-zA-Z0-9_]+)/g)
-        ?.map((mention) => mention.slice(1).toLowerCase()) ?? []
-    )
-  );
 }
 
 const NOTIFICATION_HIGHLIGHT_DURATION_MS = 4000;
@@ -471,20 +463,14 @@ export default function DiscussionDetailClient({
         type: "discussion_comment",
       });
 
-      await Promise.all(
-        mentionedUsernames(trimmedReply).map((username) =>
-          createNotification({
-            actorUserId: actor.userId,
-            actorUsername: actor.username,
-            entityId: replyHref,
-            entityType: "discussion_comment",
-            message: `${actor.displayName} mentioned you in a discussion.`,
-            recipientUserId: `mention-${username}`,
-            recipientUsername: username,
-            type: "mention",
-          })
-        )
-      );
+      await createMentionNotifications({
+        actorUserId: actor.userId,
+        actorUsername: actor.username,
+        entityId: replyHref,
+        entityType: "discussion_comment",
+        message: `${actor.displayName} mentioned you in a discussion reply.`,
+        text: trimmedReply,
+      });
     });
   };
 
@@ -684,9 +670,9 @@ export default function DiscussionDetailClient({
                 </div>
 
                 <div className="mt-4 grid gap-3">
-                  <textarea
+                  <MentionTextarea
                     value={replyBody}
-                    onChange={(event) => setReplyBody(event.target.value)}
+                    onChange={setReplyBody}
                     placeholder="Add your reply..."
                     className="min-h-28 w-full resize-none rounded-2xl border border-slate-700 bg-black/35 px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
                   />

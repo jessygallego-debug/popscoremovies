@@ -64,6 +64,20 @@ type CreateNotificationInput = {
   type: NotificationType;
 };
 
+type MentionProfileRow = {
+  user_id: string;
+  username: string;
+};
+
+type CreateMentionNotificationsInput = {
+  actorUserId: string;
+  actorUsername?: string | null;
+  entityId: string;
+  entityType: NotificationEntityType;
+  message: string;
+  text: string;
+};
+
 export type NotificationActor = {
   displayName: string;
   userId: string;
@@ -213,6 +227,71 @@ function localNotificationId() {
 
 function normalizeUsername(username?: string | null) {
   return username?.trim().toLowerCase() ?? "";
+}
+
+export function extractMentionedUsernames(text: string) {
+  const usernames = new Set<string>();
+  const mentionPattern = /(?:^|[^\w])@([a-zA-Z0-9_]{2,32})\b/g;
+  let match = mentionPattern.exec(text);
+
+  while (match) {
+    usernames.add(match[1].toLowerCase());
+    match = mentionPattern.exec(text);
+  }
+
+  return Array.from(usernames);
+}
+
+async function getMentionProfiles(usernames: string[]) {
+  if (usernames.length === 0) {
+    return [];
+  }
+
+  const usernameFilters = usernames
+    .map((username) => `username.ilike.${encodeURIComponent(username)}`)
+    .join(",");
+  const rows = await supabaseFetch<MentionProfileRow[]>(
+    `/profiles?or=(${usernameFilters})&select=user_id,username&limit=25`
+  );
+  const usernameSet = new Set(usernames);
+
+  return rows.filter((row) =>
+    usernameSet.has(normalizeUsername(row.username))
+  );
+}
+
+export async function createMentionNotifications({
+  actorUserId,
+  actorUsername,
+  entityId,
+  entityType,
+  message,
+  text,
+}: CreateMentionNotificationsInput) {
+  const usernames = extractMentionedUsernames(text);
+
+  if (usernames.length === 0) {
+    return [];
+  }
+
+  const mentionProfiles = await getMentionProfiles(usernames).catch(
+    () => []
+  );
+
+  return Promise.all(
+    mentionProfiles.map((profile) =>
+      createNotification({
+        actorUserId,
+        actorUsername,
+        entityId,
+        entityType,
+        message,
+        recipientUserId: profile.user_id,
+        recipientUsername: profile.username,
+        type: "mention",
+      })
+    )
+  );
 }
 
 function shouldSkipNotification(input: CreateNotificationInput) {
