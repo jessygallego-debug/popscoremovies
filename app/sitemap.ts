@@ -1,0 +1,74 @@
+import type { MetadataRoute } from "next";
+import {
+  mockCommunityDiscussions,
+  mockDiscussionReplies,
+} from "@/lib/community-discussions";
+import { getPublicProfileUsernames } from "@/lib/seo-data";
+import { absoluteUrl } from "@/lib/site-url";
+import { getMovies, MOVIE_GENRE_FILTERS } from "@/lib/tmdb";
+import { discussionHref, genreHref, movieHref } from "@/lib/urls";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date();
+  const [movies, profiles] = await Promise.all([
+    getMovies("", 160).catch(() => []),
+    getPublicProfileUsernames(),
+  ]);
+
+  const staticRoutes: MetadataRoute.Sitemap = [
+    {
+      url: absoluteUrl("/"),
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 1,
+    },
+    {
+      url: absoluteUrl("/discover"),
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl("/community"),
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+  ];
+
+  const genreRoutes = MOVIE_GENRE_FILTERS.map((genre) => ({
+    url: absoluteUrl(genreHref(genre.name)),
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
+  }));
+
+  const movieRoutes = movies.map((movie) => ({
+    url: absoluteUrl(movieHref(movie)),
+    lastModified: movie.release_date ? new Date(movie.release_date) : now,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  const discussionRoutes = mockCommunityDiscussions.map((discussion) => ({
+    url: absoluteUrl(discussionHref(discussion)),
+    lastModified: new Date(discussion.lastActiveAt || discussion.createdAt),
+    changeFrequency: "daily" as const,
+    priority: mockDiscussionReplies[discussion.id]?.length ? 0.65 : 0.55,
+  }));
+
+  const profileRoutes = profiles.map((profile) => ({
+    url: absoluteUrl(`/profile/${encodeURIComponent(profile.username)}`),
+    lastModified: profile.updated_at ? new Date(profile.updated_at) : now,
+    changeFrequency: "weekly" as const,
+    priority: 0.5,
+  }));
+
+  return [
+    ...staticRoutes,
+    ...genreRoutes,
+    ...movieRoutes,
+    ...discussionRoutes,
+    ...profileRoutes,
+  ];
+}
