@@ -2853,8 +2853,7 @@ export default function CommunityPage() {
     () => getVisibleFeedPosts(feedPostsWithActivity, selectedGenre, selectedTrend),
     [feedPostsWithActivity, selectedGenre, selectedTrend]
   );
-  const sidebarDiscussions =
-    selectedTab === "Discussions" ? actualDiscussions : communityDiscussions;
+  const sidebarDiscussions = actualDiscussions;
   const showSocialSidebar =
     selectedTab === "Feed" || selectedTab === "Discussions";
   const showDiscussions = () => {
