@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import CommunityPostComments from "@/app/components/community-post-comments";
 import FollowButton from "@/app/components/follow-button";
 import CommunityPostLikeButton from "@/app/components/community-post-like-button";
+import MentionTextarea from "@/app/components/mention-textarea";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
 import SiteHeader from "@/app/components/site-header";
@@ -43,7 +44,11 @@ import {
   type DiscoverableUserSummary,
   type TopReviewerSummary,
 } from "@/lib/profile-store";
-import { NOTIFICATION_TARGET_CHANGED_EVENT } from "@/lib/notifications";
+import {
+  createMentionNotifications,
+  getCurrentNotificationActor,
+  NOTIFICATION_TARGET_CHANGED_EVENT,
+} from "@/lib/notifications";
 import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
 
@@ -1509,10 +1514,10 @@ function StartDiscussionModal({
                 />
               </label>
 
-              <textarea
+              <MentionTextarea
                 disabled={!selectedMovie}
                 value={body}
-                onChange={(event) => setBody(event.target.value)}
+                onChange={setBody}
                 placeholder="Share your thoughts to get the conversation started..."
                 className="min-h-28 w-full resize-none rounded-2xl border border-slate-700 bg-black/35 px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70 disabled:cursor-not-allowed"
               />
@@ -2304,10 +2309,6 @@ function WhoToFollowCard({
   );
 }
 
-function ratingCountText(count: number) {
-  return `${count} review${count === 1 ? "" : "s"} submitted`;
-}
-
 function TopReviewersList({
   reviewers,
 }: {
@@ -2325,21 +2326,21 @@ function TopReviewersList({
           <div className="min-w-0">
             <p className="truncate font-black text-white">
               <ProfileUsernameLink username={reviewer.username}>
-                {reviewer.username}
+                @{reviewer.username}
               </ProfileUsernameLink>
             </p>
             <p className="mt-1 text-xs font-bold text-slate-300">
-              {ratingCountText(reviewer.totalReviews)}
+              reviews submitted
             </p>
           </div>
-          <FollowButton
-            size="sm"
-            target={{
-              displayName: reviewer.username,
-              userId: reviewer.userId,
-              username: reviewer.username,
-            }}
-          />
+          <div className="rounded-2xl border border-yellow-400/35 bg-yellow-400/10 px-3 py-2 text-right shadow-lg shadow-yellow-400/10">
+            <p className="text-lg font-black leading-none text-yellow-300">
+              {reviewer.totalReviews}
+            </p>
+            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+              reviews
+            </p>
+          </div>
         </div>
       ))}
     </div>
@@ -2934,6 +2935,17 @@ export default function CommunityPage() {
     });
     setIsDiscussionDialogOpen(false);
     setSelectedTab("Discussions");
+
+    void getCurrentNotificationActor().then((actor) =>
+      createMentionNotifications({
+        actorUserId: actor.userId,
+        actorUsername: actor.username,
+        entityId: `${communityDiscussionHref(discussion.id)}#replies`,
+        entityType: "discussion",
+        message: `${actor.displayName} mentioned you in a community discussion.`,
+        text: `${discussion.title} ${discussion.body}`,
+      })
+    );
   };
 
   useEffect(() => {

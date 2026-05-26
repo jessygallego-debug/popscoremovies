@@ -103,6 +103,13 @@ export type DiscoverableUserSummary = {
   username: string;
 };
 
+export type MentionableUserSummary = {
+  avatar: string;
+  displayName: string;
+  userId: string;
+  username: string;
+};
+
 type RatingQuestion = {
   key: string;
   weight: number;
@@ -675,6 +682,49 @@ export async function updateProfileDiscoveryPreferences(preferences: {
   );
 
   return rows[0] ?? null;
+}
+
+export async function searchMentionableUsers(
+  query: string,
+  limit = 8
+): Promise<MentionableUserSummary[]> {
+  const normalizedQuery = normalizeUsername(query).replace(/^_+|_+$/g, "");
+  const currentUser = await getCurrentUser().catch(() => null);
+  const select =
+    "id,user_id,username,avatar_key,favorite_genre,created_at,updated_at";
+  const profilePath = normalizedQuery
+    ? `/profiles?username=ilike.${encodeURIComponent(
+        `${normalizedQuery}*`
+      )}&select=${select}&order=username.asc&limit=${limit * 3}`
+    : `/profiles?select=${select}&order=username.asc&limit=${limit * 3}`;
+  const profiles = await supabaseFetch<ProfileRecord[]>(profilePath).catch(
+    () => []
+  );
+
+  return profiles
+    .filter((profile) => profile.user_id !== currentUser?.id)
+    .sort((a, b) => {
+      const aUsername = a.username.toLowerCase();
+      const bUsername = b.username.toLowerCase();
+
+      if (normalizedQuery) {
+        const aStartsWithQuery = aUsername.startsWith(normalizedQuery);
+        const bStartsWithQuery = bUsername.startsWith(normalizedQuery);
+
+        if (aStartsWithQuery !== bStartsWithQuery) {
+          return aStartsWithQuery ? -1 : 1;
+        }
+      }
+
+      return aUsername.localeCompare(bUsername);
+    })
+    .slice(0, limit)
+    .map((profile) => ({
+      avatar: avatarForKey(profile.avatar_key).icon,
+      displayName: profile.username,
+      userId: profile.user_id,
+      username: profile.username,
+    }));
 }
 
 export async function upsertProfile(profile: {
