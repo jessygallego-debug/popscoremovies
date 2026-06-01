@@ -60,8 +60,9 @@ export const FILTER_ONLY_MOVIE_GENRES = [
 ] as const;
 
 export const MOVIE_FILTER_GENRES = [
-  ...PROFILE_GENRES,
+  ...PROFILE_GENRES.slice(0, 13),
   ...FILTER_ONLY_MOVIE_GENRES,
+  ...PROFILE_GENRES.slice(13),
 ] as const;
 
 const PROFILE_GENRE_KEY_ALIASES: Record<string, string> = {
