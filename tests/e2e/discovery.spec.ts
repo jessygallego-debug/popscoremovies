@@ -89,6 +89,11 @@ test("Discovery controls update recommendation query params", async ({
   });
 
   await page.goto("/discover");
+  await page.getByRole("button", { name: "Fantasy" }).click();
+  await expect
+    .poll(() => recommendationRequests.at(-1)?.searchParams.get("genre"))
+    .toBe("fantasy");
+
   await page.getByRole("button", { name: "Rom-Com" }).click();
   await expect
     .poll(() => recommendationRequests.at(-1)?.searchParams.get("genre"))
@@ -122,9 +127,18 @@ test("Discovery controls update recommendation query params", async ({
     .toBe("true");
 });
 
-test("Western is a rating genre but Super Hero is filter-only", async ({
+test("Fantasy and Western are rating genres but Super Hero is filter-only", async ({
   page,
 }) => {
+  await page.goto("/rate?genre=fantasy");
+
+  await expect(page.getByRole("button", { name: "Fantasy" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Storyline" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Character" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Rewatch Score" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "World Building" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Magic & Wonder" })).toBeVisible();
+
   await page.goto("/rate?genre=western");
 
   await expect(page.getByRole("button", { name: "Western" })).toBeVisible();

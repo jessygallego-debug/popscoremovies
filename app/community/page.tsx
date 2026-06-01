@@ -629,6 +629,7 @@ function normalizeCommunityGenres(genreNames: string[], ratingGenre: string) {
     sci_fi: "Sci-Fi",
     scifi: "Sci-Fi",
     "science fiction": "Sci-Fi",
+    fantasy: "Fantasy",
     super_hero: "Super Hero",
     superhero: "Super Hero",
     western: "Western",

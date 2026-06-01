@@ -75,6 +75,7 @@ const categoryTips: Record<string, string> = {
   impact: "How much the documentary stays with you.",
   informativeValue: "How much you learn from it.",
   intrigue: "How well it keeps you curious.",
+  magicWonder: "How well it delivers magic, creatures, adventure, or wonder.",
   mysteryPayoff: "How satisfying the answers feel.",
   originality: "How fresh or unique the movie feels.",
   pace: "How well the movie keeps moving.",
@@ -90,6 +91,7 @@ const categoryTips: Record<string, string> = {
   visualEffects: "How convincing the effects look.",
   voiceActing: "How well the voices bring characters to life.",
   westernAtmosphere: "How well it captures the Western setting, tone, and feel.",
+  worldBuilding: "How immersive the fantasy world, lore, and mythology feel.",
 };
 
 export type GenreKey = RatingGenreKey;

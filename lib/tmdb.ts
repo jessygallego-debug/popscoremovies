@@ -144,6 +144,7 @@ export const MOVIE_GENRE_FILTERS = [
   { id: String(DOCUMENTARY_GENRE_ID), name: "Documentary" },
   { id: String(DRAMA_GENRE_ID), name: "Drama" },
   { id: String(FAMILY_GENRE_ID), name: "Family" },
+  { id: String(FANTASY_GENRE_ID), name: "Fantasy" },
   { id: String(HORROR_GENRE_ID), name: "Horror" },
   { id: String(MYSTERY_GENRE_ID), name: "Mystery" },
   { id: String(MUSIC_GENRE_ID), name: "Musical" },

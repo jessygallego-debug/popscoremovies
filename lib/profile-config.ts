@@ -44,6 +44,7 @@ export const PROFILE_GENRES = [
   { key: "documentary", label: "Documentary", tmdbId: "99" },
   { key: "drama", label: "Drama", tmdbId: "18" },
   { key: "family", label: "Family", tmdbId: "10751" },
+  { key: "fantasy", label: "Fantasy", tmdbId: "14" },
   { key: "horror", label: "Horror", tmdbId: "27" },
   { key: "mystery", label: "Mystery", tmdbId: "9648" },
   { key: "musical", label: "Musical", tmdbId: "10402" },
@@ -60,9 +61,9 @@ export const FILTER_ONLY_MOVIE_GENRES = [
 ] as const;
 
 export const MOVIE_FILTER_GENRES = [
-  ...PROFILE_GENRES.slice(0, 13),
+  ...PROFILE_GENRES.slice(0, 14),
   ...FILTER_ONLY_MOVIE_GENRES,
-  ...PROFILE_GENRES.slice(13),
+  ...PROFILE_GENRES.slice(14),
 ] as const;
 
 const PROFILE_GENRE_KEY_ALIASES: Record<string, string> = {

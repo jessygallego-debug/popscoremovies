@@ -119,6 +119,16 @@ export const GENRE_RATING_CONFIGS = {
       { key: "heartWarmth", name: "Heart/Warmth", weight: 0.15 },
     ],
   },
+  fantasy: {
+    title: "Fantasy",
+    questions: [
+      { key: "story", name: "Storyline", weight: 0.25 },
+      { key: "character", name: "Character", weight: 0.2 },
+      { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
+      { key: "worldBuilding", name: "World Building", weight: 0.2 },
+      { key: "magicWonder", name: "Magic & Wonder", weight: 0.25 },
+    ],
+  },
   documentary: {
     title: "Documentary",
     questions: [

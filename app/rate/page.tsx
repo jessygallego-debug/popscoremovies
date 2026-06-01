@@ -30,6 +30,7 @@ function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
     Documentary: "documentary",
     Drama: "drama",
     Family: "family",
+    Fantasy: "fantasy",
     Horror: "horror",
     Music: "musical",
     Mystery: "mystery",
