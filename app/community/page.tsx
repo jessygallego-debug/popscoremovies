@@ -186,8 +186,10 @@ const genreFilters = [
   "Romance",
   "Rom-Com",
   "Sci-Fi",
+  "Super Hero",
   "Thriller",
   "War",
+  "Western",
 ];
 
 const trendFilters = ["Trending", "Newest", "Most Liked", "Most Commented"];
@@ -627,6 +629,9 @@ function normalizeCommunityGenres(genreNames: string[], ratingGenre: string) {
     sci_fi: "Sci-Fi",
     scifi: "Sci-Fi",
     "science fiction": "Sci-Fi",
+    super_hero: "Super Hero",
+    superhero: "Super Hero",
+    western: "Western",
   };
   const genres = [...genreNames, ratingGenre]
     .map((genre) => {

@@ -13,6 +13,10 @@ export type MovieSummary = {
 
 export type MovieDetails = MovieSummary & {
   genres: { id: number; name: string }[];
+  keywords?: {
+    keywords?: { id: number; name: string }[];
+    results?: { id: number; name: string }[];
+  };
   runtime: number | null;
   tagline: string;
   videos?: {
@@ -69,6 +73,7 @@ const COMEDY_GENRE_ID = 35;
 const DOCUMENTARY_GENRE_ID = 99;
 const DRAMA_GENRE_ID = 18;
 const FAMILY_GENRE_ID = 10751;
+const FANTASY_GENRE_ID = 14;
 const HORROR_GENRE_ID = 27;
 const MUSIC_GENRE_ID = 10402;
 const MYSTERY_GENRE_ID = 9648;
@@ -76,8 +81,12 @@ const ROMANCE_GENRE_ID = 10749;
 const SCIENCE_FICTION_GENRE_ID = 878;
 const THRILLER_GENRE_ID = 53;
 const WAR_GENRE_ID = 10752;
+const WESTERN_GENRE_ID = 37;
 const MUSICAL_KEYWORD_ID = 4344;
+const SUPERHERO_KEYWORD_ID = 9715;
 export const ROMCOM_GENRE_FILTER_ID = "romcom";
+export const SUPERHERO_GENRE_FILTER_ID = "superhero";
+export const SUPERHERO_GENRE_FILTER_NAME = "Super Hero";
 
 type RecommendationMovieOptions = {
   includeInternationalMovies?: boolean;
@@ -115,6 +124,16 @@ const CUSTOM_GENRE_FILTERS: Record<string, DiscoverGenreFilter> = {
     withGenres: [ROMANCE_GENRE_ID, COMEDY_GENRE_ID],
     withoutGenres: HARD_MISMATCH_GENRE_IDS,
   },
+  [SUPERHERO_GENRE_FILTER_ID]: {
+    searchAnyGenres: [
+      ACTION_GENRE_ID,
+      ADVENTURE_GENRE_ID,
+      COMEDY_GENRE_ID,
+      FANTASY_GENRE_ID,
+      SCIENCE_FICTION_GENRE_ID,
+    ],
+    withKeywords: [SUPERHERO_KEYWORD_ID],
+  },
 };
 
 export const MOVIE_GENRE_FILTERS = [
@@ -131,8 +150,10 @@ export const MOVIE_GENRE_FILTERS = [
   { id: String(ROMANCE_GENRE_ID), name: "Romance" },
   { id: ROMCOM_GENRE_FILTER_ID, name: "Rom-Com" },
   { id: String(SCIENCE_FICTION_GENRE_ID), name: "Sci-Fi" },
+  { id: SUPERHERO_GENRE_FILTER_ID, name: SUPERHERO_GENRE_FILTER_NAME },
   { id: String(THRILLER_GENRE_ID), name: "Thriller" },
   { id: String(WAR_GENRE_ID), name: "War" },
+  { id: String(WESTERN_GENRE_ID), name: "Western" },
 ];
 
 function getToken() {
@@ -494,8 +515,31 @@ export async function getRecommendationMovies(
 
 export async function getMovie(id: string) {
   return tmdbFetch<MovieDetails>(
-    `/movie/${id}?append_to_response=credits,videos`
+    `/movie/${id}?append_to_response=credits,videos,keywords`
   );
+}
+
+export function movieHasSuperheroKeyword(movie: MovieDetails) {
+  const keywords = [
+    ...(movie.keywords?.keywords ?? []),
+    ...(movie.keywords?.results ?? []),
+  ];
+
+  return keywords.some(
+    (keyword) =>
+      keyword.id === SUPERHERO_KEYWORD_ID ||
+      keyword.name.trim().toLowerCase() === "superhero"
+  );
+}
+
+export function movieFilterGenreNames(movie: MovieDetails) {
+  const genres = movie.genres.map((genre) => genre.name);
+
+  if (movieHasSuperheroKeyword(movie)) {
+    genres.push(SUPERHERO_GENRE_FILTER_NAME);
+  }
+
+  return Array.from(new Set(genres));
 }
 
 function bestImagePath(images: TmdbMovieImage[] = []) {

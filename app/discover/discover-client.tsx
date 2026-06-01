@@ -14,7 +14,7 @@ import {
   normalizeMovieLanguage,
   normalizeMovieRegion,
 } from "@/lib/movie-locale";
-import { PROFILE_GENRES } from "@/lib/profile-config";
+import { MOVIE_FILTER_GENRES } from "@/lib/profile-config";
 import { updateProfileDiscoveryPreferences } from "@/lib/profile-store";
 import { MovieSummary, posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
@@ -177,7 +177,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
   );
 
   const selectedGenre = useMemo(
-    () => PROFILE_GENRES.find((nextGenre) => nextGenre.key === genre),
+    () => MOVIE_FILTER_GENRES.find((nextGenre) => nextGenre.key === genre),
     [genre]
   );
   const visibleMovies = useMemo(
@@ -479,7 +479,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
         <MobileFilterMenu
           label="Genre filter"
           onSelect={handleGenreChange}
-          options={PROFILE_GENRES.map((nextGenre) => ({
+          options={MOVIE_FILTER_GENRES.map((nextGenre) => ({
             label: nextGenre.label,
             value: nextGenre.key,
           }))}
@@ -487,7 +487,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
         />
 
         <div className="hidden gap-2 overflow-visible pb-1 md:grid md:grid-cols-5 md:gap-3 lg:grid-cols-8">
-          {PROFILE_GENRES.map((nextGenre) => (
+          {MOVIE_FILTER_GENRES.map((nextGenre) => (
             <button
               key={nextGenre.key}
               type="button"
@@ -501,7 +501,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
               {nextGenre.label}
             </button>
           ))}
-          {PROFILE_GENRES.length % 8 ? (
+          {MOVIE_FILTER_GENRES.length % 8 ? (
             <span aria-hidden="true" className="hidden lg:block" />
           ) : null}
         </div>

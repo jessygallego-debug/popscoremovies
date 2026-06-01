@@ -9,6 +9,7 @@ const tmdbGenresById: Record<number, string> = {
   27: "Horror",
   28: "Action",
   35: "Comedy",
+  37: "Western",
   53: "Thriller",
   80: "Crime",
   99: "Documentary",

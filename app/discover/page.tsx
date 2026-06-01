@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import SiteHeader from "@/app/components/site-header";
 import DiscoverClient from "@/app/discover/discover-client";
-import { PROFILE_GENRES, normalizeProfileGenreKey } from "@/lib/profile-config";
+import {
+  MOVIE_FILTER_GENRES,
+  normalizeMovieFilterGenreKey,
+} from "@/lib/profile-config";
 import { absoluteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
@@ -27,7 +30,7 @@ export default async function DiscoverPage({
 }) {
   const params = await searchParams;
   const initialGenre =
-    normalizeProfileGenreKey(params.genre) || PROFILE_GENRES[0].key;
+    normalizeMovieFilterGenreKey(params.genre) || MOVIE_FILTER_GENRES[0].key;
 
   return (
     <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.16),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.16),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_40%,#000_72%,#020617_100%)] text-white">

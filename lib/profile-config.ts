@@ -52,7 +52,17 @@ export const PROFILE_GENRES = [
   { key: "scifi", label: "Sci-Fi", tmdbId: "878" },
   { key: "thriller", label: "Thriller", tmdbId: "53" },
   { key: "war", label: "War", tmdbId: "10752" },
+  { key: "western", label: "Western", tmdbId: "37" },
 ];
+
+export const FILTER_ONLY_MOVIE_GENRES = [
+  { key: "superhero", label: "Super Hero", tmdbId: "superhero" },
+] as const;
+
+export const MOVIE_FILTER_GENRES = [
+  ...PROFILE_GENRES,
+  ...FILTER_ONLY_MOVIE_GENRES,
+] as const;
 
 const PROFILE_GENRE_KEY_ALIASES: Record<string, string> = {
   animation: "animated",
@@ -63,6 +73,12 @@ const PROFILE_GENRE_KEY_ALIASES: Record<string, string> = {
   sci_fi: "scifi",
   scifi: "scifi",
   science_fiction: "scifi",
+};
+
+const MOVIE_FILTER_GENRE_KEY_ALIASES: Record<string, string> = {
+  ...PROFILE_GENRE_KEY_ALIASES,
+  super_hero: "superhero",
+  superhero: "superhero",
 };
 
 const PROFILE_GENRE_DB_VALUES: Record<string, string> = {
@@ -108,17 +124,33 @@ function compactGenreKey(key: string) {
     .replace(/^_+|_+$/g, "");
 }
 
-export function normalizeProfileGenreKey(key?: string | null) {
+function normalizeGenreKey(
+  key: string | null | undefined,
+  genres: readonly { key: string }[],
+  aliases: Record<string, string>
+) {
   if (!key) {
     return "";
   }
 
   const compactKey = compactGenreKey(key);
-  const normalizedKey = PROFILE_GENRE_KEY_ALIASES[compactKey] ?? compactKey;
+  const normalizedKey = aliases[compactKey] ?? compactKey;
 
-  return PROFILE_GENRES.some((genre) => genre.key === normalizedKey)
+  return genres.some((genre) => genre.key === normalizedKey)
     ? normalizedKey
     : "";
+}
+
+export function normalizeProfileGenreKey(key?: string | null) {
+  return normalizeGenreKey(key, PROFILE_GENRES, PROFILE_GENRE_KEY_ALIASES);
+}
+
+export function normalizeMovieFilterGenreKey(key?: string | null) {
+  return normalizeGenreKey(
+    key,
+    MOVIE_FILTER_GENRES,
+    MOVIE_FILTER_GENRE_KEY_ALIASES
+  );
 }
 
 export function safeProfileGenreKey(key?: string | null) {
@@ -149,4 +181,23 @@ export function genreTmdbIdForKey(key: string) {
   const normalizedKey = normalizeProfileGenreKey(key);
 
   return PROFILE_GENRES.find((genre) => genre.key === normalizedKey)?.tmdbId ?? "";
+}
+
+export function movieFilterGenreLabelForKey(key?: string | null) {
+  const normalizedKey = normalizeMovieFilterGenreKey(key);
+
+  return (
+    MOVIE_FILTER_GENRES.find((genre) => genre.key === normalizedKey)?.label ??
+    key ??
+    ""
+  );
+}
+
+export function movieFilterGenreTmdbIdForKey(key: string) {
+  const normalizedKey = normalizeMovieFilterGenreKey(key);
+
+  return (
+    MOVIE_FILTER_GENRES.find((genre) => genre.key === normalizedKey)?.tmdbId ??
+    ""
+  );
 }

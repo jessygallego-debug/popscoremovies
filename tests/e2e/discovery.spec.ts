@@ -94,6 +94,16 @@ test("Discovery controls update recommendation query params", async ({
     .poll(() => recommendationRequests.at(-1)?.searchParams.get("genre"))
     .toBe("romcom");
 
+  await page.getByRole("button", { name: "Super Hero" }).click();
+  await expect
+    .poll(() => recommendationRequests.at(-1)?.searchParams.get("genre"))
+    .toBe("superhero");
+
+  await page.getByRole("button", { name: "Western" }).click();
+  await expect
+    .poll(() => recommendationRequests.at(-1)?.searchParams.get("genre"))
+    .toBe("western");
+
   await page.locator("details", { hasText: "1960s and newer" }).click();
   await page.getByRole("button", { name: "2020s and newer" }).click();
   await expect
@@ -110,6 +120,23 @@ test("Discovery controls update recommendation query params", async ({
         ?.searchParams.get("includeInternationalMovies")
     )
     .toBe("true");
+});
+
+test("Western is a rating genre but Super Hero is filter-only", async ({
+  page,
+}) => {
+  await page.goto("/rate?genre=western");
+
+  await expect(page.getByRole("button", { name: "Western" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Storyline" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Character" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Rewatch Score" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Western Atmosphere" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Showdowns" })).toBeVisible();
+
+  await page.goto("/rate?genre=superhero");
+
+  await expect(page.getByRole("button", { name: "Super Hero" })).toHaveCount(0);
 });
 
 test("My PopFile does not navigate to edit while profile is still loading", async ({

@@ -6,13 +6,21 @@ import {
   normalizeMovieLanguage,
   normalizeMovieRegion,
 } from "@/lib/movie-locale";
-import { genreLabelForKey, genreTmdbIdForKey } from "@/lib/profile-config";
+import {
+  MOVIE_FILTER_GENRES,
+  genreLabelForKey,
+  movieFilterGenreLabelForKey,
+  movieFilterGenreTmdbIdForKey,
+  normalizeMovieFilterGenreKey,
+} from "@/lib/profile-config";
 import { getRecommendationMovies, type MovieSummary } from "@/lib/tmdb";
 
 const RECOMMENDATION_LIMIT = 10;
 const CANDIDATE_LIMIT = 300;
 const FALLBACK_MESSAGE =
   "Rate more movies in this genre to unlock personalized recommendations.";
+
+type MovieFilterGenreKey = (typeof MOVIE_FILTER_GENRES)[number]["key"];
 
 type MovieLocalePreference = {
   includeInternationalMovies: boolean;
@@ -424,16 +432,6 @@ function explainPersonalizedMatch(
   )} in ${genreLabel}.`;
 }
 
-function explainFallbackMatch(genre: GenreKey, totalRatings: number) {
-  const genreLabel = genreLabelForKey(genre);
-
-  if (totalRatings > 0) {
-    return `A strong ${genreLabel} pick with high PopScore fan ratings.`;
-  }
-
-  return `A trending ${genreLabel} pick while you build your taste profile.`;
-}
-
 function uniqueMovies(movies: MovieSummary[]) {
   const byId = new Map<number, MovieSummary>();
 
@@ -508,10 +506,11 @@ function fallbackRecommendations({
   preferredLanguage,
 }: {
   aggregates: Map<string, MovieAggregate>;
-  genre: GenreKey;
+  genre: MovieFilterGenreKey;
   movies: MovieSummary[];
   preferredLanguage: string;
 }) {
+  const genreLabel = movieFilterGenreLabelForKey(genre);
   const maxRatings = Math.max(
     1,
     ...movies.map(
@@ -535,7 +534,10 @@ function fallbackRecommendations({
 
       return {
         ...movie,
-        explanation: explainFallbackMatch(genre, totalRatings),
+        explanation:
+          totalRatings > 0
+            ? `A strong ${genreLabel} pick with high PopScore fan ratings.`
+            : `A trending ${genreLabel} pick while you build your taste profile.`,
         fallbackScore,
         overallPopScore,
         recommendationMode: "fallback",
@@ -573,12 +575,14 @@ function fallbackRecommendations({
 }
 
 export async function GET(request: NextRequest) {
-  const genre = request.nextUrl.searchParams.get("genre") ?? "";
+  const genre = normalizeMovieFilterGenreKey(
+    request.nextUrl.searchParams.get("genre")
+  ) as MovieFilterGenreKey;
   const userId = request.nextUrl.searchParams.get("userId") ?? "";
   const movieLocalePreference = getMovieLocalePreference(request);
   const minReleaseYear = getMinReleaseYearFromRequest(request);
 
-  if (!isGenreKey(genre)) {
+  if (!genre) {
     return NextResponse.json({
       highRatedCount: 0,
       message: "Choose a valid genre to get recommendations.",
@@ -587,7 +591,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const tmdbGenreId = genreTmdbIdForKey(genre);
+  const tmdbGenreId = movieFilterGenreTmdbIdForKey(genre);
 
   if (!tmdbGenreId) {
     return NextResponse.json({
@@ -598,21 +602,26 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const questions = GENRE_RATING_CONFIGS[genre].questions;
+  const ratingGenre = isGenreKey(genre) ? genre : null;
+  const questions = ratingGenre
+    ? GENRE_RATING_CONFIGS[ratingGenre].questions
+    : [];
   const [movies, allRatingRows] = await Promise.all([
     getRecommendationMovies(tmdbGenreId, CANDIDATE_LIMIT, movieLocalePreference),
     getMovieRatingRows(),
   ]);
-  const genreRatingRows = allRatingRows.filter((row) =>
-    rowMatchesGenre(row, genre)
-  );
+  const genreRatingRows = ratingGenre
+    ? allRatingRows.filter((row) => rowMatchesGenre(row, ratingGenre))
+    : allRatingRows;
   const userRows = userId
     ? allRatingRows.filter((row) => row.user_id === userId)
     : [];
   const userRatedMovieIds = buildCompletedRatingMovieIds(userRows);
-  const userGenreRows = userRows.filter(
-    (row) => rowMatchesGenre(row, genre) && ratingHasPopScore(row)
-  );
+  const userGenreRows = ratingGenre
+    ? userRows.filter(
+        (row) => rowMatchesGenre(row, ratingGenre) && ratingHasPopScore(row)
+      )
+    : [];
   const highRatedRows = userGenreRows.filter(
     (row) => Number(row.popscore ?? 0) >= 75
   );
@@ -622,10 +631,10 @@ export async function GET(request: NextRequest) {
   ).filter((movie) => !userRatedMovieIds.has(normalizeMovieId(movie.id)));
   const aggregates = buildMovieAggregates(genreRatingRows, questions);
 
-  if (highRatedRows.length < 3) {
+  if (!ratingGenre || highRatedRows.length < 3) {
     return NextResponse.json({
       highRatedCount: highRatedRows.length,
-      message: FALLBACK_MESSAGE,
+      message: ratingGenre ? FALLBACK_MESSAGE : "",
       mode: "fallback",
       movies: fallbackRecommendations({
         aggregates,
@@ -644,7 +653,7 @@ export async function GET(request: NextRequest) {
     mode: "personalized",
     movies: personalizeRecommendations({
       aggregates,
-      genre,
+      genre: ratingGenre,
       movies: candidateMovies,
       preferredLanguage: movieLocalePreference.preferredLanguage,
       questions,

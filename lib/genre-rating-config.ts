@@ -139,6 +139,16 @@ export const GENRE_RATING_CONFIGS = {
       { key: "emotionalImpact", name: "Emotional Impact", weight: 0.15 },
     ],
   },
+  western: {
+    title: "Western",
+    questions: [
+      { key: "story", name: "Storyline", weight: 0.25 },
+      { key: "character", name: "Character", weight: 0.2 },
+      { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
+      { key: "westernAtmosphere", name: "Western Atmosphere", weight: 0.2 },
+      { key: "showdowns", name: "Showdowns", weight: 0.25 },
+    ],
+  },
   thriller: {
     title: "Thriller",
     questions: [

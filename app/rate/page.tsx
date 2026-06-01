@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getMovie } from "@/lib/tmdb";
+import { GENRE_RATING_CONFIGS } from "@/lib/genre-rating-config";
+import { getMovie, movieFilterGenreNames } from "@/lib/tmdb";
 import RateClient, { GenreKey } from "./rate-client";
 
 export const metadata: Metadata = {
@@ -10,23 +11,7 @@ export const metadata: Metadata = {
   },
 };
 
-const popGenreKeys = [
-  "horror",
-  "scifi",
-  "action",
-  "adventure",
-  "comedy",
-  "romcom",
-  "romance",
-  "animated",
-  "musical",
-  "drama",
-  "mystery",
-  "family",
-  "documentary",
-  "war",
-  "thriller",
-];
+const popGenreKeys = Object.keys(GENRE_RATING_CONFIGS);
 
 function isGenreKey(value: string | undefined): value is GenreKey {
   return Boolean(value && popGenreKeys.includes(value));
@@ -52,7 +37,7 @@ function mapMovieGenresToPopGenre(genreNames: string[]): GenreKey {
     "Science Fiction": "scifi",
     Thriller: "thriller",
     War: "war",
-    Western: "action",
+    Western: "western",
   };
 
   for (const genreName of genreNames) {
@@ -99,7 +84,7 @@ export default async function RatePage({
       movieId={params.movie}
       initialGenre={initialGenre}
       lockGenre={Boolean(movieGenre || urlGenre)}
-      movieGenreNames={movie?.genres.map((genre) => genre.name)}
+      movieGenreNames={movie ? movieFilterGenreNames(movie) : undefined}
       moviePosterPath={movie?.poster_path}
       movieReleaseDate={movie?.release_date}
       movieTitle={movie?.title}

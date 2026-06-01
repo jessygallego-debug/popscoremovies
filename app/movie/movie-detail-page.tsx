@@ -22,6 +22,7 @@ import {
   getRecommendationMovies,
   getMovie,
   isTmdbConfigured,
+  movieFilterGenreNames,
   posterUrl,
 } from "@/lib/tmdb";
 import { discussionHref, genreHref, movieHref } from "@/lib/urls";
@@ -225,6 +226,7 @@ export async function MovieDetailPage({
 
   const backdrop = backdropUrl(movie.backdrop_path);
   const poster = posterUrl(movie.poster_path) ?? backdrop;
+  const filterGenreNames = movieFilterGenreNames(movie);
   const releaseDate = movie.release_date
     ? formatReleaseMonthYear(movie.release_date)
     : "";
@@ -390,7 +392,7 @@ export async function MovieDetailPage({
                   <AddToWatchlistButton
                     movie={{
                       genre: movie.genres[0]?.name,
-                      genreNames: movie.genres.map((genre) => genre.name),
+                      genreNames: filterGenreNames,
                       movieId: String(movie.id),
                       movieTitle: movie.title,
                       posterPath: movie.poster_path,
@@ -402,7 +404,7 @@ export async function MovieDetailPage({
                   <CoStarReactions
                     movie={{
                       genre: movie.genres[0]?.name,
-                      genreNames: movie.genres.map((genre) => genre.name),
+                      genreNames: filterGenreNames,
                       movieId: String(movie.id),
                       movieTitle: movie.title,
                       posterPath: movie.poster_path,

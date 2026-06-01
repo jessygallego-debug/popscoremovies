@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import MobileFilterMenu from "@/app/components/mobile-filter-menu";
 import MoviePosterImage from "@/app/components/movie-poster-image";
-import { PROFILE_GENRES } from "@/lib/profile-config";
+import { MOVIE_FILTER_GENRES } from "@/lib/profile-config";
 import {
   getCurrentUser,
   getWatchlist,
@@ -20,6 +20,16 @@ function yearFromDate(releaseDate?: string | null) {
 
 function primaryGenreForMovie(movie: WatchlistMovie) {
   return movie.genreNames[0] ?? movie.genre ?? "Movie";
+}
+
+function filterGenresForMovie(movie: WatchlistMovie) {
+  return Array.from(
+    new Set(
+      [...(movie.genreNames ?? []), movie.genre].filter(
+        (genre): genre is string => Boolean(genre)
+      )
+    )
+  );
 }
 
 function WatchlistPoster({ movie }: { movie: WatchlistMovie }) {
@@ -119,9 +129,11 @@ export default function WatchlistClient() {
 
   const genreFilters = useMemo(() => {
     const genres = new Set(
-      PROFILE_GENRES.map((nextGenre) => nextGenre.label)
+      MOVIE_FILTER_GENRES.map((nextGenre) => nextGenre.label)
     );
-    watchlist.map(primaryGenreForMovie).forEach((genre) => genres.add(genre));
+    watchlist
+      .flatMap(filterGenresForMovie)
+      .forEach((genre) => genres.add(genre));
 
     return [
       "all",
@@ -140,8 +152,8 @@ export default function WatchlistClient() {
       return watchlist;
     }
 
-    return watchlist.filter(
-      (movie) => primaryGenreForMovie(movie) === activeGenre
+    return watchlist.filter((movie) =>
+      filterGenresForMovie(movie).includes(activeGenre)
     );
   }, [activeGenre, watchlist]);
 

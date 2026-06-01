@@ -62,6 +62,7 @@ const categoryTips: Record<string, string> = {
   acting: "How believable the performances feel.",
   animationQuality: "How strong the animation looks and moves.",
   battleScenes: "How powerful and clear the battle scenes feel.",
+  character: "How memorable the characters are.",
   chemistry: "How well the leads connect on screen.",
   choreography: "How well the dance and movement land.",
   conflict: "How strong the central struggle feels.",
@@ -80,6 +81,7 @@ const categoryTips: Record<string, string> = {
   quotability: "How memorable the funny lines are.",
   rewatchability: "How likely you are to watch it again.",
   scareFactor: "How tense, scary, or unsettling it feels.",
+  showdowns: "How exciting the confrontations feel.",
   songQuality: "How memorable and enjoyable the songs are.",
   story: "How strong the plot and characters are.",
   suspense: "How well the movie keeps you on edge.",
@@ -87,6 +89,7 @@ const categoryTips: Record<string, string> = {
   tensionPacing: "How well tension and momentum build.",
   visualEffects: "How convincing the effects look.",
   voiceActing: "How well the voices bring characters to life.",
+  westernAtmosphere: "How well it captures the Western setting, tone, and feel.",
 };
 
 export type GenreKey = RatingGenreKey;

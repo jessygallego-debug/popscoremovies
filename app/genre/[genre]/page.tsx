@@ -144,6 +144,7 @@ export default async function GenrePage({
                       sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
                       className="object-cover"
                       fallbackMovieId={String(movie.id)}
+                      unoptimized
                     />
                     <div className="absolute left-3 top-3">
                       <PopScoreDisplay
