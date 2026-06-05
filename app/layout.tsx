@@ -41,6 +41,23 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <head>
         <link rel="preconnect" href="https://image.tmdb.org" />
+        <link
+          rel="icon"
+          href="/icon.png?v=extra-buttery-3"
+          type="image/png"
+          sizes="256x256"
+        />
+        <link
+          rel="shortcut icon"
+          href="/favicon.ico?v=extra-buttery-3"
+          sizes="any"
+        />
+        <link
+          rel="apple-touch-icon"
+          href="/apple-icon.png?v=extra-buttery-3"
+          type="image/png"
+          sizes="180x180"
+        />
       </head>
       <body className="min-h-full flex flex-col">
         <PopFileProvider>
