@@ -354,24 +354,30 @@ function saveAuthSession(authResponse: SupabaseAuthResponse) {
 
 export function consumeAuthRedirect() {
   if (typeof window === "undefined" || !window.location.hash) {
-    return { error: null, signedIn: false };
+    return { error: null, signedIn: false, isPasswordRecovery: false };
   }
 
   const hashParams = new URLSearchParams(window.location.hash.slice(1));
   const errorDescription = hashParams.get("error_description");
+  const authType = hashParams.get("type");
 
   if (errorDescription) {
     window.history.replaceState(null, "", window.location.pathname);
     return {
       error: errorDescription.replace(/\+/g, " "),
       signedIn: false,
+      isPasswordRecovery: false,
     };
   }
 
   const accessToken = hashParams.get("access_token");
 
   if (!accessToken) {
-    return { error: null, signedIn: false };
+    return {
+      error: null,
+      signedIn: false,
+      isPasswordRecovery: authType === "recovery",
+    };
   }
 
   const session: SupabaseSession = {
@@ -382,10 +388,21 @@ export function consumeAuthRedirect() {
 
   writeSession(session);
   window.history.replaceState(null, "", window.location.pathname);
-  return { error: null, signedIn: true };
+  return {
+    error: null,
+    signedIn: true,
+    isPasswordRecovery: authType === "recovery",
+  };
 }
 
-export async function sendMagicLink(email: string) {
+async function sendEmailOtp(
+  email: string,
+  options: {
+    createUser: boolean;
+    fallbackError: string;
+    hideAuthErrors?: boolean;
+  }
+) {
   const config = getSupabaseConfig();
 
   if (!config) {
@@ -399,7 +416,7 @@ export async function sendMagicLink(email: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      create_user: true,
+      create_user: options.createUser,
       email,
       options: {
         email_redirect_to: getEmailRedirectUrl(),
@@ -408,8 +425,55 @@ export async function sendMagicLink(email: string) {
   });
 
   if (!response.ok) {
+    if (options.hideAuthErrors) {
+      return;
+    }
+
+    throw new Error(await readSupabaseAuthError(response, options.fallbackError));
+  }
+}
+
+export async function sendMagicLink(email: string) {
+  return sendEmailOtp(email, {
+    createUser: true,
+    fallbackError: "Could not send sign-in link.",
+  });
+}
+
+export async function sendUsernameReminder(email: string) {
+  return sendEmailOtp(email, {
+    createUser: false,
+    fallbackError: "Could not send username reminder.",
+    hideAuthErrors: true,
+  });
+}
+
+export async function sendPasswordReset(email: string) {
+  const config = getSupabaseConfig();
+
+  if (!config) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const redirectUrl = getEmailRedirectUrl();
+  const response = await fetch(
+    `${config.authUrl}/recover?redirect_to=${encodeURIComponent(redirectUrl)}`,
+    {
+      method: "POST",
+      headers: {
+        apikey: config.key,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    }
+  );
+
+  if (!response.ok) {
     throw new Error(
-      await readSupabaseAuthError(response, "Could not send sign-in link.")
+      await readSupabaseAuthError(
+        response,
+        "Could not send password reset email."
+      )
     );
   }
 }
@@ -503,6 +567,31 @@ export async function getCurrentUser() {
 
 export function signOut() {
   clearSession();
+}
+
+export async function updatePassword(password: string) {
+  const config = getSupabaseConfig();
+  const accessToken = await getSupabaseAccessToken();
+
+  if (!config || !accessToken) {
+    throw new Error("Open the reset link from your email before choosing a new password.");
+  }
+
+  const response = await fetch(`${config.authUrl}/user`, {
+    method: "PUT",
+    headers: {
+      apikey: config.key,
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await readSupabaseAuthError(response, "Could not update password.")
+    );
+  }
 }
 
 export function normalizeUsername(username: string) {

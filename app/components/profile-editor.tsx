@@ -20,10 +20,13 @@ import {
   getUserRatings,
   normalizeUsername,
   ProfileRecord,
+  sendPasswordReset,
+  sendUsernameReminder,
   signInWithPassword,
   signUpWithPassword,
   signOut,
   SupabaseUser,
+  updatePassword,
   upsertProfile,
   UserMovieRating,
 } from "@/lib/profile-store";
@@ -63,6 +66,8 @@ export default function ProfileEditor() {
   const returnTo = getSafeReturnPath(searchParams.get("returnTo"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
@@ -70,14 +75,24 @@ export default function ProfileEditor() {
   const [avatarKey, setAvatarKey] = useState("clapper");
   const [favoriteGenre, setFavoriteGenre] = useState("horror");
   const [ratedMovieCount, setRatedMovieCount] = useState(0);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [isSendingRecovery, setIsSendingRecovery] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   useEffect(() => {
     const authResult = consumeAuthRedirect();
 
     if (authResult.error) {
       queueMicrotask(() => setMessage(authResult.error));
+    }
+
+    if (authResult.isPasswordRecovery) {
+      queueMicrotask(() => {
+        setIsPasswordRecovery(true);
+        setMessage("Choose a new password to finish your reset.");
+      });
     }
 
     getCurrentUser().then((nextUser) => {
@@ -102,10 +117,82 @@ export default function ProfileEditor() {
               : firstUnlockedAvatarKey(nextRatedMovieCount)
           );
           setFavoriteGenre(safeProfileGenreKey(nextProfile?.favorite_genre));
+
+          if (authResult.signedIn && !authResult.isPasswordRecovery) {
+            setMessage(
+              nextProfile?.username
+                ? `Signed in. Your PopFile username is @${nextProfile.username}.`
+                : "Signed in. Set up your PopFile username here."
+            );
+          }
         });
       }
     });
   }, []);
+
+  const requestPasswordReset = () => {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setMessage("Enter your email first, then tap Forgot password.");
+      return;
+    }
+
+    setIsSendingRecovery(true);
+    setMessage("");
+    sendPasswordReset(trimmedEmail)
+      .then(() =>
+        setMessage(
+          "Check your email for a password reset link. Open it, then choose a new password here."
+        )
+      )
+      .catch((error: Error) => setMessage(error.message))
+      .finally(() => setIsSendingRecovery(false));
+  };
+
+  const requestUsernameReminder = () => {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setMessage("Enter your email first, then tap Forgot username.");
+      return;
+    }
+
+    setIsSendingRecovery(true);
+    setMessage("");
+    sendUsernameReminder(trimmedEmail)
+      .then(() =>
+        setMessage(
+          "If that email has a PopScore account, a secure sign-in link is on the way. Open it here and your username will show on this page."
+        )
+      )
+      .catch((error: Error) => setMessage(error.message))
+      .finally(() => setIsSendingRecovery(false));
+  };
+
+  const saveNewPassword = () => {
+    if (newPassword.length < 8) {
+      setMessage("Use a password with at least 8 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setMessage("The new passwords do not match.");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    setMessage("");
+    updatePassword(newPassword)
+      .then(() => {
+        setNewPassword("");
+        setConfirmPassword("");
+        setIsPasswordRecovery(false);
+        setMessage("Password updated. Use it the next time you sign in.");
+      })
+      .catch((error: Error) => setMessage(error.message))
+      .finally(() => setIsUpdatingPassword(false));
+  };
 
   if (!user) {
     return (
@@ -121,7 +208,7 @@ export default function ProfileEditor() {
             event.preventDefault();
             setIsSigningIn(true);
             setMessage("");
-            signInWithPassword(email, password)
+            signInWithPassword(email.trim(), password)
               .then(() => getCurrentUser())
               .then((nextUser) => {
                 if (!nextUser) {
@@ -167,9 +254,9 @@ export default function ProfileEditor() {
           </button>
           <button
             type="button"
-            disabled={isSigningIn}
+            disabled={isSigningIn || isSendingRecovery}
             onClick={() => {
-              if (!email || password.length < 8) {
+              if (!email.trim() || password.length < 8) {
                 setMessage(
                   "Enter an email and a password with at least 8 characters."
                 );
@@ -178,7 +265,7 @@ export default function ProfileEditor() {
 
               setIsSigningIn(true);
               setMessage("");
-              signUpWithPassword(email, password)
+              signUpWithPassword(email.trim(), password)
                 .then((signedIn) => {
                   if (signedIn) {
                     window.location.reload();
@@ -196,6 +283,24 @@ export default function ProfileEditor() {
           >
             Create Account
           </button>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              disabled={isSigningIn || isSendingRecovery}
+              onClick={requestPasswordReset}
+              className="min-h-12 rounded-xl border border-slate-700 px-5 font-black text-slate-200 transition hover:border-yellow-400 hover:text-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Forgot Password?
+            </button>
+            <button
+              type="button"
+              disabled={isSigningIn || isSendingRecovery}
+              onClick={requestUsernameReminder}
+              className="min-h-12 rounded-xl border border-slate-700 px-5 font-black text-slate-200 transition hover:border-yellow-400 hover:text-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Forgot Username?
+            </button>
+          </div>
         </form>
         {message ? (
           <p className="mt-4 text-sm font-bold text-yellow-300">{message}</p>
@@ -243,6 +348,49 @@ export default function ProfileEditor() {
             </p>
           </div>
         </div>
+      </div>
+
+      {message ? (
+        <p className="mt-4 rounded-2xl border border-yellow-400/20 bg-black/40 p-4 text-sm font-bold text-yellow-300">
+          {message}
+        </p>
+      ) : null}
+
+      <div className="mt-6 rounded-2xl border border-slate-800 bg-black/35 p-4">
+        <h2 className="text-sm font-black uppercase text-yellow-400">
+          Password
+        </h2>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+          {isPasswordRecovery
+            ? "Choose a new password to finish your reset."
+            : "Need a new password? Enter it here while you are signed in."}
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <input
+            type="password"
+            minLength={8}
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+            placeholder="New password"
+            className="min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400"
+          />
+          <input
+            type="password"
+            minLength={8}
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            placeholder="Confirm new password"
+            className="min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400"
+          />
+        </div>
+        <button
+          type="button"
+          disabled={isUpdatingPassword}
+          onClick={saveNewPassword}
+          className="mt-4 min-h-12 rounded-xl border border-yellow-400/50 px-5 font-black text-yellow-300 transition hover:bg-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isUpdatingPassword ? "Saving Password..." : "Save New Password"}
+        </button>
       </div>
 
       <form
@@ -334,7 +482,6 @@ export default function ProfileEditor() {
         </button>
       </form>
 
-      {message ? <p className="mt-4 text-sm font-bold text-yellow-300">{message}</p> : null}
       {profile ? (
         <Link
           href={`/profile/${profile.username}`}
