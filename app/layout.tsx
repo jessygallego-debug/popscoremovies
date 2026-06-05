@@ -43,18 +43,19 @@ export default function RootLayout({
         <link rel="preconnect" href="https://image.tmdb.org" />
         <link
           rel="icon"
-          href="/icon.png?v=extra-buttery-3"
+          href="/extra-buttery-icon.png?v=extra-buttery-4"
           type="image/png"
           sizes="256x256"
         />
         <link
           rel="shortcut icon"
-          href="/favicon.ico?v=extra-buttery-3"
-          sizes="any"
+          href="/extra-buttery-icon.png?v=extra-buttery-4"
+          type="image/png"
+          sizes="256x256"
         />
         <link
           rel="apple-touch-icon"
-          href="/apple-icon.png?v=extra-buttery-3"
+          href="/extra-buttery-apple-icon.png?v=extra-buttery-4"
           type="image/png"
           sizes="180x180"
         />
