@@ -119,6 +119,7 @@ export default function MoviePosterImage({
       decoding="async"
       quality={75}
       className={className}
+      unoptimized
       onError={() => {
         if (activeSrc === src) {
           setFailedSrc(src);

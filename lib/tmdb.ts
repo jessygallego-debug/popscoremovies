@@ -220,6 +220,12 @@ export function backdropUrl(path: string | null, size = "w1280") {
   return normalizeTmdbImageUrl(path, size);
 }
 
+export function movieHasBrowseArtwork(movie: MovieSummary) {
+  return Boolean(
+    tmdbImagePath(movie.poster_path) && tmdbImagePath(movie.backdrop_path)
+  );
+}
+
 export function formatReleaseMonthYear(releaseDate: string) {
   const [year, month] = releaseDate.split("-");
   const monthNumber = Number(month);
@@ -471,8 +477,10 @@ export async function getMovies(
       break;
     }
 
-    const nextMovies = data.results.filter((movie) =>
-      movieMatchesGenreFilter(movie, genreId, resultSource)
+    const nextMovies = data.results.filter(
+      (movie) =>
+        movieMatchesGenreFilter(movie, genreId, resultSource) &&
+        (resultSource === "search" || movieHasBrowseArtwork(movie))
     );
 
     movies.push(...nextMovies);
@@ -518,8 +526,9 @@ export async function getRecommendationMovies(
       break;
     }
 
-    const nextMovies = data.results.filter((movie) =>
-      movieMatchesGenreFilter(movie, genreId)
+    const nextMovies = data.results.filter(
+      (movie) =>
+        movieMatchesGenreFilter(movie, genreId) && movieHasBrowseArtwork(movie)
     );
 
     movies.push(...nextMovies);
