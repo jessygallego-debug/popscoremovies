@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMovie, getMovieImageFallbacks } from "@/lib/tmdb";
+import { getMovie, getMovieImageFallbacks, tmdbImagePath } from "@/lib/tmdb";
 
 const posterCacheHeaders = {
   "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
@@ -7,6 +7,7 @@ const posterCacheHeaders = {
 
 export async function GET(request: NextRequest) {
   const movieId = request.nextUrl.searchParams.get("movie");
+  const failedPath = tmdbImagePath(request.nextUrl.searchParams.get("failed"));
 
   if (!movieId) {
     return NextResponse.json(
@@ -16,15 +17,24 @@ export async function GET(request: NextRequest) {
   }
 
   const movie = await getMovie(movieId);
-  const imageFallbacks =
-    movie && (!movie.poster_path || !movie.backdrop_path)
-      ? await getMovieImageFallbacks(movieId)
-      : null;
+  const imageFallbacks = movie
+    ? await getMovieImageFallbacks(movieId, [failedPath])
+    : null;
+  const moviePosterPath = tmdbImagePath(movie?.poster_path);
+  const movieBackdropPath = tmdbImagePath(movie?.backdrop_path);
+  const posterPath =
+    imageFallbacks?.posterPath ??
+    (moviePosterPath && moviePosterPath !== failedPath ? moviePosterPath : null);
+  const backdropPath =
+    imageFallbacks?.backdropPath ??
+    (movieBackdropPath && movieBackdropPath !== failedPath
+      ? movieBackdropPath
+      : null);
 
   return NextResponse.json(
     {
-      backdropPath: movie?.backdrop_path ?? imageFallbacks?.backdropPath ?? null,
-      posterPath: movie?.poster_path ?? imageFallbacks?.posterPath ?? null,
+      backdropPath,
+      posterPath,
     },
     { headers: posterCacheHeaders }
   );

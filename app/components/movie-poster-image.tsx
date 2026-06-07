@@ -48,7 +48,15 @@ export default function MoviePosterImage({
 
     attemptedRecoveryKeys.current.add(recoveryKey);
 
-    fetch(`/api/movie-poster?movie=${encodeURIComponent(fallbackMovieId ?? "")}`)
+    const params = new URLSearchParams({
+      movie: fallbackMovieId ?? "",
+    });
+
+    if (failedSrc) {
+      params.set("failed", failedSrc);
+    }
+
+    fetch(`/api/movie-poster?${params.toString()}`)
       .then((response) => response.json())
       .then((data: { backdropPath?: string | null; posterPath?: string | null }) => {
         const fallbackSrc =
@@ -67,7 +75,7 @@ export default function MoviePosterImage({
     return () => {
       isCurrent = false;
     };
-  }, [fallbackMovieId, hasError, recoveryKey, src]);
+  }, [failedSrc, fallbackMovieId, hasError, recoveryKey, src]);
 
   if (!activeSrc) {
     return (

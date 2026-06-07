@@ -161,91 +161,63 @@ function getToken() {
   return process.env.TMDB_API_TOKEN;
 }
 
-function normalizeTmdbImageUrl(path: string, size: string) {
-  try {
-    const url = new URL(path);
+export function tmdbImagePath(path?: string | null) {
+  const trimmedPath = path?.trim();
 
-    if (url.hostname !== "image.tmdb.org") {
-      return null;
-    }
-
-    const imagePath = url.pathname.match(/^\/t\/p\/[^/]+(\/.+)$/)?.[1];
-
-    if (!imagePath) {
-      return null;
-    }
-
-    return `${TMDB_IMAGE_BASE_URL}/${size}${imagePath}`;
-  } catch {
+  if (
+    !trimmedPath ||
+    trimmedPath.toLowerCase() === "null" ||
+    trimmedPath.toLowerCase() === "undefined"
+  ) {
     return null;
   }
-}
 
-function normalizeNextImageUrl(path: string, size: string) {
-  try {
-    const nextImageUrl = new URL(path, "https://popscoremovies.com");
-    const originalUrl = nextImageUrl.searchParams.get("url");
+  if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
+    try {
+      const url = new URL(trimmedPath);
 
-    if (nextImageUrl.pathname !== "/_next/image" || !originalUrl) {
+      if (url.hostname !== "image.tmdb.org") {
+        return null;
+      }
+
+      return url.pathname.match(/^\/t\/p\/[^/]+(\/.+)$/)?.[1] ?? null;
+    } catch {
       return null;
     }
+  }
 
-    return normalizeTmdbImageUrl(originalUrl, size);
+  if (trimmedPath.startsWith("/_next/image")) {
+    try {
+      const nextImageUrl = new URL(trimmedPath, "https://popscoremovies.com");
+      return tmdbImagePath(nextImageUrl.searchParams.get("url"));
+    } catch {
+      return null;
+    }
+  }
+
+  if (trimmedPath.startsWith("/t/p/")) {
+    return trimmedPath.match(/^\/t\/p\/[^/]+(\/.+)$/)?.[1] ?? null;
+  }
+
+  return trimmedPath.startsWith("/") ? trimmedPath : `/${trimmedPath}`;
+}
+
+function normalizeTmdbImageUrl(path: string | null, size: string) {
+  try {
+    const imagePath = tmdbImagePath(path);
+
+    return imagePath ? `${TMDB_IMAGE_BASE_URL}/${size}${imagePath}` : null;
   } catch {
     return null;
   }
 }
 
 export function posterUrl(path: string | null, size = "w500") {
-  const trimmedPath = path?.trim();
-
-  if (
-    !trimmedPath ||
-    trimmedPath.toLowerCase() === "null" ||
-    trimmedPath.toLowerCase() === "undefined"
-  ) {
-    return null;
-  }
-
-  if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
-    return normalizeTmdbImageUrl(trimmedPath, size);
-  }
-
-  if (trimmedPath.startsWith("/_next/image")) {
-    return normalizeNextImageUrl(trimmedPath, size);
-  }
-
-  const normalizedPath = trimmedPath.startsWith("/")
-    ? trimmedPath
-    : `/${trimmedPath}`;
-
-  return `${TMDB_IMAGE_BASE_URL}/${size}${normalizedPath}`;
+  return normalizeTmdbImageUrl(path, size);
 }
 
 export function backdropUrl(path: string | null, size = "w1280") {
-  const trimmedPath = path?.trim();
-
-  if (
-    !trimmedPath ||
-    trimmedPath.toLowerCase() === "null" ||
-    trimmedPath.toLowerCase() === "undefined"
-  ) {
-    return null;
-  }
-
-  if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
-    return normalizeTmdbImageUrl(trimmedPath, size);
-  }
-
-  if (trimmedPath.startsWith("/_next/image")) {
-    return normalizeNextImageUrl(trimmedPath, size);
-  }
-
-  const normalizedPath = trimmedPath.startsWith("/")
-    ? trimmedPath
-    : `/${trimmedPath}`;
-
-  return `${TMDB_IMAGE_BASE_URL}/${size}${normalizedPath}`;
+  return normalizeTmdbImageUrl(path, size);
 }
 
 export function formatReleaseMonthYear(releaseDate: string) {
@@ -586,9 +558,26 @@ export function movieFilterGenreNames(movie: MovieDetails) {
   return Array.from(new Set(genres));
 }
 
-function bestImagePath(images: TmdbMovieImage[] = []) {
+function bestImagePath(
+  images: TmdbMovieImage[] = [],
+  excludePaths: (string | null | undefined)[] = []
+) {
+  const excludedImagePaths = new Set(
+    excludePaths
+      .map((path) => tmdbImagePath(path))
+      .filter((path): path is string => Boolean(path))
+  );
+
   return [...images]
-    .filter((image) => posterUrl(image.file_path))
+    .filter((image) => {
+      const imagePath = tmdbImagePath(image.file_path);
+
+      return Boolean(
+        imagePath &&
+          !excludedImagePaths.has(imagePath) &&
+          posterUrl(imagePath)
+      );
+    })
     .sort((a, b) => {
       const languageScore =
         Number(b.iso_639_1 === null) - Number(a.iso_639_1 === null);
@@ -607,14 +596,17 @@ function bestImagePath(images: TmdbMovieImage[] = []) {
     })[0]?.file_path ?? null;
 }
 
-export async function getMovieImageFallbacks(id: string) {
+export async function getMovieImageFallbacks(
+  id: string,
+  excludePaths: (string | null | undefined)[] = []
+) {
   const images = await tmdbFetch<TmdbMovieImagesResponse>(
     `/movie/${id}/images`
   );
 
   return {
-    backdropPath: bestImagePath(images?.backdrops),
-    posterPath: bestImagePath(images?.posters),
+    backdropPath: bestImagePath(images?.backdrops, excludePaths),
+    posterPath: bestImagePath(images?.posters, excludePaths),
   };
 }
 
