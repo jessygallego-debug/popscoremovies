@@ -11,7 +11,6 @@ type MoviePosterImageProps = {
   onLoadError?: () => void;
   sizes: string;
   src: string | null;
-  unoptimized?: boolean;
 };
 
 export default function MoviePosterImage({
@@ -21,7 +20,6 @@ export default function MoviePosterImage({
   onLoadError,
   sizes,
   src,
-  unoptimized = false,
 }: MoviePosterImageProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const recoveryKey = `${fallbackMovieId ?? ""}:${src ?? ""}`;
@@ -87,6 +85,9 @@ export default function MoviePosterImage({
       alt={alt}
       fill
       sizes={sizes}
+      loading="lazy"
+      decoding="async"
+      quality={75}
       className={className}
       onError={() => {
         if (activeSrc === src) {
@@ -97,7 +98,6 @@ export default function MoviePosterImage({
 
         onLoadError?.();
       }}
-      unoptimized={unoptimized}
     />
   );
 }

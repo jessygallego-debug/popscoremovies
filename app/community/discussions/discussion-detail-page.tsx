@@ -4,6 +4,7 @@ import {
   getMockCommunityDiscussion,
   getMockDiscussionReplies,
 } from "@/lib/community-discussions";
+import { SITE_KEYWORDS } from "@/lib/site-metadata";
 import { absoluteUrl, truncateDescription } from "@/lib/site-url";
 import { posterUrl } from "@/lib/tmdb";
 import { discussionHref } from "@/lib/urls";
@@ -43,6 +44,13 @@ export async function generateDiscussionMetadata(
   return {
     title,
     description,
+    keywords: [
+      `${discussion.movieTitle} discussion`,
+      `${discussion.movieTitle} reviews`,
+      "movie discussions",
+      "movie reviews and ratings",
+      ...SITE_KEYWORDS,
+    ],
     alternates: {
       canonical,
     },
@@ -55,7 +63,7 @@ export async function generateDiscussionMetadata(
         ? [
             {
               url: image,
-              alt: discussion.movieTitle,
+              alt: `${discussion.movieTitle} discussion movie poster`,
             },
           ]
         : undefined,

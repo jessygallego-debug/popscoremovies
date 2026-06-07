@@ -5,21 +5,48 @@ import {
   MOVIE_FILTER_GENRES,
   normalizeMovieFilterGenreKey,
 } from "@/lib/profile-config";
+import {
+  SITE_ICON_ALT,
+  SITE_ICON_PATH,
+  SITE_KEYWORDS,
+} from "@/lib/site-metadata";
 import { absoluteUrl } from "@/lib/site-url";
 
+const discoverTitle = "Discover Movie Recommendations | PopScore";
+const discoverDescription =
+  "Find personalized movie recommendations by genre, era, language, and region based on movies you rated, so your next watch fits your taste.";
+const discoverImage = {
+  url: absoluteUrl(SITE_ICON_PATH),
+  width: 256,
+  height: 256,
+  alt: SITE_ICON_ALT,
+};
+
 export const metadata: Metadata = {
-  title: "Discover Movie Recommendations",
-  description:
-    "Find personalized movie recommendations by genre, era, language, and region on PopScore.",
+  title: { absolute: discoverTitle },
+  description: discoverDescription,
+  keywords: [
+    "discover movies to watch",
+    "personalized movie recommendations",
+    "movie recommendation site",
+    "best movies by genre",
+    ...SITE_KEYWORDS,
+  ],
   alternates: {
     canonical: absoluteUrl("/discover"),
   },
   openGraph: {
-    title: "Discover Movie Recommendations",
-    description:
-      "Find personalized movie recommendations by genre, era, language, and region on PopScore.",
+    title: discoverTitle,
+    description: discoverDescription,
+    images: [discoverImage],
     type: "website",
     url: absoluteUrl("/discover"),
+  },
+  twitter: {
+    card: "summary",
+    title: discoverTitle,
+    description: discoverDescription,
+    images: [discoverImage],
   },
 };
 
@@ -44,10 +71,12 @@ export default async function DiscoverPage({
               Personalized Picks
             </div>
             <h1 className="max-w-3xl text-3xl font-black leading-[0.98] text-white sm:text-6xl xl:text-7xl">
-              Discover Movies You&rsquo;ll Actually Love
+              Discover Personalized Movie Recommendations
             </h1>
             <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:mt-5 sm:text-lg sm:leading-8">
-              Pick a genre and get personalized movie recommendations.
+              Use PopScore Discovery to find movie recommendations based on your
+              ratings. Pick a genre, choose your filters, and get personalized
+              movies that match your taste.
             </p>
           </div>
 

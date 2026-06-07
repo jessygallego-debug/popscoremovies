@@ -303,10 +303,12 @@ export default function RateClient({
             🍿
           </div>
           <h1 className="text-3xl font-black text-white sm:text-6xl">
-            Rate This Movie
+            {movieTitle ? "Rate This Movie" : "Rate Movies Online"}
           </h1>
           <p className="mt-3 text-base font-bold text-gray-200 sm:mt-4 sm:text-xl">
-            How did this movie feel overall?
+            {movieTitle
+              ? "How did this movie feel overall?"
+              : "Use genre-specific PopScore questions to build your movie taste profile."}
           </p>
         </div>
 
@@ -320,11 +322,10 @@ export default function RateClient({
               >
                 <MoviePosterImage
                   src={moviePosterSrc}
-                  alt={`${movieTitle} poster`}
+                  alt={`${movieTitle} movie poster`}
                   sizes="(min-width: 640px) 86px, 74px"
                   className="object-cover transition group-hover:scale-105"
                   fallbackMovieId={movieId}
-                  unoptimized
                 />
               </Link>
             ) : null}

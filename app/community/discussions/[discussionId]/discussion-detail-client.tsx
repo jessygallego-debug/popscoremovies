@@ -575,12 +575,11 @@ export default function DiscussionDetailClient({
           <div className="grid gap-5 p-4 sm:grid-cols-[150px_1fr] sm:p-5">
             <div className="relative mx-auto aspect-[2/3] w-full max-w-[150px] overflow-hidden rounded-2xl bg-slate-900 sm:mx-0">
               <MoviePosterImage
-                alt={discussion.movieTitle}
+                alt={`${discussion.movieTitle} discussion movie poster`}
                 className="object-cover"
                 fallbackMovieId={discussion.movieId}
                 sizes="150px"
                 src={posterUrl(discussion.moviePosterUrl)}
-                unoptimized
               />
             </div>
 

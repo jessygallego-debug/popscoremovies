@@ -988,7 +988,6 @@ function MovieThumb({
         fallbackMovieId={fallbackMovieId}
         sizes={wide ? "(min-width: 1024px) 120px, 112px" : "96px"}
         src={posterUrl(imagePath)}
-        unoptimized
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
     </div>
@@ -1280,12 +1279,11 @@ function MovieSearchSelect({
               >
                 <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-slate-900">
                   <MoviePosterImage
-                    alt={movie.title}
+                    alt={`${movie.title} movie poster`}
                     className="object-cover"
                     fallbackMovieId={String(movie.id)}
                     sizes="54px"
                     src={posterUrl(movie.posterPath ?? null)}
-                    unoptimized
                   />
                 </div>
                 <div className="min-w-0">
@@ -1314,12 +1312,11 @@ function MovieSearchSelect({
         <div className="mt-4 grid grid-cols-[76px_1fr] gap-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
           <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-slate-900">
             <MoviePosterImage
-              alt={selectedMovie.title}
+              alt={`${selectedMovie.title} selected movie poster`}
               className="object-cover"
               fallbackMovieId={String(selectedMovie.id)}
               sizes="76px"
               src={posterUrl(selectedMovie.posterPath ?? null)}
-              unoptimized
             />
           </div>
           <div className="min-w-0 self-center">
@@ -1811,7 +1808,7 @@ function CommunityFeedCard({
 
           <div className="mt-2.5 grid grid-cols-[88px_minmax(0,1fr)] gap-3 sm:mt-3 sm:grid-cols-[110px_1fr] lg:grid-cols-[120px_1fr]">
             <MovieThumb
-              alt={post.movie.title}
+              alt={`${post.movie.title} movie poster`}
               fallbackMovieId={post.movie.fallbackMovieId}
               href={communityMovieHref(
                 post.movie.fallbackMovieId,
@@ -2075,7 +2072,7 @@ function DiscussionCard({
     <article className={cardClass("p-3 transition hover:border-yellow-400/40 hover:bg-slate-950/90 sm:p-4")}>
       <div className="grid grid-cols-[82px_minmax(0,1fr)] gap-3 sm:grid-cols-[96px_1fr] sm:gap-4">
         <MovieThumb
-          alt={discussion.movieTitle}
+          alt={`${discussion.movieTitle} discussion movie poster`}
           fallbackMovieId={discussion.movieId}
           href={communityMovieHref(discussion.movieId, discussion.movieTitle)}
           imagePath={discussion.moviePosterUrl}
@@ -2246,7 +2243,7 @@ function TrendingDiscussionsCard({
               className="grid grid-cols-[82px_1fr] items-center gap-3 border-b border-white/10 pb-4 last:border-b-0 last:pb-0"
             >
               <MovieThumb
-                alt={discussion.title}
+                alt={`${discussion.movieTitle} movie discussion poster`}
                 fallbackMovieId={discussion.movieId}
                 fit="contain"
                 href={communityDiscussionHref(discussion.id, discussion.title)}
@@ -2543,7 +2540,7 @@ function FollowingActivityCard({
     <article className={cardClass("p-3 sm:p-4")}>
       <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-3 sm:grid-cols-[96px_1fr]">
         <MovieThumb
-          alt={activity.movieTitle}
+          alt={`${activity.movieTitle} movie poster`}
           fallbackMovieId={activity.movieId}
           href={communityMovieHref(activity.movieId, activity.movieTitle)}
           imagePath={activity.moviePoster}
@@ -3099,11 +3096,12 @@ export default function CommunityPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-4xl font-black text-white sm:text-5xl">
-                Community
+                Join the PopScore Movie Community
               </h1>
               <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:text-base">
-                Discover what movie fans are loving, debating, rating, and
-                talking about right now.
+                The PopScore community lets movie fans share ratings, reviews,
+                comments, and discussions. Follow other users, see what they are
+                watching, and join conversations about movies.
               </p>
             </div>
           </div>

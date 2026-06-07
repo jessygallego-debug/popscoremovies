@@ -12,6 +12,7 @@ import {
   SITE_DESCRIPTION,
   SITE_ICON_ALT,
   SITE_ICON_PATH,
+  SITE_KEYWORDS,
   SITE_NAME,
 } from "@/lib/site-metadata";
 import { getSiteEngagementTotals } from "@/lib/site-stats";
@@ -35,20 +36,45 @@ const TMDB_GENRE_LABELS = new Map(
 
 const whyPopScoreCards = [
   {
-    title: "Genre-Specific Ratings",
-    description: "Horror shouldn't be rated like romance.",
+    title: "Rate Movies by Genre",
+    description:
+      "Action, horror, comedy, and romance each get the right questions.",
   },
   {
-    title: "Real Fan Reactions",
-    description: "See how real fans actually feel about movies.",
+    title: "Personalized Movie Recommendations",
+    description:
+      "Discover movies to watch based on your ratings and favorite genres.",
   },
   {
-    title: "Built For Movie Fans",
-    description: "No critics. No agendas. Just fans.",
+    title: "Build Your PopFile",
+    description: "Track your movie ratings, reviews, reactions, and taste.",
   },
   {
-    title: "Discover Your Next Favorite",
-    description: "Recommendations based on your taste.",
+    title: "Join Movie Discussions",
+    description: "Share reviews and see what real movie fans are watching.",
+  },
+];
+
+const searchFaqs = [
+  {
+    question: "How does PopScore recommend movies?",
+    answer:
+      "PopScore recommends movies based on the genres and movies you rate highly. The more movies you rate, the better your personalized recommendations become.",
+  },
+  {
+    question: "Can I rate movies on PopScore?",
+    answer:
+      "Yes. PopScore lets you rate movies online using genre-specific questions that create a clearer movie score than one-size-fits-all ratings.",
+  },
+  {
+    question: "What is a PopFile?",
+    answer:
+      "Your PopFile is your personal movie profile. It tracks your ratings, favorite genres, reviews, watchlist activity, and movie taste.",
+  },
+  {
+    question: "Can I find movies by genre?",
+    answer:
+      "Yes. PopScore lets you explore movie recommendations by genre, including Action, Comedy, Horror, Sci-Fi, Fantasy, Western, and more.",
   },
 ];
 
@@ -108,11 +134,10 @@ function HeroVisual({
                 <div className="relative aspect-[2/3]">
                   <MoviePosterImage
                     src={posterUrl(movie.poster_path)}
-                    alt={movie.title}
+                    alt={`${movie.title} movie poster on PopScore`}
                     sizes="(min-width: 1024px) 19vw, 34vw"
                     className="object-cover"
                     fallbackMovieId={String(movie.id)}
-                    unoptimized
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
                   <div className="absolute bottom-3 left-3 right-3 hidden md:block">
@@ -175,6 +200,40 @@ function WhyPopScore() {
   );
 }
 
+function SearchFaq() {
+  return (
+    <section
+      aria-labelledby="popscore-faq-heading"
+      className="mt-10 rounded-[1.5rem] border border-slate-800/80 bg-slate-950/65 p-5 shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[1.75rem] sm:p-6"
+    >
+      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-300 sm:text-xs">
+        How PopScore Works
+      </p>
+      <h2
+        id="popscore-faq-heading"
+        className="mt-2 text-2xl font-black text-white sm:text-4xl"
+      >
+        Movie Ratings and Recommendations, Answered
+      </h2>
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        {searchFaqs.map((faq) => (
+          <article
+            key={faq.question}
+            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+          >
+            <h3 className="text-lg font-black text-yellow-300">
+              {faq.question}
+            </h3>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+              {faq.answer}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export async function generateMetadata({
   searchParams,
 }: {
@@ -184,9 +243,10 @@ export async function generateMetadata({
   const activeGenre = MOVIE_GENRE_FILTERS.find(
     (genre) => genre.id === params.genre
   );
-  const title = activeGenre
+  const pageTitle = activeGenre
     ? `${activeGenre.name} Movies: Fan Ratings & PopScore Reviews`
-    : SITE_NAME;
+    : "PopScore | Rate Movies and Discover What to Watch Next";
+  const metadataTitle = activeGenre ? pageTitle : { absolute: pageTitle };
   const description = activeGenre
     ? `Browse ${activeGenre.name.toLowerCase()} movies with PopScore fan ratings, recommendations, and community reviews.`
     : SITE_DESCRIPTION;
@@ -201,13 +261,21 @@ export async function generateMetadata({
   };
 
   return {
-    title,
+    title: metadataTitle,
     description,
+    keywords: activeGenre
+      ? [
+          `${activeGenre.name.toLowerCase()} movies`,
+          `${activeGenre.name.toLowerCase()} movie recommendations`,
+          `${activeGenre.name.toLowerCase()} movie ratings`,
+          ...SITE_KEYWORDS,
+        ]
+      : SITE_KEYWORDS,
     alternates: {
       canonical,
     },
     openGraph: {
-      title,
+      title: pageTitle,
       description,
       images: [image],
       type: "website",
@@ -215,7 +283,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary",
-      title,
+      title: pageTitle,
       description,
       images: [image],
     },
@@ -295,12 +363,28 @@ export default async function Home({
       "query-input": "required name=search_term_string",
     },
   };
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: searchFaqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
 
   return (
     <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.16),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.16),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_34%,#000_64%,#020617_100%)] text-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <ScrollMemory />
       <div className="pointer-events-none fixed inset-0 opacity-40 [background-image:radial-gradient(rgba(250,204,21,0.28)_1px,transparent_1px)] [background-size:42px_42px]" />
@@ -313,18 +397,19 @@ export default async function Home({
               Ratings that actually understand genre
             </div>
             <h1 className="text-5xl font-black leading-[0.94] text-white sm:text-6xl xl:text-7xl">
-              Discover Movies
+              Rate Movies
               <br />
-              Worth{" "}
+              and Discover What to{" "}
               <span className="relative inline-block text-yellow-400">
-                Watching
+                Watch Next
                 <span className="absolute -bottom-2 left-0 h-3 w-full rounded-[50%] border-b-4 border-yellow-400/75 shadow-[0_12px_24px_rgba(250,204,21,0.42)]" />
               </span>
             </h1>
             <p className="mt-6 max-w-[620px] text-base font-semibold leading-7 text-slate-300 sm:text-lg">
-              Genre-specific movie ratings, fan reviews, watchlists, and
-              personalized recommendations built around what real fans actually
-              love.
+              PopScore helps movie fans rate movies, track their taste, and
+              discover personalized movie recommendations. Build your PopFile,
+              explore movies by genre, and find something you actually want to
+              watch.
             </p>
             <div className="mt-8 max-w-[640px]">
               <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
@@ -336,6 +421,7 @@ export default async function Home({
 
         <div className="border-t border-white/10 pt-7">
           <WhyPopScore />
+          <SearchFaq />
         </div>
 
         <section id="genres" className="mt-8">
@@ -396,11 +482,10 @@ export default async function Home({
                       <div className="relative aspect-[4/3] overflow-hidden bg-slate-900 sm:aspect-[16/10]">
                         <MoviePosterImage
                           src={poster}
-                          alt={movie.title}
+                          alt={`${movie.title} movie poster`}
                           sizes="(min-width: 1536px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 50vw"
                           className="object-cover transition duration-500 group-hover:scale-105"
                           fallbackMovieId={String(movie.id)}
-                          unoptimized
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/25 to-transparent" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />

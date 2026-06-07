@@ -4,6 +4,11 @@ import { notFound } from "next/navigation";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import SiteHeader from "@/app/components/site-header";
+import {
+  SITE_ICON_ALT,
+  SITE_ICON_PATH,
+  SITE_KEYWORDS,
+} from "@/lib/site-metadata";
 import { absoluteUrl } from "@/lib/site-url";
 import {
   formatReleaseMonthYear,
@@ -42,18 +47,32 @@ export async function generateMetadata({
   }
 
   const title = `${genre.name} Movies: Reviews, Ratings & Recommendations`;
-  const description = `Discover ${genre.name.toLowerCase()} movies on PopScore, with fan ratings, recommendations, discussions, and PopScore reviews.`;
+  const description = `Discover ${genre.name.toLowerCase()} movies on PopScore with fan ratings, movie recommendations, reviews, discussions, and genre-specific PopScores.`;
   const canonical = absoluteUrl(genreHref(genre.name));
+  const image = {
+    url: absoluteUrl(SITE_ICON_PATH),
+    width: 256,
+    height: 256,
+    alt: SITE_ICON_ALT,
+  };
 
   return {
     title,
     description,
+    keywords: [
+      `${genre.name.toLowerCase()} movies`,
+      `${genre.name.toLowerCase()} movie recommendations`,
+      `${genre.name.toLowerCase()} movie reviews`,
+      "best movies by genre",
+      ...SITE_KEYWORDS,
+    ],
     alternates: {
       canonical,
     },
     openGraph: {
       title,
       description,
+      images: [image],
       type: "website",
       url: canonical,
     },
@@ -61,6 +80,7 @@ export async function generateMetadata({
       card: "summary",
       title,
       description,
+      images: [image],
     },
   };
 }
@@ -109,15 +129,18 @@ export default async function GenrePage({
           </p>
         </header>
 
-        <div className="mb-8 flex flex-wrap gap-2">
+        <div
+          aria-label="Filter movies by genre"
+          className="mb-8 grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-8"
+        >
           {MOVIE_GENRE_FILTERS.map((genreFilter) => (
             <Link
               key={genreFilter.id}
               href={genreHref(genreFilter.name)}
-              className={`rounded-full border px-3 py-2 text-xs font-black transition sm:text-sm ${
+              className={`inline-flex min-h-9 min-w-0 items-center justify-center rounded-full border px-2 py-1.5 text-center text-xs font-black leading-tight transition duration-300 hover:-translate-y-0.5 sm:min-h-10 sm:px-3 sm:text-sm md:min-h-11 md:px-4 ${
                 genreFilter.id === genre.id
-                  ? "border-yellow-400/60 bg-yellow-400/10 text-yellow-300"
-                  : "border-slate-700 bg-slate-950 text-slate-300 hover:border-yellow-400/50 hover:text-yellow-200"
+                  ? "border-yellow-400/60 bg-yellow-400/10 text-yellow-300 shadow-inner shadow-black/20"
+                  : "border-slate-700/90 bg-slate-950/80 text-slate-300 hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-200"
               }`}
             >
               {genreFilter.name}
@@ -140,11 +163,10 @@ export default async function GenrePage({
                   <div className="relative aspect-[2/3] bg-slate-900">
                     <MoviePosterImage
                       src={posterUrl(movie.poster_path)}
-                      alt={movie.title}
+                      alt={`${movie.title} ${genre.name.toLowerCase()} movie poster`}
                       sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
                       className="object-cover"
                       fallbackMovieId={String(movie.id)}
-                      unoptimized
                     />
                     <div className="absolute left-3 top-3">
                       <PopScoreDisplay

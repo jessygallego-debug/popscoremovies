@@ -15,6 +15,7 @@ import {
   getMovieFanReviews,
 } from "@/lib/fan-reviews-store";
 import { mockCommunityDiscussions } from "@/lib/community-discussions";
+import { SITE_KEYWORDS } from "@/lib/site-metadata";
 import { absoluteUrl, truncateDescription } from "@/lib/site-url";
 import {
   backdropUrl,
@@ -55,8 +56,9 @@ function getTrailer(movie: NonNullable<Awaited<ReturnType<typeof getMovie>>>) {
 
 function movieDescription(movie: MovieDetails) {
   return truncateDescription(
-    movie.overview ||
-      `Read fan ratings, PopScore reviews, cast details, and discussions for ${movie.title}.`
+    `See ratings, reviews, comments, and the PopScore for ${movieTitle(
+      movie
+    )}. Rate the movie and share your thoughts.`
   );
 }
 
@@ -83,7 +85,7 @@ export async function generateMovieMetadata(id: string): Promise<Metadata> {
     };
   }
 
-  const title = `${movieTitle(movie)} Reviews, Ratings, Cast & PopScore`;
+  const title = `${movieTitle(movie)} Reviews, Ratings, and PopScore`;
   const description = movieDescription(movie);
   const image = posterUrl(movie.poster_path) ?? backdropUrl(movie.backdrop_path);
   const canonical = movieCanonical(movie);
@@ -91,6 +93,14 @@ export async function generateMovieMetadata(id: string): Promise<Metadata> {
   return {
     title,
     description,
+    keywords: [
+      `${movie.title} reviews`,
+      `${movie.title} ratings`,
+      `${movie.title} PopScore`,
+      "movie reviews and ratings",
+      "rate movies online",
+      ...SITE_KEYWORDS,
+    ],
     alternates: {
       canonical,
     },
@@ -103,7 +113,7 @@ export async function generateMovieMetadata(id: string): Promise<Metadata> {
         ? [
             {
               url: image,
-              alt: movie.title,
+              alt: `${movie.title} movie poster`,
             },
           ]
         : undefined,
@@ -336,11 +346,10 @@ export async function MovieDetailPage({
               {poster ? (
                 <MoviePosterImage
                   src={poster}
-                  alt={movie.title}
+                  alt={`${movie.title} movie poster`}
                   sizes="280px"
                   className="object-cover"
                   fallbackMovieId={String(movie.id)}
-                  unoptimized
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-gray-500">
@@ -420,6 +429,16 @@ export async function MovieDetailPage({
               <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-200">
                 {movie.overview || "No overview is available for this movie."}
               </p>
+
+              <section className="mt-6 max-w-3xl rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
+                <h2 className="text-lg font-black text-yellow-300">
+                  Rate {movie.title} on PopScore
+                </h2>
+                <p className="mt-2 text-sm font-semibold leading-6 text-gray-200 sm:text-base">
+                  Rate this movie, view its PopScore, read fan comments, and
+                  see how other movie fans scored it.
+                </p>
+              </section>
 
               {mainActors.length > 0 || directors.length > 0 ? (
                 <div className="mt-8 grid gap-5 text-gray-200 sm:grid-cols-2">

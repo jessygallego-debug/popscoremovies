@@ -7,6 +7,7 @@ import {
   SITE_DESCRIPTION,
   SITE_ICON_ALT,
   SITE_ICON_PATH,
+  SITE_KEYWORDS,
   SITE_NAME,
 } from "@/lib/site-metadata";
 import { absoluteUrl, getSiteUrl } from "@/lib/site-url";
@@ -26,6 +27,7 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
   alternates: {
     canonical: absoluteUrl("/"),
   },

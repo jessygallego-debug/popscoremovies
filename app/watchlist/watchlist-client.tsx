@@ -39,11 +39,10 @@ function WatchlistPoster({ movie }: { movie: WatchlistMovie }) {
     <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl shadow-black/30 sm:rounded-[1.35rem]">
       <MoviePosterImage
         src={poster}
-        alt={movie.movieTitle}
+        alt={`${movie.movieTitle} saved movie poster`}
         sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 50vw"
         className="object-cover transition duration-500 group-hover:scale-105"
         fallbackMovieId={movie.movieId}
-        unoptimized
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
     </div>

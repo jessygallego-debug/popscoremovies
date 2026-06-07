@@ -82,11 +82,10 @@ function DiscoveryPoster({ movie }: { movie: DiscoveryRecommendation }) {
   return (
     <MoviePosterImage
       src={poster}
-      alt={movie.title}
+      alt={`${movie.title} recommended movie on PopScore`}
       sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 50vw"
       className="object-cover transition duration-500 group-hover:scale-105"
       fallbackMovieId={String(movie.id)}
-      unoptimized
     />
   );
 }
@@ -463,10 +462,10 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3 sm:mb-5 sm:gap-4">
           <div>
             <h2 className="text-xl font-black text-white sm:text-3xl">
-              Explore By Genre
+              Explore Movies by Genre
             </h2>
             <p className="mt-1 text-xs font-semibold text-slate-400 sm:mt-2 sm:text-sm">
-              Pick a lane and find movies that match the mood.
+              Pick a lane and find movie recommendations that match your mood.
             </p>
           </div>
           {isLoadingUser ? (
@@ -614,6 +613,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
             </p>
             <h2 className="mt-1 text-xl font-black text-white sm:text-2xl">
               {visibleMovies.length} {selectedGenre?.label ?? "Movie"} recommendations
+              based on your ratings
             </h2>
           </div>
         </div>
