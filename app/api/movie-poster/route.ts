@@ -5,14 +5,21 @@ const posterCacheHeaders = {
   "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
 };
 
+const posterRecoveryCacheHeaders = {
+  "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
+};
+
 export async function GET(request: NextRequest) {
   const movieId = request.nextUrl.searchParams.get("movie");
   const failedPath = tmdbImagePath(request.nextUrl.searchParams.get("failed"));
+  const cacheHeaders = failedPath
+    ? posterRecoveryCacheHeaders
+    : posterCacheHeaders;
 
   if (!movieId) {
     return NextResponse.json(
       { posterPath: null },
-      { headers: posterCacheHeaders }
+      { headers: cacheHeaders }
     );
   }
 
@@ -36,6 +43,6 @@ export async function GET(request: NextRequest) {
       backdropPath,
       posterPath,
     },
-    { headers: posterCacheHeaders }
+    { headers: cacheHeaders }
   );
 }

@@ -1338,6 +1338,94 @@ function MovieSearchSelect({
   );
 }
 
+function DiscussionTypeDropdown({
+  disabled,
+  onChange,
+  value,
+}: {
+  disabled: boolean;
+  onChange: (value: DiscussionType | "") => void;
+  value: DiscussionType | "";
+}) {
+  const menuRef = useRef<HTMLDetailsElement>(null);
+  const selectedLabel = value || "Choose one";
+  const options: (DiscussionType | "")[] = ["", ...discussionTypes];
+
+  useEffect(() => {
+    const closeMenu = (event: PointerEvent) => {
+      const menu = menuRef.current;
+
+      if (menu && !menu.contains(event.target as Node)) {
+        menu.removeAttribute("open");
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        menuRef.current?.removeAttribute("open");
+      }
+    };
+
+    document.addEventListener("pointerdown", closeMenu);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  if (disabled) {
+    return (
+      <button
+        type="button"
+        disabled
+        className="flex min-h-12 w-full cursor-not-allowed items-center justify-between rounded-2xl border border-slate-700 bg-black/20 px-4 text-left text-sm font-black text-slate-500"
+      >
+        {selectedLabel}
+        <span aria-hidden="true">▾</span>
+      </button>
+    );
+  }
+
+  return (
+    <details ref={menuRef} className="group relative z-[140]">
+      <summary className="flex min-h-12 w-full cursor-pointer list-none items-center justify-between rounded-2xl border border-slate-700 bg-black/35 px-4 text-left text-sm font-black text-white outline-none transition hover:border-yellow-400/70 hover:bg-yellow-400/10 focus:border-yellow-400/70 group-open:border-yellow-400/70 [&::-webkit-details-marker]:hidden">
+        {selectedLabel}
+        <span
+          aria-hidden="true"
+          className="text-yellow-300 transition group-open:rotate-180"
+        >
+          ▾
+        </span>
+      </summary>
+      <div className="absolute left-0 right-0 z-[160] mt-2 grid max-h-72 gap-1 overflow-y-auto rounded-2xl border border-yellow-400/40 bg-slate-950 p-2 shadow-2xl shadow-black/70 ring-1 ring-yellow-400/10">
+        {options.map((option) => {
+          const label = option || "Choose one";
+          const isSelected = option === value;
+
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={(event) => {
+                onChange(option);
+                event.currentTarget.closest("details")?.removeAttribute("open");
+              }}
+              className={`rounded-xl border px-3 py-2.5 text-left text-sm font-black transition ${
+                isSelected
+                  ? "border-yellow-400/60 bg-yellow-400/15 text-yellow-300"
+                  : "border-transparent text-slate-100 hover:bg-yellow-400/10 hover:text-yellow-300"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
 function StartDiscussionModal({
   mentionableUsers,
   onClose,
@@ -1534,32 +1622,16 @@ function StartDiscussionModal({
               />
 
               <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-                <label className="block">
+                <div className="block">
                   <span className="mb-2 block text-xs font-black uppercase tracking-[0.14em] text-slate-400">
                     Discussion Type
                   </span>
-                  <select
+                  <DiscussionTypeDropdown
                     disabled={!selectedMovie}
                     value={discussionType}
-                    onChange={(event) =>
-                      setDiscussionType(event.target.value as DiscussionType)
-                    }
-                    className="min-h-12 w-full rounded-2xl border border-slate-700 bg-black/35 px-4 text-sm font-black text-white outline-none transition [color-scheme:dark] focus:border-yellow-400/70 disabled:cursor-not-allowed"
-                  >
-                    <option className="bg-slate-950 text-white" value="">
-                      Choose one
-                    </option>
-                    {discussionTypes.map((type) => (
-                      <option
-                        className="bg-slate-950 text-white"
-                        key={type}
-                        value={type}
-                      >
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    onChange={setDiscussionType}
+                  />
+                </div>
 
                 <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-700 bg-black/35 px-4 text-sm font-black text-white">
                   <input

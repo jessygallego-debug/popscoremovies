@@ -23,22 +23,27 @@ export default function MoviePosterImage({
 }: MoviePosterImageProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const recoveryKey = `${fallbackMovieId ?? ""}:${src ?? ""}`;
+  const recoveryRequestKey = `${recoveryKey}:${failedSrc ?? ""}`;
   const attemptedRecoveryKeys = useRef(new Set<string>());
   const [recovery, setRecovery] = useState<{
+    index: number;
     key: string;
-    src: string | null;
+    sources: string[];
   }>({
+    index: 0,
     key: recoveryKey,
-    src: null,
+    sources: [],
   });
   const hasError = Boolean(src && src === failedSrc);
-  const recoverySrc = recovery.key === recoveryKey ? recovery.src : null;
+  const recoverySources = recovery.key === recoveryKey ? recovery.sources : [];
+  const recoverySrc = recoverySources[recovery.index] ?? null;
   const activeSrc = src && !hasError ? src : recoverySrc;
 
   useEffect(() => {
     let isCurrent = true;
     const shouldRecover = Boolean(fallbackMovieId && (!src || hasError));
-    const hasAttemptedRecovery = attemptedRecoveryKeys.current.has(recoveryKey);
+    const hasAttemptedRecovery =
+      attemptedRecoveryKeys.current.has(recoveryRequestKey);
 
     if (!shouldRecover || hasAttemptedRecovery) {
       return () => {
@@ -46,7 +51,7 @@ export default function MoviePosterImage({
       };
     }
 
-    attemptedRecoveryKeys.current.add(recoveryKey);
+    attemptedRecoveryKeys.current.add(recoveryRequestKey);
 
     const params = new URLSearchParams({
       movie: fallbackMovieId ?? "",
@@ -59,23 +64,39 @@ export default function MoviePosterImage({
     fetch(`/api/movie-poster?${params.toString()}`)
       .then((response) => response.json())
       .then((data: { backdropPath?: string | null; posterPath?: string | null }) => {
-        const fallbackSrc =
-          posterUrl(data.posterPath ?? null) ?? backdropUrl(data.backdropPath ?? null);
+        const fallbackSources = [
+          posterUrl(data.posterPath ?? null),
+          backdropUrl(data.backdropPath ?? null),
+        ].filter(
+          (candidate): candidate is string =>
+            Boolean(candidate && candidate !== src && candidate !== failedSrc)
+        );
 
         if (isCurrent) {
-          setRecovery({ key: recoveryKey, src: fallbackSrc });
+          setRecovery({
+            index: 0,
+            key: recoveryKey,
+            sources: fallbackSources,
+          });
         }
       })
       .catch(() => {
         if (isCurrent) {
-          setRecovery({ key: recoveryKey, src: null });
+          setRecovery({ index: 0, key: recoveryKey, sources: [] });
         }
       });
 
     return () => {
       isCurrent = false;
     };
-  }, [failedSrc, fallbackMovieId, hasError, recoveryKey, src]);
+  }, [
+    failedSrc,
+    fallbackMovieId,
+    hasError,
+    recoveryKey,
+    recoveryRequestKey,
+    src,
+  ]);
 
   if (!activeSrc) {
     return (
@@ -89,6 +110,7 @@ export default function MoviePosterImage({
 
   return (
     <Image
+      key={activeSrc}
       src={activeSrc}
       alt={alt}
       fill
@@ -101,7 +123,16 @@ export default function MoviePosterImage({
         if (activeSrc === src) {
           setFailedSrc(src);
         } else {
-          setRecovery({ key: recoveryKey, src: null });
+          setRecovery((current) => {
+            if (current.key !== recoveryKey) {
+              return current;
+            }
+
+            return {
+              ...current,
+              index: current.index + 1,
+            };
+          });
         }
 
         onLoadError?.();
