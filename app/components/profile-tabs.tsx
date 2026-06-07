@@ -1469,7 +1469,7 @@ function MoviePoster({
       {poster ? (
         <MoviePosterImage
           src={poster}
-          alt={title}
+          alt={`${title} movie poster`}
           sizes={size === "small" ? "52px" : "80px"}
           className="object-cover"
           onLoadError={() => {
@@ -1482,7 +1482,6 @@ function MoviePoster({
               }));
             }
           }}
-          unoptimized
         />
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-black px-2 text-center">
