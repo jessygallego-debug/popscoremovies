@@ -57,7 +57,7 @@ export const PROFILE_GENRES = [
 ];
 
 export const FILTER_ONLY_MOVIE_GENRES = [
-  { key: "superhero", label: "Super Hero", tmdbId: "superhero" },
+  { key: "superhero", label: "Superhero", tmdbId: "superhero" },
 ] as const;
 
 export const MOVIE_FILTER_GENRES = [

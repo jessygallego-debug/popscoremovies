@@ -99,7 +99,7 @@ test("Discovery controls update recommendation query params", async ({
     .poll(() => recommendationRequests.at(-1)?.searchParams.get("genre"))
     .toBe("romcom");
 
-  await page.getByRole("button", { name: "Super Hero" }).click();
+  await page.getByRole("button", { name: "Superhero" }).click();
   await expect
     .poll(() => recommendationRequests.at(-1)?.searchParams.get("genre"))
     .toBe("superhero");
@@ -127,7 +127,7 @@ test("Discovery controls update recommendation query params", async ({
     .toBe("true");
 });
 
-test("Fantasy and Western are rating genres but Super Hero is filter-only", async ({
+test("Fantasy and Western are rating genres but Superhero is filter-only", async ({
   page,
 }) => {
   await page.goto("/rate?genre=fantasy");
@@ -150,7 +150,7 @@ test("Fantasy and Western are rating genres but Super Hero is filter-only", asyn
 
   await page.goto("/rate?genre=superhero");
 
-  await expect(page.getByRole("button", { name: "Super Hero" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Superhero" })).toHaveCount(0);
 });
 
 test("My PopFile does not navigate to edit while profile is still loading", async ({

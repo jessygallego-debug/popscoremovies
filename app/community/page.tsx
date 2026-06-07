@@ -186,7 +186,7 @@ const genreFilters = [
   "Romance",
   "Rom-Com",
   "Sci-Fi",
-  "Super Hero",
+  "Superhero",
   "Thriller",
   "War",
   "Western",
@@ -630,8 +630,8 @@ function normalizeCommunityGenres(genreNames: string[], ratingGenre: string) {
     scifi: "Sci-Fi",
     "science fiction": "Sci-Fi",
     fantasy: "Fantasy",
-    super_hero: "Super Hero",
-    superhero: "Super Hero",
+    super_hero: "Superhero",
+    superhero: "Superhero",
     western: "Western",
   };
   const genres = [...genreNames, ratingGenre]
@@ -1544,11 +1544,17 @@ function StartDiscussionModal({
                     onChange={(event) =>
                       setDiscussionType(event.target.value as DiscussionType)
                     }
-                    className="min-h-12 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-sm font-black text-white outline-none transition focus:border-yellow-400/70 disabled:cursor-not-allowed"
+                    className="min-h-12 w-full rounded-2xl border border-slate-700 bg-black/35 px-4 text-sm font-black text-white outline-none transition [color-scheme:dark] focus:border-yellow-400/70 disabled:cursor-not-allowed"
                   >
-                    <option value="">Choose one</option>
+                    <option className="bg-slate-950 text-white" value="">
+                      Choose one
+                    </option>
                     {discussionTypes.map((type) => (
-                      <option key={type} value={type}>
+                      <option
+                        className="bg-slate-950 text-white"
+                        key={type}
+                        value={type}
+                      >
                         {type}
                       </option>
                     ))}

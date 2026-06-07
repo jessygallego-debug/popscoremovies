@@ -86,7 +86,7 @@ const MUSICAL_KEYWORD_ID = 4344;
 const SUPERHERO_KEYWORD_ID = 9715;
 export const ROMCOM_GENRE_FILTER_ID = "romcom";
 export const SUPERHERO_GENRE_FILTER_ID = "superhero";
-export const SUPERHERO_GENRE_FILTER_NAME = "Super Hero";
+export const SUPERHERO_GENRE_FILTER_NAME = "Superhero";
 
 type RecommendationMovieOptions = {
   includeInternationalMovies?: boolean;
@@ -161,6 +161,41 @@ function getToken() {
   return process.env.TMDB_API_TOKEN;
 }
 
+function normalizeTmdbImageUrl(path: string, size: string) {
+  try {
+    const url = new URL(path);
+
+    if (url.hostname !== "image.tmdb.org") {
+      return null;
+    }
+
+    const imagePath = url.pathname.match(/^\/t\/p\/[^/]+(\/.+)$/)?.[1];
+
+    if (!imagePath) {
+      return null;
+    }
+
+    return `${TMDB_IMAGE_BASE_URL}/${size}${imagePath}`;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeNextImageUrl(path: string, size: string) {
+  try {
+    const nextImageUrl = new URL(path, "https://popscoremovies.com");
+    const originalUrl = nextImageUrl.searchParams.get("url");
+
+    if (nextImageUrl.pathname !== "/_next/image" || !originalUrl) {
+      return null;
+    }
+
+    return normalizeTmdbImageUrl(originalUrl, size);
+  } catch {
+    return null;
+  }
+}
+
 export function posterUrl(path: string | null, size = "w500") {
   const trimmedPath = path?.trim();
 
@@ -173,7 +208,11 @@ export function posterUrl(path: string | null, size = "w500") {
   }
 
   if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
-    return trimmedPath;
+    return normalizeTmdbImageUrl(trimmedPath, size);
+  }
+
+  if (trimmedPath.startsWith("/_next/image")) {
+    return normalizeNextImageUrl(trimmedPath, size);
   }
 
   const normalizedPath = trimmedPath.startsWith("/")
@@ -195,7 +234,11 @@ export function backdropUrl(path: string | null, size = "w1280") {
   }
 
   if (trimmedPath.startsWith("http://") || trimmedPath.startsWith("https://")) {
-    return trimmedPath;
+    return normalizeTmdbImageUrl(trimmedPath, size);
+  }
+
+  if (trimmedPath.startsWith("/_next/image")) {
+    return normalizeNextImageUrl(trimmedPath, size);
   }
 
   const normalizedPath = trimmedPath.startsWith("/")
