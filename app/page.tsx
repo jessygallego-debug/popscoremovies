@@ -8,6 +8,12 @@ import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import SiteHeader from "@/app/components/site-header";
 import ScrollMemory from "@/app/components/scroll-memory";
+import {
+  SITE_DESCRIPTION,
+  SITE_ICON_ALT,
+  SITE_ICON_PATH,
+  SITE_NAME,
+} from "@/lib/site-metadata";
 import { getSiteEngagementTotals } from "@/lib/site-stats";
 import { absoluteUrl } from "@/lib/site-url";
 import {
@@ -180,13 +186,19 @@ export async function generateMetadata({
   );
   const title = activeGenre
     ? `${activeGenre.name} Movies: Fan Ratings & PopScore Reviews`
-    : "PopScore Movies";
+    : SITE_NAME;
   const description = activeGenre
     ? `Browse ${activeGenre.name.toLowerCase()} movies with PopScore fan ratings, recommendations, and community reviews.`
-    : "Movie rating built for true fans - because horror shouldn't be rated like comedy.";
+    : SITE_DESCRIPTION;
   const canonical = activeGenre
     ? absoluteUrl(genreHref(activeGenre.name))
     : absoluteUrl("/");
+  const image = {
+    url: absoluteUrl(SITE_ICON_PATH),
+    width: 256,
+    height: 256,
+    alt: SITE_ICON_ALT,
+  };
 
   return {
     title,
@@ -197,8 +209,15 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
+      images: [image],
       type: "website",
       url: canonical,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+      images: [image],
     },
   };
 }
@@ -253,9 +272,36 @@ export default async function Home({
     : activeGenre
       ? `${activeGenre.name} Movies`
       : "Trending Movies";
+  const homeJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    url: absoluteUrl("/"),
+    description: SITE_DESCRIPTION,
+    image: absoluteUrl(SITE_ICON_PATH),
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      logo: {
+        "@type": "ImageObject",
+        url: absoluteUrl(SITE_ICON_PATH),
+        width: 256,
+        height: 256,
+      },
+    },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${absoluteUrl("/")}?query={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
 
   return (
     <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.16),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.16),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_34%,#000_64%,#020617_100%)] text-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}
+      />
       <ScrollMemory />
       <div className="pointer-events-none fixed inset-0 opacity-40 [background-image:radial-gradient(rgba(250,204,21,0.28)_1px,transparent_1px)] [background-size:42px_42px]" />
       <section className="relative mx-auto max-w-[1500px] px-5 py-6 sm:px-8">
@@ -275,6 +321,11 @@ export default async function Home({
                 <span className="absolute -bottom-2 left-0 h-3 w-full rounded-[50%] border-b-4 border-yellow-400/75 shadow-[0_12px_24px_rgba(250,204,21,0.42)]" />
               </span>
             </h1>
+            <p className="mt-6 max-w-[620px] text-base font-semibold leading-7 text-slate-300 sm:text-lg">
+              Genre-specific movie ratings, fan reviews, watchlists, and
+              personalized recommendations built around what real fans actually
+              love.
+            </p>
             <div className="mt-8 max-w-[640px]">
               <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
             </div>
