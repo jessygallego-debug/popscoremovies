@@ -325,7 +325,7 @@ export default function FaqPage() {
 
         <section className="mt-8 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-5 text-center shadow-2xl shadow-black/30 sm:rounded-[1.75rem] sm:p-7">
           <h2 className="text-2xl font-black text-white sm:text-3xl">
-            Ready to build your PopFile?
+            Ready to create your PopFile?
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:text-base sm:leading-7">
             Start rating movies, save what you want to watch, and let PopScore
@@ -333,16 +333,16 @@ export default function FaqPage() {
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link
-              href="/#trending"
+              href="/profile/edit?returnTo=%2Ffaq"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-yellow-400/60 bg-yellow-400 px-5 py-2.5 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
             >
-              Browse Movies
+              Create Your PopFile
             </Link>
             <Link
-              href="/community"
+              href="/#trending"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-700/90 bg-slate-950/80 px-5 py-2.5 text-sm font-black text-slate-200 transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-200"
             >
-              Visit Community
+              Browse Movies
             </Link>
           </div>
         </section>
