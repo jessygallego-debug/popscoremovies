@@ -3,13 +3,66 @@ export function normalizeMovieSearchText(value: string) {
     .toLowerCase()
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function compactSearchText(value: string) {
   return normalizeMovieSearchText(value).replace(/\s+/g, "");
 }
+
+type MovieSearchProfile = {
+  aliases: string[];
+  canonicalTitle: string;
+  franchiseTerms: string[];
+  searchQueries: string[];
+};
+
+const movieSearchProfiles: MovieSearchProfile[] = [
+  {
+    canonicalTitle: "spider man",
+    aliases: ["spider man", "spider-man", "spiderman", "spyder man"],
+    franchiseTerms: ["spider man", "spider verse", "spiderverse"],
+    searchQueries: ["Spider-Man", "Spider Man", "Spiderman"],
+  },
+  {
+    canonicalTitle: "batman",
+    aliases: ["batman", "bat man", "bman"],
+    franchiseTerms: ["batman", "dark knight"],
+    searchQueries: ["Batman", "The Batman", "Dark Knight"],
+  },
+  {
+    canonicalTitle: "avengers",
+    aliases: ["avengers", "avngers"],
+    franchiseTerms: ["avengers"],
+    searchQueries: ["Avengers", "The Avengers"],
+  },
+  {
+    canonicalTitle: "jurassic park",
+    aliases: ["jurassic park", "jurasic park", "jurassic world"],
+    franchiseTerms: ["jurassic park", "jurassic world", "jurassic"],
+    searchQueries: ["Jurassic Park", "Jurassic World"],
+  },
+  {
+    canonicalTitle: "harry potter",
+    aliases: ["harry potter", "harry poter"],
+    franchiseTerms: ["harry potter", "fantastic beasts"],
+    searchQueries: ["Harry Potter", "Fantastic Beasts"],
+  },
+  {
+    canonicalTitle: "lord of the rings",
+    aliases: [
+      "lord of the rings",
+      "lord rings",
+      "lord of rings",
+      "lotr",
+    ],
+    franchiseTerms: ["lord of the rings", "hobbit"],
+    searchQueries: ["Lord of the Rings", "The Hobbit"],
+  },
+];
 
 function containsWholePhrase(normalizedTitle: string, normalizedQuery: string) {
   return ` ${normalizedTitle} `.includes(` ${normalizedQuery} `);
@@ -86,6 +139,84 @@ function fuzzyDistanceScore(candidate: string, query: string) {
   return Number.POSITIVE_INFINITY;
 }
 
+function isCloseSearchText(candidate: string, query: string) {
+  const normalizedCandidate = normalizeMovieSearchText(candidate);
+  const normalizedQuery = normalizeMovieSearchText(query);
+
+  if (!normalizedCandidate || !normalizedQuery) {
+    return false;
+  }
+
+  if (
+    normalizedCandidate === normalizedQuery ||
+    compactSearchText(normalizedCandidate) === compactSearchText(normalizedQuery)
+  ) {
+    return true;
+  }
+
+  if (
+    containsWholePhrase(normalizedCandidate, normalizedQuery) ||
+    containsWholePhrase(normalizedQuery, normalizedCandidate)
+  ) {
+    return true;
+  }
+
+  return Number.isFinite(
+    fuzzyDistanceScore(
+      compactSearchText(normalizedCandidate),
+      compactSearchText(normalizedQuery)
+    )
+  );
+}
+
+function profileMatchesQuery(profile: MovieSearchProfile, query: string) {
+  return [
+    profile.canonicalTitle,
+    ...profile.aliases,
+    ...profile.franchiseTerms,
+  ].some((value) => isCloseSearchText(value, query));
+}
+
+function profileMatchesMovieTitle(
+  profile: MovieSearchProfile,
+  normalizedTitle: string
+) {
+  return [profile.canonicalTitle, ...profile.franchiseTerms].some((term) => {
+    const normalizedTerm = normalizeMovieSearchText(term);
+
+    return (
+      containsWholePhrase(normalizedTitle, normalizedTerm) ||
+      compactSearchText(normalizedTitle).includes(compactSearchText(term))
+    );
+  });
+}
+
+export function getMovieSearchProfilesForQuery(query: string) {
+  return movieSearchProfiles.filter((profile) =>
+    profileMatchesQuery(profile, query)
+  );
+}
+
+export function getMovieSearchQueries(query: string) {
+  const seenQueries = new Set<string>();
+
+  return [
+    query,
+    ...getMovieSearchProfilesForQuery(query).flatMap(
+      (profile) => profile.searchQueries
+    ),
+  ].filter((searchQuery) => {
+    const normalizedSearchQuery = normalizeMovieSearchText(searchQuery);
+
+    if (!normalizedSearchQuery || seenQueries.has(normalizedSearchQuery)) {
+      return false;
+    }
+
+    seenQueries.add(normalizedSearchQuery);
+    return true;
+  });
+}
+
 export function movieTitleSearchScore(title: string, query: string) {
   const normalizedTitle = normalizeMovieSearchText(title);
   const normalizedQuery = normalizeMovieSearchText(query);
@@ -101,16 +232,32 @@ export function movieTitleSearchScore(title: string, query: string) {
     return 0;
   }
 
+  if (compactSearchText(title) === compactSearchText(query)) {
+    return 1;
+  }
+
   if (normalizedTitle.startsWith(normalizedQuery)) {
-    return isSingleTermQuery ? 0 : 1;
+    return isSingleTermQuery ? 2 : 3;
   }
 
   if (containsWholePhrase(normalizedTitle, normalizedQuery)) {
-    return 2;
+    return 4;
+  }
+
+  const franchiseMatchScore = Math.min(
+    ...getMovieSearchProfilesForQuery(query).map((profile) =>
+      profileMatchesMovieTitle(profile, normalizedTitle)
+        ? 8
+        : Number.POSITIVE_INFINITY
+    )
+  );
+
+  if (Number.isFinite(franchiseMatchScore)) {
+    return franchiseMatchScore;
   }
 
   if (queryTerms.every((term) => titleTerms.includes(term))) {
-    return 3;
+    return 10;
   }
 
   if (
@@ -118,11 +265,11 @@ export function movieTitleSearchScore(title: string, query: string) {
       titleTerms.some((word) => word.startsWith(term))
     )
   ) {
-    return 4;
+    return 11;
   }
 
   if (queryTerms.every((term) => normalizedTitle.includes(term))) {
-    return 5;
+    return 12;
   }
 
   const compactTitle = compactSearchText(title);

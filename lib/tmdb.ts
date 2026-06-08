@@ -1,4 +1,7 @@
-import { movieTitleSearchScore } from "@/lib/movie-search";
+import {
+  getMovieSearchQueries,
+  movieTitleSearchScore,
+} from "@/lib/movie-search";
 
 export type MovieSummary = {
   id: number;
@@ -530,30 +533,41 @@ export async function getMovies(
   const requestedLimit = Math.min(Math.max(limit, 1), MAX_MOVIE_RESULTS);
   const requestedPages = Math.ceil(requestedLimit / TMDB_PAGE_SIZE);
   const movies: MovieSummary[] = [];
-  let pageLimit = requestedPages;
   const resultSource = query.trim() ? "search" : "discover";
+  const searchQueries =
+    resultSource === "search" ? getMovieSearchQueries(query) : [query];
 
-  for (
-    let page = 1;
-    page <= pageLimit && movies.length < requestedLimit;
-    page++
-  ) {
-    const data = await tmdbFetch<TmdbListResponse>(
-      moviesPath(query, page, genreId)
-    );
+  for (const searchQuery of searchQueries) {
+    const isOriginalQuery = searchQuery === query;
+    let pageLimit =
+      resultSource === "search" && !isOriginalQuery
+        ? Math.min(requestedPages, 3)
+        : requestedPages;
 
-    if (!data?.results?.length) {
-      break;
+    for (
+      let page = 1;
+      page <= pageLimit && uniqueMovies(movies).length < requestedLimit;
+      page++
+    ) {
+      const data = await tmdbFetch<TmdbListResponse>(
+        moviesPath(searchQuery, page, genreId)
+      );
+
+      if (!data?.results?.length) {
+        break;
+      }
+
+      const nextMovies = data.results.filter(
+        (movie) =>
+          movieMatchesGenreFilter(movie, genreId, resultSource) &&
+          (isOriginalQuery ||
+            Number.isFinite(movieTitleSearchScore(movie.title, query))) &&
+          (resultSource === "search" || movieHasBrowseArtwork(movie))
+      );
+
+      movies.push(...nextMovies);
+      pageLimit = Math.min(pageLimit, data.total_pages ?? pageLimit);
     }
-
-    const nextMovies = data.results.filter(
-      (movie) =>
-        movieMatchesGenreFilter(movie, genreId, resultSource) &&
-        (resultSource === "search" || movieHasBrowseArtwork(movie))
-    );
-
-    movies.push(...nextMovies);
-    pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
   }
 
   if (resultSource === "search") {

@@ -51,7 +51,7 @@ export async function GET(request: Request) {
         a.score - b.score ||
         (b.movie.popularity ?? 0) - (a.movie.popularity ?? 0)
     )
-    .slice(0, 8)
+    .slice(0, 12)
     .map(({ movie }) => ({
       genreNames: (movie.genre_ids ?? [])
         .map((genreId) => tmdbGenresById[genreId])
