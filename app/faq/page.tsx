@@ -248,19 +248,19 @@ export default function FaqPage() {
           >
             How PopScore Works
           </h2>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-3 lg:grid-cols-5">
             {howPopScoreWorks.map((step, index) => (
               <article
                 key={step.title}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06]"
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06] sm:p-4"
               >
-                <p className="text-3xl font-black text-yellow-300">
+                <p className="text-2xl font-black text-yellow-300 sm:text-3xl">
                   {index + 1}
                 </p>
-                <h3 className="mt-3 text-base font-black text-white">
+                <h3 className="mt-2 text-sm font-black leading-snug text-white sm:mt-3 sm:text-base">
                   {step.title}
                 </h3>
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+                <p className="mt-2 text-xs font-semibold leading-5 text-slate-300 sm:text-sm sm:leading-6">
                   {step.description}
                 </p>
               </article>
@@ -284,27 +284,28 @@ export default function FaqPage() {
             </h2>
           </div>
 
-          <div className="mt-7 grid gap-6 lg:grid-cols-2">
+          <div className="-mx-5 mt-6 flex snap-x gap-3 overflow-x-auto px-5 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:mt-7 lg:grid lg:grid-cols-2 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0">
             {faqSections.map((section) => (
               <section
                 key={section.title}
                 aria-labelledby={`faq-${section.title
                   .toLowerCase()
                   .replace(/\s+/g, "-")}`}
+                className="min-w-[82%] snap-start rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:min-w-[58%] lg:min-w-0 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0"
               >
                 <h3
                   id={`faq-${section.title.toLowerCase().replace(/\s+/g, "-")}`}
-                  className="text-xl font-black text-yellow-300"
+                  className="text-lg font-black text-yellow-300 sm:text-xl"
                 >
                   {section.title}
                 </h3>
-                <div className="mt-4 grid gap-3">
+                <div className="mt-3 grid gap-2 sm:mt-4 sm:gap-3">
                   {section.items.map((item) => (
                     <details
                       key={item.question}
-                      className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                      className="group rounded-2xl border border-white/10 bg-slate-950/65 p-3 lg:bg-white/[0.03] lg:p-4"
                     >
-                      <summary className="cursor-pointer list-none text-base font-black text-white marker:hidden">
+                      <summary className="cursor-pointer list-none text-sm font-black leading-snug text-white marker:hidden sm:text-base">
                         <span className="flex items-start justify-between gap-4">
                           <span>{item.question}</span>
                           <span className="mt-0.5 text-yellow-300 transition group-open:rotate-45">
@@ -312,7 +313,7 @@ export default function FaqPage() {
                           </span>
                         </span>
                       </summary>
-                      <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
+                      <p className="mt-3 text-xs font-semibold leading-5 text-slate-300 sm:text-sm sm:leading-6">
                         {item.answer}
                       </p>
                     </details>
