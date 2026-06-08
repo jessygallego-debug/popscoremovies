@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileMenu from "@/app/components/profile-menu";
+import RatingInfoPopover from "@/app/components/rating-info-popover";
 import {
   getCurrentProfile,
   removeFromWatchlist,
   saveUserMovieRating,
 } from "@/lib/profile-store";
+import { ratingInfoForKey } from "@/lib/rating-info-copy";
 import { posterUrl } from "@/lib/tmdb";
 import {
   GENRE_RATING_CONFIGS,
@@ -56,43 +58,6 @@ const scoreOptions = [
     description: "Amazing",
   },
 ];
-
-const categoryTips: Record<string, string> = {
-  actionSequences: "Stunts, fights, chases, and big moments.",
-  acting: "How believable the performances feel.",
-  animationQuality: "How strong the animation looks and moves.",
-  battleScenes: "How powerful and clear the battle scenes feel.",
-  character: "How memorable the characters are.",
-  chemistry: "How well the leads connect on screen.",
-  choreography: "How well the dance and movement land.",
-  conflict: "How strong the central struggle feels.",
-  emotionalImpact: "How much the movie makes you feel.",
-  excitement: "How fun and thrilling the journey feels.",
-  exploration: "How strong the sense of discovery feels.",
-  familyEnjoyment: "How well it works for family viewing.",
-  heartWarmth: "How warm and heartfelt the movie feels.",
-  humor: "How often the jokes land.",
-  impact: "How much the documentary stays with you.",
-  informativeValue: "How much you learn from it.",
-  intrigue: "How well it keeps you curious.",
-  magicWonder: "How well it delivers magic, creatures, adventure, or wonder.",
-  mysteryPayoff: "How satisfying the answers feel.",
-  originality: "How fresh or unique the movie feels.",
-  pace: "How well the movie keeps moving.",
-  quotability: "How memorable the funny lines are.",
-  rewatchability: "How likely you are to watch it again.",
-  scareFactor: "How tense, scary, or unsettling it feels.",
-  showdowns: "How exciting the confrontations feel.",
-  songQuality: "How memorable and enjoyable the songs are.",
-  story: "How strong the plot and characters are.",
-  suspense: "How well the movie keeps you on edge.",
-  tension: "How well suspense builds and holds.",
-  tensionPacing: "How well tension and momentum build.",
-  visualEffects: "How convincing the effects look.",
-  voiceActing: "How well the voices bring characters to life.",
-  westernAtmosphere: "How well it captures the Western setting, tone, and feel.",
-  worldBuilding: "How immersive the fantasy world, lore, and mythology feel.",
-};
 
 export type GenreKey = RatingGenreKey;
 
@@ -363,86 +328,87 @@ export default function RateClient({
         </div>
 
         <div className="space-y-3 sm:space-y-5">
-          {currentGenre.questions.map((question) => (
-            <div
-              key={question.key}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 shadow-xl shadow-black/40 sm:p-4"
-            >
-              <div className="mb-2 flex items-center gap-2 sm:mb-3">
-                <h2 className="text-base font-bold text-white sm:text-xl">
-                  {question.name}
-                </h2>
-                <span
-                  title={categoryTips[question.key]}
-                  aria-label={categoryTips[question.key]}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-yellow-400/30 bg-yellow-400/10 text-xs font-bold text-yellow-300"
-                >
-                  i
-                </span>
-              </div>
+          {currentGenre.questions.map((question) => {
+            const ratingInfo = ratingInfoForKey(question.key, question.name);
 
-              <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5">
-                {scoreOptions.map((option) => {
-                  const isSelected = ratings[question.key] === option.value;
-                  const imageSize =
-                    option.value === 5
-                      ? "h-10 w-10 sm:h-20 sm:w-20"
-                      : "h-8 w-8 sm:h-14 sm:w-14";
+            return (
+              <div
+                key={question.key}
+                className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 shadow-xl shadow-black/40 sm:p-4"
+              >
+                <div className="mb-2 flex items-center gap-2 sm:mb-3">
+                  <h2 className="text-base font-bold text-white sm:text-xl">
+                    {question.name}
+                  </h2>
+                  <RatingInfoPopover
+                    title={ratingInfo.title}
+                    description={ratingInfo.description}
+                  />
+                </div>
 
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setRatings({
-                          ...ratings,
-                          [question.key]: option.value,
-                        });
-                        setSubmittedScore(null);
-                      }}
-                      className={`flex min-h-20 flex-col items-center rounded-xl border p-1.5 text-center transition sm:min-h-32 sm:p-3 ${
-                        isSelected
-                          ? "border-yellow-300 bg-yellow-400/15 text-yellow-300 shadow-[0_0_34px_rgba(250,204,21,0.35)]"
-                          : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
-                      }`}
-                    >
-                      <span className="flex h-10 w-full items-center justify-center sm:h-20">
-                        <span
-                          className={`relative block overflow-hidden rounded-lg ${imageSize}`}
-                        >
-                          <Image
-                            src={option.iconSrc}
-                            alt={`${option.label} rating icon`}
-                            fill
-                            unoptimized
-                            sizes={
-                              option.value === 5
-                                ? "(min-width: 640px) 80px, 40px"
-                                : "(min-width: 640px) 56px, 32px"
-                            }
-                            className="object-contain"
-                          />
-                        </span>
-                      </span>
-                      <span className="mt-0.5 block text-base font-black sm:mt-2 sm:text-3xl">
-                        {option.value}
-                      </span>
-                      <span className="mt-0.5 block text-[9px] font-black leading-tight sm:mt-1.5 sm:text-xs">
-                        {option.label}
-                      </span>
-                      <span
-                        className={`mx-auto my-1 block h-px w-7 sm:my-2 sm:w-10 ${
-                          isSelected ? "bg-yellow-300/70" : "bg-white/15"
+                <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5">
+                  {scoreOptions.map((option) => {
+                    const isSelected = ratings[question.key] === option.value;
+                    const imageSize =
+                      option.value === 5
+                        ? "h-10 w-10 sm:h-20 sm:w-20"
+                        : "h-8 w-8 sm:h-14 sm:w-14";
+
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setRatings({
+                            ...ratings,
+                            [question.key]: option.value,
+                          });
+                          setSubmittedScore(null);
+                        }}
+                        className={`flex min-h-20 flex-col items-center rounded-xl border p-1.5 text-center transition sm:min-h-32 sm:p-3 ${
+                          isSelected
+                            ? "border-yellow-300 bg-yellow-400/15 text-yellow-300 shadow-[0_0_34px_rgba(250,204,21,0.35)]"
+                            : "border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] text-gray-200 hover:border-yellow-400/60 hover:bg-yellow-400/10"
                         }`}
-                      />
-                      <span className="block text-[9px] font-bold leading-tight text-gray-400 sm:text-xs">
-                        {option.description}
-                      </span>
-                    </button>
-                  );
-                })}
+                      >
+                        <span className="flex h-10 w-full items-center justify-center sm:h-20">
+                          <span
+                            className={`relative block overflow-hidden rounded-lg ${imageSize}`}
+                          >
+                            <Image
+                              src={option.iconSrc}
+                              alt={`${option.label} rating icon`}
+                              fill
+                              unoptimized
+                              sizes={
+                                option.value === 5
+                                  ? "(min-width: 640px) 80px, 40px"
+                                  : "(min-width: 640px) 56px, 32px"
+                              }
+                              className="object-contain"
+                            />
+                          </span>
+                        </span>
+                        <span className="mt-0.5 block text-base font-black sm:mt-2 sm:text-3xl">
+                          {option.value}
+                        </span>
+                        <span className="mt-0.5 block text-[9px] font-black leading-tight sm:mt-1.5 sm:text-xs">
+                          {option.label}
+                        </span>
+                        <span
+                          className={`mx-auto my-1 block h-px w-7 sm:my-2 sm:w-10 ${
+                            isSelected ? "bg-yellow-300/70" : "bg-white/15"
+                          }`}
+                        />
+                        <span className="block text-[9px] font-bold leading-tight text-gray-400 sm:text-xs">
+                          {option.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {allAnswered && (
