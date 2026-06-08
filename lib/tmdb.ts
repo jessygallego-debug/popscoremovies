@@ -1,3 +1,5 @@
+import { movieTitleSearchScore } from "@/lib/movie-search";
+
 export type MovieSummary = {
   id: number;
   title: string;
@@ -453,6 +455,73 @@ function compareLatestPopular(a: MovieSummary, b: MovieSummary) {
   return releaseTime(b) - releaseTime(a);
 }
 
+function uniqueMovies(movies: MovieSummary[]) {
+  const seenMovieIds = new Set<number>();
+
+  return movies.filter((movie) => {
+    if (seenMovieIds.has(movie.id)) {
+      return false;
+    }
+
+    seenMovieIds.add(movie.id);
+    return true;
+  });
+}
+
+function compareSearchMatches(query: string) {
+  return (a: MovieSummary, b: MovieSummary) => {
+    const scoreDifference =
+      movieTitleSearchScore(a.title, query) -
+      movieTitleSearchScore(b.title, query);
+
+    if (scoreDifference !== 0) {
+      return scoreDifference;
+    }
+
+    return compareLatestPopular(a, b);
+  };
+}
+
+async function getFuzzyMovieFallbacks(
+  query: string,
+  limit: number,
+  genreId = "",
+  existingMovies: MovieSummary[] = []
+) {
+  const fallbackLimit = Math.min(MAX_MOVIE_RESULTS, Math.max(limit, 120));
+  const fallbackPages = Math.ceil(fallbackLimit / TMDB_PAGE_SIZE);
+  const existingMovieIds = new Set(existingMovies.map((movie) => movie.id));
+  const movies: MovieSummary[] = [];
+
+  for (
+    let page = 1;
+    page <= fallbackPages && movies.length < fallbackLimit;
+    page++
+  ) {
+    const data = await tmdbFetch<TmdbListResponse>(
+      discoverMoviesPath({ genreId, includeRecentDates: false, page })
+    );
+
+    if (!data?.results?.length) {
+      break;
+    }
+
+    movies.push(
+      ...data.results.filter(
+        (movie) =>
+          !existingMovieIds.has(movie.id) &&
+          movieHasBrowseArtwork(movie) &&
+          movieMatchesGenreFilter(movie, genreId) &&
+          Number.isFinite(movieTitleSearchScore(movie.title, query))
+      )
+    );
+  }
+
+  return uniqueMovies(movies)
+    .sort(compareSearchMatches(query))
+    .slice(0, Math.max(limit - existingMovies.length, 0));
+}
+
 export async function getMovies(
   query = "",
   limit = MAX_MOVIE_RESULTS,
@@ -487,7 +556,18 @@ export async function getMovies(
     pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
   }
 
-  return movies.sort(compareLatestPopular).slice(0, requestedLimit);
+  if (resultSource === "search") {
+    const fuzzyMatches =
+      movies.length < requestedLimit
+        ? await getFuzzyMovieFallbacks(query, requestedLimit, genreId, movies)
+        : [];
+
+    return uniqueMovies([...movies, ...fuzzyMatches])
+      .sort(compareSearchMatches(query))
+      .slice(0, requestedLimit);
+  }
+
+  return uniqueMovies(movies).sort(compareLatestPopular).slice(0, requestedLimit);
 }
 
 function recommendationMoviesPath(

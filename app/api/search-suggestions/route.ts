@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  movieTitleSearchScore,
+  normalizeMovieSearchText,
+} from "@/lib/movie-search";
 import { getMovies, type MovieSummary } from "@/lib/tmdb";
 
 const tmdbGenresById: Record<number, string> = {
@@ -21,58 +25,8 @@ const tmdbGenresById: Record<number, string> = {
   10752: "War",
 };
 
-function normalizeSearchText(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function containsWholePhrase(normalizedTitle: string, normalizedQuery: string) {
-  return ` ${normalizedTitle} `.includes(` ${normalizedQuery} `);
-}
-
 function suggestionScore(movie: MovieSummary, normalizedQuery: string) {
-  const normalizedTitle = normalizeSearchText(movie.title);
-  const queryTerms = normalizedQuery.split(" ").filter(Boolean);
-  const titleTerms = normalizedTitle.split(" ").filter(Boolean);
-  const isSingleTermQuery = queryTerms.length === 1;
-
-  if (!normalizedTitle || queryTerms.length === 0) {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  if (normalizedTitle === normalizedQuery) {
-    return 0;
-  }
-
-  if (normalizedTitle.startsWith(normalizedQuery)) {
-    return isSingleTermQuery ? 0 : 1;
-  }
-
-  if (containsWholePhrase(normalizedTitle, normalizedQuery)) {
-    return 2;
-  }
-
-  if (queryTerms.every((term) => titleTerms.includes(term))) {
-    return 3;
-  }
-
-  if (
-    queryTerms.every((term) =>
-      titleTerms.some((word) => word.startsWith(term))
-    )
-  ) {
-    return 4;
-  }
-
-  if (queryTerms.every((term) => normalizedTitle.includes(term))) {
-    return 5;
-  }
-
-  return Number.POSITIVE_INFINITY;
+  return movieTitleSearchScore(movie.title, normalizedQuery);
 }
 
 export async function GET(request: Request) {
@@ -84,7 +38,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ suggestions: [] });
   }
 
-  const normalizedQuery = normalizeSearchText(query);
+  const normalizedQuery = normalizeMovieSearchText(query);
   const movies = await getMovies(query, 140, genre);
   const suggestions = movies
     .map((movie) => ({

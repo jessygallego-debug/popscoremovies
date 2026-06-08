@@ -11,6 +11,7 @@ const mobileNavItems = [
   { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/discover", label: "Discovery" },
+  { href: "/faq", label: "FAQ" },
 ];
 
 export default function MobileSiteMenu() {

@@ -10,6 +10,7 @@ const navItems = [
   { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/discover", label: "Discovery" },
+  { href: "/faq", label: "FAQ" },
 ];
 
 function SiteLogo() {
@@ -21,13 +22,12 @@ function SiteLogo() {
     >
       <div className="flex items-center gap-3">
         <span
-          aria-hidden="true"
           className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/25 bg-yellow-400/10 shadow-lg shadow-yellow-400/10 sm:h-12 sm:w-12 md:h-14 md:w-14"
         >
           <span className="relative block h-8 w-8 sm:h-10 sm:w-10 md:h-11 md:w-11">
             <Image
               src="/rating-icons/extra-buttery-v2.png"
-              alt=""
+              alt="PopScore movie rating and recommendation site"
               fill
               sizes="(min-width: 640px) 44px, 40px"
               className="object-contain transition group-hover:scale-105"

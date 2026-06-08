@@ -55,29 +55,6 @@ const whyPopScoreCards = [
   },
 ];
 
-const searchFaqs = [
-  {
-    question: "How does PopScore recommend movies?",
-    answer:
-      "PopScore recommends movies based on the genres and movies you rate highly. The more movies you rate, the better your personalized recommendations become.",
-  },
-  {
-    question: "Can I rate movies on PopScore?",
-    answer:
-      "Yes. PopScore lets you rate movies online using genre-specific questions that create a clearer movie score than one-size-fits-all ratings.",
-  },
-  {
-    question: "What is a PopFile?",
-    answer:
-      "Your PopFile is your personal movie profile. It tracks your ratings, favorite genres, reviews, watchlist activity, and movie taste.",
-  },
-  {
-    question: "Can I find movies by genre?",
-    answer:
-      "Yes. PopScore lets you explore movie recommendations by genre, including Action, Comedy, Horror, Sci-Fi, Fantasy, Western, and more.",
-  },
-];
-
 function genreLabelsForMovie(movie: MovieSummary) {
   return (
     movie.genre_ids
@@ -195,40 +172,6 @@ function WhyPopScore() {
             </article>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
-
-function SearchFaq() {
-  return (
-    <section
-      aria-labelledby="popscore-faq-heading"
-      className="mt-10 rounded-[1.5rem] border border-slate-800/80 bg-slate-950/65 p-5 shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[1.75rem] sm:p-6"
-    >
-      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-300 sm:text-xs">
-        How PopScore Works
-      </p>
-      <h2
-        id="popscore-faq-heading"
-        className="mt-2 text-2xl font-black text-white sm:text-4xl"
-      >
-        Movie Ratings and Recommendations, Answered
-      </h2>
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        {searchFaqs.map((faq) => (
-          <article
-            key={faq.question}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
-          >
-            <h3 className="text-lg font-black text-yellow-300">
-              {faq.question}
-            </h3>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
-              {faq.answer}
-            </p>
-          </article>
-        ))}
       </div>
     </section>
   );
@@ -363,28 +306,12 @@ export default async function Home({
       "query-input": "required name=search_term_string",
     },
   };
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: searchFaqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
-  };
 
   return (
     <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.16),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.16),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_34%,#000_64%,#020617_100%)] text-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <ScrollMemory />
       <div className="pointer-events-none fixed inset-0 opacity-40 [background-image:radial-gradient(rgba(250,204,21,0.28)_1px,transparent_1px)] [background-size:42px_42px]" />
@@ -421,7 +348,6 @@ export default async function Home({
 
         <div className="border-t border-white/10 pt-7">
           <WhyPopScore />
-          <SearchFaq />
         </div>
 
         <section id="genres" className="mt-8">
