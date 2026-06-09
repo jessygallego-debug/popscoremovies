@@ -10,6 +10,7 @@ import ProfileUsernameLink, {
   profileStatsHref,
 } from "@/app/components/profile-username-link";
 import QuickReactionBadge from "@/app/components/quick-reaction-badge";
+import ShareRatingButton from "@/app/components/share-rating-button";
 import {
   FOLLOWS_UPDATED_EVENT,
   getFollowerUsers,
@@ -1316,6 +1317,15 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
             <p className="mt-2 text-xs font-bold text-slate-500 sm:mt-3">
               Rated {formatDate(rating.created_at)}
             </p>
+            <div className="mt-3">
+              <ShareRatingButton
+                movieId={rating.movieId}
+                movieTitle={rating.movieTitle}
+                popscore={rating.popscore}
+                posterPath={rating.posterPath}
+                variant="compact"
+              />
+            </div>
           </div>
         </article>
       ))}

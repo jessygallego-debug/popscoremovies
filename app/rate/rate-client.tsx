@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileMenu from "@/app/components/profile-menu";
 import RatingInfoPopover from "@/app/components/rating-info-popover";
+import ShareRatingButton from "@/app/components/share-rating-button";
 import {
   getCurrentProfile,
   removeFromWatchlist,
@@ -134,7 +134,6 @@ export default function RateClient({
   returnTo = "/",
   submitReturnTo,
 }: RateClientProps) {
-  const router = useRouter();
   const [selectedGenre, setSelectedGenre] = useState<GenreKey>(initialGenre);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [reviewComment, setReviewComment] = useState("");
@@ -210,7 +209,7 @@ export default function RateClient({
       })
       .then(() => {
         setSubmittedScore(popScore);
-        router.push(submitHref);
+        setSubmitMessage("");
       })
       .catch((error: Error) => {
         if (error.message !== "Missing profile") {
@@ -473,7 +472,7 @@ export default function RateClient({
               ) : null}
             </div>
 
-            {movieId ? (
+            {movieId && !submittedScore ? (
               <button
                 type="button"
                 onClick={handleSubmit}
@@ -482,19 +481,38 @@ export default function RateClient({
                 Submit Rating ★
               </button>
             ) : (
-              <p className="mt-6 font-bold">
-                Select a movie before submitting a rating.
-              </p>
+              !submittedScore ? (
+                <p className="mt-6 font-bold">
+                  Select a movie before submitting a rating.
+                </p>
+              ) : null
             )}
 
             {submitMessage ? (
               <p className="mt-4 font-bold text-yellow-200">{submitMessage}</p>
             ) : null}
 
-            {submittedScore ? (
-              <p className="mt-4 font-bold">
-                Rating submitted. This movie&apos;s PopScore is now updated.
-              </p>
+            {movieId && submittedScore ? (
+              <div className="mt-5 rounded-2xl border border-yellow-400/30 bg-black/45 p-4">
+                <p className="font-black text-yellow-200">
+                  Rating submitted. This movie&apos;s PopScore is now updated.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <ShareRatingButton
+                    movieId={movieId}
+                    movieTitle={movieTitle ?? `Movie ${movieId}`}
+                    popscore={submittedScore}
+                    posterPath={moviePosterPath}
+                    ratingLabel={popRating.label}
+                  />
+                  <Link
+                    href={submitHref}
+                    className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 font-black text-white transition hover:border-yellow-400/50 hover:text-yellow-300"
+                  >
+                    Done
+                  </Link>
+                </div>
+              </div>
             ) : null}
           </div>
         )}

@@ -9,6 +9,7 @@ import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import ProfileMenu from "@/app/components/profile-menu";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
+import { MovieRatingSharePanel } from "@/app/components/share-rating-button";
 import TrailerModalButton from "@/app/components/trailer-modal-button";
 import {
   getMovieAggregateRatingForSeo,
@@ -85,7 +86,7 @@ export async function generateMovieMetadata(id: string): Promise<Metadata> {
     };
   }
 
-  const title = `${movieTitle(movie)} Reviews, Ratings, and PopScore`;
+  const title = `${movieTitle(movie)} PopScore Rating, Reviews, and Fan Reactions`;
   const description = movieDescription(movie);
   const image = posterUrl(movie.poster_path) ?? backdropUrl(movie.backdrop_path);
   const canonical = movieCanonical(movie);
@@ -424,6 +425,12 @@ export async function MovieDetailPage({
                     variant="mini"
                   />
                 </div>
+                <MovieRatingSharePanel
+                  movieId={String(movie.id)}
+                  movieTitle={movie.title}
+                  posterPath={movie.poster_path}
+                  className="mt-4 max-w-xl"
+                />
               </div>
 
               <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-200">
