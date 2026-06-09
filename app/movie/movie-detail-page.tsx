@@ -426,6 +426,9 @@ export async function MovieDetailPage({
                   />
                 </div>
                 <MovieRatingSharePanel
+                  communityScore={
+                    aggregateRating?.count ? aggregateRating.score : null
+                  }
                   movieId={String(movie.id)}
                   movieTitle={movie.title}
                   posterPath={movie.poster_path}

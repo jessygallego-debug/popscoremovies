@@ -12,6 +12,7 @@ import { movieHrefById } from "@/lib/urls";
 
 type ShareRatingButtonProps = {
   className?: string;
+  communityScore?: number | null;
   movieId: string;
   movieTitle: string;
   popscore: number;
@@ -22,6 +23,7 @@ type ShareRatingButtonProps = {
 
 type MovieRatingSharePanelProps = {
   className?: string;
+  communityScore?: number | null;
   movieId: string;
   movieTitle: string;
   posterPath?: string | null;
@@ -77,6 +79,14 @@ export function getShareRatingLabel(score: number) {
   return "Burnt";
 }
 
+function getShareRatingStatement(score: number) {
+  if (score >= 90) return "One of my all-time favorites.";
+  if (score >= 80) return "Highly recommended.";
+  if (score >= 70) return "Definitely worth watching.";
+  if (score >= 60) return "Worth a watch.";
+  return "Didn't quite work for me.";
+}
+
 function wrapCanvasText(
   context: CanvasRenderingContext2D,
   text: string,
@@ -125,6 +135,33 @@ function loadImage(src: string) {
   });
 }
 
+function drawImageCover(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) {
+  const scale = Math.max(width / image.width, height / image.height);
+  const sourceWidth = width / scale;
+  const sourceHeight = height / scale;
+  const sourceX = (image.width - sourceWidth) / 2;
+  const sourceY = (image.height - sourceHeight) / 2;
+
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    x,
+    y,
+    width,
+    height
+  );
+}
+
 function downloadDataUrl(dataUrl: string, filename: string) {
   const link = document.createElement("a");
   link.href = dataUrl;
@@ -155,6 +192,7 @@ async function getPosterForDownload(movieId: string, posterPath?: string | null)
 
 export function MovieRatingSharePanel({
   className = "",
+  communityScore,
   movieId,
   movieTitle,
   posterPath,
@@ -216,6 +254,7 @@ export function MovieRatingSharePanel({
           </p>
         </div>
         <ShareRatingButton
+          communityScore={communityScore}
           movieId={movieId}
           movieTitle={movieTitle}
           popscore={rating.popscore}
@@ -229,6 +268,7 @@ export function MovieRatingSharePanel({
 
 export default function ShareRatingButton({
   className = "",
+  communityScore,
   movieId,
   movieTitle,
   popscore,
@@ -237,11 +277,8 @@ export default function ShareRatingButton({
   variant = "default",
 }: ShareRatingButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [copyStatus, setCopyStatus] = useState("");
-  const [downloadStatus, setDownloadStatus] = useState("");
-  const [canNativeShare] = useState(
-    () => typeof navigator !== "undefined" && Boolean(navigator.share)
-  );
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
   const moviePath = movieHrefById(movieId);
   const shareUrl =
     typeof window === "undefined"
@@ -249,14 +286,22 @@ export default function ShareRatingButton({
       : new URL(moviePath, window.location.origin).toString();
   const poster = sharePosterUrl(posterPath);
   const finalRatingLabel = ratingLabel ?? getShareRatingLabel(popscore);
-  const shareText = `I rated ${movieTitle} ${popscore}% ${finalRatingLabel} on PopScore.`;
+  const shareStatement = getShareRatingStatement(popscore);
+  const visibleCommunityScore =
+    typeof communityScore === "number" &&
+    Number.isFinite(communityScore) &&
+    communityScore > 0
+      ? Math.round(communityScore)
+      : null;
+  const hasCommunityScore = visibleCommunityScore !== null;
+  const shareText = `I rated ${movieTitle} ${popscore} ${finalRatingLabel} on PopScore.\nWhat would you score it?\n${shareUrl}`;
   const fileSafeTitle = useMemo(
     () =>
       movieTitle
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "")
-        .slice(0, 70) || "popscore-rating",
+        .slice(0, 70) || "movie",
     [movieTitle]
   );
 
@@ -287,85 +332,92 @@ export default function ShareRatingButton({
       : "inline-flex min-h-12 items-center justify-center rounded-2xl bg-yellow-400 px-5 text-base font-black text-black shadow-[0_0_24px_rgba(250,204,21,0.32)] transition hover:bg-yellow-300";
 
   const handleCopy = () => {
+    setStatusMessage("");
     navigator.clipboard
       .writeText(shareUrl)
       .then(() => {
-        setCopyStatus("Copied!");
+        setStatusMessage("Link copied!");
       })
       .catch(() => {
-        setCopyStatus("Copy failed");
+        setStatusMessage("Could not copy link.");
       });
   };
 
-  const handleNativeShare = () => {
+  const handleShare = async () => {
+    setStatusMessage("");
+
     if (!navigator.share) {
+      handleCopy();
       return;
     }
 
-    navigator
-      .share({
+    try {
+      await navigator.share({
         title: `${movieTitle} PopScore Rating`,
-        text: shareText,
+        text: `I rated ${movieTitle} ${popscore} ${finalRatingLabel} on PopScore.`,
         url: shareUrl,
-      })
-      .catch(() => null);
+      });
+    } catch {
+      // Closing the native share sheet should not show an error.
+    }
   };
 
   const handleDownload = async () => {
-    setDownloadStatus("Preparing...");
+    setIsDownloading(true);
+    setStatusMessage("Preparing your story...");
 
     const canvas = document.createElement("canvas");
-    canvas.width = 1200;
-    canvas.height = 630;
+    canvas.width = 1080;
+    canvas.height = 1920;
     const context = canvas.getContext("2d");
 
     if (!context) {
-      setDownloadStatus("Could not create image");
+      setIsDownloading(false);
+      setStatusMessage("Could not create image.");
       return;
     }
 
-    const gradient = context.createLinearGradient(0, 0, 1200, 630);
-    gradient.addColorStop(0, "#111827");
-    gradient.addColorStop(0.46, "#020617");
-    gradient.addColorStop(1, "#17130a");
+    const gradient = context.createLinearGradient(0, 0, 1080, 1920);
+    gradient.addColorStop(0, "#182131");
+    gradient.addColorStop(0.44, "#030712");
+    gradient.addColorStop(1, "#111006");
     context.fillStyle = gradient;
-    context.fillRect(0, 0, 1200, 630);
+    context.fillRect(0, 0, 1080, 1920);
 
     context.fillStyle = "rgba(250, 204, 21, 0.09)";
-    for (let x = 20; x < 1200; x += 52) {
-      for (let y = 24; y < 630; y += 52) {
+    for (let x = 30; x < 1080; x += 58) {
+      for (let y = 32; y < 1920; y += 58) {
         context.beginPath();
-        context.arc(x, y, 2, 0, Math.PI * 2);
+        context.arc(x, y, 2.4, 0, Math.PI * 2);
         context.fill();
       }
     }
 
-    context.fillStyle = "#facc15";
-    context.font = "900 42px Arial, sans-serif";
-    context.fillText("POPSCORE", 74, 92);
-    context.fillStyle = "#cbd5e1";
-    context.font = "800 22px Arial, sans-serif";
-    context.fillText("MOVIE RATINGS FOR REAL FANS", 76, 128);
-
-    context.fillStyle = "#ffffff";
-    context.font = "900 64px Arial, sans-serif";
-    wrapCanvasText(context, movieTitle, 76, 235, 620, 76, 3);
+    const halo = context.createRadialGradient(540, 790, 40, 540, 790, 720);
+    halo.addColorStop(0, "rgba(250, 204, 21, 0.28)");
+    halo.addColorStop(0.42, "rgba(250, 204, 21, 0.08)");
+    halo.addColorStop(1, "rgba(250, 204, 21, 0)");
+    context.fillStyle = halo;
+    context.fillRect(0, 0, 1080, 1920);
 
     context.fillStyle = "#facc15";
-    context.font = "900 108px Arial, sans-serif";
-    context.fillText(`${popscore}%`, 76, 500);
-    context.fillStyle = "#ffffff";
-    context.font = "900 36px Arial, sans-serif";
-    context.fillText(finalRatingLabel, 76, 548);
+    context.font = "900 58px Arial, sans-serif";
+    context.fillText("POPSCORE", 72, 120);
     context.fillStyle = "#cbd5e1";
-    context.font = "800 24px Arial, sans-serif";
-    context.fillText("I rated this on PopScore", 76, 590);
+    context.font = "800 27px Arial, sans-serif";
+    context.fillText("MOVIE RATINGS FOR REAL FANS", 74, 158);
 
-    context.strokeStyle = "rgba(250, 204, 21, 0.5)";
-    context.lineWidth = 4;
+    context.fillStyle = "rgba(250, 204, 21, 0.14)";
+    context.strokeStyle = "rgba(250, 204, 21, 0.45)";
+    context.lineWidth = 3;
     context.beginPath();
-    context.roundRect(790, 74, 300, 450, 26);
+    context.roundRect(72, 224, 936, 1280, 54);
+    context.fill();
     context.stroke();
+
+    context.fillStyle = "#facc15";
+    context.font = "900 34px Arial, sans-serif";
+    context.fillText("Rated on PopScore", 118, 294);
 
     const downloadPoster = await getPosterForDownload(movieId, posterPath);
 
@@ -374,31 +426,81 @@ export default function ShareRatingButton({
         const image = await loadImage(downloadPoster);
         context.save();
         context.beginPath();
-        context.roundRect(790, 74, 300, 450, 26);
+        context.roundRect(118, 340, 300, 450, 34);
         context.clip();
-        context.drawImage(image, 790, 74, 300, 450);
+        drawImageCover(context, image, 118, 340, 300, 450);
         context.restore();
       } catch {
         context.fillStyle = "#0f172a";
-        context.fillRect(790, 74, 300, 450);
+        context.fillRect(118, 340, 300, 450);
         context.fillStyle = "#64748b";
-        context.font = "900 28px Arial, sans-serif";
-        context.fillText("Poster", 885, 292);
+        context.font = "900 30px Arial, sans-serif";
+        context.fillText("Poster", 215, 580);
       }
     } else {
       context.fillStyle = "#0f172a";
-      context.fillRect(790, 74, 300, 450);
+      context.fillRect(118, 340, 300, 450);
       context.fillStyle = "#64748b";
-      context.font = "900 28px Arial, sans-serif";
-      context.fillText("Poster", 885, 292);
+      context.font = "900 30px Arial, sans-serif";
+      context.fillText("Poster", 215, 580);
     }
 
-    context.fillStyle = "#facc15";
-    context.font = "900 26px Arial, sans-serif";
-    context.fillText("popscoremovies.com", 790, 582);
+    context.strokeStyle = "rgba(250, 204, 21, 0.55)";
+    context.lineWidth = 4;
+    context.beginPath();
+    context.roundRect(118, 340, 300, 450, 34);
+    context.stroke();
 
-    downloadDataUrl(canvas.toDataURL("image/png"), `${fileSafeTitle}-popscore.png`);
-    setDownloadStatus("Downloaded");
+    context.fillStyle = "#ffffff";
+    context.font = "900 56px Arial, sans-serif";
+    wrapCanvasText(context, movieTitle, 468, 405, 440, 66, 4);
+
+    context.fillStyle = "#facc15";
+    context.textAlign = "center";
+    context.font = "900 300px Arial, sans-serif";
+    context.fillText(String(popscore), 540, 1048);
+    context.textAlign = "start";
+
+    context.fillStyle = "#ffffff";
+    context.font = "900 54px Arial, sans-serif";
+    context.textAlign = "center";
+    context.fillText(finalRatingLabel, 540, 1118);
+
+    context.fillStyle = "#cbd5e1";
+    context.font = "800 38px Arial, sans-serif";
+    context.fillText(shareStatement, 540, 1190);
+    context.textAlign = "start";
+
+    if (hasCommunityScore) {
+      context.fillStyle = "rgba(2, 6, 23, 0.72)";
+      context.strokeStyle = "rgba(250, 204, 21, 0.32)";
+      context.lineWidth = 3;
+      context.beginPath();
+      context.roundRect(150, 1255, 780, 110, 34);
+      context.fill();
+      context.stroke();
+      context.fillStyle = "#ffffff";
+      context.font = "900 34px Arial, sans-serif";
+      context.fillText(`My Score: ${popscore}`, 200, 1322);
+      context.fillStyle = "#facc15";
+      context.fillText(`Community Score: ${visibleCommunityScore}`, 548, 1322);
+    }
+
+    context.textAlign = "center";
+    context.fillStyle = "#ffffff";
+    context.font = "900 50px Arial, sans-serif";
+    context.fillText("What would you score it?", 540, 1625);
+    context.fillStyle = "#facc15";
+    context.font = "900 38px Arial, sans-serif";
+    context.fillText("PopScoreMovies.com", 540, 1688);
+    context.textAlign = "start";
+
+    downloadDataUrl(
+      canvas.toDataURL("image/png"),
+      `${fileSafeTitle}-popscore-rating.png`
+    );
+    setIsDownloading(false);
+    setStatusMessage("Story downloaded.");
   };
 
   const shareDialog =
@@ -419,7 +521,7 @@ export default function ShareRatingButton({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-300 sm:text-xs sm:tracking-[0.2em]">
-                    Share Rating
+                    SHARE RATING
                   </p>
                   <h2 className="mt-1 text-xl font-black sm:text-3xl">
                     Share your PopScore
@@ -435,71 +537,107 @@ export default function ShareRatingButton({
                 </button>
               </div>
 
-              <div className="mt-4 overflow-hidden rounded-3xl border border-yellow-400/25 bg-gradient-to-br from-slate-900 via-slate-950 to-black sm:mt-5">
-                <div className="grid grid-cols-[92px_minmax(0,1fr)] gap-0 sm:grid-cols-[180px_1fr]">
-                  <div className="relative min-h-36 bg-slate-900 sm:min-h-72">
+              <div className="mx-auto mt-4 aspect-[9/16] max-h-[58vh] w-full max-w-[290px] overflow-hidden rounded-[2rem] border border-yellow-400/30 bg-[radial-gradient(circle_at_50%_42%,rgba(250,204,21,0.24),transparent_34%),linear-gradient(145deg,#182131,#020617_50%,#100f05)] p-4 shadow-2xl shadow-yellow-400/20 sm:mt-5 sm:max-h-[62vh] sm:max-w-[360px] sm:p-5">
+                <div className="flex h-full flex-col">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-300 sm:text-xs">
+                      Rated on PopScore
+                    </p>
+                    <h3 className="mt-2 line-clamp-2 text-xl font-black leading-tight text-white sm:text-2xl">
+                      {movieTitle}
+                    </h3>
+                  </div>
+
+                  <div className="mt-3 grid flex-1 grid-cols-[0.82fr_1fr] gap-3">
+                    <div className="relative min-h-0 overflow-hidden rounded-2xl border border-yellow-400/30 bg-slate-900">
                     <MoviePosterImage
                       src={poster}
                       alt={`${movieTitle} movie poster`}
-                      sizes="(min-width: 640px) 180px, 92px"
+                      sizes="(min-width: 640px) 150px, 120px"
                       className="object-cover"
                       fallbackMovieId={movieId}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   </div>
-                  <div className="flex flex-col justify-between p-4 sm:p-6">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-300 sm:text-xs sm:tracking-[0.22em]">
-                        My PopScore
+                    <div className="flex min-w-0 flex-col justify-center">
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">
+                        My Score
                       </p>
-                      <h3 className="mt-1 line-clamp-2 text-xl font-black text-white sm:mt-2 sm:text-3xl">
-                        {movieTitle}
-                      </h3>
-                      <div className="mt-3 flex flex-wrap items-end gap-2 sm:mt-5 sm:gap-3">
-                        <span className="text-4xl font-black text-yellow-300 sm:text-6xl">
-                          {popscore}%
-                        </span>
-                        <span className="pb-1 text-base font-black text-white sm:pb-2 sm:text-xl">
-                          {finalRatingLabel}
-                        </span>
+                      <p className="text-7xl font-black leading-none text-yellow-300 sm:text-8xl">
+                        {popscore}
+                      </p>
+                      <p className="mt-1 text-lg font-black leading-tight text-white sm:text-xl">
+                        {finalRatingLabel}
+                      </p>
+                      <p className="mt-3 text-xs font-bold leading-5 text-slate-300 sm:text-sm">
+                        {shareStatement}
+                      </p>
+                    </div>
+                  </div>
+
+                  {hasCommunityScore ? (
+                    <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-yellow-400/20 bg-black/40 p-3 text-center">
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">
+                          My Score
+                        </p>
+                        <p className="text-lg font-black text-white">{popscore}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">
+                          Community
+                        </p>
+                        <p className="text-lg font-black text-yellow-300">
+                          {visibleCommunityScore}
+                        </p>
                       </div>
                     </div>
-                    <p className="mt-3 hidden text-sm font-bold leading-6 text-slate-300 sm:block">
-                      I rated this on PopScore, where movies are scored by what
-                      matters most for each genre.
+                  ) : null}
+
+                  <div className="mt-auto pt-4 text-center">
+                    <p className="text-lg font-black text-white">
+                      What would you score it?
+                    </p>
+                    <p className="mt-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
+                      PopScoreMovies.com
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 grid gap-2 sm:mt-5 sm:grid-cols-3 sm:gap-3">
-                {canNativeShare ? (
-                  <button
-                    type="button"
-                    onClick={handleNativeShare}
-                    className="min-h-12 rounded-2xl bg-yellow-400 px-4 font-black text-black transition hover:bg-yellow-300"
-                  >
-                    Share
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="min-h-12 rounded-2xl bg-yellow-400 px-4 font-black text-black transition hover:bg-yellow-300"
+                >
+                  Share
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 font-black text-white transition hover:border-yellow-400/40 hover:text-yellow-300"
+                >
+                  Download Story
+                </button>
                 <button
                   type="button"
                   onClick={handleCopy}
                   className="min-h-12 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-4 font-black text-yellow-300 transition hover:bg-yellow-400/15"
                 >
-                  {copyStatus || "Copy Link"}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 font-black text-white transition hover:border-yellow-400/40 hover:text-yellow-300"
-                >
-                  {downloadStatus || "Download Image"}
+                  Copy Link
                 </button>
               </div>
 
-              <p className="mt-3 break-words rounded-2xl border border-white/10 bg-black/35 p-3 text-xs font-bold leading-5 text-slate-400 sm:mt-4">
-                {shareText} {shareUrl}
+              {statusMessage ? (
+                <p className="mt-3 text-center text-sm font-black text-yellow-200">
+                  {statusMessage}
+                </p>
+              ) : null}
+
+              <p className="mt-3 whitespace-pre-line break-words rounded-2xl border border-white/10 bg-black/35 p-3 text-xs font-bold leading-5 text-slate-400 sm:mt-4">
+                {shareText}
               </p>
             </div>
           </div>,
@@ -513,8 +651,7 @@ export default function ShareRatingButton({
         type="button"
         onClick={() => {
           setIsOpen(true);
-          setCopyStatus("");
-          setDownloadStatus("");
+          setStatusMessage("");
         }}
         className={`${buttonClasses} ${className}`}
       >
