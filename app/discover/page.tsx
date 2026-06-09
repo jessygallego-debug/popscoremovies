@@ -65,12 +65,12 @@ export default async function DiscoverPage({
       <section className="relative mx-auto max-w-[1500px] px-5 py-6 sm:px-8">
         <SiteHeader />
 
-        <section className="grid gap-5 py-7 sm:gap-8 sm:py-10 lg:grid-cols-[minmax(360px,0.72fr)_minmax(420px,1fr)] lg:items-center lg:py-14">
-          <div>
+        <section className="grid gap-5 py-7 sm:gap-8 sm:py-10 xl:grid-cols-[minmax(0,0.9fr)_minmax(440px,1fr)] xl:items-center xl:py-14">
+          <div className="min-w-0">
             <div className="mb-4 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-yellow-300 sm:mb-5 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.18em]">
               Personalized Picks
             </div>
-            <h1 className="max-w-3xl text-3xl font-black leading-[0.98] text-white sm:text-6xl xl:text-7xl">
+            <h1 className="max-w-[14ch] text-3xl font-black leading-[0.98] text-white sm:text-6xl 2xl:text-7xl">
               Discover Personalized Movie Recommendations
             </h1>
             <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:mt-5 sm:text-lg sm:leading-8">
@@ -80,7 +80,7 @@ export default async function DiscoverPage({
             </p>
           </div>
 
-          <div className="rounded-[1.5rem] border border-slate-800/80 bg-[radial-gradient(circle_at_70%_15%,rgba(250,204,21,0.18),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-black/40 sm:rounded-[2rem] sm:p-6">
+          <div className="min-w-0 rounded-[1.5rem] border border-slate-800/80 bg-[radial-gradient(circle_at_70%_15%,rgba(250,204,21,0.18),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-black/40 sm:rounded-[2rem] sm:p-6">
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {["Choose Genre", "Get Movie Matches", "Rate & Refine"].map((step, index) => (
                 <div
