@@ -1,8 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { getCurrentProfile, getUserRatings, UserMovieRating } from "@/lib/profile-store";
+import { createPortal } from "react-dom";
+import MoviePosterImage from "@/app/components/movie-poster-image";
+import {
+  getCurrentProfile,
+  getUserRatings,
+  UserMovieRating,
+} from "@/lib/profile-store";
 import { movieHrefById } from "@/lib/urls";
 
 type ShareRatingButtonProps = {
@@ -129,6 +134,25 @@ function downloadDataUrl(dataUrl: string, filename: string) {
   link.remove();
 }
 
+async function getPosterForDownload(movieId: string, posterPath?: string | null) {
+  const primaryPoster = sharePosterUrl(posterPath, "w780");
+
+  if (primaryPoster) {
+    return primaryPoster;
+  }
+
+  try {
+    const response = await fetch(
+      `/api/movie-poster?movie=${encodeURIComponent(movieId)}`
+    );
+    const data = (await response.json()) as { posterPath?: string | null };
+
+    return sharePosterUrl(data.posterPath ?? null, "w780");
+  } catch {
+    return null;
+  }
+}
+
 export function MovieRatingSharePanel({
   className = "",
   movieId,
@@ -241,15 +265,18 @@ export default function ShareRatingButton({
       return;
     }
 
+    const previousOverflow = document.body.style.overflow;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsOpen(false);
       }
     };
 
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
@@ -340,9 +367,11 @@ export default function ShareRatingButton({
     context.roundRect(790, 74, 300, 450, 26);
     context.stroke();
 
-    if (poster) {
+    const downloadPoster = await getPosterForDownload(movieId, posterPath);
+
+    if (downloadPoster) {
       try {
-        const image = await loadImage(poster);
+        const image = await loadImage(downloadPoster);
         context.save();
         context.beginPath();
         context.roundRect(790, 74, 300, 450, 26);
@@ -372,6 +401,112 @@ export default function ShareRatingButton({
     setDownloadStatus("Downloaded");
   };
 
+  const shareDialog =
+    isOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className="fixed inset-x-0 top-0 z-[10000] flex h-[100dvh] items-start justify-center overflow-y-auto bg-black/80 px-3 py-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:px-4 sm:py-8"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Share your ${movieTitle} rating`}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                setIsOpen(false);
+              }
+            }}
+          >
+            <div className="w-full max-w-2xl overflow-hidden rounded-3xl border border-yellow-400/30 bg-slate-950 p-4 text-white shadow-2xl shadow-yellow-400/20 sm:max-h-[90vh] sm:overflow-y-auto sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-300 sm:text-xs sm:tracking-[0.2em]">
+                    Share Rating
+                  </p>
+                  <h2 className="mt-1 text-xl font-black sm:text-3xl">
+                    Share your PopScore
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg font-black text-slate-300 transition hover:border-yellow-400/50 hover:text-yellow-300"
+                  aria-label="Close share dialog"
+                >
+                  X
+                </button>
+              </div>
+
+              <div className="mt-4 overflow-hidden rounded-3xl border border-yellow-400/25 bg-gradient-to-br from-slate-900 via-slate-950 to-black sm:mt-5">
+                <div className="grid grid-cols-[92px_minmax(0,1fr)] gap-0 sm:grid-cols-[180px_1fr]">
+                  <div className="relative min-h-36 bg-slate-900 sm:min-h-72">
+                    <MoviePosterImage
+                      src={poster}
+                      alt={`${movieTitle} movie poster`}
+                      sizes="(min-width: 640px) 180px, 92px"
+                      className="object-cover"
+                      fallbackMovieId={movieId}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  </div>
+                  <div className="flex flex-col justify-between p-4 sm:p-6">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-300 sm:text-xs sm:tracking-[0.22em]">
+                        My PopScore
+                      </p>
+                      <h3 className="mt-1 line-clamp-2 text-xl font-black text-white sm:mt-2 sm:text-3xl">
+                        {movieTitle}
+                      </h3>
+                      <div className="mt-3 flex flex-wrap items-end gap-2 sm:mt-5 sm:gap-3">
+                        <span className="text-4xl font-black text-yellow-300 sm:text-6xl">
+                          {popscore}%
+                        </span>
+                        <span className="pb-1 text-base font-black text-white sm:pb-2 sm:text-xl">
+                          {finalRatingLabel}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="mt-3 hidden text-sm font-bold leading-6 text-slate-300 sm:block">
+                      I rated this on PopScore, where movies are scored by what
+                      matters most for each genre.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:mt-5 sm:grid-cols-3 sm:gap-3">
+                {canNativeShare ? (
+                  <button
+                    type="button"
+                    onClick={handleNativeShare}
+                    className="min-h-12 rounded-2xl bg-yellow-400 px-4 font-black text-black transition hover:bg-yellow-300"
+                  >
+                    Share
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="min-h-12 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-4 font-black text-yellow-300 transition hover:bg-yellow-400/15"
+                >
+                  {copyStatus || "Copy Link"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 font-black text-white transition hover:border-yellow-400/40 hover:text-yellow-300"
+                >
+                  {downloadStatus || "Download Image"}
+                </button>
+              </div>
+
+              <p className="mt-3 break-words rounded-2xl border border-white/10 bg-black/35 p-3 text-xs font-bold leading-5 text-slate-400 sm:mt-4">
+                {shareText} {shareUrl}
+              </p>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
     <>
       <button
@@ -385,115 +520,7 @@ export default function ShareRatingButton({
       >
         Share My Rating
       </button>
-
-      {isOpen ? (
-        <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 px-4 py-8 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Share your ${movieTitle} rating`}
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setIsOpen(false);
-            }
-          }}
-        >
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-yellow-400/30 bg-slate-950 p-5 text-white shadow-2xl shadow-yellow-400/20 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-300">
-                  Share Rating
-                </p>
-                <h2 className="mt-1 text-2xl font-black sm:text-3xl">
-                  Share your PopScore
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg font-black text-slate-300 transition hover:border-yellow-400/50 hover:text-yellow-300"
-                aria-label="Close share dialog"
-              >
-                X
-              </button>
-            </div>
-
-            <div className="mt-5 overflow-hidden rounded-3xl border border-yellow-400/25 bg-gradient-to-br from-slate-900 via-slate-950 to-black">
-              <div className="grid gap-0 sm:grid-cols-[180px_1fr]">
-                <div className="relative min-h-64 bg-slate-900 sm:min-h-72">
-                  {poster ? (
-                    <Image
-                      src={poster}
-                      alt={`${movieTitle} movie poster`}
-                      fill
-                      unoptimized
-                      sizes="(min-width: 640px) 180px, 100vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full min-h-64 items-center justify-center px-4 text-center text-sm font-black uppercase tracking-[0.18em] text-slate-500">
-                      Poster Coming Soon
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                </div>
-                <div className="flex flex-col justify-between p-5 sm:p-6">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-300">
-                      My PopScore
-                    </p>
-                    <h3 className="mt-2 text-3xl font-black text-white">
-                      {movieTitle}
-                    </h3>
-                    <div className="mt-5 flex flex-wrap items-end gap-3">
-                      <span className="text-6xl font-black text-yellow-300">
-                        {popscore}%
-                      </span>
-                      <span className="pb-2 text-xl font-black text-white">
-                        {finalRatingLabel}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="mt-6 text-sm font-bold leading-6 text-slate-300">
-                    I rated this on PopScore, where movies are scored by what
-                    matters most for each genre.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              {canNativeShare ? (
-                <button
-                  type="button"
-                  onClick={handleNativeShare}
-                  className="min-h-12 rounded-2xl bg-yellow-400 px-4 font-black text-black transition hover:bg-yellow-300"
-                >
-                  Share
-                </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="min-h-12 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-4 font-black text-yellow-300 transition hover:bg-yellow-400/15"
-              >
-                {copyStatus || "Copy Link"}
-              </button>
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 font-black text-white transition hover:border-yellow-400/40 hover:text-yellow-300"
-              >
-                {downloadStatus || "Download Image"}
-              </button>
-            </div>
-
-            <p className="mt-4 break-words rounded-2xl border border-white/10 bg-black/35 p-3 text-xs font-bold leading-5 text-slate-400">
-              {shareText} {shareUrl}
-            </p>
-          </div>
-        </div>
-      ) : null}
+      {shareDialog}
     </>
   );
 }
