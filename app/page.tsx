@@ -8,7 +8,6 @@ import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import SiteHeader from "@/app/components/site-header";
 import ScrollMemory from "@/app/components/scroll-memory";
-import StartRatingMoviesCta from "@/app/components/start-rating-movies-cta";
 import {
   SITE_DESCRIPTION,
   SITE_ICON_ALT,
@@ -159,9 +158,6 @@ function WhyPopScore() {
             Discover better recommendations, connect with movie fans, and
             uncover hidden gems based on your personal taste.
           </p>
-          <div className="mt-4">
-            <StartRatingMoviesCta />
-          </div>
         </div>
         <div className="grid auto-rows-fr grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-4">
           {whyPopScoreCards.map((card) => (
