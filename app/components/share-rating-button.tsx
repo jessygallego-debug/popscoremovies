@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import MoviePosterImage from "@/app/components/movie-poster-image";
@@ -85,6 +86,14 @@ function getShareRatingStatement(score: number) {
   if (score >= 70) return "Definitely worth watching.";
   if (score >= 60) return "Worth a watch.";
   return "Didn't quite work for me.";
+}
+
+function getShareRatingIconSrc(score: number) {
+  if (score >= 90) return "/rating-icons/extra-buttery-v2.png";
+  if (score >= 75) return "/rating-icons/buttery.png";
+  if (score >= 60) return "/rating-icons/fresh-popcorn.png";
+  if (score >= 40) return "/rating-icons/salty.png";
+  return "/rating-icons/burnt.png";
 }
 
 function wrapCanvasText(
@@ -282,6 +291,7 @@ export default function ShareRatingButton({
       : new URL(moviePath, window.location.origin).toString();
   const poster = sharePosterUrl(posterPath);
   const finalRatingLabel = ratingLabel ?? getShareRatingLabel(popscore);
+  const ratingIconSrc = getShareRatingIconSrc(popscore);
   const shareStatement = getShareRatingStatement(popscore);
   const visibleCommunityScore =
     typeof communityScore === "number" &&
@@ -415,6 +425,10 @@ export default function ShareRatingButton({
     context.font = "900 34px Arial, sans-serif";
     context.fillText("Rated on PopScore", 118, 294);
 
+    context.fillStyle = "#ffffff";
+    context.font = "900 62px Arial, sans-serif";
+    wrapCanvasText(context, movieTitle, 118, 380, 820, 72, 3);
+
     const downloadPoster = await getPosterForDownload(movieId, posterPath);
 
     if (downloadPoster) {
@@ -422,66 +436,69 @@ export default function ShareRatingButton({
         const image = await loadImage(downloadPoster);
         context.save();
         context.beginPath();
-        context.roundRect(118, 340, 300, 450, 34);
+        context.roundRect(118, 530, 300, 450, 34);
         context.clip();
         context.fillStyle = "#020617";
-        context.fillRect(118, 340, 300, 450);
-        drawImageContain(context, image, 118, 340, 300, 450);
+        context.fillRect(118, 530, 300, 450);
+        drawImageContain(context, image, 118, 530, 300, 450);
         context.restore();
       } catch {
         context.fillStyle = "#0f172a";
-        context.fillRect(118, 340, 300, 450);
+        context.fillRect(118, 530, 300, 450);
         context.fillStyle = "#64748b";
         context.font = "900 30px Arial, sans-serif";
-        context.fillText("Poster", 215, 580);
+        context.fillText("Poster", 215, 770);
       }
     } else {
       context.fillStyle = "#0f172a";
-      context.fillRect(118, 340, 300, 450);
+      context.fillRect(118, 530, 300, 450);
       context.fillStyle = "#64748b";
       context.font = "900 30px Arial, sans-serif";
-      context.fillText("Poster", 215, 580);
+      context.fillText("Poster", 215, 770);
     }
 
     context.strokeStyle = "rgba(250, 204, 21, 0.55)";
     context.lineWidth = 4;
     context.beginPath();
-    context.roundRect(118, 340, 300, 450, 34);
+    context.roundRect(118, 530, 300, 450, 34);
     context.stroke();
 
-    context.fillStyle = "#ffffff";
-    context.font = "900 56px Arial, sans-serif";
-    wrapCanvasText(context, movieTitle, 468, 405, 440, 66, 4);
+    context.fillStyle = "#cbd5e1";
+    context.font = "900 28px Arial, sans-serif";
+    context.fillText("MY SCORE", 468, 585);
 
     context.fillStyle = "#facc15";
-    context.textAlign = "center";
-    context.font = "900 300px Arial, sans-serif";
-    context.fillText(String(popscore), 540, 1048);
-    context.textAlign = "start";
+    context.font = "900 210px Arial, sans-serif";
+    context.fillText(String(popscore), 468, 760);
+
+    try {
+      const ratingIcon = await loadImage(ratingIconSrc);
+      context.drawImage(ratingIcon, 742, 618, 130, 130);
+    } catch {
+      // The text score remains the primary shareable element if the icon fails.
+    }
 
     context.fillStyle = "#ffffff";
-    context.font = "900 54px Arial, sans-serif";
-    context.textAlign = "center";
-    context.fillText(finalRatingLabel, 540, 1118);
+    context.font = "900 48px Arial, sans-serif";
+    context.fillText(finalRatingLabel, 468, 835);
 
     context.fillStyle = "#cbd5e1";
-    context.font = "800 38px Arial, sans-serif";
-    context.fillText(shareStatement, 540, 1190);
-    context.textAlign = "start";
+    context.font = "800 35px Arial, sans-serif";
+    wrapCanvasText(context, shareStatement, 468, 905, 420, 44, 3);
 
     if (hasCommunityScore) {
       context.fillStyle = "rgba(2, 6, 23, 0.72)";
       context.strokeStyle = "rgba(250, 204, 21, 0.32)";
       context.lineWidth = 3;
       context.beginPath();
-      context.roundRect(150, 1255, 780, 110, 34);
+      context.roundRect(150, 1110, 780, 110, 34);
       context.fill();
       context.stroke();
       context.fillStyle = "#ffffff";
       context.font = "900 34px Arial, sans-serif";
-      context.fillText(`My Score: ${popscore}`, 200, 1322);
+      context.fillText(`My Score: ${popscore}`, 200, 1177);
       context.fillStyle = "#facc15";
-      context.fillText(`Community Score: ${visibleCommunityScore}`, 548, 1322);
+      context.fillText(`Community Score: ${visibleCommunityScore}`, 548, 1177);
     }
 
     context.textAlign = "center";
@@ -546,7 +563,7 @@ export default function ShareRatingButton({
                     </h3>
                   </div>
 
-                  <div className="mt-3 grid flex-1 grid-cols-[minmax(88px,0.85fr)_1fr] gap-3">
+                  <div className="mt-3 grid grid-cols-[minmax(88px,0.85fr)_1fr] items-start gap-3">
                     <div className="relative aspect-[2/3] w-full self-start overflow-hidden rounded-2xl border border-yellow-400/30 bg-slate-950">
                       <MoviePosterImage
                         src={poster}
@@ -557,17 +574,28 @@ export default function ShareRatingButton({
                       />
                       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/75 to-transparent" />
                     </div>
-                    <div className="flex min-w-0 flex-col justify-center">
+                    <div className="min-w-0 self-start pt-1">
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">
                         My Score
                       </p>
-                      <p className="text-7xl font-black leading-none text-yellow-300 sm:text-8xl">
-                        {popscore}
-                      </p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <p className="text-6xl font-black leading-none text-yellow-300 sm:text-7xl">
+                          {popscore}
+                        </p>
+                        <span className="relative block h-12 w-12 shrink-0 overflow-hidden rounded-full border border-yellow-400/25 bg-yellow-400/10 sm:h-14 sm:w-14">
+                          <Image
+                            src={ratingIconSrc}
+                            alt=""
+                            fill
+                            sizes="56px"
+                            className="object-contain"
+                          />
+                        </span>
+                      </div>
                       <p className="mt-1 text-lg font-black leading-tight text-white sm:text-xl">
                         {finalRatingLabel}
                       </p>
-                      <p className="mt-3 text-xs font-bold leading-5 text-slate-300 sm:text-sm">
+                      <p className="mt-2 text-xs font-bold leading-5 text-slate-300 sm:text-sm">
                         {shareStatement}
                       </p>
                     </div>
