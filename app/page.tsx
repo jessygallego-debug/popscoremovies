@@ -8,6 +8,7 @@ import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import SiteHeader from "@/app/components/site-header";
 import ScrollMemory from "@/app/components/scroll-memory";
+import StartRatingMoviesCta from "@/app/components/start-rating-movies-cta";
 import {
   SITE_DESCRIPTION,
   SITE_ICON_ALT,
@@ -36,22 +37,28 @@ const TMDB_GENRE_LABELS = new Map(
 
 const whyPopScoreCards = [
   {
-    title: "Rate Movies by Genre",
+    icon: "🎯",
+    title: "Personalized Recommendations",
     description:
-      "Action, horror, comedy, and romance each get the right questions.",
+      "Get movie suggestions based on your ratings, favorite genres, and unique taste.",
   },
   {
-    title: "Personalized Movie Recommendations",
+    icon: "🍿",
+    title: "Genre-Specific Ratings",
     description:
-      "Discover movies to watch based on your ratings and favorite genres.",
+      "Action, Horror, Comedy, and Romance each use questions tailored to what matters most in that genre.",
   },
   {
-    title: "Build Your PopFile",
-    description: "Track your movie ratings, reviews, reactions, and taste.",
+    icon: "💬",
+    title: "Join the Community",
+    description:
+      "Follow movie fans, share reviews, and see what people are watching and discussing right now.",
   },
   {
-    title: "Join Movie Discussions",
-    description: "Share reviews and see what real movie fans are watching.",
+    icon: "🔍",
+    title: "Discover Hidden Gems",
+    description:
+      "Rate movies you love and let Discovery uncover personalized recommendations you might have otherwise missed.",
   },
 ];
 
@@ -147,11 +154,18 @@ function WhyPopScore() {
       id="why-popscore"
       className="rounded-[1.5rem] border border-slate-800/80 bg-slate-950/65 p-4 text-center shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[1.75rem] sm:p-5 xl:text-left"
     >
-      <div className="grid gap-4 sm:gap-5 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-stretch">
-        <div className="flex items-center justify-center xl:justify-start">
+      <div className="grid gap-4 sm:gap-5 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-stretch">
+        <div className="flex flex-col items-center justify-center xl:items-start">
           <h2 className="text-2xl font-black leading-tight text-white sm:text-4xl xl:text-3xl">
-            Why PopScore?
+            Find Movies You&apos;ll Actually Love
           </h2>
+          <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-300 sm:text-base xl:max-w-none">
+            Discover better recommendations, connect with movie fans, and
+            uncover hidden gems based on your personal taste.
+          </p>
+          <div className="mt-5">
+            <StartRatingMoviesCta />
+          </div>
         </div>
         <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
           {whyPopScoreCards.map((card) => (
@@ -161,6 +175,12 @@ function WhyPopScore() {
             >
               <div className="flex h-full flex-col">
                 <div>
+                  <p
+                    aria-hidden="true"
+                    className="mb-2 text-2xl leading-none sm:mb-3 sm:text-3xl"
+                  >
+                    {card.icon}
+                  </p>
                   <h3 className="flex min-h-[2.5rem] items-start justify-center text-[13px] font-black leading-snug text-yellow-300 sm:min-h-[3.4rem] sm:text-lg xl:justify-start">
                     {card.title}
                   </h3>
