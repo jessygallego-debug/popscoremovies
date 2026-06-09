@@ -135,7 +135,7 @@ function loadImage(src: string) {
   });
 }
 
-function drawImageCover(
+function drawImageContain(
   context: CanvasRenderingContext2D,
   image: HTMLImageElement,
   x: number,
@@ -143,22 +143,18 @@ function drawImageCover(
   width: number,
   height: number
 ) {
-  const scale = Math.max(width / image.width, height / image.height);
-  const sourceWidth = width / scale;
-  const sourceHeight = height / scale;
-  const sourceX = (image.width - sourceWidth) / 2;
-  const sourceY = (image.height - sourceHeight) / 2;
+  const scale = Math.min(width / image.width, height / image.height);
+  const drawWidth = image.width * scale;
+  const drawHeight = image.height * scale;
+  const drawX = x + (width - drawWidth) / 2;
+  const drawY = y + (height - drawHeight) / 2;
 
   context.drawImage(
     image,
-    sourceX,
-    sourceY,
-    sourceWidth,
-    sourceHeight,
-    x,
-    y,
-    width,
-    height
+    drawX,
+    drawY,
+    drawWidth,
+    drawHeight
   );
 }
 
@@ -428,7 +424,9 @@ export default function ShareRatingButton({
         context.beginPath();
         context.roundRect(118, 340, 300, 450, 34);
         context.clip();
-        drawImageCover(context, image, 118, 340, 300, 450);
+        context.fillStyle = "#020617";
+        context.fillRect(118, 340, 300, 450);
+        drawImageContain(context, image, 118, 340, 300, 450);
         context.restore();
       } catch {
         context.fillStyle = "#0f172a";
@@ -548,17 +546,17 @@ export default function ShareRatingButton({
                     </h3>
                   </div>
 
-                  <div className="mt-3 grid flex-1 grid-cols-[0.82fr_1fr] gap-3">
-                    <div className="relative min-h-0 overflow-hidden rounded-2xl border border-yellow-400/30 bg-slate-900">
-                    <MoviePosterImage
-                      src={poster}
-                      alt={`${movieTitle} movie poster`}
-                      sizes="(min-width: 640px) 150px, 120px"
-                      className="object-cover"
-                      fallbackMovieId={movieId}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  </div>
+                  <div className="mt-3 grid flex-1 grid-cols-[minmax(88px,0.85fr)_1fr] gap-3">
+                    <div className="relative aspect-[2/3] w-full self-start overflow-hidden rounded-2xl border border-yellow-400/30 bg-slate-950">
+                      <MoviePosterImage
+                        src={poster}
+                        alt={`${movieTitle} movie poster`}
+                        sizes="(min-width: 640px) 150px, 120px"
+                        className="object-contain"
+                        fallbackMovieId={movieId}
+                      />
+                      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/75 to-transparent" />
+                    </div>
                     <div className="flex min-w-0 flex-col justify-center">
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">
                         My Score
