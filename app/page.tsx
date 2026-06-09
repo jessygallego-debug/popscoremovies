@@ -37,25 +37,21 @@ const TMDB_GENRE_LABELS = new Map(
 
 const whyPopScoreCards = [
   {
-    icon: "🎯",
     title: "Personalized Recommendations",
     description:
       "Get movie suggestions based on your ratings, favorite genres, and unique taste.",
   },
   {
-    icon: "🍿",
     title: "Genre-Specific Ratings",
     description:
       "Action, Horror, Comedy, and Romance each use questions tailored to what matters most in that genre.",
   },
   {
-    icon: "💬",
     title: "Join the Community",
     description:
       "Follow movie fans, share reviews, and see what people are watching and discussing right now.",
   },
   {
-    icon: "🔍",
     title: "Discover Hidden Gems",
     description:
       "Rate movies you love and let Discovery uncover personalized recommendations you might have otherwise missed.",
@@ -152,39 +148,33 @@ function WhyPopScore() {
   return (
     <section
       id="why-popscore"
-      className="rounded-[1.5rem] border border-slate-800/80 bg-slate-950/65 p-4 text-center shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[1.75rem] sm:p-5 xl:text-left"
+      className="rounded-[1.25rem] border border-slate-800/80 bg-slate-950/65 p-3 text-center shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[1.75rem] sm:p-5 xl:text-left"
     >
-      <div className="grid gap-4 sm:gap-5 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-stretch">
+      <div className="grid gap-3 sm:gap-5 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-stretch">
         <div className="flex flex-col items-center justify-center xl:items-start">
           <h2 className="text-2xl font-black leading-tight text-white sm:text-4xl xl:text-3xl">
             Find Movies You&apos;ll Actually Love
           </h2>
-          <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-300 sm:text-base xl:max-w-none">
+          <p className="mt-2 max-w-xl text-sm font-semibold leading-5 text-slate-300 sm:mt-3 sm:text-base sm:leading-6 xl:max-w-none">
             Discover better recommendations, connect with movie fans, and
             uncover hidden gems based on your personal taste.
           </p>
-          <div className="mt-5">
+          <div className="mt-4">
             <StartRatingMoviesCta />
           </div>
         </div>
-        <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <div className="grid auto-rows-fr grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-4">
           {whyPopScoreCards.map((card) => (
             <article
               key={card.title}
-              className="flex h-full min-h-[118px] rounded-2xl border border-slate-800/80 bg-white/[0.03] p-3 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06] sm:min-h-[150px] sm:p-5"
+              className="flex h-full min-h-[96px] rounded-2xl border border-slate-800/80 bg-white/[0.03] p-3 transition hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-400/[0.06] sm:min-h-[128px] sm:p-4"
             >
               <div className="flex h-full flex-col">
                 <div>
-                  <p
-                    aria-hidden="true"
-                    className="mb-2 text-2xl leading-none sm:mb-3 sm:text-3xl"
-                  >
-                    {card.icon}
-                  </p>
-                  <h3 className="flex min-h-[2.5rem] items-start justify-center text-[13px] font-black leading-snug text-yellow-300 sm:min-h-[3.4rem] sm:text-lg xl:justify-start">
+                  <h3 className="flex min-h-[2.1rem] items-start justify-center text-[13px] font-black leading-snug text-yellow-300 sm:min-h-[2.75rem] sm:text-base xl:justify-start">
                     {card.title}
                   </h3>
-                  <p className="mt-1 text-[11px] font-semibold leading-5 text-slate-300 sm:mt-2 sm:text-sm sm:leading-6">
+                  <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-300 sm:text-xs sm:leading-5">
                     {card.description}
                   </p>
                 </div>
