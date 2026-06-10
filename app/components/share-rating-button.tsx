@@ -552,8 +552,8 @@ export default function ShareRatingButton({
                 </button>
               </div>
 
-              <div className="mx-auto mt-4 aspect-[9/16] max-h-[58vh] w-full max-w-[290px] overflow-hidden rounded-[2rem] border border-yellow-400/30 bg-[radial-gradient(circle_at_50%_42%,rgba(250,204,21,0.24),transparent_34%),linear-gradient(145deg,#182131,#020617_50%,#100f05)] p-4 shadow-2xl shadow-yellow-400/20 sm:mt-5 sm:max-h-[62vh] sm:max-w-[360px] sm:p-5">
-                <div className="flex h-full flex-col">
+              <div className="mx-auto mt-4 w-full max-w-[290px] overflow-hidden rounded-[2rem] border border-yellow-400/30 bg-[radial-gradient(circle_at_50%_42%,rgba(250,204,21,0.24),transparent_34%),linear-gradient(145deg,#182131,#020617_50%,#100f05)] p-4 shadow-2xl shadow-yellow-400/20 sm:mt-5 sm:max-w-[360px] sm:p-5">
+                <div className="flex flex-col">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-300 sm:text-xs">
                       Rated on PopScore
@@ -620,7 +620,7 @@ export default function ShareRatingButton({
                     </div>
                   ) : null}
 
-                  <div className="mt-auto pt-4 text-center">
+                  <div className="mt-4 text-center">
                     <p className="text-lg font-black text-white">
                       What would you score it?
                     </p>
