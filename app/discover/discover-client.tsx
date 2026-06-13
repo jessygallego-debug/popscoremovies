@@ -622,9 +622,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
       <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
         {visibleMovies.map((movie) => {
           const discoveryReturnPath = discoveryReturnPathForGenre(genre);
-          const detailsHref = `${movieHref(movie)}?returnTo=${encodeURIComponent(
-            discoveryReturnPath
-          )}`;
+          const detailsHref = movieHref(movie);
           const rateParams = new URLSearchParams({
             from: "discover",
             genre,

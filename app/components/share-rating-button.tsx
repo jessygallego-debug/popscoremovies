@@ -9,7 +9,7 @@ import {
   getUserRatings,
   UserMovieRating,
 } from "@/lib/profile-store";
-import { movieHrefById } from "@/lib/urls";
+import { movieHref } from "@/lib/urls";
 
 type ShareRatingButtonProps = {
   className?: string;
@@ -284,7 +284,7 @@ export default function ShareRatingButton({
   const [isOpen, setIsOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
-  const moviePath = movieHrefById(movieId);
+  const moviePath = movieHref({ id: movieId, title: movieTitle });
   const shareUrl =
     typeof window === "undefined"
       ? moviePath

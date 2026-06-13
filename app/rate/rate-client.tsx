@@ -23,6 +23,7 @@ import {
   REVIEW_COMMENT_MAX_LENGTH,
   validateReviewComment,
 } from "@/lib/review-comments";
+import { movieHref } from "@/lib/urls";
 
 const genreConfigs = GENRE_RATING_CONFIGS;
 
@@ -154,9 +155,13 @@ export default function RateClient({
   const genresToShow: GenreEntry[] = lockGenre
     ? [[selectedGenre, currentGenre]]
     : (Object.entries(genreConfigs) as GenreEntry[]);
-  const detailExitHref = movieId
-    ? `/movie/${movieId}?returnTo=${encodeURIComponent(returnTo)}`
-    : returnTo;
+  const detailExitHref =
+    movieId && movieTitle
+      ? `${movieHref({
+          id: movieId,
+          title: movieTitle,
+        })}?returnTo=${encodeURIComponent(returnTo)}`
+      : returnTo;
   const exitHref = submitReturnTo ?? detailExitHref;
   const submitHref = submitReturnTo ?? detailExitHref;
   const popRating = getPopRating(popScore);

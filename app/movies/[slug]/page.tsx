@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
   generateMovieMetadata,
   MovieDetailPage,
 } from "@/app/movie/movie-detail-page";
-import { movieIdFromSlug } from "@/lib/urls";
+import { getMovie } from "@/lib/tmdb";
+import { movieHref, movieIdFromSlug } from "@/lib/urls";
 
 export const revalidate = 3600;
 
@@ -41,6 +42,13 @@ export default async function SeoMoviePage({
 
   if (!id) {
     notFound();
+  }
+
+  const movie = await getMovie(id);
+  const canonicalPath = movie ? movieHref(movie) : null;
+
+  if (canonicalPath && canonicalPath !== `/movies/${slug}`) {
+    permanentRedirect(canonicalPath);
   }
 
   return <MovieDetailPage id={id} searchParams={searchParams} />;

@@ -541,11 +541,7 @@ function releaseYear(value: string) {
 }
 
 function communityMovieHref(movieId: string, movieTitle?: string) {
-  const path = movieTitle
-    ? movieHref({ id: movieId, title: movieTitle })
-    : `/movie/${movieId}`;
-
-  return `${path}?returnTo=${encodeURIComponent("/community")}`;
+  return movieHref({ id: movieId, title: movieTitle ?? "movie" });
 }
 
 function communityRateHref(movieId: string) {

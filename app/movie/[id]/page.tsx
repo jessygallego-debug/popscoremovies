@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 import {
   generateMovieMetadata,
   MovieDetailPage,
 } from "@/app/movie/movie-detail-page";
+import { getMovie } from "@/lib/tmdb";
+import { movieHref } from "@/lib/urls";
 
 export const revalidate = 3600;
 
@@ -24,6 +27,11 @@ export default async function MoviePage({
   searchParams: Promise<{ returnTo?: string }>;
 }) {
   const { id } = await params;
+  const movie = await getMovie(id);
+
+  if (movie) {
+    permanentRedirect(movieHref(movie));
+  }
 
   return <MovieDetailPage id={id} searchParams={searchParams} />;
 }

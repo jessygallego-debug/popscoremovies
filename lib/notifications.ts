@@ -5,6 +5,7 @@ import {
   getCurrentUser,
   getSupabaseAccessToken,
 } from "@/lib/profile-store";
+import { movieHref } from "@/lib/urls";
 
 export const NOTIFICATIONS_UPDATED_EVENT = "popscore-notifications-updated";
 export const NOTIFICATION_TARGET_CHANGED_EVENT =
@@ -464,7 +465,10 @@ export function getNotificationHref(notification: PopScoreNotification) {
   if (notification.entityType === "movie") {
     const params = new URLSearchParams({ movieId: notification.entityId });
 
-    return `/movie/${notification.entityId}?${params.toString()}`;
+    return `${movieHref({
+      id: notification.entityId,
+      title: "movie",
+    })}?${params.toString()}`;
   }
 
   return "/community";

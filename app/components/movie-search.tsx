@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { formatReleaseMonthYear } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
 
@@ -16,29 +16,11 @@ type MovieSearchProps = {
   initialQuery: string;
 };
 
-function buildReturnTo(query: string, genreId?: string) {
-  const params = new URLSearchParams();
-  const trimmedQuery = query.trim();
-
-  if (trimmedQuery) {
-    params.set("query", trimmedQuery);
-  }
-
-  if (genreId) {
-    params.set("genre", genreId);
-  }
-
-  const queryString = params.toString();
-
-  return queryString ? `/?${queryString}` : "/";
-}
-
 export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps) {
   const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<MovieSuggestion[]>([]);
   const [isFocused, setIsFocused] = useState(false);
 
-  const returnTo = useMemo(() => buildReturnTo(query, genreId), [genreId, query]);
   const showSuggestions =
     isFocused && query.trim().length >= 2 && suggestions.length > 0;
   const hasQuery = query.length > 0;
@@ -132,9 +114,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
                 <Link
                   key={movie.id}
                   data-remember-scroll
-                  href={`${movieHref(movie)}?returnTo=${encodeURIComponent(
-                    returnTo
-                  )}`}
+                  href={movieHref(movie)}
                   className="block border-b border-gray-900 px-5 py-3 text-sm font-bold text-white last:border-b-0 hover:bg-yellow-400 hover:text-black"
                 >
                   {movie.title}

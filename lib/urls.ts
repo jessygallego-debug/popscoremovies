@@ -24,10 +24,6 @@ export function movieHref(movie: MovieLinkTarget) {
   return `/movies/${movieSlug(movie)}`;
 }
 
-export function movieHrefById(id: string | number) {
-  return `/movie/${id}`;
-}
-
 export function movieIdFromSlug(slug: string) {
   const [, id] = slug.match(/-(\d+)$/) ?? [];
 

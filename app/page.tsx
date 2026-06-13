@@ -398,9 +398,7 @@ export default async function Home({
                   ? formatReleaseMonthYear(movie.release_date)
                   : "";
                 const genreLabels = genreLabelsForMovie(movie);
-                const detailsHref = `${seoMovieHref(
-                  movie
-                )}?returnTo=${encodeURIComponent(currentPagePath)}`;
+                const detailsHref = seoMovieHref(movie);
                 const rateHref = `/rate?movie=${
                   movie.id
                 }&returnTo=${encodeURIComponent(currentPagePath)}&from=home`;
