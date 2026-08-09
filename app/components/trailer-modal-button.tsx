@@ -133,17 +133,15 @@ export default function TrailerModalButton({
                 >
                   <svg
                     aria-hidden="true"
-                    className="h-5 w-5"
+                    className="h-7 w-7"
                     fill="none"
                     stroke="currentColor"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="2.4"
-                    viewBox="0 0 24 24"
+                    strokeWidth="4.5"
+                    viewBox="0 0 48 48"
                   >
-                    <path d="M15 6.5 21 12l-6 5.5" />
-                    <path d="M20 12h-7.5A8.5 8.5 0 0 0 4 20" />
-                    <path d="M12.5 12A8.5 8.5 0 0 0 4 4" />
+                    <path d="M8 40C7.5 26.5 15.5 16.5 31 14V7l14 13-14 13v-8C19.5 25 12 30.5 8 40Z" />
                   </svg>
                 </button>
                 <button
