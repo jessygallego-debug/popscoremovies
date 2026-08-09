@@ -210,7 +210,7 @@ export async function MovieDetailPage({
   searchParams,
 }: {
   id: string;
-  searchParams: Promise<{ returnTo?: string }>;
+  searchParams: Promise<{ returnTo?: string; trailer?: string }>;
 }) {
   const queryParams = await searchParams;
   const movie = await getMovie(id);
@@ -257,6 +257,7 @@ export async function MovieDetailPage({
     )
   );
   const closeHref = getSafeReturnPath(queryParams.returnTo);
+  const moviePath = movieHref(movie);
   const rateHref = `/rate?movie=${movie.id}&returnTo=${encodeURIComponent(
     closeHref
   )}`;
@@ -394,6 +395,8 @@ export async function MovieDetailPage({
                   </Link>
                   {trailer ? (
                     <TrailerModalButton
+                      autoOpen={queryParams.trailer === "1"}
+                      moviePath={moviePath}
                       movieTitle={movie.title}
                       trailerKey={trailer.key}
                       trailerTitle={trailer.name}

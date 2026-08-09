@@ -35,7 +35,7 @@ export default async function SeoMoviePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ returnTo?: string }>;
+  searchParams: Promise<{ returnTo?: string; trailer?: string }>;
 }) {
   const { slug } = await params;
   const id = movieIdFromSlug(slug);

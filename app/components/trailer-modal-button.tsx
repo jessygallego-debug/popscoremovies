@@ -3,17 +3,22 @@
 import { useEffect, useMemo, useState } from "react";
 
 type TrailerModalButtonProps = {
+  autoOpen?: boolean;
+  moviePath: string;
   movieTitle: string;
   trailerKey: string;
   trailerTitle?: string;
 };
 
 export default function TrailerModalButton({
+  autoOpen = false,
+  moviePath,
   movieTitle,
   trailerKey,
   trailerTitle,
 }: TrailerModalButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(autoOpen);
+  const [statusMessage, setStatusMessage] = useState("");
   const embedUrl = useMemo(() => {
     const params = new URLSearchParams({
       autoplay: "1",
@@ -25,6 +30,16 @@ export default function TrailerModalButton({
       trailerKey
     )}?${params.toString()}`;
   }, [trailerKey]);
+  const shareUrl = useMemo(() => {
+    if (typeof window === "undefined") {
+      return moviePath;
+    }
+
+    const url = new URL(moviePath, window.location.origin);
+    url.searchParams.set("trailer", "1");
+
+    return url.toString();
+  }, [moviePath]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -46,15 +61,62 @@ export default function TrailerModalButton({
     };
   }, [isOpen]);
 
+  const copyTrailerLink = () => {
+    setStatusMessage("");
+    navigator.clipboard
+      .writeText(shareUrl)
+      .then(() => {
+        setStatusMessage("Trailer link copied!");
+      })
+      .catch(() => {
+        setStatusMessage("Could not copy link.");
+      });
+  };
+
+  const handleShareTrailer = async () => {
+    setStatusMessage("");
+
+    if (!navigator.share) {
+      copyTrailerLink();
+      return;
+    }
+
+    try {
+      await navigator.share({
+        title: `${movieTitle} Trailer on PopScore`,
+        text: `Watch the ${movieTitle} trailer on PopScore.`,
+        url: shareUrl,
+      });
+    } catch {
+      // Closing the native share sheet should not show an error.
+    }
+  };
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
-      >
-        Watch Trailer
-      </button>
+      <div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
+          >
+            Watch Trailer
+          </button>
+          <button
+            type="button"
+            onClick={handleShareTrailer}
+            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-6 font-bold text-white transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-300"
+          >
+            Share Trailer
+          </button>
+        </div>
+        {statusMessage ? (
+          <p className="mt-2 text-sm font-bold text-yellow-200">
+            {statusMessage}
+          </p>
+        ) : null}
+      </div>
 
       {isOpen ? (
         <div

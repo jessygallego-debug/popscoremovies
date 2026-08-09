@@ -24,7 +24,7 @@ export default async function MoviePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ returnTo?: string }>;
+  searchParams: Promise<{ returnTo?: string; trailer?: string }>;
 }) {
   const { id } = await params;
   const movie = await getMovie(id);
