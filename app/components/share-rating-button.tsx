@@ -176,6 +176,12 @@ function downloadDataUrl(dataUrl: string, filename: string) {
   link.remove();
 }
 
+function canvasToBlob(canvas: HTMLCanvasElement) {
+  return new Promise<Blob | null>((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), "image/png");
+  });
+}
+
 async function getPosterForDownload(movieId: string, posterPath?: string | null) {
   const primaryPoster = sharePosterUrl(posterPath, "w780");
 
@@ -283,6 +289,7 @@ export default function ShareRatingButton({
 }: ShareRatingButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharingStory, setIsSharingStory] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const moviePath = movieHref({ id: movieId, title: movieTitle });
   const shareUrl =
@@ -368,19 +375,14 @@ export default function ShareRatingButton({
     }
   };
 
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    setStatusMessage("Preparing your story...");
-
+  const createStoryCanvas = async () => {
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
     canvas.height = 1920;
     const context = canvas.getContext("2d");
 
     if (!context) {
-      setIsDownloading(false);
-      setStatusMessage("Could not create image.");
-      return;
+      return null;
     }
 
     const gradient = context.createLinearGradient(0, 0, 1080, 1920);
@@ -510,6 +512,70 @@ export default function ShareRatingButton({
     context.fillText("PopScoreMovies.com", 540, 1688);
     context.textAlign = "start";
 
+    return canvas;
+  };
+
+  const handleShareStory = async () => {
+    setIsSharingStory(true);
+    setStatusMessage("Preparing your story...");
+
+    try {
+      const canvas = await createStoryCanvas();
+
+      if (!canvas) {
+        setStatusMessage("Could not create story image.");
+        return;
+      }
+
+      const blob = await canvasToBlob(canvas);
+
+      if (!blob) {
+        setStatusMessage("Could not create story image.");
+        return;
+      }
+
+      const file = new File([blob], `${fileSafeTitle}-popscore-story.png`, {
+        type: "image/png",
+      });
+      const shareData = { files: [file] };
+
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+        setStatusMessage("Story image ready to post.");
+        return;
+      }
+
+      downloadDataUrl(
+        canvas.toDataURL("image/png"),
+        `${fileSafeTitle}-popscore-story.png`
+      );
+      setStatusMessage(
+        "Story downloaded. Add it to your story from your photos."
+      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setStatusMessage("");
+        return;
+      }
+
+      setStatusMessage("Could not open story sharing. Try Download Story.");
+    } finally {
+      setIsSharingStory(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    setStatusMessage("Preparing your story...");
+
+    const canvas = await createStoryCanvas();
+
+    if (!canvas) {
+      setIsDownloading(false);
+      setStatusMessage("Could not create image.");
+      return;
+    }
+
     downloadDataUrl(
       canvas.toDataURL("image/png"),
       `${fileSafeTitle}-popscore-rating.png`
@@ -631,13 +697,21 @@ export default function ShareRatingButton({
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2 sm:mt-5 sm:grid-cols-3 sm:gap-3">
+              <div className="mt-4 grid gap-2 sm:mt-5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
                 <button
                   type="button"
                   onClick={handleShare}
                   className="min-h-12 rounded-2xl bg-yellow-400 px-4 font-black text-black transition hover:bg-yellow-300"
                 >
                   Share
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShareStory}
+                  disabled={isSharingStory}
+                  className="min-h-12 rounded-2xl border border-yellow-400/35 bg-yellow-400/10 px-4 font-black text-yellow-300 transition hover:bg-yellow-400/15 disabled:cursor-wait disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                >
+                  Share to Story
                 </button>
                 <button
                   type="button"
