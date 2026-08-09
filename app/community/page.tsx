@@ -1504,7 +1504,7 @@ function StartDiscussionModal({
   );
 }
 
-function CreatePostBox({
+function FeedSearchInput({
   onSearchChange,
   searchQuery,
 }: {
@@ -1514,38 +1514,34 @@ function CreatePostBox({
   const hasSearchQuery = searchQuery.trim().length > 0;
 
   return (
-    <section className={cardClass("p-3 sm:p-4")}>
-      <div>
-        <label htmlFor="community-feed-movie-search">
-          <span className="mb-2 block text-sm font-black text-white sm:text-base">
-            Search Movie
-          </span>
-          <span className="sr-only">
-            Search movies and comments in the community feed
-          </span>
-        </label>
-        <div className="relative">
-          <input
-            id="community-feed-movie-search"
-            type="search"
-            value={searchQuery}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search movies or feed comments..."
-            className="min-h-12 w-full rounded-2xl border border-slate-700 bg-black/35 px-4 pr-12 text-sm font-bold text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
-          />
-          {hasSearchQuery ? (
-            <button
-              type="button"
-              aria-label="Clear feed movie search"
-              onClick={() => onSearchChange("")}
-              className="absolute right-4 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-300"
-            >
-              X
-            </button>
-          ) : null}
-        </div>
+    <label
+      htmlFor="community-feed-movie-search"
+      className="block w-full min-w-0 sm:w-64 lg:w-72 xl:w-80"
+    >
+      <span className="sr-only">
+        Search movies and comments in the community feed
+      </span>
+      <div className="relative">
+        <input
+          id="community-feed-movie-search"
+          type="search"
+          value={searchQuery}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="Search Movie"
+          className="min-h-10 w-full rounded-full border border-slate-700 bg-black/35 px-4 pr-11 text-sm font-bold text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
+        />
+        {hasSearchQuery ? (
+          <button
+            type="button"
+            aria-label="Clear feed movie search"
+            onClick={() => onSearchChange("")}
+            className="absolute right-3 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-xs font-black text-slate-300 transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-300"
+          >
+            X
+          </button>
+        ) : null}
       </div>
-    </section>
+    </label>
   );
 }
 
@@ -1644,28 +1640,38 @@ function FilterMenu({
 
 function CommunityFilters({
   onGenreChange,
+  onSearchChange,
   onTrendChange,
+  searchQuery,
   selectedGenre,
   selectedTrend,
 }: {
   onGenreChange: (genre: string) => void;
+  onSearchChange: (query: string) => void;
   onTrendChange: (trend: string) => void;
+  searchQuery: string;
   selectedGenre: string;
   selectedTrend: string;
 }) {
   return (
     <section className={cardClass("relative z-[60] overflow-visible p-2")}>
-      <div className="flex flex-wrap gap-2">
-        <FilterMenu
-          onSelect={onGenreChange}
-          options={genreFilters}
-          selectedOption={selectedGenre}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <FeedSearchInput
+          searchQuery={searchQuery}
+          onSearchChange={onSearchChange}
         />
-        <FilterMenu
-          onSelect={onTrendChange}
-          options={trendFilters}
-          selectedOption={selectedTrend}
-        />
+        <div className="flex flex-wrap gap-2 sm:justify-end">
+          <FilterMenu
+            onSelect={onGenreChange}
+            options={genreFilters}
+            selectedOption={selectedGenre}
+          />
+          <FilterMenu
+            onSelect={onTrendChange}
+            options={trendFilters}
+            selectedOption={selectedTrend}
+          />
+        </div>
       </div>
     </section>
   );
@@ -3059,13 +3065,11 @@ export default function CommunityPage() {
           <div className="space-y-4 sm:space-y-5">
             {selectedTab === "Feed" ? (
               <>
-                <CreatePostBox
-                  searchQuery={feedSearchQuery}
-                  onSearchChange={setFeedSearchQuery}
-                />
                 <CommunityFilters
                   onGenreChange={setSelectedGenre}
+                  onSearchChange={setFeedSearchQuery}
                   onTrendChange={setSelectedTrend}
+                  searchQuery={feedSearchQuery}
                   selectedGenre={selectedGenre}
                   selectedTrend={selectedTrend}
                 />
