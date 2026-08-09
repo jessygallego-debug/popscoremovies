@@ -5,14 +5,20 @@ import NotificationItem from "@/app/components/notification-item";
 import type { PopScoreNotification } from "@/lib/notifications";
 
 type NotificationDropdownProps = {
+  canClearNotifications?: boolean;
   isLoading?: boolean;
+  isClearingNotifications?: boolean;
   notifications: PopScoreNotification[];
+  onClearNotifications: () => void;
   onSelect: (notification: PopScoreNotification) => void;
 };
 
 export default function NotificationDropdown({
+  canClearNotifications = false,
   isLoading = false,
+  isClearingNotifications = false,
   notifications,
+  onClearNotifications,
   onSelect,
 }: NotificationDropdownProps) {
   return (
@@ -49,12 +55,22 @@ export default function NotificationDropdown({
         )}
       </div>
 
-      <Link
-        href="/notifications"
-        className="mt-2 block rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-3 py-2.5 text-center text-xs font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-black sm:mt-3 sm:px-4 sm:py-3 sm:text-sm"
-      >
-        View all notifications
-      </Link>
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-3">
+        <Link
+          href="/notifications"
+          className="flex min-h-11 items-center justify-center rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-2 py-2 text-center text-[10px] font-black leading-4 text-yellow-300 transition hover:bg-yellow-400 hover:text-black sm:min-h-12 sm:px-3 sm:text-xs"
+        >
+          View all notifications
+        </Link>
+        <button
+          type="button"
+          disabled={!canClearNotifications || isClearingNotifications}
+          onClick={onClearNotifications}
+          className="flex min-h-11 items-center justify-center rounded-2xl border border-slate-700/90 bg-slate-900/90 px-2 py-2 text-center text-[10px] font-black leading-4 text-slate-200 transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-200 disabled:cursor-not-allowed disabled:opacity-45 sm:min-h-12 sm:px-3 sm:text-xs"
+        >
+          {isClearingNotifications ? "Clearing..." : "Clear Notifications"}
+        </button>
+      </div>
     </div>
   );
 }

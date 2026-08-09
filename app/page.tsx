@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import CoStarReactions from "@/app/components/co-star-reactions";
+import HomeGenreFilter from "@/app/components/home-genre-filter";
 import LovedItBadge from "@/app/components/loved-it-badge";
 import MovieSearch from "@/app/components/movie-search";
 import MoviePosterImage from "@/app/components/movie-poster-image";
@@ -357,9 +358,10 @@ export default async function Home({
         </div>
 
         <section id="genres" className="mt-8">
+          <HomeGenreFilter filters={genreFilters} />
           <div
             aria-label="Filter movies by genre"
-            className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-8"
+            className="hidden grid-cols-3 gap-2 sm:grid sm:grid-cols-4 sm:gap-3 md:grid-cols-8"
           >
             {genreFilters.map((genre) => (
               <Link

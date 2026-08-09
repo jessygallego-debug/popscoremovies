@@ -8,6 +8,7 @@ import {
   getCurrentNotificationUserId,
   getNotificationHref,
   getNotificationsForUser,
+  markAllNotificationsAsRead,
   markNotificationAsRead,
   NOTIFICATION_TARGET_CHANGED_EVENT,
   NOTIFICATIONS_UPDATED_EVENT,
@@ -56,6 +57,7 @@ export default function NotificationBell({
   } = usePopFile();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isClearingNotifications, setIsClearingNotifications] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<PopScoreNotification[]>(
@@ -158,6 +160,25 @@ export default function NotificationBell({
     }, 50);
   };
 
+  const clearNotifications = () => {
+    if (!userId || isClearingNotifications) {
+      return;
+    }
+
+    setIsClearingNotifications(true);
+    setNotifications((currentNotifications) =>
+      currentNotifications.map((notification) => ({
+        ...notification,
+        isRead: true,
+      }))
+    );
+
+    void markAllNotificationsAsRead(userId)
+      .then(refreshNotifications)
+      .catch(() => undefined)
+      .finally(() => setIsClearingNotifications(false));
+  };
+
   return (
     <div ref={wrapperRef} className={`relative z-[1200] ${className}`}>
       <button
@@ -188,8 +209,11 @@ export default function NotificationBell({
 
       {isOpen ? (
         <NotificationDropdown
+          canClearNotifications={hasUnread}
           isLoading={isLoading || !userId}
+          isClearingNotifications={isClearingNotifications}
           notifications={notifications}
+          onClearNotifications={clearNotifications}
           onSelect={selectNotification}
         />
       ) : null}
