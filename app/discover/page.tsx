@@ -70,7 +70,7 @@ export default async function DiscoverPage({
             <div className="mb-4 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-yellow-300 sm:mb-5 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.18em]">
               Personalized Picks
             </div>
-            <h1 className="max-w-[13ch] break-words text-3xl font-black leading-[0.98] text-white [overflow-wrap:anywhere] sm:text-6xl">
+            <h1 className="max-w-[18ch] text-3xl font-black leading-[0.98] text-white sm:text-6xl">
               Discover Personalized Movie Recommendations
             </h1>
             <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:mt-5 sm:text-lg sm:leading-8">
