@@ -17,6 +17,10 @@ import {
   type CommunityDiscussionReply,
 } from "@/lib/community-discussions";
 import {
+  COMMUNITY_DISCUSSIONS_UPDATED_EVENT,
+  getCommunityDiscussion,
+} from "@/lib/community-discussions-store";
+import {
   createNotification,
   getCurrentNotificationActor,
   NOTIFICATION_TARGET_CHANGED_EVENT,
@@ -301,6 +305,9 @@ export default function DiscussionDetailClient({
 }) {
   const [storedDiscussion, setStoredDiscussion] =
     useState<CommunityDiscussion | null>(null);
+  const [isLoadingDiscussion, setIsLoadingDiscussion] = useState(
+    () => !getMockCommunityDiscussion(discussionId)
+  );
   const [isSpoilerVisible, setIsSpoilerVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [replySort, setReplySort] = useState<ReplySort>("Top");
@@ -363,12 +370,53 @@ export default function DiscussionDetailClient({
   );
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setStoredDiscussion(findStoredDiscussion(discussionId));
-    }, 0);
+    let isCurrent = true;
+
+    const loadDiscussion = () => {
+      const localDiscussion = findStoredDiscussion(discussionId);
+
+      setStoredDiscussion(localDiscussion);
+      setIsLoadingDiscussion(true);
+
+      void getCommunityDiscussion(discussionId)
+        .then((sharedDiscussion) => {
+          if (!isCurrent) {
+            return;
+          }
+
+          if (sharedDiscussion) {
+            setStoredDiscussion(sharedDiscussion);
+          }
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          if (isCurrent) {
+            setIsLoadingDiscussion(false);
+          }
+        });
+    };
+
+    const refreshStoredDiscussion = (event: StorageEvent) => {
+      if (event.key === communityDiscussionsStorageKey) {
+        loadDiscussion();
+      }
+    };
+
+    const timeout = window.setTimeout(loadDiscussion, 0);
+
+    window.addEventListener("storage", refreshStoredDiscussion);
+    window.addEventListener(COMMUNITY_DISCUSSIONS_UPDATED_EVENT, loadDiscussion);
+    window.addEventListener("focus", loadDiscussion);
 
     return () => {
+      isCurrent = false;
       window.clearTimeout(timeout);
+      window.removeEventListener("storage", refreshStoredDiscussion);
+      window.removeEventListener(
+        COMMUNITY_DISCUSSIONS_UPDATED_EVENT,
+        loadDiscussion
+      );
+      window.removeEventListener("focus", loadDiscussion);
     };
   }, [discussionId]);
 
@@ -473,10 +521,12 @@ export default function DiscussionDetailClient({
               Back to Community
             </Link>
             <h1 className="mt-4 text-2xl font-black text-white">
-              Discussion not found
+              {isLoadingDiscussion ? "Loading discussion" : "Discussion not found"}
             </h1>
             <p className="mt-2 text-sm font-semibold text-slate-400">
-              This discussion may have been removed or has not been posted yet.
+              {isLoadingDiscussion
+                ? "Checking the latest community discussions."
+                : "This discussion may have been removed or has not been posted yet."}
             </p>
           </div>
         </section>

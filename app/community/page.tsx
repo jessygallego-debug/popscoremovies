@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CommunityPostComments from "@/app/components/community-post-comments";
 import FollowButton from "@/app/components/follow-button";
 import CommunityPostLikeButton from "@/app/components/community-post-like-button";
@@ -23,6 +23,13 @@ import {
   type DiscussionFilter,
   type DiscussionType,
 } from "@/lib/community-discussions";
+import {
+  COMMUNITY_DISCUSSIONS_UPDATED_EVENT,
+  createCommunityDiscussion,
+  getCommunityDiscussions,
+  mergeCommunityDiscussions,
+  notifyCommunityDiscussionsUpdated,
+} from "@/lib/community-discussions-store";
 import { avatarForKey } from "@/lib/profile-config";
 import {
   FOLLOWS_UPDATED_EVENT,
@@ -2842,12 +2849,8 @@ export default function CommunityPage() {
   const [feedActivitySummaries, setFeedActivitySummaries] = useState<
     Record<string, CommunityPostActivitySummary>
   >({});
-  const actualDiscussions = useMemo(
-    () => createdDiscussions,
-    [createdDiscussions]
-  );
   const communityDiscussions = useMemo(
-    () => [...createdDiscussions, ...mockCommunityDiscussions],
+    () => mergeCommunityDiscussions(createdDiscussions, mockCommunityDiscussions),
     [createdDiscussions]
   );
   const realFeedPosts = useMemo(
@@ -2887,7 +2890,7 @@ export default function CommunityPage() {
     () => mergeMentionableUsers(discoverableUsers, suggestedFollows),
     [discoverableUsers]
   );
-  const sidebarDiscussions = actualDiscussions;
+  const sidebarDiscussions = communityDiscussions;
   const showSocialSidebar =
     selectedTab === "Feed" || selectedTab === "Discussions";
   const showDiscussions = () => {
@@ -2951,7 +2954,26 @@ export default function CommunityPage() {
       communityDiscussionsStorageKey,
       JSON.stringify(nextDiscussions)
     );
+    notifyCommunityDiscussionsUpdated();
   };
+
+  const loadCreatedDiscussions = useCallback(() => {
+    const localDiscussions = parseStoredCommunityDiscussions(
+      window.localStorage.getItem(communityDiscussionsStorageKey)
+    );
+
+    setCreatedDiscussions(localDiscussions);
+
+    void getCommunityDiscussions()
+      .then((sharedDiscussions) => {
+        setCreatedDiscussions(
+          mergeCommunityDiscussions(sharedDiscussions, localDiscussions)
+        );
+      })
+      .catch(() => {
+        setCreatedDiscussions(localDiscussions);
+      });
+  }, []);
 
   const postDiscussion = (discussion: CommunityDiscussion) => {
     setCreatedDiscussions((currentDiscussions) => {
@@ -2966,6 +2988,20 @@ export default function CommunityPage() {
 
       return nextDiscussions;
     });
+    void createCommunityDiscussion(discussion)
+      .then((savedDiscussion) => {
+        setCreatedDiscussions((currentDiscussions) => {
+          const nextDiscussions = mergeCommunityDiscussions(
+            [savedDiscussion],
+            currentDiscussions
+          );
+
+          saveCreatedDiscussions(nextDiscussions);
+
+          return nextDiscussions;
+        });
+      })
+      .catch(() => undefined);
     setIsDiscussionDialogOpen(false);
     setSelectedTab("Discussions");
 
@@ -2984,18 +3020,30 @@ export default function CommunityPage() {
   };
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setCreatedDiscussions(
-        parseStoredCommunityDiscussions(
-          window.localStorage.getItem(communityDiscussionsStorageKey)
-        )
-      );
-    }, 0);
+    const timeout = window.setTimeout(loadCreatedDiscussions, 0);
+    const refreshStoredDiscussions = (event: StorageEvent) => {
+      if (event.key === communityDiscussionsStorageKey) {
+        loadCreatedDiscussions();
+      }
+    };
+
+    window.addEventListener("storage", refreshStoredDiscussions);
+    window.addEventListener(
+      COMMUNITY_DISCUSSIONS_UPDATED_EVENT,
+      loadCreatedDiscussions
+    );
+    window.addEventListener("focus", loadCreatedDiscussions);
 
     return () => {
       window.clearTimeout(timeout);
+      window.removeEventListener("storage", refreshStoredDiscussions);
+      window.removeEventListener(
+        COMMUNITY_DISCUSSIONS_UPDATED_EVENT,
+        loadCreatedDiscussions
+      );
+      window.removeEventListener("focus", loadCreatedDiscussions);
     };
-  }, []);
+  }, [loadCreatedDiscussions]);
 
   useEffect(() => {
     const refreshFeedActivity = () => {
@@ -3148,7 +3196,7 @@ export default function CommunityPage() {
               />
             ) : selectedTab === "Discussions" ? (
               <DiscussionsTabContent
-                discussions={actualDiscussions}
+                discussions={communityDiscussions}
                 onStartDiscussion={() => setIsDiscussionDialogOpen(true)}
               />
             ) : (
