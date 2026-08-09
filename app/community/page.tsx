@@ -2003,6 +2003,7 @@ function DiscussionFilters({
   onFilterChange,
   onGenreChange,
   onSearchChange,
+  onStartDiscussion,
   searchQuery,
   selectedFilter,
   selectedGenre,
@@ -2010,6 +2011,7 @@ function DiscussionFilters({
   onFilterChange: (filter: DiscussionFilter) => void;
   onGenreChange: (genre: string) => void;
   onSearchChange: (query: string) => void;
+  onStartDiscussion: () => void;
   searchQuery: string;
   selectedFilter: DiscussionFilter;
   selectedGenre: string;
@@ -2056,6 +2058,13 @@ function DiscussionFilters({
             options={[...discussionFilterOptions]}
             selectedOption={selectedFilter}
           />
+          <button
+            type="button"
+            onClick={onStartDiscussion}
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-yellow-400 px-4 text-xs font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:px-5"
+          >
+            + Start Discussion
+          </button>
         </div>
       </div>
     </section>
@@ -2174,30 +2183,11 @@ function DiscussionsTabContent({
 
   return (
     <div className="space-y-3 sm:space-y-5">
-      <section className={cardClass("p-3 sm:p-5")}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-black text-white sm:text-2xl">
-              Discussions
-            </h2>
-            <p className="mt-1 text-xs font-semibold text-slate-400 sm:text-sm">
-              Jump into movie conversations happening right now.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onStartDiscussion}
-            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:px-5 sm:py-3"
-          >
-            + Start Discussion
-          </button>
-        </div>
-      </section>
-
       <DiscussionFilters
         onFilterChange={setSelectedFilter}
         onGenreChange={setSelectedGenre}
         onSearchChange={setDiscussionSearchQuery}
+        onStartDiscussion={onStartDiscussion}
         searchQuery={discussionSearchQuery}
         selectedFilter={selectedFilter}
         selectedGenre={selectedGenre}
