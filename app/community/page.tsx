@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import CommunityPostComments from "@/app/components/community-post-comments";
 import FollowButton from "@/app/components/follow-button";
@@ -492,6 +491,21 @@ function getVisibleFeedPosts(
   );
 }
 
+function feedPostMatchesMovieSearch(post: CommunityFeedPost, query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  return [
+    post.movie.title,
+    post.activity,
+    post.comment ?? "",
+    ...post.genres,
+  ].some((value) => value.toLowerCase().includes(normalizedQuery));
+}
+
 function getVisibleDiscussions(
   discussions: CommunityDiscussion[],
   selectedFilter: DiscussionFilter,
@@ -542,12 +556,6 @@ function releaseYear(value: string) {
 
 function communityMovieHref(movieId: string, movieTitle?: string) {
   return movieHref({ id: movieId, title: movieTitle ?? "movie" });
-}
-
-function communityRateHref(movieId: string) {
-  return `/rate?movie=${movieId}&returnTo=${encodeURIComponent(
-    "/community"
-  )}&from=community`;
 }
 
 function formatRelativePostTime(value: string) {
@@ -911,23 +919,6 @@ function useFollowingIds() {
   return followingIds;
 }
 
-function formatSuggestionDate(value: string) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
-
 function Avatar({
   label,
   size = "md",
@@ -1028,159 +1019,6 @@ function CommunityTabs({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function SelectMovieDialog({
-  onClose,
-}: {
-  onClose: () => void;
-}) {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<MovieSuggestion[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
-    document.addEventListener("keydown", closeOnEscape);
-
-    return () => {
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [onClose]);
-
-  useEffect(() => {
-    const trimmedQuery = query.trim();
-
-    if (trimmedQuery.length < 2) {
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => {
-      setIsSearching(true);
-
-      fetch(
-        `/api/search-suggestions?${new URLSearchParams({
-          query: trimmedQuery,
-        }).toString()}`,
-        { signal: controller.signal }
-      )
-        .then((response) => response.json())
-        .then((data: { suggestions?: MovieSuggestion[] }) => {
-          setSuggestions(data.suggestions ?? []);
-        })
-        .catch(() => {
-          if (!controller.signal.aborted) {
-            setSuggestions([]);
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setIsSearching(false);
-          }
-        });
-    }, 180);
-
-    return () => {
-      controller.abort();
-      window.clearTimeout(timeout);
-    };
-  }, [query]);
-
-  const selectMovie = (movieId: number) => {
-    router.push(communityRateHref(String(movieId)));
-  };
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Select a movie to rate"
-      className="fixed inset-0 z-[120] flex items-start justify-center bg-black/75 px-4 py-24 backdrop-blur-sm sm:py-28"
-      onMouseDown={onClose}
-    >
-      <div
-        className="w-full max-w-2xl rounded-3xl border border-slate-700 bg-slate-950 p-4 shadow-2xl shadow-black/70 sm:p-5"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-black text-white">Select Movie</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-400">
-              Search for a movie, then rate it.
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label="Close movie selector"
-            onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:text-yellow-300"
-          >
-            X
-          </button>
-        </div>
-
-        <label className="mt-4 block">
-          <span className="sr-only">Search movies</span>
-          <input
-            autoFocus
-            value={query}
-            onChange={(event) => {
-              const nextQuery = event.target.value;
-
-              setQuery(nextQuery);
-
-              if (nextQuery.trim().length < 2) {
-                setSuggestions([]);
-                setIsSearching(false);
-              }
-            }}
-            placeholder="Search for a movie..."
-            type="search"
-            className="min-h-12 w-full rounded-2xl border border-slate-700 bg-black/35 px-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
-          />
-        </label>
-
-        <div className="mt-3 max-h-80 overflow-y-auto rounded-2xl border border-slate-800 bg-black/30">
-          {suggestions.length > 0 ? (
-            suggestions.map((movie) => {
-              const releaseDate = formatSuggestionDate(movie.releaseDate);
-
-              return (
-                <button
-                  key={movie.id}
-                  type="button"
-                  onClick={() => selectMovie(movie.id)}
-                  className="block w-full border-b border-slate-900 px-4 py-3 text-left text-sm font-bold text-white transition last:border-b-0 hover:bg-yellow-400 hover:text-black"
-                >
-                  {movie.title}
-                  {releaseDate ? (
-                    <span className="ml-2 font-semibold text-slate-400">
-                      {releaseDate}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })
-          ) : (
-            <p className="px-4 py-5 text-sm font-bold text-slate-500">
-              {query.trim().length < 2
-                ? "Type at least 2 letters to search."
-                : isSearching
-                  ? "Searching..."
-                  : "No movies found."}
-            </p>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
@@ -1666,20 +1504,46 @@ function StartDiscussionModal({
   );
 }
 
-function CreatePostBox({ onSelectMovie }: { onSelectMovie: () => void }) {
+function CreatePostBox({
+  onSearchChange,
+  searchQuery,
+}: {
+  onSearchChange: (query: string) => void;
+  searchQuery: string;
+}) {
+  const hasSearchQuery = searchQuery.trim().length > 0;
+
   return (
     <section className={cardClass("p-3 sm:p-4")}>
-      <div className="flex flex-wrap items-center gap-3">
-        <p className="min-w-0 flex-1 text-sm font-semibold text-slate-300 sm:text-base">
-          What movie is on your mind?
-        </p>
-        <button
-          type="button"
-          onClick={onSelectMovie}
-          className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:px-5"
-        >
-          Select Movie
-        </button>
+      <div>
+        <label htmlFor="community-feed-movie-search">
+          <span className="mb-2 block text-sm font-black text-white sm:text-base">
+            Search Movie
+          </span>
+          <span className="sr-only">
+            Search movies and comments in the community feed
+          </span>
+        </label>
+        <div className="relative">
+          <input
+            id="community-feed-movie-search"
+            type="search"
+            value={searchQuery}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search movies or feed comments..."
+            className="min-h-12 w-full rounded-2xl border border-slate-700 bg-black/35 px-4 pr-12 text-sm font-bold text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
+          />
+          {hasSearchQuery ? (
+            <button
+              type="button"
+              aria-label="Clear feed movie search"
+              onClick={() => onSearchChange("")}
+              className="absolute right-4 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-300"
+            >
+              X
+            </button>
+          ) : null}
+        </div>
       </div>
     </section>
   );
@@ -2896,7 +2760,7 @@ export default function CommunityPage() {
   const [selectedTab, setSelectedTab] = useState<CommunityTab>("Feed");
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
   const [selectedTrend, setSelectedTrend] = useState("Trending");
-  const [isMovieDialogOpen, setIsMovieDialogOpen] = useState(false);
+  const [feedSearchQuery, setFeedSearchQuery] = useState("");
   const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = useState(false);
   const [createdDiscussions, setCreatedDiscussions] = useState<
     CommunityDiscussion[]
@@ -2948,6 +2812,13 @@ export default function CommunityPage() {
   const visibleFeedPosts = useMemo(
     () => getVisibleFeedPosts(feedPostsWithActivity, selectedGenre, selectedTrend),
     [feedPostsWithActivity, selectedGenre, selectedTrend]
+  );
+  const searchedFeedPosts = useMemo(
+    () =>
+      visibleFeedPosts.filter((post) =>
+        feedPostMatchesMovieSearch(post, feedSearchQuery)
+      ),
+    [feedSearchQuery, visibleFeedPosts]
   );
   const mentionableUsers = useMemo(
     () => mergeMentionableUsers(discoverableUsers, suggestedFollows),
@@ -3188,7 +3059,10 @@ export default function CommunityPage() {
           <div className="space-y-4 sm:space-y-5">
             {selectedTab === "Feed" ? (
               <>
-                <CreatePostBox onSelectMovie={() => setIsMovieDialogOpen(true)} />
+                <CreatePostBox
+                  searchQuery={feedSearchQuery}
+                  onSearchChange={setFeedSearchQuery}
+                />
                 <CommunityFilters
                   onGenreChange={setSelectedGenre}
                   onTrendChange={setSelectedTrend}
@@ -3197,8 +3071,12 @@ export default function CommunityPage() {
                 />
                 <FeedPostsList
                   currentUserId={currentUserId}
-                  posts={visibleFeedPosts}
-                  emptyMessage="No posts match that filter yet."
+                  posts={searchedFeedPosts}
+                  emptyMessage={
+                    feedSearchQuery.trim()
+                      ? "No movie comments match that search yet."
+                      : "No posts match that filter yet."
+                  }
                   mentionableUsers={mentionableUsers}
                 />
               </>
@@ -3234,9 +3112,6 @@ export default function CommunityPage() {
           </aside>
         </section>
       </section>
-      {isMovieDialogOpen ? (
-        <SelectMovieDialog onClose={() => setIsMovieDialogOpen(false)} />
-      ) : null}
       {isDiscussionDialogOpen ? (
         <StartDiscussionModal
           mentionableUsers={mentionableUsers}
