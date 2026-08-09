@@ -391,7 +391,7 @@ export default function ShareRatingButton({
       }
     }
 
-    const halo = context.createRadialGradient(540, 790, 40, 540, 790, 720);
+    const halo = context.createRadialGradient(540, 860, 40, 540, 860, 680);
     halo.addColorStop(0, "rgba(250, 204, 21, 0.28)");
     halo.addColorStop(0.42, "rgba(250, 204, 21, 0.08)");
     halo.addColorStop(1, "rgba(250, 204, 21, 0)");
@@ -400,26 +400,26 @@ export default function ShareRatingButton({
 
     context.fillStyle = "#facc15";
     context.font = "900 58px Arial, sans-serif";
-    context.fillText("POPSCORE", 72, 120);
+    context.fillText("POPSCORE", 72, 206);
     context.fillStyle = "#cbd5e1";
     context.font = "800 27px Arial, sans-serif";
-    context.fillText("MOVIE RATINGS FOR REAL FANS", 74, 158);
+    context.fillText("MOVIE RATINGS FOR REAL FANS", 74, 244);
 
     context.fillStyle = "rgba(250, 204, 21, 0.14)";
     context.strokeStyle = "rgba(250, 204, 21, 0.45)";
     context.lineWidth = 3;
     context.beginPath();
-    context.roundRect(72, 224, 936, 1280, 54);
+    context.roundRect(72, 326, 936, 990, 54);
     context.fill();
     context.stroke();
 
     context.fillStyle = "#facc15";
     context.font = "900 34px Arial, sans-serif";
-    context.fillText("Rated on PopScore", 118, 294);
+    context.fillText("Rated on PopScore", 118, 398);
 
     context.fillStyle = "#ffffff";
     context.font = "900 62px Arial, sans-serif";
-    wrapCanvasText(context, movieTitle, 118, 380, 820, 72, 3);
+    wrapCanvasText(context, movieTitle, 118, 486, 820, 72, 2);
 
     const downloadPoster = await getPosterForDownload(movieId, posterPath);
 
@@ -428,78 +428,78 @@ export default function ShareRatingButton({
         const image = await loadImage(downloadPoster);
         context.save();
         context.beginPath();
-        context.roundRect(118, 530, 300, 450, 34);
+        context.roundRect(118, 624, 310, 465, 34);
         context.clip();
         context.fillStyle = "#020617";
-        context.fillRect(118, 530, 300, 450);
-        drawImageContain(context, image, 118, 530, 300, 450);
+        context.fillRect(118, 624, 310, 465);
+        drawImageContain(context, image, 118, 624, 310, 465);
         context.restore();
       } catch {
         context.fillStyle = "#0f172a";
-        context.fillRect(118, 530, 300, 450);
+        context.fillRect(118, 624, 310, 465);
         context.fillStyle = "#64748b";
         context.font = "900 30px Arial, sans-serif";
-        context.fillText("Poster", 215, 770);
+        context.fillText("Poster", 225, 865);
       }
     } else {
       context.fillStyle = "#0f172a";
-      context.fillRect(118, 530, 300, 450);
+      context.fillRect(118, 624, 310, 465);
       context.fillStyle = "#64748b";
       context.font = "900 30px Arial, sans-serif";
-      context.fillText("Poster", 215, 770);
+      context.fillText("Poster", 225, 865);
     }
 
     context.strokeStyle = "rgba(250, 204, 21, 0.55)";
     context.lineWidth = 4;
     context.beginPath();
-    context.roundRect(118, 530, 300, 450, 34);
+    context.roundRect(118, 624, 310, 465, 34);
     context.stroke();
 
     context.fillStyle = "#cbd5e1";
     context.font = "900 28px Arial, sans-serif";
-    context.fillText("MY SCORE", 468, 585);
+    context.fillText("MY SCORE", 492, 674);
 
     context.fillStyle = "#facc15";
-    context.font = "900 210px Arial, sans-serif";
-    context.fillText(String(popscore), 468, 760);
+    context.font = "900 190px Arial, sans-serif";
+    context.fillText(String(popscore), 492, 845);
 
     try {
       const ratingIcon = await loadImage(ratingIconSrc);
-      context.drawImage(ratingIcon, 742, 618, 130, 130);
+      drawImageContain(context, ratingIcon, 754, 696, 132, 172);
     } catch {
       // The text score remains the primary shareable element if the icon fails.
     }
 
     context.fillStyle = "#ffffff";
     context.font = "900 48px Arial, sans-serif";
-    context.fillText(finalRatingLabel, 468, 835);
+    context.fillText(finalRatingLabel, 492, 926);
 
     context.fillStyle = "#cbd5e1";
     context.font = "800 35px Arial, sans-serif";
-    wrapCanvasText(context, shareStatement, 468, 905, 420, 44, 3);
+    wrapCanvasText(context, shareStatement, 492, 1002, 390, 44, 3);
 
     if (hasCommunityScore) {
       context.fillStyle = "rgba(2, 6, 23, 0.72)";
       context.strokeStyle = "rgba(250, 204, 21, 0.32)";
       context.lineWidth = 3;
       context.beginPath();
-      context.roundRect(150, 1110, 780, 110, 34);
+      context.roundRect(150, 1152, 780, 100, 32);
       context.fill();
       context.stroke();
       context.fillStyle = "#ffffff";
       context.font = "900 34px Arial, sans-serif";
-      context.fillText(`My Score: ${popscore}`, 200, 1177);
+      context.fillText(`My Score: ${popscore}`, 200, 1217);
       context.fillStyle = "#facc15";
-      context.fillText(`Community Score: ${visibleCommunityScore}`, 548, 1177);
+      context.fillText(`Community Score: ${visibleCommunityScore}`, 548, 1217);
     }
 
     context.textAlign = "center";
     context.fillStyle = "#ffffff";
     context.font = "900 50px Arial, sans-serif";
-    context.fillText("What would you score it?", 540, 1625);
+    context.fillText("What would you score it?", 540, 1468);
     context.fillStyle = "#facc15";
     context.font = "900 38px Arial, sans-serif";
-    context.fillText("PopScoreMovies.com", 540, 1688);
+    context.fillText("PopScoreMovies.com", 540, 1528);
     context.textAlign = "start";
 
     return canvas;
