@@ -298,6 +298,8 @@ export default function ShareRatingButton({
       : null;
   const hasCommunityScore = visibleCommunityScore !== null;
   const shareText = `I rated ${movieTitle} ${popscore} ${finalRatingLabel} on PopScore.\nWhat would you score it?\n${shareUrl}`;
+  const previewScoreSize =
+    popscore >= 100 ? "text-[3.35rem] sm:text-7xl" : "text-6xl sm:text-7xl";
   const fileSafeTitle = useMemo(
     () =>
       movieTitle
@@ -608,16 +610,18 @@ export default function ShareRatingButton({
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">
                         My Score
                       </p>
-                      <div className="mt-1 flex items-center gap-2">
-                        <p className="text-6xl font-black leading-none text-yellow-300 sm:text-7xl">
+                      <div className="mt-1 flex max-w-full items-center gap-1">
+                        <p
+                          className={`${previewScoreSize} font-black leading-none text-yellow-300`}
+                        >
                           {popscore}
                         </p>
-                        <span className="relative block h-12 w-12 shrink-0 overflow-hidden rounded-full border border-yellow-400/25 bg-yellow-400/10 sm:h-14 sm:w-14">
+                        <span className="relative -ml-2 block h-10 w-10 shrink-0 overflow-hidden rounded-full border border-yellow-400/25 bg-yellow-400/10 sm:ml-0 sm:h-14 sm:w-14">
                           <Image
                             src={ratingIconSrc}
                             alt=""
                             fill
-                            sizes="56px"
+                            sizes="(min-width: 640px) 56px, 40px"
                             className="object-contain"
                           />
                         </span>
