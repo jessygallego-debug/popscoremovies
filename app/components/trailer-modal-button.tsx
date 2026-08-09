@@ -94,29 +94,13 @@ export default function TrailerModalButton({
 
   return (
     <>
-      <div>
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => setIsOpen(true)}
-            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
-          >
-            Watch Trailer
-          </button>
-          <button
-            type="button"
-            onClick={handleShareTrailer}
-            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-6 font-bold text-white transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-300"
-          >
-            Share Trailer
-          </button>
-        </div>
-        {statusMessage ? (
-          <p className="mt-2 text-sm font-bold text-yellow-200">
-            {statusMessage}
-          </p>
-        ) : null}
-      </div>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
+      >
+        Watch Trailer
+      </button>
 
       {isOpen ? (
         <div
@@ -139,15 +123,44 @@ export default function TrailerModalButton({
                   {movieTitle}
                 </p>
               </div>
-              <button
-                type="button"
-                aria-label="Close trailer"
-                onClick={() => setIsOpen(false)}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-700 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:text-yellow-300"
-              >
-                X
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Share trailer"
+                  title="Share trailer"
+                  onClick={handleShareTrailer}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 text-slate-300 transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-300"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.4"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M15 6.5 21 12l-6 5.5" />
+                    <path d="M20 12h-7.5A8.5 8.5 0 0 0 4 20" />
+                    <path d="M12.5 12A8.5 8.5 0 0 0 4 4" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Close trailer"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:text-yellow-300"
+                >
+                  X
+                </button>
+              </div>
             </div>
+            {statusMessage ? (
+              <p className="border-b border-white/10 bg-yellow-400/10 px-4 py-2 text-sm font-bold text-yellow-100">
+                {statusMessage}
+              </p>
+            ) : null}
             <div className="aspect-video bg-black">
               <iframe
                 title={`${movieTitle} trailer`}
