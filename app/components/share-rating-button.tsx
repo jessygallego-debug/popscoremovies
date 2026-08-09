@@ -616,7 +616,7 @@ export default function ShareRatingButton({
                         >
                           {popscore}
                         </p>
-                        <span className="relative -ml-2 block h-10 w-10 shrink-0 overflow-hidden rounded-full border border-yellow-400/25 bg-yellow-400/10 sm:ml-0 sm:h-14 sm:w-14">
+                        <span className="relative -ml-1 block h-10 w-10 shrink-0 overflow-hidden rounded-full border border-yellow-400/25 bg-yellow-400/10 sm:ml-0 sm:h-14 sm:w-14">
                           <Image
                             src={ratingIconSrc}
                             alt=""
