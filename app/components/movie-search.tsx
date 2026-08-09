@@ -74,12 +74,6 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
       {genreId ? <input type="hidden" name="genre" value={genreId} /> : null}
 
       <div className="relative w-full">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base text-yellow-300/80 sm:left-5 sm:text-lg"
-        >
-          🔎
-        </span>
         <input
           type="search"
           name="query"
@@ -88,7 +82,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => setIsFocused(true)}
           placeholder="Search for a movie..."
-          className="min-h-12 w-full rounded-2xl border border-slate-700/90 bg-slate-950/80 px-10 pl-10 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_45px_rgba(0,0,0,0.35)] outline-none backdrop-blur transition placeholder:text-slate-500 focus:border-yellow-400/80 focus:bg-slate-950 focus:shadow-yellow-400/15 sm:min-h-16 sm:px-12 sm:pl-12 sm:text-base"
+          className="min-h-12 w-full rounded-2xl border border-slate-700/90 bg-slate-950/80 px-4 pr-12 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_45px_rgba(0,0,0,0.35)] outline-none backdrop-blur transition placeholder:text-slate-500 focus:border-yellow-400/80 focus:bg-slate-950 focus:shadow-yellow-400/15 sm:min-h-16 sm:px-5 sm:pr-12 sm:text-base"
         />
 
         {hasQuery ? (
