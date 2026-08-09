@@ -500,10 +500,11 @@ export default function RateClient({
             {movieId && submittedScore ? (
               <div className="mt-5 rounded-2xl border border-yellow-400/30 bg-black/45 p-4">
                 <p className="font-black text-yellow-200">
-                  Rating submitted. This movie&apos;s PopScore is now updated.
+                  Rating submitted.
                 </p>
-                <div className="mt-4 flex flex-wrap gap-3">
+                <div className="mt-4 grid grid-cols-2 gap-3">
                   <ShareRatingButton
+                    className="w-full !px-2 !text-xs sm:!px-5 sm:!text-base"
                     movieId={movieId}
                     movieTitle={movieTitle ?? `Movie ${movieId}`}
                     popscore={submittedScore}
@@ -512,7 +513,7 @@ export default function RateClient({
                   />
                   <Link
                     href={submitHref}
-                    className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 font-black text-white transition hover:border-yellow-400/50 hover:text-yellow-300"
+                    className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-2 text-xs font-black text-white transition hover:border-yellow-400/50 hover:text-yellow-300 sm:px-5 sm:text-base"
                   >
                     Done
                   </Link>

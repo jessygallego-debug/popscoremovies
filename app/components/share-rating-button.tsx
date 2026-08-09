@@ -167,15 +167,6 @@ function drawImageContain(
   );
 }
 
-function downloadDataUrl(dataUrl: string, filename: string) {
-  const link = document.createElement("a");
-  link.href = dataUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-}
-
 function canvasToBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob | null>((resolve) => {
     canvas.toBlob((blob) => resolve(blob), "image/png");
@@ -288,7 +279,6 @@ export default function ShareRatingButton({
   variant = "default",
 }: ShareRatingButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [isSharingStory, setIsSharingStory] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const moviePath = movieHref({ id: movieId, title: movieTitle });
@@ -545,43 +535,17 @@ export default function ShareRatingButton({
         return;
       }
 
-      downloadDataUrl(
-        canvas.toDataURL("image/png"),
-        `${fileSafeTitle}-popscore-story.png`
-      );
-      setStatusMessage(
-        "Story downloaded. Add it to your story from your photos."
-      );
+      setStatusMessage("Story sharing is not available on this browser.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         setStatusMessage("");
         return;
       }
 
-      setStatusMessage("Could not open story sharing. Try Download Story.");
+      setStatusMessage("Could not open story sharing.");
     } finally {
       setIsSharingStory(false);
     }
-  };
-
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    setStatusMessage("Preparing your story...");
-
-    const canvas = await createStoryCanvas();
-
-    if (!canvas) {
-      setIsDownloading(false);
-      setStatusMessage("Could not create image.");
-      return;
-    }
-
-    downloadDataUrl(
-      canvas.toDataURL("image/png"),
-      `${fileSafeTitle}-popscore-rating.png`
-    );
-    setIsDownloading(false);
-    setStatusMessage("Story downloaded.");
   };
 
   const shareDialog =
@@ -697,7 +661,7 @@ export default function ShareRatingButton({
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2 sm:mt-5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+              <div className="mt-4 grid gap-2 sm:mt-5 sm:grid-cols-3 sm:gap-3">
                 <button
                   type="button"
                   onClick={handleShare}
@@ -712,14 +676,6 @@ export default function ShareRatingButton({
                   className="min-h-12 rounded-2xl border border-yellow-400/35 bg-yellow-400/10 px-4 font-black text-yellow-300 transition hover:bg-yellow-400/15 disabled:cursor-wait disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
                 >
                   Share to Story
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  disabled={isDownloading}
-                  className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 font-black text-white transition hover:border-yellow-400/40 hover:text-yellow-300"
-                >
-                  Download Story
                 </button>
                 <button
                   type="button"
