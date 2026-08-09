@@ -506,6 +506,27 @@ function feedPostMatchesMovieSearch(post: CommunityFeedPost, query: string) {
   ].some((value) => value.toLowerCase().includes(normalizedQuery));
 }
 
+function discussionMatchesSearch(
+  discussion: CommunityDiscussion,
+  query: string
+) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  return [
+    discussion.title,
+    discussion.body,
+    discussion.movieTitle,
+    discussion.movieYear,
+    discussion.type,
+    ...discussion.tags,
+    ...discussion.movieGenres,
+  ].some((value) => value.toLowerCase().includes(normalizedQuery));
+}
+
 function getVisibleDiscussions(
   discussions: CommunityDiscussion[],
   selectedFilter: DiscussionFilter,
@@ -1981,27 +2002,61 @@ function CompactTextPreview({
 function DiscussionFilters({
   onFilterChange,
   onGenreChange,
+  onSearchChange,
+  searchQuery,
   selectedFilter,
   selectedGenre,
 }: {
   onFilterChange: (filter: DiscussionFilter) => void;
   onGenreChange: (genre: string) => void;
+  onSearchChange: (query: string) => void;
+  searchQuery: string;
   selectedFilter: DiscussionFilter;
   selectedGenre: string;
 }) {
+  const hasSearchQuery = searchQuery.trim().length > 0;
+
   return (
     <section className={cardClass("relative z-[60] overflow-visible p-2")}>
-      <div className="flex flex-wrap items-center gap-2">
-        <FilterMenu
-          onSelect={onGenreChange}
-          options={genreFilters}
-          selectedOption={selectedGenre}
-        />
-        <FilterMenu
-          onSelect={(filter) => onFilterChange(filter as DiscussionFilter)}
-          options={[...discussionFilterOptions]}
-          selectedOption={selectedFilter}
-        />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <label
+          htmlFor="community-discussion-search"
+          className="block w-full min-w-0 sm:w-64 lg:w-72 xl:w-80"
+        >
+          <span className="sr-only">Search community discussions</span>
+          <div className="relative">
+            <input
+              id="community-discussion-search"
+              type="search"
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Search Discussions"
+              className="min-h-10 w-full rounded-full border border-slate-700 bg-black/35 px-4 pr-11 text-sm font-bold text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400/70"
+            />
+            {hasSearchQuery ? (
+              <button
+                type="button"
+                aria-label="Clear discussion search"
+                onClick={() => onSearchChange("")}
+                className="absolute right-3 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-xs font-black text-slate-300 transition hover:border-yellow-400/60 hover:bg-yellow-400/10 hover:text-yellow-300"
+              >
+                X
+              </button>
+            ) : null}
+          </div>
+        </label>
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <FilterMenu
+            onSelect={onGenreChange}
+            options={genreFilters}
+            selectedOption={selectedGenre}
+          />
+          <FilterMenu
+            onSelect={(filter) => onFilterChange(filter as DiscussionFilter)}
+            options={[...discussionFilterOptions]}
+            selectedOption={selectedFilter}
+          />
+        </div>
       </div>
     </section>
   );
@@ -2104,9 +2159,17 @@ function DiscussionsTabContent({
   const [selectedFilter, setSelectedFilter] =
     useState<DiscussionFilter>("Trending");
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
+  const [discussionSearchQuery, setDiscussionSearchQuery] = useState("");
   const visibleDiscussions = useMemo(
     () => getVisibleDiscussions(discussions, selectedFilter, selectedGenre),
     [discussions, selectedFilter, selectedGenre]
+  );
+  const searchedDiscussions = useMemo(
+    () =>
+      visibleDiscussions.filter((discussion) =>
+        discussionMatchesSearch(discussion, discussionSearchQuery)
+      ),
+    [discussionSearchQuery, visibleDiscussions]
   );
 
   return (
@@ -2134,18 +2197,22 @@ function DiscussionsTabContent({
       <DiscussionFilters
         onFilterChange={setSelectedFilter}
         onGenreChange={setSelectedGenre}
+        onSearchChange={setDiscussionSearchQuery}
+        searchQuery={discussionSearchQuery}
         selectedFilter={selectedFilter}
         selectedGenre={selectedGenre}
       />
 
       <div className="space-y-3 sm:space-y-4">
-        {visibleDiscussions.length > 0 ? (
-          visibleDiscussions.map((discussion) => (
+        {searchedDiscussions.length > 0 ? (
+          searchedDiscussions.map((discussion) => (
             <DiscussionCard key={discussion.id} discussion={discussion} />
           ))
         ) : (
           <section className={cardClass("p-6 text-sm font-bold text-slate-300")}>
-            No discussions match those filters yet.
+            {discussionSearchQuery.trim()
+              ? "No discussions match that search yet."
+              : "No discussions match those filters yet."}
           </section>
         )}
       </div>
