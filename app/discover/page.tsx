@@ -74,8 +74,8 @@ export default async function DiscoverPage({
               Find Personalized Movie Matches
             </h1>
             <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:mt-5 sm:text-lg sm:leading-8">
-              Use PopScore Movie Match to find movie picks based on your
-              ratings. Pick a genre, choose your filters, and get personalized
+              Use PopScore Movie Match to discover new movies. Pick a genre,
+              choose your filters, and get personalized
               movies that match your taste.
             </p>
           </div>
