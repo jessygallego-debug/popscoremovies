@@ -87,9 +87,9 @@ const faqSections = [
           "Different movie types succeed for different reasons. PopScore rates movies by the standards fans actually use, so a scary horror movie is not judged by the same exact criteria as a funny comedy or a sweeping fantasy movie.",
       },
       {
-        question: "Can I rate superhero movies?",
+        question: "What is the Watchlist for?",
         answer:
-          "Yes. Superhero works as a quick filter for finding those movies. When you rate one, PopScore still uses the movie's main genre, like Action, Sci-Fi, Comedy, or Fantasy, for the scoring questions.",
+          "Your Watchlist is where you save movies you want to see later, so good recommendations do not disappear when you are not ready to watch yet.",
       },
       {
         question: "Why do some movies say not rated yet?",
@@ -107,14 +107,14 @@ const faqSections = [
           "PopScore uses your ratings, favorite genres, and watchlist activity to help surface movies that fit your taste. The more you rate, the more useful your recommendations become.",
       },
       {
+        question: "Why is it recommending movies I've seen before?",
+        answer:
+          "It will display movies you have not yet rated. Once you rate it, it will recommend a different movie.",
+      },
+      {
         question: "Can I browse movies by genre?",
         answer:
           "Yes. You can explore movies by Action, Adventure, Animation, Comedy, Documentary, Drama, Family, Fantasy, Horror, Mystery, Musical, Romance, Rom-Com, Sci-Fi, Superhero, Thriller, War, Western, and more.",
-      },
-      {
-        question: "What is the Watchlist for?",
-        answer:
-          "Your Watchlist is where you save movies you want to see later, so good recommendations do not disappear when you are not ready to watch yet.",
       },
       {
         question: "Can PopScore help if I do not know what to watch?",
