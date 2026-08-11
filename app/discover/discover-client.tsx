@@ -465,7 +465,7 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
               Explore Movies by Genre
             </h2>
             <p className="mt-1 text-xs font-semibold text-slate-400 sm:mt-2 sm:text-sm">
-              Pick a lane and find movie recommendations that match your mood.
+              Pick a lane and find movies that fit your mood.
             </p>
           </div>
           {isLoadingUser ? (
@@ -608,11 +608,11 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-300 sm:text-xs sm:tracking-[0.22em]">
               {recommendationMode === "personalized"
-                ? "Personalized Picks"
+                ? "Movie Match Picks"
                 : "Popular Genre Picks"}
             </p>
             <h2 className="mt-1 text-xl font-black text-white sm:text-2xl">
-              {visibleMovies.length} {selectedGenre?.label ?? "Movie"} recommendations
+              {visibleMovies.length} {selectedGenre?.label ?? "Movie"} movie matches
               based on your ratings
             </h2>
           </div>

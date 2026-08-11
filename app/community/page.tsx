@@ -294,7 +294,7 @@ const feedPosts: CommunityFeedPost[] = [
       fallbackMovieId: "1124",
       imagePath: "/tRNlZbgNCNOpLpbPEz5L8G8A0JN.jpg",
     },
-    comment: "Discovered this gem through PopScore Discovery ✨",
+    comment: "Found this gem through PopScore Movie Match ✨",
     genres: ["Drama", "Mystery", "Thriller"],
     likeCount: 18,
     commentCount: 2,

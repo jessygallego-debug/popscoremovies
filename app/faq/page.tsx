@@ -99,7 +99,7 @@ const faqSections = [
     ],
   },
   {
-    title: "Discovery",
+    title: "Movie Match",
     items: [
       {
         question: "How does PopScore recommend movies?",
@@ -119,7 +119,7 @@ const faqSections = [
       {
         question: "Can PopScore help if I do not know what to watch?",
         answer:
-          "Yes. Use Discovery to pick a genre, era, language, or region, then PopScore will show movie ideas that match the mood you are looking for.",
+          "Yes. Use Movie Match to pick a genre, era, language, or region, then PopScore will show movie ideas that match the mood you are looking for.",
       },
     ],
   },
@@ -229,7 +229,7 @@ export default function FaqPage() {
                 href="/discover"
                 className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-700/90 bg-slate-950/80 px-5 py-2.5 text-sm font-black text-slate-200 transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-200"
               >
-                Explore Discovery
+                Explore Movie Match
               </Link>
             </div>
           </div>

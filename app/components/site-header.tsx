@@ -9,7 +9,7 @@ const navItems = [
   { href: "/#trending", label: "Movies" },
   { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
-  { href: "/discover", label: "Discovery" },
+  { href: "/discover", label: "Movie Match" },
   { href: "/faq", label: "FAQ" },
 ];
 

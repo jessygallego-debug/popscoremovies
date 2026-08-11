@@ -66,7 +66,7 @@ function WatchlistEmptyState() {
         href="/discover"
         className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-yellow-400 px-6 text-sm font-black text-black shadow-lg shadow-yellow-400/25 transition hover:bg-yellow-300"
       >
-        Discover Movies
+        Find Movie Matches
       </Link>
     </section>
   );

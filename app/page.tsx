@@ -54,7 +54,7 @@ const whyPopScoreCards = [
   {
     title: "Discover Hidden Gems",
     description:
-      "Rate movies you love and let Discovery uncover personalized recommendations you might have otherwise missed.",
+      "Rate movies you love and let Movie Match uncover personalized recommendations you might have otherwise missed.",
   },
 ];
 

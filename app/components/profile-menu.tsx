@@ -11,7 +11,7 @@ const menuItems = [
   { href: "stats", label: "PopFile Stats" },
   { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
-  { href: "/discover", label: "Discovery" },
+  { href: "/discover", label: "Movie Match" },
 ];
 
 export default function ProfileMenu() {

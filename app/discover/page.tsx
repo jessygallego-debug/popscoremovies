@@ -12,9 +12,9 @@ import {
 } from "@/lib/site-metadata";
 import { absoluteUrl } from "@/lib/site-url";
 
-const discoverTitle = "Discover Movie Recommendations | PopScore";
+const discoverTitle = "Movie Match | PopScore";
 const discoverDescription =
-  "Find personalized movie recommendations by genre, era, language, and region based on movies you rated, so your next watch fits your taste.";
+  "Find personalized movie matches by genre, era, language, and region based on movies you rated, so your next watch fits your taste.";
 const discoverImage = {
   url: absoluteUrl(SITE_ICON_PATH),
   width: 256,
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   description: discoverDescription,
   keywords: [
     "discover movies to watch",
-    "personalized movie recommendations",
+    "personalized movie matches",
     "movie recommendation site",
     "best movies by genre",
     ...SITE_KEYWORDS,
@@ -68,13 +68,13 @@ export default async function DiscoverPage({
         <section className="grid gap-5 py-7 sm:gap-8 sm:py-10 2xl:grid-cols-[minmax(0,0.88fr)_minmax(420px,0.92fr)] 2xl:items-center 2xl:gap-12 2xl:py-14">
           <div className="min-w-0">
             <div className="mb-4 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-yellow-300 sm:mb-5 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.18em]">
-              Personalized Picks
+              Movie Match
             </div>
             <h1 className="max-w-[18ch] text-3xl font-black leading-[0.98] text-white sm:text-6xl">
-              Discover Personalized Movie Recommendations
+              Find Personalized Movie Matches
             </h1>
             <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:mt-5 sm:text-lg sm:leading-8">
-              Use PopScore Discovery to find movie recommendations based on your
+              Use PopScore Movie Match to find movie picks based on your
               ratings. Pick a genre, choose your filters, and get personalized
               movies that match your taste.
             </p>
@@ -97,7 +97,7 @@ export default async function DiscoverPage({
               ))}
             </div>
             <p className="mt-4 text-center text-xs font-bold leading-5 text-slate-300 sm:mt-5 sm:text-sm sm:leading-6">
-              The same PopScore discovery flow, now outside the PopFile stats
+              The same PopScore Movie Match flow, now outside the PopFile stats
               page.
             </p>
           </div>
