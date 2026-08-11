@@ -19,6 +19,9 @@ const siteImage = {
   height: 256,
   alt: SITE_ICON_ALT,
 };
+const browserIconPath = `${SITE_ICON_PATH}?v=popscore-popcorn-20260811`;
+const fallbackFaviconPath = "/favicon.ico?v=popscore-popcorn-20260811";
+const appleIconPath = `${SITE_APPLE_ICON_PATH}?v=popscore-popcorn-20260811`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -33,11 +36,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: SITE_ICON_PATH, type: "image/png", sizes: "256x256" },
+      { url: browserIconPath, type: "image/png", sizes: "256x256" },
+      { url: fallbackFaviconPath, sizes: "any" },
     ],
-    shortcut: SITE_ICON_PATH,
-    apple: [{ url: SITE_APPLE_ICON_PATH, type: "image/png", sizes: "180x180" }],
+    shortcut: browserIconPath,
+    apple: [{ url: appleIconPath, type: "image/png", sizes: "180x180" }],
   },
   openGraph: {
     title: SITE_NAME,
@@ -64,22 +67,22 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <head>
         <link rel="preconnect" href="https://image.tmdb.org" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
         <link
           rel="icon"
-          href={SITE_ICON_PATH}
+          href={browserIconPath}
           type="image/png"
           sizes="256x256"
         />
         <link
           rel="shortcut icon"
-          href={SITE_ICON_PATH}
+          href={browserIconPath}
           type="image/png"
           sizes="256x256"
         />
+        <link rel="icon" href={fallbackFaviconPath} sizes="any" />
         <link
           rel="apple-touch-icon"
-          href={SITE_APPLE_ICON_PATH}
+          href={appleIconPath}
           type="image/png"
           sizes="180x180"
         />
