@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
+import { avatarForKey } from "@/lib/profile-config";
+import { SITE_ICON_ALT, SITE_ICON_PATH } from "@/lib/site-metadata";
 import { absoluteUrl } from "@/lib/site-url";
 
 type ProfileRow = {
+  avatar_key: string;
   user_id: string;
   username: string;
+};
+
+type FollowRow = {
+  created_at: string;
+  id: string;
 };
 
 type SupabaseAuthUser = {
@@ -18,6 +26,7 @@ type NewFollowerEmailRequest = {
 };
 
 const resendApiUrl = "https://api.resend.com/emails";
+const maxFollowAgeMs = 10 * 60 * 1000;
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -61,7 +70,7 @@ async function getProfileByUserId(userId: string) {
   }
 
   const params = new URLSearchParams({
-    select: "user_id,username",
+    select: "user_id,username,avatar_key",
     user_id: `eq.${userId}`,
   });
   const response = await fetch(`${config.restUrl}/profiles?${params}`, {
@@ -79,6 +88,37 @@ async function getProfileByUserId(userId: string) {
 
   const rows = (await response.json()) as ProfileRow[];
   return rows[0] ?? null;
+}
+
+async function newFollowerEmailsAreEnabled(userId: string) {
+  const config = getSupabaseConfig();
+
+  if (!config) {
+    return false;
+  }
+
+  const params = new URLSearchParams({
+    select: "email_new_follower_notifications",
+    user_id: `eq.${userId}`,
+  });
+  const response = await fetch(`${config.restUrl}/profiles?${params}`, {
+    headers: {
+      apikey: config.serviceRoleKey,
+      Authorization: `Bearer ${config.serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    next: { revalidate: 0 },
+  });
+
+  if (!response.ok) {
+    return true;
+  }
+
+  const rows = (await response.json()) as {
+    email_new_follower_notifications?: boolean | null;
+  }[];
+
+  return rows[0]?.email_new_follower_notifications !== false;
 }
 
 function getBearerToken(request: Request) {
@@ -153,7 +193,7 @@ async function followRelationshipExists(input: {
     follower_id: `eq.${input.followerUserId}`,
     following_id: `eq.${input.followedUserId}`,
     limit: "1",
-    select: "id",
+    select: "id,created_at",
   });
   const response = await fetch(`${config.restUrl}/user_follows?${params}`, {
     headers: {
@@ -168,6 +208,52 @@ async function followRelationshipExists(input: {
     return false;
   }
 
+  const rows = (await response.json()) as FollowRow[];
+  return rows[0] ?? null;
+}
+
+function followWasRecentlyCreated(row: FollowRow) {
+  const createdAt = new Date(row.created_at).getTime();
+
+  if (Number.isNaN(createdAt)) {
+    return false;
+  }
+
+  return Date.now() - createdAt <= maxFollowAgeMs;
+}
+
+async function claimNewFollowerEmailEvent(input: {
+  followedUserId: string;
+  followerUserId: string;
+}) {
+  const config = getSupabaseConfig();
+
+  if (!config) {
+    return false;
+  }
+
+  const response = await fetch(
+    `${config.restUrl}/new_follower_email_events?on_conflict=follower_id,following_id`,
+    {
+      method: "POST",
+      headers: {
+        apikey: config.serviceRoleKey,
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=ignore-duplicates,return=representation",
+      },
+      body: JSON.stringify({
+        follower_id: input.followerUserId,
+        following_id: input.followedUserId,
+      }),
+      next: { revalidate: 0 },
+    }
+  );
+
+  if (!response.ok) {
+    return true;
+  }
+
   const rows = (await response.json()) as { id: string }[];
   return rows.length > 0;
 }
@@ -175,8 +261,10 @@ async function followRelationshipExists(input: {
 async function sendResendEmail(input: {
   followedUserId: string;
   followerUserId: string;
+  followerAvatar: string;
   followerName: string;
   profileUrl: string;
+  recipientName: string;
   to: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
@@ -187,8 +275,15 @@ async function sendResendEmail(input: {
     return { skipped: true };
   }
 
-  const safeFollowerName = escapeHtml(input.followerName);
+  const followerHandle = `@${input.followerName}`;
+  const recipientHandle = `@${input.recipientName}`;
+  const logoUrl = absoluteUrl(SITE_ICON_PATH);
+  const safeFollowerAvatar = escapeHtml(input.followerAvatar);
+  const safeFollowerHandle = escapeHtml(followerHandle);
+  const safeLogoAlt = escapeHtml(SITE_ICON_ALT);
+  const safeLogoUrl = escapeHtml(logoUrl);
   const safeProfileUrl = escapeHtml(input.profileUrl);
+  const safeRecipientHandle = escapeHtml(recipientHandle);
   const response = await fetch(resendApiUrl, {
     method: "POST",
     headers: {
@@ -199,17 +294,40 @@ async function sendResendEmail(input: {
     body: JSON.stringify({
       from,
       html: `
-        <div style="background:#020617;color:#f8fafc;font-family:Arial,sans-serif;padding:32px">
-          <div style="margin:0 auto;max-width:560px;border:1px solid rgba(250,204,21,.35);border-radius:24px;padding:28px">
-            <p style="color:#facc15;font-size:12px;font-weight:700;letter-spacing:.18em;margin:0 0 18px;text-transform:uppercase">New follower</p>
-            <h1 style="font-size:28px;line-height:1.15;margin:0 0 16px">${safeFollowerName} started following you on PopScore.</h1>
-            <p style="color:#cbd5e1;font-size:16px;line-height:1.6;margin:0 0 24px">Open PopScore to view their PopFile and see what movies they are rating.</p>
-            <a href="${safeProfileUrl}" style="background:#facc15;border-radius:999px;color:#020617;display:inline-block;font-size:15px;font-weight:700;padding:13px 20px;text-decoration:none">View PopFile</a>
+        <div style="background:#020617;margin:0;padding:0">
+          <div style="background:#020617;color:#111827;font-family:Arial,Helvetica,sans-serif;margin:0 auto;max-width:600px;padding:32px 18px">
+            <div style="padding:0 0 22px;text-align:center">
+              <img src="${safeLogoUrl}" width="48" height="48" alt="${safeLogoAlt}" style="border:0;border-radius:14px;display:inline-block;height:48px;object-fit:cover;width:48px" />
+              <div style="color:#facc15;font-size:22px;font-weight:800;letter-spacing:.08em;line-height:1;margin-top:10px">POPSCORE</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid rgba(250,204,21,.55);border-radius:26px;box-shadow:0 18px 45px rgba(0,0,0,.28);overflow:hidden">
+              <div style="background:#071022;padding:24px 24px 18px;text-align:center">
+                <p style="color:#facc15;font-size:12px;font-weight:800;letter-spacing:.18em;margin:0;text-transform:uppercase">New follower</p>
+              </div>
+              <div style="padding:30px 26px 28px;text-align:left">
+                <p style="color:#334155;font-size:16px;line-height:1.55;margin:0 0 22px">Hey <strong>${safeRecipientHandle}</strong>,</p>
+                <h1 style="color:#0f172a;font-size:28px;line-height:1.15;margin:0 0 22px;text-align:center">You have a new follower!</h1>
+                <div style="text-align:center">
+                  <div style="background:#fff7cc;border:2px solid #facc15;border-radius:999px;color:#020617;display:inline-block;font-size:34px;height:76px;line-height:76px;text-align:center;width:76px">${safeFollowerAvatar}</div>
+                  <p style="color:#0f172a;font-size:22px;font-weight:800;line-height:1.25;margin:14px 0 6px">${safeFollowerHandle}</p>
+                  <p style="color:#475569;font-size:16px;line-height:1.55;margin:0 0 24px">is now following you on PopScore.</p>
+                </div>
+                <p style="color:#334155;font-size:16px;line-height:1.65;margin:0 0 26px">They'll be able to keep up with your latest movie ratings, reactions, and discussions.</p>
+                <div style="text-align:center">
+                  <a href="${safeProfileUrl}" style="background:#facc15;border-radius:999px;color:#020617;display:inline-block;font-size:16px;font-weight:800;line-height:1;padding:16px 28px;text-decoration:none">View Their Profile</a>
+                </div>
+                <p style="color:#475569;font-size:15px;line-height:1.6;margin:26px 0 0;text-align:center">See what they're watching and find out if your movie tastes match.</p>
+              </div>
+            </div>
+            <div style="color:#94a3b8;font-size:13px;line-height:1.55;padding:22px 10px 0;text-align:center">
+              <strong style="color:#f8fafc">PopScore</strong><br />
+              Rate movies. Discover what's next. Join the conversation.
+            </div>
           </div>
         </div>
       `,
-      subject: `${input.followerName} started following you on PopScore`,
-      text: `${input.followerName} started following you on PopScore. View their PopFile: ${input.profileUrl}`,
+      subject: `🎬 @${input.followerName} is now following you on PopScore`,
+      text: `Hey @${input.recipientName},\n\nYou have a new follower!\n\n@${input.followerName} is now following you on PopScore.\n\nThey'll be able to keep up with your latest movie ratings, reactions, and discussions.\n\nView Their Profile: ${input.profileUrl}\n\nSee what they're watching and find out if your movie tastes match.\n\n-- PopScore\nRate movies. Discover what's next. Join the conversation.`,
       to: input.to,
     }),
   });
@@ -251,12 +369,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const hasFollow = await followRelationshipExists({
+  const followRow = await followRelationshipExists({
     followedUserId,
     followerUserId,
   });
 
-  if (!hasFollow) {
+  if (!followRow || !followWasRecentlyCreated(followRow)) {
     return NextResponse.json({ skipped: true });
   }
 
@@ -270,18 +388,43 @@ export async function POST(request: Request) {
     return NextResponse.json({ skipped: true });
   }
 
+  const canReceiveNewFollowerEmails = await newFollowerEmailsAreEnabled(
+    followedUserId
+  );
+
+  if (!canReceiveNewFollowerEmails) {
+    return NextResponse.json({ skipped: true });
+  }
+
   const followerName =
     followerProfile?.username ??
     body?.followerUsername?.trim() ??
     "Someone";
   const profileSlug = followerProfile?.username ?? followerUserId;
-  const result = await sendResendEmail({
+  const emailClaimed = await claimNewFollowerEmailEvent({
     followedUserId,
     followerUserId,
-    followerName,
-    profileUrl: absoluteUrl(`/profile/${profileSlug}`),
-    to: recipientEmail,
   });
 
-  return NextResponse.json(result);
+  if (!emailClaimed) {
+    return NextResponse.json({ skipped: true });
+  }
+
+  try {
+    const result = await sendResendEmail({
+      followedUserId,
+      followerAvatar: avatarForKey(followerProfile?.avatar_key ?? "").icon,
+      followerUserId,
+      followerName,
+      profileUrl: absoluteUrl(`/profile/${profileSlug}`),
+      recipientName: followedProfile.username,
+      to: recipientEmail,
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.warn("Could not send new follower email.", error);
+  }
+
+  return NextResponse.json({ skipped: true });
 }
