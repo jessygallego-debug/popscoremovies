@@ -25,6 +25,11 @@ type NewFollowerEmailRequest = {
   followedUserId?: string;
 };
 
+type NewFollowerEmailResult = {
+  reason?: string;
+  skipped: boolean;
+};
+
 const resendApiUrl = "https://api.resend.com/emails";
 const maxFollowAgeMs = 10 * 60 * 1000;
 
@@ -62,6 +67,18 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
+function skipNewFollowerEmail(
+  reason: string,
+  details?: Record<string, boolean | number | string>
+) {
+  console.warn("New follower email skipped.", {
+    ...details,
+    reason,
+  });
+
+  return NextResponse.json({ reason, skipped: true });
+}
+
 async function getProfileByUserId(userId: string) {
   const config = getSupabaseConfig();
 
@@ -83,6 +100,9 @@ async function getProfileByUserId(userId: string) {
   });
 
   if (!response.ok) {
+    console.warn("New follower email profile lookup failed.", {
+      status: response.status,
+    });
     return null;
   }
 
@@ -111,6 +131,9 @@ async function newFollowerEmailsAreEnabled(userId: string) {
   });
 
   if (!response.ok) {
+    console.warn("New follower email preference lookup failed.", {
+      status: response.status,
+    });
     return true;
   }
 
@@ -147,6 +170,9 @@ async function getAuthUser(accessToken: string) {
   });
 
   if (!response.ok) {
+    console.warn("New follower email auth lookup failed.", {
+      status: response.status,
+    });
     return null;
   }
 
@@ -172,6 +198,9 @@ async function getAuthUserEmail(userId: string) {
   );
 
   if (!response.ok) {
+    console.warn("New follower email recipient lookup failed.", {
+      status: response.status,
+    });
     return null;
   }
 
@@ -205,6 +234,9 @@ async function followRelationshipExists(input: {
   });
 
   if (!response.ok) {
+    console.warn("New follower email follow lookup failed.", {
+      status: response.status,
+    });
     return false;
   }
 
@@ -251,6 +283,9 @@ async function newFollowerEmailWasProcessed(input: {
   );
 
   if (!response.ok) {
+    console.warn("New follower email event lookup failed.", {
+      status: response.status,
+    });
     return false;
   }
 
@@ -287,7 +322,9 @@ async function markNewFollowerEmailProcessed(input: {
   );
 
   if (!response.ok) {
-    console.warn("Could not save new follower email event.");
+    console.warn("Could not save new follower email event.", {
+      status: response.status,
+    });
   }
 }
 
@@ -299,13 +336,13 @@ async function sendResendEmail(input: {
   profileUrl: string;
   recipientName: string;
   to: string;
-}) {
+}): Promise<NewFollowerEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from =
     process.env.RESEND_FROM_EMAIL ?? "PopScore <onboarding@resend.dev>";
 
   if (!apiKey) {
-    return { skipped: true };
+    return { reason: "missing_resend_api_key", skipped: true };
   }
 
   const followerHandle = `@${input.followerName}`;
@@ -375,7 +412,7 @@ async function sendResendEmail(input: {
 
 export async function POST(request: Request) {
   if (!getSupabaseConfig()) {
-    return NextResponse.json({ skipped: true });
+    return skipNewFollowerEmail("missing_supabase_config");
   }
 
   const body = (await request.json().catch(() => null)) as
@@ -392,7 +429,7 @@ export async function POST(request: Request) {
   }
 
   if (followerUserId === followedUserId) {
-    return NextResponse.json({ skipped: true });
+    return skipNewFollowerEmail("self_follow");
   }
 
   const accessToken = getBearerToken(request);
@@ -407,8 +444,12 @@ export async function POST(request: Request) {
     followerUserId,
   });
 
-  if (!followRow || !followWasRecentlyCreated(followRow)) {
-    return NextResponse.json({ skipped: true });
+  if (!followRow) {
+    return skipNewFollowerEmail("follow_not_found");
+  }
+
+  if (!followWasRecentlyCreated(followRow)) {
+    return skipNewFollowerEmail("follow_too_old");
   }
 
   const [followedProfile, followerProfile] = await Promise.all([
@@ -417,8 +458,12 @@ export async function POST(request: Request) {
   ]);
   const recipientEmail = await getAuthUserEmail(followedUserId);
 
-  if (!followedProfile || !recipientEmail) {
-    return NextResponse.json({ skipped: true });
+  if (!followedProfile) {
+    return skipNewFollowerEmail("recipient_profile_missing");
+  }
+
+  if (!recipientEmail) {
+    return skipNewFollowerEmail("recipient_email_missing");
   }
 
   const canReceiveNewFollowerEmails = await newFollowerEmailsAreEnabled(
@@ -426,7 +471,7 @@ export async function POST(request: Request) {
   );
 
   if (!canReceiveNewFollowerEmails) {
-    return NextResponse.json({ skipped: true });
+    return skipNewFollowerEmail("recipient_email_notifications_disabled");
   }
 
   const followerName =
@@ -440,7 +485,7 @@ export async function POST(request: Request) {
   });
 
   if (emailAlreadyProcessed) {
-    return NextResponse.json({ skipped: true });
+    return skipNewFollowerEmail("email_already_processed");
   }
 
   try {
@@ -459,12 +504,18 @@ export async function POST(request: Request) {
         followedUserId,
         followerUserId,
       });
+    } else {
+      console.warn("New follower email skipped.", {
+        reason: result.reason ?? "email_send_skipped",
+      });
     }
 
     return NextResponse.json(result);
   } catch (error) {
-    console.warn("Could not send new follower email.", error);
+    console.warn("Could not send new follower email.", {
+      message: error instanceof Error ? error.message : String(error),
+    });
   }
 
-  return NextResponse.json({ skipped: true });
+  return NextResponse.json({ reason: "resend_request_failed", skipped: true });
 }
