@@ -222,7 +222,7 @@ function followWasRecentlyCreated(row: FollowRow) {
   return Date.now() - createdAt <= maxFollowAgeMs;
 }
 
-async function claimNewFollowerEmailEvent(input: {
+async function newFollowerEmailWasProcessed(input: {
   followedUserId: string;
   followerUserId: string;
 }) {
@@ -230,6 +230,42 @@ async function claimNewFollowerEmailEvent(input: {
 
   if (!config) {
     return false;
+  }
+
+  const params = new URLSearchParams({
+    follower_id: `eq.${input.followerUserId}`,
+    following_id: `eq.${input.followedUserId}`,
+    limit: "1",
+    select: "id",
+  });
+  const response = await fetch(
+    `${config.restUrl}/new_follower_email_events?${params}`,
+    {
+      headers: {
+        apikey: config.serviceRoleKey,
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        "Content-Type": "application/json",
+      },
+      next: { revalidate: 0 },
+    }
+  );
+
+  if (!response.ok) {
+    return false;
+  }
+
+  const rows = (await response.json()) as { id: string }[];
+  return rows.length > 0;
+}
+
+async function markNewFollowerEmailProcessed(input: {
+  followedUserId: string;
+  followerUserId: string;
+}) {
+  const config = getSupabaseConfig();
+
+  if (!config) {
+    return;
   }
 
   const response = await fetch(
@@ -251,11 +287,8 @@ async function claimNewFollowerEmailEvent(input: {
   );
 
   if (!response.ok) {
-    return true;
+    console.warn("Could not save new follower email event.");
   }
-
-  const rows = (await response.json()) as { id: string }[];
-  return rows.length > 0;
 }
 
 async function sendResendEmail(input: {
@@ -401,12 +434,12 @@ export async function POST(request: Request) {
     body?.followerUsername?.trim() ??
     "Someone";
   const profileSlug = followerProfile?.username ?? followerUserId;
-  const emailClaimed = await claimNewFollowerEmailEvent({
+  const emailAlreadyProcessed = await newFollowerEmailWasProcessed({
     followedUserId,
     followerUserId,
   });
 
-  if (!emailClaimed) {
+  if (emailAlreadyProcessed) {
     return NextResponse.json({ skipped: true });
   }
 
@@ -420,6 +453,13 @@ export async function POST(request: Request) {
       recipientName: followedProfile.username,
       to: recipientEmail,
     });
+
+    if (!result.skipped) {
+      await markNewFollowerEmailProcessed({
+        followedUserId,
+        followerUserId,
+      });
+    }
 
     return NextResponse.json(result);
   } catch (error) {
