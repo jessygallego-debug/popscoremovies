@@ -34,11 +34,15 @@ const resendApiUrl = "https://api.resend.com/emails";
 const maxFollowAgeMs = 10 * 60 * 1000;
 
 function getSupabaseConfig() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const url =
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key =
+    process.env.SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    serviceRoleKey;
 
-  if (!url || !key || !serviceRoleKey) {
+  if (!url || !serviceRoleKey) {
     return null;
   }
 
@@ -412,7 +416,14 @@ async function sendResendEmail(input: {
 
 export async function POST(request: Request) {
   if (!getSupabaseConfig()) {
-    return skipNewFollowerEmail("missing_supabase_config");
+    return skipNewFollowerEmail("missing_supabase_config", {
+      hasNextPublicSupabaseKey: Boolean(
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+      ),
+      hasNextPublicSupabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      hasServerSupabaseUrl: Boolean(process.env.SUPABASE_URL),
+      hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    });
   }
 
   const body = (await request.json().catch(() => null)) as
