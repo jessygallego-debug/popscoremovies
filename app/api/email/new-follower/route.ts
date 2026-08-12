@@ -37,14 +37,15 @@ function getSupabaseConfig() {
   const url =
     process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const key =
-    process.env.SUPABASE_PUBLISHABLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-    serviceRoleKey;
 
   if (!url || !serviceRoleKey) {
     return null;
   }
+
+  const key =
+    process.env.SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    serviceRoleKey;
 
   const cleanUrl = url.replace(/\/$/, "");
 
