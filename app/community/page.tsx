@@ -2765,44 +2765,102 @@ function PeopleTabContent({ users }: { users: SuggestedFollow[] }) {
   const [userSearch, setUserSearch] = useState("");
   const [selectedFavoriteGenre, setSelectedFavoriteGenre] =
     useState("All Genres");
+  const [isUserSearchFocused, setIsUserSearchFocused] = useState(false);
   const followingIds = useFollowingIds();
-  const visibleUsers = useMemo(() => {
-    const normalizedSearch = userSearch.trim().toLowerCase();
-    const followingSet = new Set(followingIds);
+  const normalizedUserSearch = userSearch.trim().toLowerCase();
+  const followingSet = useMemo(() => new Set(followingIds), [followingIds]);
+  const userSuggestions = useMemo(() => {
+    if (normalizedUserSearch.length < 2) {
+      return [];
+    }
 
+    return users
+      .filter((user) => {
+        if (followingSet.has(user.userId)) {
+          return false;
+        }
+
+        return (
+          user.displayName.toLowerCase().includes(normalizedUserSearch) ||
+          user.username.toLowerCase().includes(normalizedUserSearch)
+        );
+      })
+      .slice(0, 6);
+  }, [followingSet, normalizedUserSearch, users]);
+  const visibleUsers = useMemo(() => {
     return users.filter((user) => {
       if (followingSet.has(user.userId)) {
         return false;
       }
 
       const matchesSearch =
-        !normalizedSearch ||
-        user.displayName.toLowerCase().includes(normalizedSearch) ||
-        user.username.toLowerCase().includes(normalizedSearch);
+        !normalizedUserSearch ||
+        user.displayName.toLowerCase().includes(normalizedUserSearch) ||
+        user.username.toLowerCase().includes(normalizedUserSearch);
       const matchesGenre =
         selectedFavoriteGenre === "All Genres" ||
         user.favoriteGenre === selectedFavoriteGenre;
 
       return matchesSearch && matchesGenre;
     });
-  }, [followingIds, selectedFavoriteGenre, userSearch, users]);
+  }, [followingSet, normalizedUserSearch, selectedFavoriteGenre, users]);
+
+  const shouldShowUserSuggestions =
+    isUserSearchFocused && normalizedUserSearch.length >= 2;
 
   return (
     <div className="w-full space-y-3 sm:space-y-5">
       <section className={cardClass("relative z-[60] overflow-visible p-2 sm:p-3")}>
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
-          <label className="flex min-h-9 items-center gap-2 rounded-full border border-slate-800 bg-black/35 px-3 text-xs font-bold text-slate-400 shadow-inner shadow-black/20 sm:min-h-10 sm:text-sm">
-            <span aria-hidden="true" className="text-lg">
-              ⌕
-            </span>
-            <input
-              value={userSearch}
-              onChange={(event) => setUserSearch(event.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-slate-500"
-              placeholder="Search users..."
-              type="search"
-            />
-          </label>
+          <div className="relative">
+            <label className="flex min-h-9 items-center rounded-full border border-slate-800 bg-black/35 px-3 text-xs font-bold text-slate-400 shadow-inner shadow-black/20 focus-within:border-yellow-400/70 sm:min-h-10 sm:text-sm">
+              <span className="sr-only">Search users</span>
+              <input
+                value={userSearch}
+                onBlur={() => {
+                  window.setTimeout(() => setIsUserSearchFocused(false), 120);
+                }}
+                onChange={(event) => setUserSearch(event.target.value)}
+                onFocus={() => setIsUserSearchFocused(true)}
+                className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-slate-500"
+                placeholder="Search users..."
+                type="search"
+              />
+            </label>
+
+            {shouldShowUserSuggestions ? (
+              <div className="absolute left-0 right-0 z-[95] mt-2 max-h-72 overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-2 shadow-2xl shadow-black/60">
+                {userSuggestions.length > 0 ? (
+                  userSuggestions.map((user) => (
+                    <button
+                      key={user.userId}
+                      type="button"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        setUserSearch(user.username);
+                        setIsUserSearchFocused(false);
+                      }}
+                      className="grid w-full grid-cols-[40px_1fr] items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-bold text-white transition hover:bg-yellow-400 hover:text-black"
+                    >
+                      <Avatar label={user.avatar} size="md" />
+                      <span className="min-w-0">
+                        <span className="block truncate font-black">
+                          {user.displayName}
+                        </span>
+                        <span className="block truncate text-xs opacity-75">
+                          @{user.username}
+                        </span>
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-3 text-sm font-bold text-slate-500">
+                    No users found.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
           <FilterMenu
             onSelect={setSelectedFavoriteGenre}
             options={genreFilters}
