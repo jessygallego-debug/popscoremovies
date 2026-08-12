@@ -217,6 +217,35 @@ async function getCurrentFollowContext() {
   return { currentProfile, currentUser };
 }
 
+async function sendNewFollowerEmail(input: {
+  followedUserId: string;
+  followerUserId: string;
+  followerUsername?: string | null;
+}) {
+  try {
+    const accessToken = await getSupabaseAccessToken();
+
+    if (!accessToken) {
+      return;
+    }
+
+    const response = await fetch("/api/email/new-follower", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      console.warn("Could not send new follower email.");
+    }
+  } catch (error) {
+    console.warn("Could not send new follower email.", error);
+  }
+}
+
 function localSummary(
   target: FollowTarget,
   currentUserId: string | null,
@@ -435,6 +464,11 @@ export async function toggleFollow(target: FollowTarget) {
     recipientUserId: target.userId,
     recipientUsername: target.username,
     type: "new_follower",
+  });
+  await sendNewFollowerEmail({
+    followedUserId: target.userId,
+    followerUserId: currentUser.id,
+    followerUsername: currentProfile?.username ?? currentUser.email ?? null,
   });
 
   if (canUseLocalStorage()) {
