@@ -10,6 +10,8 @@ import { validateReviewComment } from "@/lib/review-comments";
 const SESSION_KEY = "popscore_supabase_session";
 const SESSION_MAX_IDLE_SECONDS = 90 * 24 * 60 * 60;
 const SESSION_REFRESH_BUFFER_SECONDS = 60;
+const SUPABASE_READ_RETRY_DELAYS_MS = [350, 900];
+const SUPABASE_READ_TIMEOUT_MS = 12000;
 
 type SupabaseSession = {
   access_token: string;
@@ -232,6 +234,79 @@ async function authHeaders(accessToken?: string) {
   };
 }
 
+function waitForRetry(milliseconds: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+function isReadRequest(options: RequestInit) {
+  const method = (options.method ?? "GET").toUpperCase();
+
+  return method === "GET" || method === "HEAD";
+}
+
+function isRetryableSupabaseStatus(status: number) {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+async function fetchWithReadRetry(
+  input: RequestInfo | URL,
+  options: RequestInit = {}
+) {
+  if (!isReadRequest(options)) {
+    return fetch(input, options);
+  }
+
+  let lastError: unknown = null;
+
+  for (
+    let attempt = 0;
+    attempt <= SUPABASE_READ_RETRY_DELAYS_MS.length;
+    attempt += 1
+  ) {
+    const controller = options.signal ? null : new AbortController();
+    const timeoutId = controller
+      ? setTimeout(() => controller.abort(), SUPABASE_READ_TIMEOUT_MS)
+      : null;
+
+    try {
+      const response = await fetch(input, {
+        ...options,
+        signal: options.signal ?? controller?.signal,
+      });
+
+      if (
+        !response.ok &&
+        isRetryableSupabaseStatus(response.status) &&
+        attempt < SUPABASE_READ_RETRY_DELAYS_MS.length
+      ) {
+        await response.text().catch(() => "");
+        await waitForRetry(SUPABASE_READ_RETRY_DELAYS_MS[attempt]);
+        continue;
+      }
+
+      return response;
+    } catch (error) {
+      lastError = error;
+
+      if (attempt >= SUPABASE_READ_RETRY_DELAYS_MS.length) {
+        throw error;
+      }
+
+      await waitForRetry(SUPABASE_READ_RETRY_DELAYS_MS[attempt]);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Supabase request failed.");
+}
+
 async function supabaseFetch<T>(
   path: string,
   options: RequestInit = {},
@@ -243,7 +318,7 @@ async function supabaseFetch<T>(
     throw new Error("Supabase is not configured.");
   }
 
-  const response = await fetch(`${config.restUrl}${path}`, {
+  const response = await fetchWithReadRetry(`${config.restUrl}${path}`, {
     ...options,
     headers: {
       ...(await authHeaders(accessToken)),
@@ -551,7 +626,7 @@ export async function getCurrentUser() {
     return null;
   }
 
-  const response = await fetch(`${config.authUrl}/user`, {
+  const response = await fetchWithReadRetry(`${config.authUrl}/user`, {
     headers: {
       apikey: config.key,
       Authorization: `Bearer ${accessToken}`,

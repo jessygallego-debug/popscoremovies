@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { usePopFile } from "@/app/components/popfile-provider";
 import { avatarForKey } from "@/lib/profile-config";
@@ -16,9 +16,10 @@ const mobileNavItems = [
 
 export default function MobileSiteMenu() {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
-  const { isLoading: isProfileLoading, profile } = usePopFile();
+  const { isLoading: isProfileLoading, profile, signOut } = usePopFile();
   const currentPath = `${pathname}${
     searchParams.toString() ? `?${searchParams.toString()}` : ""
   }`;
@@ -26,6 +27,13 @@ export default function MobileSiteMenu() {
     ? `/profile/${profile.username}`
     : `/profile/edit?returnTo=${encodeURIComponent(currentPath)}`;
   const popFileAvatar = profile ? avatarForKey(profile.avatar_key).icon : "★";
+
+  function handleSignOut() {
+    signOut();
+    setIsOpen(false);
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <div className="relative md:hidden">
@@ -93,6 +101,15 @@ export default function MobileSiteMenu() {
                 My PopFile
               </Link>
             )}
+            {!isProfileLoading && profile ? (
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="mt-2 flex w-full items-center justify-center rounded-2xl border border-slate-700/90 bg-slate-950/70 px-4 py-3 text-sm font-black text-slate-200 transition hover:border-yellow-400/55 hover:bg-yellow-400/10 hover:text-yellow-300"
+              >
+                Sign Out
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}

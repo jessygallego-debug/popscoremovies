@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { usePopFile } from "@/app/components/popfile-provider";
 import { avatarForKey } from "@/lib/profile-config";
@@ -16,15 +16,23 @@ const menuItems = [
 
 export default function ProfileMenu() {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const menuRef = useRef<HTMLDetailsElement>(null);
-  const { isLoading: isProfileLoading, profile } = usePopFile();
+  const { isLoading: isProfileLoading, profile, signOut } = usePopFile();
   const currentPath = `${pathname}${
     searchParams.toString() ? `?${searchParams.toString()}` : ""
   }`;
   const signInHref = `/profile/edit?returnTo=${encodeURIComponent(
     currentPath
   )}`;
+
+  function handleSignOut() {
+    signOut();
+    menuRef.current?.removeAttribute("open");
+    router.push("/");
+    router.refresh();
+  }
 
   useEffect(() => {
     const closeMenu = (event: PointerEvent) => {
@@ -109,6 +117,15 @@ export default function ProfileMenu() {
             </Link>
           );
         })}
+        <div className="mt-2 border-t border-white/10 pt-2">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="block w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-300 transition hover:bg-yellow-400 hover:text-black"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
     </details>
   );

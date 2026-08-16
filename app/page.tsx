@@ -250,8 +250,9 @@ export default async function Home({
   const activeGenre = MOVIE_GENRE_FILTERS.find(
     (genre) => genre.id === params.genre
   );
+  const homeMovieLimit = query || activeGenre ? 160 : 100;
   const [movies, siteStats] = await Promise.all([
-    getMovies(query, 200, activeGenre?.id),
+    getMovies(query, homeMovieLimit, activeGenre?.id),
     getSiteEngagementTotals(),
   ]);
   const displayMovies = movies.filter(hasMovieArtwork);

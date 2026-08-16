@@ -13,6 +13,12 @@ type SiteEngagementTotals = {
   totalReactions: number;
 };
 
+const EMPTY_SITE_ENGAGEMENT_TOTALS: SiteEngagementTotals = {
+  totalRatings: 0,
+  totalReactions: 0,
+};
+const SITE_STATS_TIMEOUT_MS = 2500;
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -27,7 +33,7 @@ function getSupabaseConfig() {
   };
 }
 
-async function supabaseFetch<T>(path: string) {
+async function supabaseFetch<T>(path: string, signal?: AbortSignal) {
   const config = getSupabaseConfig();
 
   if (!config) {
@@ -41,6 +47,7 @@ async function supabaseFetch<T>(path: string) {
       "Content-Type": "application/json",
     },
     next: { revalidate: 60 },
+    signal,
   });
 
   if (!response.ok) {
@@ -50,7 +57,11 @@ async function supabaseFetch<T>(path: string) {
   return (await response.json()) as T;
 }
 
-async function fetchAllRows(tableName: string, selectOptions: string[]) {
+async function fetchAllRows(
+  tableName: string,
+  selectOptions: string[],
+  signal?: AbortSignal
+) {
   const pageSize = 1000;
 
   for (const select of selectOptions) {
@@ -60,7 +71,8 @@ async function fetchAllRows(tableName: string, selectOptions: string[]) {
     try {
       for (;;) {
         const page = await supabaseFetch<SiteStatsRow[]>(
-          `/${tableName}?select=${select}&limit=${pageSize}&offset=${offset}`
+          `/${tableName}?select=${select}&limit=${pageSize}&offset=${offset}`,
+          signal
         );
 
         rows.push(...page);
@@ -107,62 +119,80 @@ function uniqueInteractionKey(row: SiteStatsRow, fallbackKey: string) {
   return fallbackKey;
 }
 
-export async function getSiteEngagementTotals(): Promise<SiteEngagementTotals> {
-  try {
-    const [profileRatings, legacyRatings, legacyReactions] = await Promise.all([
-      fetchAllRows("movie_ratings", [
-        "id,user_id,movie_id,ratings,weights,quick_reaction",
-      ]),
-      fetchAllRows("ratings", [
+async function loadSiteEngagementTotals(
+  signal?: AbortSignal
+): Promise<SiteEngagementTotals> {
+  const [profileRatings, legacyRatings, legacyReactions] = await Promise.all([
+    fetchAllRows(
+      "movie_ratings",
+      ["id,user_id,movie_id,ratings,weights,quick_reaction"],
+      signal
+    ),
+    fetchAllRows(
+      "ratings",
+      [
         "id,user_id,movie_id,ratings,weights",
         "id,movie_id,ratings,weights",
-      ]),
-      fetchAllRows("co_star_reactions", [
+      ],
+      signal
+    ),
+    fetchAllRows(
+      "co_star_reactions",
+      [
         "id,user_id,movie_id,quick_reaction,reaction",
         "id,movie_id,quick_reaction,reaction",
-      ]),
-    ]);
-    const ratingKeys = new Set<string>();
-    const reactionKeys = new Set<string>();
+      ],
+      signal
+    ),
+  ]);
+  const ratingKeys = new Set<string>();
+  const reactionKeys = new Set<string>();
 
-    [...profileRatings, ...legacyRatings].forEach((row, index) => {
-      if (!hasCompletedRating(row)) {
-        return;
-      }
+  [...profileRatings, ...legacyRatings].forEach((row, index) => {
+    if (!hasCompletedRating(row)) {
+      return;
+    }
 
-      ratingKeys.add(
-        uniqueInteractionKey(row, `rating:${row.id ?? index}`)
-      );
-    });
+    ratingKeys.add(uniqueInteractionKey(row, `rating:${row.id ?? index}`));
+  });
 
-    profileRatings.forEach((row, index) => {
-      if (!hasReaction(row)) {
-        return;
-      }
+  profileRatings.forEach((row, index) => {
+    if (!hasReaction(row)) {
+      return;
+    }
 
-      reactionKeys.add(
-        uniqueInteractionKey(row, `profile-reaction:${row.id ?? index}`)
-      );
-    });
+    reactionKeys.add(
+      uniqueInteractionKey(row, `profile-reaction:${row.id ?? index}`)
+    );
+  });
 
-    legacyReactions.forEach((row, index) => {
-      if (!hasReaction(row)) {
-        return;
-      }
+  legacyReactions.forEach((row, index) => {
+    if (!hasReaction(row)) {
+      return;
+    }
 
-      reactionKeys.add(
-        uniqueInteractionKey(row, `legacy-reaction:${row.id ?? index}`)
-      );
-    });
+    reactionKeys.add(
+      uniqueInteractionKey(row, `legacy-reaction:${row.id ?? index}`)
+    );
+  });
 
-    return {
-      totalRatings: ratingKeys.size,
-      totalReactions: reactionKeys.size,
-    };
+  return {
+    totalRatings: ratingKeys.size,
+    totalReactions: reactionKeys.size,
+  };
+}
+
+export async function getSiteEngagementTotals(): Promise<SiteEngagementTotals> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, SITE_STATS_TIMEOUT_MS);
+
+  try {
+    return await loadSiteEngagementTotals(controller.signal);
   } catch {
-    return {
-      totalRatings: 0,
-      totalReactions: 0,
-    };
+    return EMPTY_SITE_ENGAGEMENT_TOTALS;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
