@@ -412,16 +412,14 @@ export default async function Home({
                     className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/85 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10 sm:rounded-[1.5rem]"
                   >
                     <Link data-remember-scroll href={detailsHref} className="block">
-                      <div className="relative aspect-[4/3] overflow-hidden bg-slate-900 sm:aspect-[16/10]">
+                      <div className="relative aspect-[2/3] overflow-hidden bg-slate-950">
                         <MoviePosterImage
                           src={poster}
                           alt={`${movie.title} movie poster`}
                           sizes="(min-width: 1536px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 50vw"
-                          className="object-cover transition duration-500 group-hover:scale-105"
+                          className="object-contain"
                           fallbackMovieId={String(movie.id)}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/25 to-transparent" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                         <div className="absolute left-2 top-2 sm:left-4 sm:top-4">
                           <PopScoreDisplay
                             movieId={String(movie.id)}
@@ -429,18 +427,22 @@ export default async function Home({
                             className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-[15px] font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl"
                           />
                         </div>
-                        <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4">
-                          <h3 className="line-clamp-2 text-sm font-black leading-tight text-white sm:text-2xl">
-                            {movie.title}
-                          </h3>
-                          <p className="mt-1 text-xs font-bold text-slate-300 sm:text-sm">
-                            {releaseDate || "TBA"}
-                          </p>
-                        </div>
                       </div>
                     </Link>
 
                     <div className="flex flex-1 flex-col space-y-3 p-3 sm:space-y-4 sm:p-4">
+                      <Link
+                        data-remember-scroll
+                        href={detailsHref}
+                        className="group/title block min-h-[4.25rem]"
+                      >
+                        <h3 className="line-clamp-2 text-lg font-black leading-tight text-white transition group-hover/title:text-yellow-300 sm:text-2xl">
+                          {movie.title}
+                        </h3>
+                        <p className="mt-1 text-xs font-bold text-slate-300 sm:text-sm">
+                          {releaseDate || "TBA"}
+                        </p>
+                      </Link>
                       <div className="grid gap-2 sm:gap-3">
                         <Link
                           data-remember-scroll
