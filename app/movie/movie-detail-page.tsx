@@ -275,23 +275,11 @@ function WhereToWatchSection({
 }) {
   return (
     <section className="mt-6 max-w-3xl rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-black text-white">Where to Watch</h2>
-          <p className="mt-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
-            {movieRegionLabel(watchProviders.region)}
-          </p>
-        </div>
-        {watchProviders.link ? (
-          <a
-            href={watchProviders.link}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex min-h-9 items-center rounded-lg border border-yellow-400/30 px-3 text-xs font-black uppercase tracking-[0.12em] text-yellow-300 transition hover:bg-yellow-400/10"
-          >
-            View on TMDB
-          </a>
-        ) : null}
+      <div>
+        <h2 className="text-lg font-black text-white">Where to Watch</h2>
+        <p className="mt-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
+          {movieRegionLabel(watchProviders.region)}
+        </p>
       </div>
 
       <div className="mt-4 space-y-4">
@@ -328,10 +316,6 @@ function WhereToWatchSection({
           </div>
         ))}
       </div>
-
-      <p className="mt-4 text-xs font-semibold text-gray-500">
-        Availability data provided by JustWatch.
-      </p>
     </section>
   );
 }
@@ -408,13 +392,7 @@ export async function MovieDetailPage({
     ]);
   const canonical = movieCanonical(movie);
   const relatedDiscussions = mockCommunityDiscussions
-    .filter(
-      (discussion) =>
-        discussion.movieId === String(movie.id) ||
-        discussion.movieGenres.some((genre) =>
-          movie.genres.some((movieGenre) => movieGenre.name === genre)
-        )
-    )
+    .filter((discussion) => discussion.movieId === String(movie.id))
     .slice(0, 3);
   const schema = movieJsonLd({
     aggregateRating,
@@ -580,20 +558,6 @@ export async function MovieDetailPage({
                 {movie.overview || "No overview is available for this movie."}
               </p>
 
-              {watchProviders ? (
-                <WhereToWatchSection watchProviders={watchProviders} />
-              ) : null}
-
-              <section className="mt-6 max-w-3xl rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-                <h2 className="text-lg font-black text-yellow-300">
-                  Rate {movie.title} on PopScore
-                </h2>
-                <p className="mt-2 text-sm font-semibold leading-6 text-gray-200 sm:text-base">
-                  Rate this movie, view its PopScore, read fan comments, and
-                  see how other movie fans scored it.
-                </p>
-              </section>
-
               {mainActors.length > 0 || directors.length > 0 ? (
                 <div className="mt-8 grid gap-5 text-gray-200 sm:grid-cols-2">
                   {mainActors.length > 0 ? (
@@ -614,6 +578,10 @@ export async function MovieDetailPage({
                     </div>
                   ) : null}
                 </div>
+              ) : null}
+
+              {watchProviders ? (
+                <WhereToWatchSection watchProviders={watchProviders} />
               ) : null}
             </div>
           </div>
