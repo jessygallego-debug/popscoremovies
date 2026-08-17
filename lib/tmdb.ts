@@ -175,6 +175,14 @@ const WATCH_PROVIDER_GROUPS = [
   responseKeys: readonly TmdbWatchProviderResponseKey[];
 }[];
 
+const WATCH_PROVIDER_PLATFORM_ALIASES: Record<string, string> = {
+  "amazon prime video": "amazon",
+  "amazon video": "amazon",
+  "apple tv plus": "apple tv",
+  "apple tv store": "apple tv",
+  "netflix standard with ads": "netflix",
+};
+
 type RecommendationMovieOptions = {
   includeInternationalMovies?: boolean;
   preferredLanguage?: string;
@@ -385,26 +393,48 @@ function watchProviderDisplayPriority(provider: TmdbWatchProvider) {
     : Number.MAX_SAFE_INTEGER;
 }
 
+function normalizeWatchProviderName(providerName: string) {
+  return providerName
+    .replace(/\s*\((?:standard|basic)?\s*with ads\)\s*$/i, "")
+    .replace(/\s+(?:standard|basic)?\s*with ads\s*$/i, "")
+    .replace(/\s+store\s*$/i, "")
+    .trim();
+}
+
+function watchProviderPlatformKey(providerName: string) {
+  const normalizedName = normalizeWatchProviderName(providerName)
+    .toLowerCase()
+    .replace(/\+/g, " plus")
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+
+  return WATCH_PROVIDER_PLATFORM_ALIASES[normalizedName] ?? normalizedName;
+}
+
 function movieWatchProviderGroups(
   regionData: TmdbMovieWatchProviderRegion
 ): MovieWatchProviderGroup[] {
-  const seenProviderIds = new Set<number>();
+  const seenProviderKeys = new Set<string>();
 
   return WATCH_PROVIDER_GROUPS.map((group) => {
     const providers = group.responseKeys
       .flatMap((responseKey) => regionData[responseKey] ?? [])
       .filter((provider) => {
-        const providerName = provider.provider_name.trim();
+        const providerName = normalizeWatchProviderName(provider.provider_name);
+        const providerKey = watchProviderPlatformKey(provider.provider_name);
 
         if (
           !providerName ||
           !Number.isFinite(provider.provider_id) ||
-          seenProviderIds.has(provider.provider_id)
+          !providerKey ||
+          seenProviderKeys.has(providerKey)
         ) {
           return false;
         }
 
-        seenProviderIds.add(provider.provider_id);
+        seenProviderKeys.add(providerKey);
         return true;
       })
       .map<MovieWatchProvider>((provider) => ({
@@ -412,7 +442,7 @@ function movieWatchProviderGroups(
         displayPriority: watchProviderDisplayPriority(provider),
         logoPath: tmdbImagePath(provider.logo_path),
         providerId: provider.provider_id,
-        providerName: provider.provider_name.trim(),
+        providerName: normalizeWatchProviderName(provider.provider_name),
       }))
       .sort(compareWatchProviders);
 
