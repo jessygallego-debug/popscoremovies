@@ -2,6 +2,7 @@ import {
   getMovieSearchQueries,
   movieTitleSearchScore,
 } from "@/lib/movie-search";
+import { normalizeMovieRegion } from "@/lib/movie-locale";
 
 export type MovieSummary = {
   id: number;
@@ -67,10 +68,44 @@ type TmdbMovieImagesResponse = {
   posters?: TmdbMovieImage[];
 };
 
+type TmdbWatchProvider = {
+  display_priority?: number;
+  logo_path: string | null;
+  provider_id: number;
+  provider_name: string;
+};
+
+type TmdbMovieWatchProviderRegion = {
+  ads?: TmdbWatchProvider[];
+  buy?: TmdbWatchProvider[];
+  flatrate?: TmdbWatchProvider[];
+  free?: TmdbWatchProvider[];
+  link?: string;
+  rent?: TmdbWatchProvider[];
+};
+
+type TmdbMovieWatchProvidersResponse = {
+  id: number;
+  results?: Record<string, TmdbMovieWatchProviderRegion>;
+};
+
+type TmdbWatchProviderResponseKey =
+  | "ads"
+  | "buy"
+  | "flatrate"
+  | "free"
+  | "rent";
+
+type TmdbFetchOptions = {
+  revalidate?: number;
+};
+
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const MAX_MOVIE_RESULTS = 300;
 const TMDB_PAGE_SIZE = 20;
+const TMDB_DEFAULT_CACHE_SECONDS = 3600;
+const TMDB_WATCH_PROVIDER_CACHE_SECONDS = 43200;
 const ACTION_GENRE_ID = 28;
 const ADVENTURE_GENRE_ID = 12;
 const ANIMATION_GENRE_ID = 16;
@@ -92,6 +127,53 @@ const SUPERHERO_KEYWORD_ID = 9715;
 export const ROMCOM_GENRE_FILTER_ID = "romcom";
 export const SUPERHERO_GENRE_FILTER_ID = "superhero";
 export const SUPERHERO_GENRE_FILTER_NAME = "Superhero";
+
+export type MovieWatchProviderAvailability =
+  | "subscription"
+  | "free"
+  | "rent-buy";
+
+export type MovieWatchProvider = {
+  availability: MovieWatchProviderAvailability;
+  displayPriority: number;
+  logoPath: string | null;
+  providerId: number;
+  providerName: string;
+};
+
+export type MovieWatchProviderGroup = {
+  availability: MovieWatchProviderAvailability;
+  label: string;
+  providers: MovieWatchProvider[];
+};
+
+export type MovieWatchProviders = {
+  groups: MovieWatchProviderGroup[];
+  link: string | null;
+  region: string;
+};
+
+const WATCH_PROVIDER_GROUPS = [
+  {
+    availability: "subscription",
+    label: "Included with Subscription",
+    responseKeys: ["flatrate"],
+  },
+  {
+    availability: "free",
+    label: "Free",
+    responseKeys: ["free", "ads"],
+  },
+  {
+    availability: "rent-buy",
+    label: "Rent/Buy",
+    responseKeys: ["rent", "buy"],
+  },
+] as const satisfies readonly {
+  availability: MovieWatchProviderAvailability;
+  label: string;
+  responseKeys: readonly TmdbWatchProviderResponseKey[];
+}[];
 
 type RecommendationMovieOptions = {
   includeInternationalMovies?: boolean;
@@ -256,7 +338,10 @@ async function parseTmdbJson<T>(response: Response) {
   }
 }
 
-async function tmdbFetch<T>(path: string): Promise<T | null> {
+async function tmdbFetch<T>(
+  path: string,
+  options: TmdbFetchOptions = {}
+): Promise<T | null> {
   const token = getToken();
 
   if (!token) {
@@ -269,7 +354,7 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
       Accept: "application/json",
       "Accept-Encoding": "identity",
     },
-    next: { revalidate: 3600 },
+    next: { revalidate: options.revalidate ?? TMDB_DEFAULT_CACHE_SECONDS },
   });
 
   if (!response.ok) {
@@ -277,6 +362,66 @@ async function tmdbFetch<T>(path: string): Promise<T | null> {
   }
 
   return parseTmdbJson<T>(response);
+}
+
+function compareWatchProviders(
+  firstProvider: MovieWatchProvider,
+  secondProvider: MovieWatchProvider
+) {
+  const priorityDifference =
+    firstProvider.displayPriority - secondProvider.displayPriority;
+
+  if (priorityDifference !== 0) {
+    return priorityDifference;
+  }
+
+  return firstProvider.providerName.localeCompare(secondProvider.providerName);
+}
+
+function watchProviderDisplayPriority(provider: TmdbWatchProvider) {
+  return typeof provider.display_priority === "number" &&
+    Number.isFinite(provider.display_priority)
+    ? provider.display_priority
+    : Number.MAX_SAFE_INTEGER;
+}
+
+function movieWatchProviderGroups(
+  regionData: TmdbMovieWatchProviderRegion
+): MovieWatchProviderGroup[] {
+  const seenProviderIds = new Set<number>();
+
+  return WATCH_PROVIDER_GROUPS.map((group) => {
+    const providers = group.responseKeys
+      .flatMap((responseKey) => regionData[responseKey] ?? [])
+      .filter((provider) => {
+        const providerName = provider.provider_name.trim();
+
+        if (
+          !providerName ||
+          !Number.isFinite(provider.provider_id) ||
+          seenProviderIds.has(provider.provider_id)
+        ) {
+          return false;
+        }
+
+        seenProviderIds.add(provider.provider_id);
+        return true;
+      })
+      .map<MovieWatchProvider>((provider) => ({
+        availability: group.availability,
+        displayPriority: watchProviderDisplayPriority(provider),
+        logoPath: tmdbImagePath(provider.logo_path),
+        providerId: provider.provider_id,
+        providerName: provider.provider_name.trim(),
+      }))
+      .sort(compareWatchProviders);
+
+    return {
+      availability: group.availability,
+      label: group.label,
+      providers,
+    };
+  }).filter((group) => group.providers.length > 0);
 }
 
 function recentReleaseDates() {
@@ -636,6 +781,40 @@ export async function getMovie(id: string) {
   return tmdbFetch<MovieDetails>(
     `/movie/${id}?append_to_response=credits,videos,keywords`
   );
+}
+
+export async function getMovieWatchProviders(
+  movieId: string,
+  preferredRegion = "US"
+): Promise<MovieWatchProviders | null> {
+  const normalizedMovieId = movieId.trim();
+
+  if (!/^\d+$/.test(normalizedMovieId)) {
+    return null;
+  }
+
+  const region = normalizeMovieRegion(preferredRegion) || "US";
+  const data = await tmdbFetch<TmdbMovieWatchProvidersResponse>(
+    `/movie/${normalizedMovieId}/watch/providers`,
+    { revalidate: TMDB_WATCH_PROVIDER_CACHE_SECONDS }
+  );
+  const regionData = data?.results?.[region];
+
+  if (!regionData) {
+    return null;
+  }
+
+  const groups = movieWatchProviderGroups(regionData);
+
+  if (!groups.length) {
+    return null;
+  }
+
+  return {
+    groups,
+    link: regionData.link ?? null,
+    region,
+  };
 }
 
 export function movieHasSuperheroKeyword(movie: MovieDetails) {

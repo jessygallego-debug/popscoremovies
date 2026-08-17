@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -23,15 +24,38 @@ import {
   formatReleaseMonthYear,
   getRecommendationMovies,
   getMovie,
+  getMovieWatchProviders,
   isTmdbConfigured,
+  type MovieWatchProviders,
   movieFilterGenreNames,
   posterUrl,
 } from "@/lib/tmdb";
+import {
+  movieLocalePartsFromTag,
+  movieRegionLabel,
+  normalizeMovieRegion,
+} from "@/lib/movie-locale";
 import { discussionHref, genreHref, movieHref } from "@/lib/urls";
 
 export const revalidate = 3600;
 
 type MovieDetails = NonNullable<Awaited<ReturnType<typeof getMovie>>>;
+type MovieDetailSearchParams = {
+  preferredRegion?: string;
+  region?: string;
+  returnTo?: string;
+  trailer?: string;
+};
+type RequestHeaderList = {
+  get(name: string): string | null;
+};
+
+const MOVIE_WATCH_REGION_HEADER_NAMES = [
+  "x-vercel-ip-country",
+  "x-country-code",
+  "cf-ipcountry",
+  "cloudfront-viewer-country",
+] as const;
 
 function getSafeReturnPath(returnTo?: string) {
   if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
@@ -39,6 +63,45 @@ function getSafeReturnPath(returnTo?: string) {
   }
 
   return returnTo;
+}
+
+function firstAcceptLanguageRegion(acceptLanguage: string) {
+  for (const languagePart of acceptLanguage.split(",")) {
+    const locale = languagePart.split(";")[0]?.trim();
+    const region = movieLocalePartsFromTag(locale).region;
+
+    if (region) {
+      return region;
+    }
+  }
+
+  return "";
+}
+
+function getMovieWatchRegion(
+  queryParams: MovieDetailSearchParams,
+  requestHeaders: RequestHeaderList
+) {
+  const requestedRegion = normalizeMovieRegion(
+    queryParams.region ?? queryParams.preferredRegion
+  );
+
+  if (requestedRegion) {
+    return requestedRegion;
+  }
+
+  for (const headerName of MOVIE_WATCH_REGION_HEADER_NAMES) {
+    const headerRegion = normalizeMovieRegion(requestHeaders.get(headerName));
+
+    if (headerRegion && headerRegion !== "XX") {
+      return headerRegion;
+    }
+  }
+
+  return (
+    firstAcceptLanguageRegion(requestHeaders.get("accept-language") ?? "") ||
+    "US"
+  );
 }
 
 function getTrailer(movie: NonNullable<Awaited<ReturnType<typeof getMovie>>>) {
@@ -205,15 +268,86 @@ function formatFanReviewDate(value: string) {
   }).format(date);
 }
 
+function WhereToWatchSection({
+  watchProviders,
+}: {
+  watchProviders: MovieWatchProviders;
+}) {
+  return (
+    <section className="mt-6 max-w-3xl rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-white">Where to Watch</h2>
+          <p className="mt-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
+            {movieRegionLabel(watchProviders.region)}
+          </p>
+        </div>
+        {watchProviders.link ? (
+          <a
+            href={watchProviders.link}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-9 items-center rounded-lg border border-yellow-400/30 px-3 text-xs font-black uppercase tracking-[0.12em] text-yellow-300 transition hover:bg-yellow-400/10"
+          >
+            View on TMDB
+          </a>
+        ) : null}
+      </div>
+
+      <div className="mt-4 space-y-4">
+        {watchProviders.groups.map((group) => (
+          <div key={group.availability}>
+            <h3 className="text-sm font-black text-gray-200">{group.label}</h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {group.providers.map((provider) => {
+                const logo = posterUrl(provider.logoPath, "w92");
+
+                return (
+                  <div
+                    key={`${group.availability}-${provider.providerId}`}
+                    className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-lg border border-white/10 bg-black/35 px-3 py-2"
+                  >
+                    {logo ? (
+                      <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md bg-white/10">
+                        <Image
+                          src={logo}
+                          alt=""
+                          fill
+                          sizes="32px"
+                          className="object-cover"
+                        />
+                      </span>
+                    ) : null}
+                    <span className="min-w-0 break-words text-sm font-bold text-gray-100">
+                      {provider.providerName}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-4 text-xs font-semibold text-gray-500">
+        Availability data provided by JustWatch.
+      </p>
+    </section>
+  );
+}
+
 export async function MovieDetailPage({
   id,
   searchParams,
 }: {
   id: string;
-  searchParams: Promise<{ returnTo?: string; trailer?: string }>;
+  searchParams: Promise<MovieDetailSearchParams>;
 }) {
-  const queryParams = await searchParams;
-  const movie = await getMovie(id);
+  const [queryParams, requestHeaders, movie] = await Promise.all([
+    searchParams,
+    headers(),
+    getMovie(id),
+  ]);
 
   if (!movie && isTmdbConfigured()) {
     notFound();
@@ -262,13 +396,16 @@ export async function MovieDetailPage({
     closeHref
   )}`;
   const trailer = getTrailer(movie);
-  const [fanReviews, aggregateRating, similarMovies] = await Promise.all([
-    getMovieFanReviews(String(movie.id)),
-    getMovieAggregateRatingForSeo(String(movie.id)),
-    getRecommendationMovies(String(movie.genres[0]?.id ?? ""), 8).catch(
-      () => []
-    ),
-  ]);
+  const watchRegion = getMovieWatchRegion(queryParams, requestHeaders);
+  const [fanReviews, aggregateRating, similarMovies, watchProviders] =
+    await Promise.all([
+      getMovieFanReviews(String(movie.id)),
+      getMovieAggregateRatingForSeo(String(movie.id)),
+      getRecommendationMovies(String(movie.genres[0]?.id ?? ""), 8).catch(
+        () => []
+      ),
+      getMovieWatchProviders(String(movie.id), watchRegion).catch(() => null),
+    ]);
   const canonical = movieCanonical(movie);
   const relatedDiscussions = mockCommunityDiscussions
     .filter(
@@ -442,6 +579,10 @@ export async function MovieDetailPage({
               <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-200">
                 {movie.overview || "No overview is available for this movie."}
               </p>
+
+              {watchProviders ? (
+                <WhereToWatchSection watchProviders={watchProviders} />
+              ) : null}
 
               <section className="mt-6 max-w-3xl rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
                 <h2 className="text-lg font-black text-yellow-300">
