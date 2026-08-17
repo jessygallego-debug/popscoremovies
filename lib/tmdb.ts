@@ -180,6 +180,8 @@ const WATCH_PROVIDER_PLATFORM_ALIASES: Record<string, string> = {
   "amazon video": "amazon",
   "apple tv plus": "apple tv",
   "apple tv store": "apple tv",
+  "peacock premium": "peacock",
+  "peacock premium plus": "peacock",
   "netflix standard with ads": "netflix",
 };
 
@@ -397,6 +399,9 @@ function normalizeWatchProviderName(providerName: string) {
   return providerName
     .replace(/\s*\((?:standard|basic)?\s*with ads\)\s*$/i, "")
     .replace(/\s+(?:standard|basic)?\s*with ads\s*$/i, "")
+    .replace(/\s+(?:amazon|apple tv|roku premium)\s+channel\s*$/i, "")
+    .replace(/\s+premium\s+plus\s*$/i, "")
+    .replace(/\s+(?:premium|essential|ad-free|no ads)\s*$/i, "")
     .replace(/\s+store\s*$/i, "")
     .trim();
 }
