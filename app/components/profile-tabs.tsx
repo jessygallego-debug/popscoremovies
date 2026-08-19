@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import EmojiIcon from "@/app/components/emoji-icon";
 import FollowButton from "@/app/components/follow-button";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileUsernameLink, {
@@ -615,7 +616,13 @@ function TierBadge({
           color: isMuted ? "#94a3b8" : tier.accent,
         }}
       >
-        {isMuted ? "🔒" : tier.icon}
+        {isMuted ? (
+          <EmojiIcon emoji="🔒" label="Locked" size={22} />
+        ) : tier.icon === "🍿" || tier.icon === "🎬" ? (
+          <EmojiIcon emoji={tier.icon} label={tier.name} size={24} />
+        ) : (
+          tier.icon
+        )}
       </span>
       <span
         className={`absolute ${dimensions.stripe} z-10 rounded-full border border-white/15`}
@@ -974,7 +981,11 @@ function AchievementBadge({
             </span>
           ) : (
             <span className={`${dimensions.icon} relative z-10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]`}>
-              {displayIcon}
+              <EmojiIcon
+                emoji={displayIcon}
+                label={isUnlocked ? achievement.name : "Locked"}
+                size={resolvedSize === "large" ? 40 : resolvedSize === "medium" ? 34 : 28}
+              />
             </span>
           )}
         </span>

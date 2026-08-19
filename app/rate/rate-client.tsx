@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import EmojiIcon from "@/app/components/emoji-icon";
 import Link from "next/link";
 import { useState } from "react";
 import MoviePosterImage from "@/app/components/movie-poster-image";
@@ -276,7 +277,7 @@ export default function RateClient({
 
         <div className="mb-5 text-center sm:mb-8">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 text-3xl shadow-lg shadow-yellow-400/20 sm:mb-4 sm:h-16 sm:w-16 sm:text-4xl">
-            🍿
+            <EmojiIcon emoji="🍿" size={40} />
           </div>
           <h1 className="text-3xl font-black text-white sm:text-6xl">
             {movieTitle ? "Rate This Movie" : "Rate Movies Online"}

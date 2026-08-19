@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import EmojiIcon from "@/app/components/emoji-icon";
 import { getPopScore, subscribeToPopScoreUpdates } from "@/lib/popscore-store";
 
 type PopScoreDisplayProps = {
@@ -88,7 +89,7 @@ export default function PopScoreDisplay({
     return (
       <div className="flex items-center gap-2 sm:gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-yellow-400/20 bg-yellow-400/10 text-xl sm:h-12 sm:w-12 sm:text-2xl">
-          🍿
+          <EmojiIcon emoji="🍿" label="Not rated yet" size={32} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-col items-start leading-tight sm:flex-row sm:items-baseline sm:gap-2">
