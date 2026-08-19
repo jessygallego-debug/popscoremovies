@@ -107,6 +107,11 @@ export type CommunityPostActivitySummary = {
   recentLikeCount: number;
 };
 
+export type CommunityEngagementStats = {
+  communityCommentCount: number;
+  receivedLikeCount: number;
+};
+
 type CommunityCommentNotificationContext = {
   mentionableUsers?: MentionableUser[];
   movieId?: string;
@@ -230,6 +235,16 @@ async function readSupabaseRestError(response: Response, fallback: string) {
 
 function inList(values: string[]) {
   return values.map((value) => encodeURIComponent(value)).join(",");
+}
+
+function chunkValues<T>(values: T[], size: number) {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+
+  return chunks;
 }
 
 function isRecentCommunityActivity(value: string) {
@@ -504,6 +519,52 @@ export async function getCommunityPostActivitySummaries(
   });
 
   return Object.fromEntries(baseSummaries);
+}
+
+export async function getCommunityEngagementStatsForUser({
+  ratingIds,
+  userId,
+}: {
+  ratingIds: string[];
+  userId: string;
+}): Promise<CommunityEngagementStats> {
+  const comments = await supabaseFetch<Pick<CommunityCommentRow, "id">[]>(
+    `/community_comments?user_id=eq.${encodeURIComponent(
+      userId
+    )}&select=id&limit=1000`
+  ).catch(() => []);
+  const commentIds = comments.map((comment) => comment.id);
+  const ratingPostIds = Array.from(
+    new Set(ratingIds.filter(Boolean).map((ratingId) => `rating-${ratingId}`))
+  );
+  const [commentLikes, postLikes] = await Promise.all([
+    Promise.all(
+      chunkValues(commentIds, 80).map((ids) =>
+        supabaseFetch<CommunityCommentLikeRow[]>(
+          `/community_comment_likes?comment_id=in.(${inList(
+            ids
+          )})&select=comment_id,user_id&limit=1000`
+        ).catch(() => [])
+      )
+    ),
+    Promise.all(
+      chunkValues(ratingPostIds, 80).map((postIds) =>
+        supabaseFetch<CommunityPostLikeRow[]>(
+          `/community_post_likes?post_id=in.(${inList(
+            postIds
+          )})&select=post_id,user_id&limit=1000`
+        ).catch(() => [])
+      )
+    ),
+  ]);
+  const receivedLikeCount = [...commentLikes.flat(), ...postLikes.flat()].filter(
+    (like) => like.user_id !== userId
+  ).length;
+
+  return {
+    communityCommentCount: comments.length,
+    receivedLikeCount,
+  };
 }
 
 export async function getCommunityPostLikeSummary(

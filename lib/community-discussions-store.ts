@@ -17,6 +17,11 @@ import {
 export const COMMUNITY_DISCUSSIONS_UPDATED_EVENT =
   "popscore-community-discussions-updated";
 
+export type CommunityDiscussionAchievementStats = {
+  discussionCount: number;
+  maxDiscussionReplyCount: number;
+};
+
 type CommunityDiscussionRow = {
   body: string | null;
   comment_count: number | null;
@@ -298,6 +303,29 @@ export async function getCommunityDiscussion(discussionId: string) {
   const discussions = await mapDiscussionRows(rows);
 
   return discussions[0] ?? null;
+}
+
+export async function getCommunityDiscussionAchievementStatsForUser(
+  userId: string
+): Promise<CommunityDiscussionAchievementStats> {
+  const rows = await supabaseFetch<
+    Pick<CommunityDiscussionRow, "comment_count" | "id">[]
+  >(
+    `/community_discussions?user_id=eq.${encodeURIComponent(
+      userId
+    )}&select=id,comment_count&limit=1000`
+  ).catch(() => []);
+  const realRows = rows.filter(
+    (row) => !isPlaceholderCommunityDiscussionId(row.id)
+  );
+
+  return {
+    discussionCount: realRows.length,
+    maxDiscussionReplyCount: Math.max(
+      0,
+      ...realRows.map((row) => row.comment_count ?? 0)
+    ),
+  };
 }
 
 export async function createCommunityDiscussion(

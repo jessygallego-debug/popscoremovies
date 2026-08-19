@@ -20,6 +20,14 @@ import {
   type FollowSummary,
 } from "@/lib/follows";
 import {
+  getCommunityEngagementStatsForUser,
+  type CommunityEngagementStats,
+} from "@/lib/community-comments";
+import {
+  getCommunityDiscussionAchievementStatsForUser,
+  type CommunityDiscussionAchievementStats,
+} from "@/lib/community-discussions-store";
+import {
   avatarForKey,
   genreLabelForKey,
 } from "@/lib/profile-config";
@@ -42,18 +50,35 @@ type FollowListMode = "followers" | "following";
 
 type ProfileStatSummary = {
   average: number;
+  discussionCount: number;
+  followerCount: number;
+  followingCount: number;
   highestGenre: string;
   lowestGenre: string;
+  maxDiscussionReplyCount: number;
+  maxRatingDaysInMonth: number;
   maxRatingsInSingleGenre: number;
   mostRatedGenre: string;
+  movieMatchRating80PlusCount: number;
+  movieMatchRatingsCount: number;
   quickReactionCount: number;
   ratingStreakDays: number;
   ratings90Plus: number;
   ratingsThisWeek: number;
   ratingsUnder50: number;
+  receivedLikeCount: number;
+  reviewOrCommentCount: number;
   totalMovieReactions: number;
   totalMoviesRated: number;
   uniqueGenresRated: number;
+};
+
+type ProfileCommunityAchievementStats = CommunityEngagementStats &
+  CommunityDiscussionAchievementStats;
+
+type ProfileActivityStats = ProfileCommunityAchievementStats & {
+  followerCount: number;
+  followingCount: number;
 };
 
 type RequirementType =
@@ -64,7 +89,16 @@ type RequirementType =
   | "rating_streak_days"
   | "ratings_this_week"
   | "ratings_under_50"
-  | "ratings_90_plus";
+  | "ratings_90_plus"
+  | "review_or_comment_count"
+  | "received_like_count"
+  | "discussion_count"
+  | "discussion_reply_count"
+  | "following_count"
+  | "follower_count"
+  | "movie_match_rating_80_plus"
+  | "movie_match_ratings_count"
+  | "rating_days_in_month";
 
 type Achievement = {
   badgeText?: string;
@@ -103,6 +137,19 @@ type PopScoreTier = {
   name: string;
   requirementLabel: string;
   topPercentile?: number;
+};
+
+const EMPTY_PROFILE_COMMUNITY_STATS: ProfileCommunityAchievementStats = {
+  communityCommentCount: 0,
+  discussionCount: 0,
+  maxDiscussionReplyCount: 0,
+  receivedLikeCount: 0,
+};
+
+const EMPTY_PROFILE_ACTIVITY_STATS: ProfileActivityStats = {
+  ...EMPTY_PROFILE_COMMUNITY_STATS,
+  followerCount: 0,
+  followingCount: 0,
 };
 
 const ACHIEVEMENTS: Achievement[] = [
@@ -215,6 +262,105 @@ const ACHIEVEMENTS: Achievement[] = [
     color: "butter",
     requirementType: "ratings_90_plus",
     requirementValue: 10,
+  },
+  {
+    id: "first_take",
+    name: "First Take",
+    description: "Leave your first movie review/comment.",
+    icon: "💬",
+    color: "blue",
+    requirementType: "review_or_comment_count",
+    requirementValue: 1,
+  },
+  {
+    id: "crowd_pleaser",
+    name: "Crowd Pleaser",
+    description: "Receive 10 likes on your ratings/comments.",
+    icon: "❤️",
+    color: "green",
+    requirementType: "received_like_count",
+    requirementValue: 10,
+  },
+  {
+    id: "fan_favorite",
+    name: "Fan Favorite",
+    description: "Receive 50 likes.",
+    icon: "💯",
+    color: "gold",
+    requirementType: "received_like_count",
+    requirementValue: 50,
+  },
+  {
+    id: "conversation_starter",
+    name: "Conversation Starter",
+    description: "Create your first Discussion.",
+    icon: "🗣️",
+    color: "purple",
+    requirementType: "discussion_count",
+    requirementValue: 1,
+  },
+  {
+    id: "hot_topic",
+    name: "Hot Topic",
+    description: "Your Discussion gets 10 replies.",
+    icon: "🔥",
+    color: "orange",
+    requirementType: "discussion_reply_count",
+    requirementValue: 10,
+  },
+  {
+    id: "movie_circle",
+    name: "Movie Circle",
+    description: "Follow 5 people.",
+    icon: "🤝",
+    color: "teal",
+    requirementType: "following_count",
+    requirementValue: 5,
+  },
+  {
+    id: "influencer",
+    name: "Influencer",
+    description: "Gain 100 followers.",
+    icon: "⭐",
+    color: "silver",
+    requirementType: "follower_count",
+    requirementValue: 100,
+  },
+  {
+    id: "perfect_match",
+    name: "Perfect Match",
+    description: "Rate a Movie Match recommendation 80%+.",
+    icon: "🎯",
+    color: "green",
+    requirementType: "movie_match_rating_80_plus",
+    requirementValue: 1,
+  },
+  {
+    id: "movie_match_regular",
+    name: "Movie Match Regular",
+    description: "Rate 10 Movie Match recommendations.",
+    icon: "🍿",
+    color: "butter",
+    requirementType: "movie_match_ratings_count",
+    requirementValue: 10,
+  },
+  {
+    id: "genre_master",
+    name: "Genre Master",
+    description: "Rate 50 movies in one genre.",
+    icon: "🏆",
+    color: "gold",
+    requirementType: "single_genre_ratings_count",
+    requirementValue: 50,
+  },
+  {
+    id: "movie_month",
+    name: "Movie Month",
+    description: "Rate movies on 15 different days in one month.",
+    icon: "📅",
+    color: "blue",
+    requirementType: "rating_days_in_month",
+    requirementValue: 15,
   },
 ];
 
@@ -405,7 +551,25 @@ function getLongestStreak(ratings: UserMovieRating[]) {
   return longest;
 }
 
-function getProfileStatSummary(ratings: UserMovieRating[]): ProfileStatSummary {
+function getMaxRatingDaysInMonth(ratings: UserMovieRating[]) {
+  const daysByMonth = new Map<string, Set<string>>();
+
+  ratings.forEach((rating) => {
+    const dateKey = localDateKey(rating.created_at);
+    const monthKey = dateKey.slice(0, 7);
+    const days = daysByMonth.get(monthKey) ?? new Set<string>();
+
+    days.add(dateKey);
+    daysByMonth.set(monthKey, days);
+  });
+
+  return Math.max(0, ...Array.from(daysByMonth.values()).map((days) => days.size));
+}
+
+function getProfileStatSummary(
+  ratings: UserMovieRating[],
+  activityStats: ProfileActivityStats = EMPTY_PROFILE_ACTIVITY_STATS
+): ProfileStatSummary {
   const popScoreRatings = ratings.filter(hasPopScoreRating);
   const average =
     popScoreRatings.length > 0
@@ -441,13 +605,28 @@ function getProfileStatSummary(ratings: UserMovieRating[]): ProfileStatSummary {
   const highest = [...genreStats].sort((a, b) => b.average - a.average)[0];
   const lowest = [...genreStats].sort((a, b) => a.average - b.average)[0];
   const weekAgo = Date.now() - 7 * DAY_MS;
+  const reviewCommentCount = ratings.filter((rating) =>
+    Boolean(rating.reviewComment?.trim())
+  ).length;
+  const movieMatchRatings = popScoreRatings.filter(
+    (rating) => rating.ratingSource === "movie_match"
+  );
 
   return {
     average,
+    discussionCount: activityStats.discussionCount,
+    followerCount: activityStats.followerCount,
+    followingCount: activityStats.followingCount,
     highestGenre: highest?.genre ?? "None",
     lowestGenre: lowest?.genre ?? "None",
+    maxDiscussionReplyCount: activityStats.maxDiscussionReplyCount,
+    maxRatingDaysInMonth: getMaxRatingDaysInMonth(popScoreRatings),
     maxRatingsInSingleGenre: Math.max(0, ...Array.from(genreCounts.values())),
     mostRatedGenre: mostRated?.genre ?? "None",
+    movieMatchRating80PlusCount: movieMatchRatings.filter(
+      (rating) => rating.popscore >= 80
+    ).length,
+    movieMatchRatingsCount: movieMatchRatings.length,
     quickReactionCount: ratings.filter((rating) => Boolean(rating.quick_reaction))
       .length,
     ratingStreakDays: getLongestStreak(popScoreRatings),
@@ -456,6 +635,9 @@ function getProfileStatSummary(ratings: UserMovieRating[]): ProfileStatSummary {
       (rating) => new Date(rating.created_at).getTime() >= weekAgo
     ).length,
     ratingsUnder50: popScoreRatings.filter((rating) => rating.popscore < 50).length,
+    receivedLikeCount: activityStats.receivedLikeCount,
+    reviewOrCommentCount:
+      reviewCommentCount + activityStats.communityCommentCount,
     totalMovieReactions: ratings.filter(
       (rating) => !hasPopScoreRating(rating) && Boolean(rating.quick_reaction)
     ).length,
@@ -531,6 +713,24 @@ function getAchievementValue(
       return summary.ratingsUnder50;
     case "ratings_90_plus":
       return summary.ratings90Plus;
+    case "review_or_comment_count":
+      return summary.reviewOrCommentCount;
+    case "received_like_count":
+      return summary.receivedLikeCount;
+    case "discussion_count":
+      return summary.discussionCount;
+    case "discussion_reply_count":
+      return summary.maxDiscussionReplyCount;
+    case "following_count":
+      return summary.followingCount;
+    case "follower_count":
+      return summary.followerCount;
+    case "movie_match_rating_80_plus":
+      return summary.movieMatchRating80PlusCount;
+    case "movie_match_ratings_count":
+      return summary.movieMatchRatingsCount;
+    case "rating_days_in_month":
+      return summary.maxRatingDaysInMonth;
     default:
       return 0;
   }
@@ -1631,6 +1831,10 @@ export default function ProfileTabs({ username }: { username: string }) {
   const [followListUsers, setFollowListUsers] = useState<FollowListUser[]>([]);
   const [followListError, setFollowListError] = useState("");
   const [isFollowListLoading, setIsFollowListLoading] = useState(false);
+  const [profileCommunityStats, setProfileCommunityStats] =
+    useState<ProfileCommunityAchievementStats>(
+      EMPTY_PROFILE_COMMUNITY_STATS
+    );
   const [ratingPopulation, setRatingPopulation] = useState<UserRatingCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -1651,6 +1855,7 @@ export default function ProfileTabs({ username }: { username: string }) {
       setFollowListMode(null);
       setFollowListUsers([]);
       setFollowListError("");
+      setProfileCommunityStats(EMPTY_PROFILE_COMMUNITY_STATS);
       if (!nextProfile) {
         setIsLoading(false);
         return;
@@ -1667,6 +1872,23 @@ export default function ProfileTabs({ username }: { username: string }) {
         setRatings(nextRatings);
         setRatingPopulation(nextRatingPopulation);
         setIsLoading(false);
+
+        void Promise.all([
+          getCommunityEngagementStatsForUser({
+            ratingIds: nextRatings.map((rating) => rating.id),
+            userId: nextProfile.user_id,
+          }),
+          getCommunityDiscussionAchievementStatsForUser(nextProfile.user_id),
+        ]).then(([nextEngagementStats, nextDiscussionStats]) => {
+          if (!isCurrent) {
+            return;
+          }
+
+          setProfileCommunityStats({
+            ...nextEngagementStats,
+            ...nextDiscussionStats,
+          });
+        });
       });
     });
 
@@ -1703,7 +1925,18 @@ export default function ProfileTabs({ username }: { username: string }) {
     };
   }, [profile]);
 
-  const summary = useMemo(() => getProfileStatSummary(ratings), [ratings]);
+  const achievementActivityStats = useMemo<ProfileActivityStats>(
+    () => ({
+      ...profileCommunityStats,
+      followerCount: followSummary?.followersCount ?? 0,
+      followingCount: followSummary?.followingCount ?? 0,
+    }),
+    [followSummary, profileCommunityStats]
+  );
+  const summary = useMemo(
+    () => getProfileStatSummary(ratings, achievementActivityStats),
+    [achievementActivityStats, ratings]
+  );
   const openFollowList = (mode: FollowListMode) => {
     if (!profile) {
       return;

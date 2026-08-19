@@ -34,6 +34,7 @@ create table if not exists public.movie_ratings (
   humor_score int,
   popscore numeric not null,
   quick_reaction text check (quick_reaction in ('loved_it', 'worth_watching', 'trash')),
+  rating_source text check (rating_source is null or rating_source in ('movie_match')),
   review_comment text,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null,

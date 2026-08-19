@@ -11,6 +11,7 @@ import {
   getCurrentProfile,
   removeFromWatchlist,
   saveUserMovieRating,
+  type UserMovieRatingSource,
 } from "@/lib/profile-store";
 import { ratingInfoForKey } from "@/lib/rating-info-copy";
 import { posterUrl } from "@/lib/tmdb";
@@ -72,6 +73,7 @@ type RateClientProps = {
   initialGenre: GenreKey;
   lockGenre: boolean;
   movieTitle?: string;
+  ratingSource?: UserMovieRatingSource;
   returnTo?: string;
   submitReturnTo?: string;
 };
@@ -132,6 +134,7 @@ export default function RateClient({
   initialGenre,
   lockGenre,
   movieTitle,
+  ratingSource,
   returnTo = "/",
   submitReturnTo,
 }: RateClientProps) {
@@ -205,6 +208,7 @@ export default function RateClient({
           },
           popscore: popScore,
           questions: currentGenre.questions,
+          ratingSource,
           ratings,
           reviewComment: reviewValidation.reviewComment ?? "",
         });

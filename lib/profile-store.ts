@@ -55,6 +55,7 @@ export type MovieMeta = {
 };
 
 export type ProfileQuickReaction = "loved_it" | "worth_watching" | "trash";
+export type UserMovieRatingSource = "movie_match";
 
 export type UserMovieRating = MovieMeta & {
   id: string;
@@ -65,6 +66,7 @@ export type UserMovieRating = MovieMeta & {
   weights: { key: string; weight: number }[];
   popscore: number;
   quick_reaction: ProfileQuickReaction | null;
+  ratingSource: UserMovieRatingSource | null;
   reviewComment: string | null;
   created_at: string;
   updated_at: string;
@@ -923,6 +925,7 @@ function mapRatingRow(row: {
   weights: { key: string; weight: number }[];
   popscore: number;
   quick_reaction: ProfileQuickReaction | null;
+  rating_source?: UserMovieRatingSource | null;
   review_comment: string | null;
   created_at: string;
   updated_at: string;
@@ -937,6 +940,7 @@ function mapRatingRow(row: {
     popscore: Number(row.popscore),
     posterPath: row.poster_path,
     quick_reaction: row.quick_reaction,
+    ratingSource: row.rating_source ?? null,
     ratings: row.ratings,
     releaseDate: row.release_date,
     reviewComment: row.review_comment,
@@ -984,6 +988,7 @@ export async function saveUserMovieRating({
   movie,
   popscore,
   questions,
+  ratingSource,
   ratings,
   reviewComment = "",
 }: {
@@ -991,6 +996,7 @@ export async function saveUserMovieRating({
   movie: MovieMeta;
   popscore: number;
   questions: readonly RatingQuestion[];
+  ratingSource?: UserMovieRatingSource;
   ratings: Record<string, number>;
   reviewComment?: string;
 }) {
@@ -1013,6 +1019,7 @@ export async function saveUserMovieRating({
     movie_title: string;
     popscore: number;
     poster_path: string | null;
+    rating_source?: UserMovieRatingSource;
     ratings: Record<string, number>;
     release_date: string | null;
     review_comment?: string;
@@ -1034,6 +1041,34 @@ export async function saveUserMovieRating({
   if (reviewValidation.reviewComment) {
     ratingBody.review_comment = reviewValidation.reviewComment;
   }
+
+  if (ratingSource) {
+    ratingBody.rating_source = ratingSource;
+  }
+
+  const saveWithRatingSourceFallback = async (
+    path: string,
+    options: RequestInit
+  ) => {
+    try {
+      return await supabaseFetch<unknown[]>(path, options);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+
+      if (!ratingSource || !message.includes("rating_source")) {
+        throw error;
+      }
+
+      const fallbackBody = { ...ratingBody };
+      delete fallbackBody.rating_source;
+
+      return supabaseFetch<unknown[]>(path, {
+        ...options,
+        body: JSON.stringify(fallbackBody),
+      });
+    }
+  };
+
   const existingRows = await supabaseFetch<{ id: string }[]>(
     `/movie_ratings?user_id=eq.${encodeURIComponent(
       user.id
@@ -1041,7 +1076,7 @@ export async function saveUserMovieRating({
   );
 
   if (existingRows[0]) {
-    const rows = await supabaseFetch<unknown[]>(
+    const rows = await saveWithRatingSourceFallback(
       `/movie_ratings?id=eq.${encodeURIComponent(existingRows[0].id)}`,
       {
         method: "PATCH",
@@ -1055,7 +1090,7 @@ export async function saveUserMovieRating({
     return rows[0] ?? existingRows[0];
   }
 
-  const rows = await supabaseFetch<unknown[]>(
+  const rows = await saveWithRatingSourceFallback(
     "/movie_ratings?on_conflict=user_id,movie_id",
     {
       method: "POST",
