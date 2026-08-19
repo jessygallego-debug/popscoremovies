@@ -1,9 +1,9 @@
 # Third-party artwork
 
-PopScore uses Twemoji artwork for platform-independent emoji rendering.
+PopScore uses `emoji-datasource-apple` for platform-independent Apple-style
+emoji rendering.
 
-Copyright 2020 Twitter, Inc. and other contributors. Twemoji graphics are
-licensed under the Creative Commons Attribution 4.0 International license:
-https://creativecommons.org/licenses/by/4.0/
+The emoji-data package is licensed under the MIT License. Apple emoji artwork
+and related trademarks remain the property of their respective owners.
 
-Source: https://github.com/jdecked/twemoji
+Source: https://github.com/iamcal/emoji-data

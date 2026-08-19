@@ -14,7 +14,8 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "cdn.jsdelivr.net",
-        pathname: "/gh/jdecked/twemoji@15.1.0/assets/svg/**",
+        pathname:
+          "/npm/emoji-datasource-apple@16.0.0/img/apple/64/**",
         search: "",
       },
     ],
