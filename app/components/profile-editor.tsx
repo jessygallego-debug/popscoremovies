@@ -80,6 +80,7 @@ export default function ProfileEditor() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   useEffect(() => {
     const authResult = consumeAuthRedirect();
@@ -91,6 +92,7 @@ export default function ProfileEditor() {
     if (authResult.isPasswordRecovery) {
       queueMicrotask(() => {
         setIsPasswordRecovery(true);
+        setIsPasswordModalOpen(true);
         setMessage("Choose a new password to finish your reset.");
       });
     }
@@ -188,6 +190,7 @@ export default function ProfileEditor() {
         setNewPassword("");
         setConfirmPassword("");
         setIsPasswordRecovery(false);
+        setIsPasswordModalOpen(false);
         setMessage("Password updated. Use it the next time you sign in.");
       })
       .catch((error: Error) => setMessage(error.message))
@@ -356,43 +359,6 @@ export default function ProfileEditor() {
         </p>
       ) : null}
 
-      <div className="mt-6 rounded-2xl border border-slate-800 bg-black/35 p-4">
-        <h2 className="text-sm font-black uppercase text-yellow-400">
-          Password
-        </h2>
-        <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
-          {isPasswordRecovery
-            ? "Choose a new password to finish your reset."
-            : "Need a new password? Enter it here while you are signed in."}
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <input
-            type="password"
-            minLength={8}
-            value={newPassword}
-            onChange={(event) => setNewPassword(event.target.value)}
-            placeholder="New password"
-            className="min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400"
-          />
-          <input
-            type="password"
-            minLength={8}
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Confirm new password"
-            className="min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400"
-          />
-        </div>
-        <button
-          type="button"
-          disabled={isUpdatingPassword}
-          onClick={saveNewPassword}
-          className="mt-4 min-h-12 rounded-xl border border-yellow-400/50 px-5 font-black text-yellow-300 transition hover:bg-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isUpdatingPassword ? "Saving Password..." : "Save New Password"}
-        </button>
-      </div>
-
       <form
         className="mt-8 space-y-8"
         onSubmit={(event) => {
@@ -472,6 +438,13 @@ export default function ProfileEditor() {
             value={favoriteGenre}
             onChange={setFavoriteGenre}
           />
+          <button
+            type="button"
+            onClick={() => setIsPasswordModalOpen(true)}
+            className="mt-4 inline-flex font-bold text-yellow-300 underline underline-offset-4 transition hover:text-yellow-200"
+          >
+            Set New Password
+          </button>
         </div>
 
         <button
@@ -489,6 +462,92 @@ export default function ProfileEditor() {
         >
           View public PopFile
         </Link>
+      ) : null}
+
+      {isPasswordModalOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="set-new-password-title"
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 px-4 py-8 backdrop-blur-sm"
+          onMouseDown={() => {
+            if (!isUpdatingPassword) {
+              setIsPasswordModalOpen(false);
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-lg rounded-3xl border border-slate-700 bg-slate-950 p-5 shadow-2xl shadow-black/70"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
+                  PopFile
+                </p>
+                <h2
+                  id="set-new-password-title"
+                  className="mt-1 text-2xl font-black text-white"
+                >
+                  Set New Password
+                </h2>
+              </div>
+              <button
+                type="button"
+                disabled={isUpdatingPassword}
+                aria-label="Close password popup"
+                onClick={() => setIsPasswordModalOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 text-sm font-black text-slate-300 transition hover:border-yellow-400/60 hover:text-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                X
+              </button>
+            </div>
+
+            <p className="mt-4 text-sm font-semibold leading-6 text-slate-300">
+              {isPasswordRecovery
+                ? "Choose a new password to finish your reset."
+                : "Enter and confirm your new password."}
+            </p>
+
+            <div className="mt-5 grid gap-3">
+              <input
+                type="password"
+                minLength={8}
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                placeholder="New password"
+                className="min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400"
+              />
+              <input
+                type="password"
+                minLength={8}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="Confirm new password"
+                className="min-h-12 w-full rounded-xl border border-slate-800 bg-black px-4 font-bold text-white outline-none focus:border-yellow-400"
+              />
+            </div>
+
+            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                disabled={isUpdatingPassword}
+                onClick={() => setIsPasswordModalOpen(false)}
+                className="min-h-12 rounded-xl border border-slate-700 px-5 font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isUpdatingPassword}
+                onClick={saveNewPassword}
+                className="min-h-12 rounded-xl bg-yellow-400 px-5 font-black text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isUpdatingPassword ? "Saving Password..." : "Save New Password"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </section>
   );
