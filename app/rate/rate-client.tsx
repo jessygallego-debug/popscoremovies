@@ -144,6 +144,7 @@ export default function RateClient({
 
   const currentGenre = genreConfigs[selectedGenre];
   const allAnswered = currentGenre.questions.every((q) => ratings[q.key]);
+  const hasSubmittedScore = submittedScore !== null;
 
   const popScore = Math.round(
     currentGenre.questions.reduce((total, question) => {
@@ -477,7 +478,7 @@ export default function RateClient({
               ) : null}
             </div>
 
-            {movieId && !submittedScore ? (
+            {movieId && !hasSubmittedScore ? (
               <button
                 type="button"
                 onClick={handleSubmit}
@@ -486,7 +487,7 @@ export default function RateClient({
                 Submit Rating ★
               </button>
             ) : (
-              !submittedScore ? (
+              !hasSubmittedScore ? (
                 <p className="mt-6 font-bold">
                   Select a movie before submitting a rating.
                 </p>
@@ -497,7 +498,7 @@ export default function RateClient({
               <p className="mt-4 font-bold text-yellow-200">{submitMessage}</p>
             ) : null}
 
-            {movieId && submittedScore ? (
+            {movieId && hasSubmittedScore ? (
               <div className="mt-5 rounded-2xl border border-yellow-400/30 bg-black/45 p-4">
                 <p className="font-black text-yellow-200">
                   Rating submitted.
