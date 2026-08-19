@@ -16,7 +16,7 @@ import {
   getMovieAggregateRatingForSeo,
   getMovieFanReviews,
 } from "@/lib/fan-reviews-store";
-import { mockCommunityDiscussions } from "@/lib/community-discussions";
+import { getPublicCommunityDiscussionsForMovie } from "@/lib/community-discussions-public";
 import { SITE_KEYWORDS } from "@/lib/site-metadata";
 import { absoluteUrl, truncateDescription } from "@/lib/site-url";
 import {
@@ -381,7 +381,13 @@ export async function MovieDetailPage({
   )}`;
   const trailer = getTrailer(movie);
   const watchRegion = getMovieWatchRegion(queryParams, requestHeaders);
-  const [fanReviews, aggregateRating, similarMovies, watchProviders] =
+  const [
+    fanReviews,
+    aggregateRating,
+    similarMovies,
+    watchProviders,
+    relatedDiscussions,
+  ] =
     await Promise.all([
       getMovieFanReviews(String(movie.id)),
       getMovieAggregateRatingForSeo(String(movie.id)),
@@ -389,11 +395,9 @@ export async function MovieDetailPage({
         () => []
       ),
       getMovieWatchProviders(String(movie.id), watchRegion).catch(() => null),
+      getPublicCommunityDiscussionsForMovie(String(movie.id), 3),
     ]);
   const canonical = movieCanonical(movie);
-  const relatedDiscussions = mockCommunityDiscussions
-    .filter((discussion) => discussion.movieId === String(movie.id))
-    .slice(0, 3);
   const schema = movieJsonLd({
     aggregateRating,
     canonical,

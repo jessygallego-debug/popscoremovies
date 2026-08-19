@@ -3,14 +3,7 @@ import { notFound } from "next/navigation";
 import DiscussionDetailPageContent, {
   generateDiscussionMetadata,
 } from "@/app/community/discussions/discussion-detail-page";
-import { mockCommunityDiscussions } from "@/lib/community-discussions";
-import { discussionIdFromSlug, discussionSlug } from "@/lib/urls";
-
-export function generateStaticParams() {
-  return mockCommunityDiscussions.map((discussion) => ({
-    slug: discussionSlug(discussion),
-  }));
-}
+import { discussionIdFromSlug } from "@/lib/urls";
 
 export async function generateMetadata({
   params,

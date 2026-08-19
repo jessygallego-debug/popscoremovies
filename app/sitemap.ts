@@ -1,8 +1,5 @@
 import type { MetadataRoute } from "next";
-import {
-  mockCommunityDiscussions,
-  mockDiscussionReplies,
-} from "@/lib/community-discussions";
+import { getPublicCommunityDiscussions } from "@/lib/community-discussions-public";
 import { getPublicProfileUsernames } from "@/lib/seo-data";
 import { absoluteUrl } from "@/lib/site-url";
 import { getMovies, MOVIE_GENRE_FILTERS } from "@/lib/tmdb";
@@ -10,9 +7,10 @@ import { discussionHref, genreHref, movieHref } from "@/lib/urls";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const [movies, profiles] = await Promise.all([
+  const [movies, profiles, discussions] = await Promise.all([
     getMovies("", 160).catch(() => []),
     getPublicProfileUsernames(),
+    getPublicCommunityDiscussions(200),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -56,11 +54,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const discussionRoutes = mockCommunityDiscussions.map((discussion) => ({
+  const discussionRoutes = discussions.map((discussion) => ({
     url: absoluteUrl(discussionHref(discussion)),
     lastModified: new Date(discussion.lastActiveAt || discussion.createdAt),
     changeFrequency: "daily" as const,
-    priority: mockDiscussionReplies[discussion.id]?.length ? 0.65 : 0.55,
+    priority: discussion.commentCount ? 0.65 : 0.55,
   }));
 
   const profileRoutes = profiles.map((profile) => ({

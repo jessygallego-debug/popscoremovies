@@ -16,8 +16,6 @@ import {
   communityDiscussionsStorageKey,
   discussionFilterOptions,
   discussionTypes,
-  mockCommunityDiscussions,
-  mockDiscussionReplies,
   parseStoredCommunityDiscussions,
   type CommunityDiscussion,
   type DiscussionFilter,
@@ -106,6 +104,13 @@ type CommunityFeedPost = {
 };
 
 type SuggestedFollow = DiscoverableUserSummary;
+
+type DiscussionAuthor = {
+  avatar: string;
+  displayName: string;
+  userId: string;
+  username: string;
+};
 
 type FollowingReaction = "loved_it" | "worth_watching" | "trash";
 
@@ -772,24 +777,6 @@ function quickReactionFromScore(score: number): FollowingReaction {
   return "trash";
 }
 
-function communityUserForUsername(username?: string) {
-  if (!username) {
-    return null;
-  }
-
-  const normalizedUsername = username.toLowerCase();
-
-  return (
-    suggestedFollows.find(
-      (user) => user.username.toLowerCase() === normalizedUsername
-    ) ??
-    feedPosts.find(
-      (post) => post.user.username.toLowerCase() === normalizedUsername
-    )?.user ??
-    null
-  );
-}
-
 function buildFollowingActivities({
   discussions,
   followingIds,
@@ -869,38 +856,11 @@ function buildFollowingActivities({
             .replace(/[^a-z0-9]+/g, ""),
       })
     );
-  const discussionCommentActivities = discussions.flatMap((discussion) =>
-    (mockDiscussionReplies[discussion.id] ?? [])
-      .flatMap((reply) => {
-        const user = communityUserForUsername(reply.username);
-
-        if (!user?.userId || !followingSet.has(user.userId)) {
-          return [];
-        }
-
-        return [
-          {
-          avatar: user.avatar,
-          commentPreview: reply.body,
-          createdAt: reply.createdAt,
-          discussionId: discussion.id,
-          discussionTitle: discussion.title,
-          id: `following-discussion-comment-${reply.id}`,
-          movieId: discussion.movieId,
-          movieTitle: discussion.movieTitle,
-          type: "discussion_comment",
-          userId: user.userId,
-          username: user.username,
-          } satisfies FollowingActivity,
-        ];
-      })
-  );
 
   activities.push(
     ...realRatingActivities,
     ...mockRatingActivities,
-    ...discussionCreatedActivities,
-    ...discussionCommentActivities
+    ...discussionCreatedActivities
   );
 
   return activities.sort(
@@ -1304,13 +1264,9 @@ function StartDiscussionModal({
   const [body, setBody] = useState("");
   const [discussionType, setDiscussionType] = useState<DiscussionType | "">("");
   const [isSpoiler, setIsSpoiler] = useState(false);
-  const [author, setAuthor] = useState({
-    avatar: "🔥",
-    displayName: "Jessy",
-    userId: "current-user",
-    username: "jessyg305",
-  });
-  const canPost = Boolean(selectedMovie && title.trim() && discussionType);
+  const [author, setAuthor] = useState<DiscussionAuthor | null>(null);
+  const [authorMessage, setAuthorMessage] = useState("");
+  const canPost = Boolean(author && selectedMovie && title.trim() && discussionType);
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -1340,7 +1296,15 @@ function StartDiscussionModal({
         return { profile, user };
       })
       .then((context) => {
-        if (!isCurrent || !context?.user) {
+        if (!isCurrent) {
+          return;
+        }
+
+        if (!context?.user) {
+          setAuthor(null);
+          setAuthorMessage(
+            "Create or sign in to your PopFile to start discussions."
+          );
           return;
         }
 
@@ -1353,6 +1317,15 @@ function StartDiscussionModal({
           userId: user.id,
           username: profile?.username ?? user.email?.split("@")[0] ?? "popscorefan",
         });
+        setAuthorMessage("");
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setAuthor(null);
+          setAuthorMessage(
+            "Create or sign in to your PopFile to start discussions."
+          );
+        }
       });
 
     return () => {
@@ -1361,7 +1334,7 @@ function StartDiscussionModal({
   }, []);
 
   const postDiscussion = () => {
-    if (!selectedMovie || !title.trim() || !discussionType) {
+    if (!author || !selectedMovie || !title.trim() || !discussionType) {
       return;
     }
 
@@ -1511,6 +1484,11 @@ function StartDiscussionModal({
         </div>
 
         <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          {authorMessage ? (
+            <p className="self-center text-sm font-bold text-yellow-200 sm:mr-auto">
+              {authorMessage}
+            </p>
+          ) : null}
           <button
             type="button"
             onClick={onClose}
@@ -2908,7 +2886,7 @@ export default function CommunityPage() {
     Record<string, CommunityPostActivitySummary>
   >({});
   const communityDiscussions = useMemo(
-    () => mergeCommunityDiscussions(createdDiscussions, mockCommunityDiscussions),
+    () => mergeCommunityDiscussions(createdDiscussions),
     [createdDiscussions]
   );
   const realFeedPosts = useMemo(

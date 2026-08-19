@@ -1,28 +1,19 @@
 import type { Metadata } from "next";
 import DiscussionDetailClient from "@/app/community/discussions/[discussionId]/discussion-detail-client";
-import {
-  getMockCommunityDiscussion,
-  getMockDiscussionReplies,
-} from "@/lib/community-discussions";
+import { getPublicCommunityDiscussion } from "@/lib/community-discussions-public";
 import { SITE_KEYWORDS } from "@/lib/site-metadata";
 import { absoluteUrl, truncateDescription } from "@/lib/site-url";
 import { posterUrl } from "@/lib/tmdb";
 import { discussionHref } from "@/lib/urls";
 
-function discussionCanonical(discussionId: string) {
-  const discussion = getMockCommunityDiscussion(discussionId);
-
-  return absoluteUrl(
-    discussion
-      ? discussionHref(discussion)
-      : `/community/discussions/${discussionId}`
-  );
+function discussionCanonical(discussion: { id: string; title: string }) {
+  return absoluteUrl(discussionHref(discussion));
 }
 
 export async function generateDiscussionMetadata(
   discussionId: string
 ): Promise<Metadata> {
-  const discussion = getMockCommunityDiscussion(discussionId);
+  const discussion = await getPublicCommunityDiscussion(discussionId);
 
   if (!discussion) {
     return {
@@ -38,7 +29,7 @@ export async function generateDiscussionMetadata(
   const description = truncateDescription(
     `${discussion.body} Join the PopScore discussion about ${discussion.movieTitle}.`
   );
-  const canonical = discussionCanonical(discussionId);
+  const canonical = discussionCanonical(discussion);
   const image = posterUrl(discussion.moviePosterUrl);
 
   return {
@@ -77,15 +68,9 @@ export async function generateDiscussionMetadata(
   };
 }
 
-function discussionJsonLd(discussionId: string) {
-  const discussion = getMockCommunityDiscussion(discussionId);
-
-  if (!discussion) {
-    return null;
-  }
-
-  const replies = getMockDiscussionReplies(discussionId);
-
+function discussionJsonLd(
+  discussion: NonNullable<Awaited<ReturnType<typeof getPublicCommunityDiscussion>>>
+) {
   return {
     "@context": "https://schema.org",
     "@type": "DiscussionForumPosting",
@@ -98,15 +83,6 @@ function discussionJsonLd(discussionId: string) {
       "@type": "Person",
       name: discussion.startedByUsername ?? discussion.startedByDisplayName,
     },
-    comment: replies.map((reply) => ({
-      "@type": "Comment",
-      author: {
-        "@type": "Person",
-        name: reply.username ?? reply.userDisplayName,
-      },
-      datePublished: reply.createdAt,
-      text: reply.body,
-    })),
     dateCreated: discussion.createdAt,
     dateModified: discussion.lastActiveAt,
     headline: discussion.title,
@@ -115,16 +91,17 @@ function discussionJsonLd(discussionId: string) {
       interactionType: "https://schema.org/CommentAction",
       userInteractionCount: discussion.commentCount,
     },
-    url: discussionCanonical(discussionId),
+    url: discussionCanonical(discussion),
   };
 }
 
-export default function DiscussionDetailPageContent({
+export default async function DiscussionDetailPageContent({
   discussionId,
 }: {
   discussionId: string;
 }) {
-  const schema = discussionJsonLd(discussionId);
+  const discussion = await getPublicCommunityDiscussion(discussionId);
+  const schema = discussion ? discussionJsonLd(discussion) : null;
 
   return (
     <>
@@ -134,7 +111,11 @@ export default function DiscussionDetailPageContent({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ) : null}
-      <DiscussionDetailClient discussionId={discussionId} />
+      <DiscussionDetailClient
+        discussionId={discussionId}
+        initialDiscussion={discussion}
+        initialLoadComplete
+      />
     </>
   );
 }

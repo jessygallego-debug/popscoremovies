@@ -9,6 +9,7 @@ import {
 } from "@/lib/profile-store";
 import {
   discussionTypes,
+  isPlaceholderCommunityDiscussionId,
   type CommunityDiscussion,
   type DiscussionType,
 } from "@/lib/community-discussions";
@@ -227,13 +228,16 @@ async function getProfilesForDiscussionRows(rows: CommunityDiscussionRow[]) {
 }
 
 async function mapDiscussionRows(rows: CommunityDiscussionRow[]) {
+  const realRows = rows.filter(
+    (row) => !isPlaceholderCommunityDiscussionId(row.id)
+  );
   const currentUser = await getCurrentUser().catch(() => null);
   const currentProfile = currentUser
     ? await getCurrentProfile().catch(() => null)
     : null;
-  const profilesByUserId = await getProfilesForDiscussionRows(rows);
+  const profilesByUserId = await getProfilesForDiscussionRows(realRows);
 
-  return rows.map((row) =>
+  return realRows.map((row) =>
     mapDiscussionRow({
       currentProfile,
       profilesByUserId,
@@ -281,6 +285,10 @@ export async function getCommunityDiscussions(limit = 80) {
 }
 
 export async function getCommunityDiscussion(discussionId: string) {
+  if (isPlaceholderCommunityDiscussionId(discussionId)) {
+    return null;
+  }
+
   const rows = await supabaseFetch<CommunityDiscussionRow[]>(
     `/community_discussions?id=eq.${encodeURIComponent(
       discussionId

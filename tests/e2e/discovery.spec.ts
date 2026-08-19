@@ -217,17 +217,16 @@ test("My PopFile does not navigate to edit while profile is still loading", asyn
   await expect(page.locator("summary", { hasText: "My PopFile" })).toBeVisible();
 });
 
-test("notification deep links expand and highlight discussion replies", async ({
+test("placeholder discussion links do not render sample replies", async ({
   page,
 }) => {
   await page.goto(
     "/community/discussions/interstellar-nolan-best?discussionId=interstellar-nolan-best&replyId=reply-interstellar-1#reply-reply-interstellar-1"
   );
 
-  await expect(page.locator("#reply-reply-interstellar-1")).toBeVisible();
-  await expect(
-    page.locator("#reply-reply-interstellar-1.notification-highlight")
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Discussion not found" }))
+    .toBeVisible();
+  await expect(page.locator("#reply-reply-interstellar-1")).toHaveCount(0);
 });
 
 test("live recommendation API keeps key genre promises", async ({ request }) => {

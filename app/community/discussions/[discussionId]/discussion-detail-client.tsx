@@ -10,8 +10,7 @@ import ProfileUsernameLink from "@/app/components/profile-username-link";
 import SiteHeader from "@/app/components/site-header";
 import {
   communityDiscussionsStorageKey,
-  getMockCommunityDiscussion,
-  getMockDiscussionReplies,
+  isPlaceholderCommunityDiscussionId,
   parseStoredCommunityDiscussions,
   type CommunityDiscussion,
   type CommunityDiscussionReply,
@@ -25,7 +24,12 @@ import {
   getCurrentNotificationActor,
   NOTIFICATION_TARGET_CHANGED_EVENT,
 } from "@/lib/notifications";
-import { getDiscoverableUsers } from "@/lib/profile-store";
+import { avatarForKey } from "@/lib/profile-config";
+import {
+  getCurrentProfile,
+  getCurrentUser,
+  getDiscoverableUsers,
+} from "@/lib/profile-store";
 import {
   mergeMentionableUsers,
   notifyMentionedUsers,
@@ -34,6 +38,12 @@ import {
 import { posterUrl } from "@/lib/tmdb";
 
 type ReplySort = "Top" | "Newest";
+
+type ReplyAuthor = {
+  avatar: string;
+  displayName: string;
+  username: string;
+};
 
 function cardClass(extra = "") {
   return `rounded-3xl border border-slate-800/90 bg-slate-950/78 shadow-2xl shadow-black/30 backdrop-blur ${extra}`;
@@ -300,18 +310,26 @@ function ReplyCard({ reply }: { reply: CommunityDiscussionReply }) {
 
 export default function DiscussionDetailClient({
   discussionId,
+  initialDiscussion = null,
+  initialLoadComplete = false,
 }: {
   discussionId: string;
+  initialDiscussion?: CommunityDiscussion | null;
+  initialLoadComplete?: boolean;
 }) {
+  const isPlaceholderDiscussion =
+    isPlaceholderCommunityDiscussionId(discussionId);
   const [storedDiscussion, setStoredDiscussion] =
-    useState<CommunityDiscussion | null>(null);
+    useState<CommunityDiscussion | null>(initialDiscussion);
   const [isLoadingDiscussion, setIsLoadingDiscussion] = useState(
-    () => !getMockCommunityDiscussion(discussionId)
+    () => !initialDiscussion && !initialLoadComplete && !isPlaceholderDiscussion
   );
   const [isSpoilerVisible, setIsSpoilerVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [replySort, setReplySort] = useState<ReplySort>("Top");
   const [replyBody, setReplyBody] = useState("");
+  const [replyAuthor, setReplyAuthor] = useState<ReplyAuthor | null>(null);
+  const [replyAuthorMessage, setReplyAuthorMessage] = useState("");
   const [mentionableUsers, setMentionableUsers] = useState<MentionableUser[]>(
     []
   );
@@ -320,14 +338,9 @@ export default function DiscussionDetailClient({
   );
   const [locationKey, setLocationKey] = useState("");
   const handledNotificationTargetRef = useRef<string | null>(null);
-  const mockDiscussion = getMockCommunityDiscussion(discussionId);
-  const discussion = storedDiscussion ?? mockDiscussion;
-  const mockReplies = useMemo(
-    () => getMockDiscussionReplies(discussionId),
-    [discussionId]
-  );
+  const discussion = storedDiscussion;
   const replies = useMemo(() => {
-    const sortedReplies = [...addedReplies, ...mockReplies];
+    const sortedReplies = [...addedReplies];
 
     if (replySort === "Newest") {
       return sortedReplies.sort(
@@ -337,7 +350,7 @@ export default function DiscussionDetailClient({
     }
 
     return sortedReplies.sort((a, b) => b.likeCount - a.likeCount);
-  }, [addedReplies, mockReplies, replySort]);
+  }, [addedReplies, replySort]);
   const fallbackMentionableUsers = useMemo(() => {
     if (!discussion) {
       return [];
@@ -353,17 +366,9 @@ export default function DiscussionDetailClient({
           },
         ]
       : [];
-    const replyUsers = mockReplies
-      .filter((reply) => reply.username)
-      .map((reply) => ({
-        avatar: reply.userAvatarUrl,
-        displayName: reply.userDisplayName,
-        userId: `user-${reply.username}`,
-        username: reply.username ?? "",
-      }));
 
-    return mergeMentionableUsers(starter, replyUsers);
-  }, [discussion, mockReplies]);
+    return starter;
+  }, [discussion]);
   const resolvedMentionableUsers = useMemo(
     () => mergeMentionableUsers(mentionableUsers, fallbackMentionableUsers),
     [fallbackMentionableUsers, mentionableUsers]
@@ -373,9 +378,18 @@ export default function DiscussionDetailClient({
     let isCurrent = true;
 
     const loadDiscussion = () => {
+      if (isPlaceholderDiscussion) {
+        setStoredDiscussion(null);
+        setIsLoadingDiscussion(false);
+        return;
+      }
+
       const localDiscussion = findStoredDiscussion(discussionId);
 
-      setStoredDiscussion(localDiscussion);
+      if (localDiscussion) {
+        setStoredDiscussion(localDiscussion);
+      }
+
       setIsLoadingDiscussion(true);
 
       void getCommunityDiscussion(discussionId)
@@ -386,6 +400,8 @@ export default function DiscussionDetailClient({
 
           if (sharedDiscussion) {
             setStoredDiscussion(sharedDiscussion);
+          } else if (!localDiscussion) {
+            setStoredDiscussion(initialDiscussion);
           }
         })
         .catch(() => undefined)
@@ -418,7 +434,58 @@ export default function DiscussionDetailClient({
       );
       window.removeEventListener("focus", loadDiscussion);
     };
-  }, [discussionId]);
+  }, [discussionId, initialDiscussion, isPlaceholderDiscussion]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    getCurrentUser()
+      .then(async (user) => {
+        if (!user) {
+          return null;
+        }
+
+        const profile = await getCurrentProfile().catch(() => null);
+
+        return { profile, user };
+      })
+      .then((context) => {
+        if (!isCurrent) {
+          return;
+        }
+
+        if (!context?.user) {
+          setReplyAuthor(null);
+          setReplyAuthorMessage(
+            "Create or sign in to your PopFile to reply."
+          );
+          return;
+        }
+
+        const { profile, user } = context;
+        const username =
+          profile?.username ?? user.email?.split("@")[0] ?? "popscorefan";
+
+        setReplyAuthor({
+          avatar: profile ? avatarForKey(profile.avatar_key).icon : "🔥",
+          displayName: username,
+          username,
+        });
+        setReplyAuthorMessage("");
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setReplyAuthor(null);
+          setReplyAuthorMessage(
+            "Create or sign in to your PopFile to reply."
+          );
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isCurrent = true;
@@ -540,7 +607,7 @@ export default function DiscussionDetailClient({
   const submitReply = () => {
     const trimmedReply = replyBody.trim();
 
-    if (!trimmedReply) {
+    if (!replyAuthor || !trimmedReply) {
       return;
     }
 
@@ -553,9 +620,9 @@ export default function DiscussionDetailClient({
         createdAt: new Date().toISOString(),
         id: replyId,
         likeCount: 0,
-        userAvatarUrl: "🔥",
-        userDisplayName: "Jessy",
-        username: "jessyg305",
+        userAvatarUrl: replyAuthor.avatar,
+        userDisplayName: replyAuthor.displayName,
+        username: replyAuthor.username,
       },
       ...currentReplies,
     ]);
@@ -792,12 +859,17 @@ export default function DiscussionDetailClient({
                   />
                   <button
                     type="button"
-                    disabled={!replyBody.trim()}
+                    disabled={!replyAuthor || !replyBody.trim()}
                     onClick={submitReply}
                     className="justify-self-end rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
                   >
                     Post Reply
                   </button>
+                  {replyAuthorMessage ? (
+                    <p className="text-sm font-bold text-yellow-200">
+                      {replyAuthorMessage}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="mt-5 space-y-3">
