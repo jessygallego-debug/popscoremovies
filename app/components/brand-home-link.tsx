@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EmojiIcon from "@/app/components/emoji-icon";
 
 export default function BrandHomeLink() {
   return (
@@ -7,9 +8,7 @@ export default function BrandHomeLink() {
       aria-label="Go to PopScore Movies home"
       className="mb-3 inline-flex items-center gap-2 text-lg font-bold text-yellow-400 transition hover:text-yellow-300 sm:text-xl"
     >
-      <span aria-hidden="true" className="text-xl sm:text-2xl">
-        🍿
-      </span>
+      <EmojiIcon emoji="🍿" size={28} />
       <span>PopScore Movies</span>
     </Link>
   );

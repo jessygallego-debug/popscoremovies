@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import EmojiIcon from "@/app/components/emoji-icon";
 import { CoStarCounts, getCoStarCounts } from "@/lib/co-star-store";
 
 type LovedItBadgeProps = {
@@ -66,8 +67,8 @@ export default function LovedItBadge({ movieId }: LovedItBadgeProps) {
   }, [movieId]);
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-black/25 px-2 py-2 text-center text-[11px] font-black text-yellow-300 sm:px-3 sm:text-sm">
-      🔥 {lovedPercent(counts)}% Loved It
+    <div className="flex items-center justify-center gap-1 rounded-2xl border border-slate-800 bg-black/25 px-2 py-2 text-center text-[11px] font-black text-yellow-300 sm:px-3 sm:text-sm">
+      <EmojiIcon emoji="🔥" size={16} /> {lovedPercent(counts)}% Loved It
     </div>
   );
 }

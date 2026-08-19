@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import EmojiIcon from "@/app/components/emoji-icon";
 import { AVATAR_OPTIONS } from "@/lib/profile-config";
 
 type AvatarPickerProps = {
@@ -80,7 +81,11 @@ export default function AvatarPicker({
                     : ""
                 }`}
               >
-                {isUnlocked ? avatar.icon : "🔒"}
+                <EmojiIcon
+                  emoji={isUnlocked ? avatar.icon : "🔒"}
+                  label={isUnlocked ? avatar.label : "Locked"}
+                  size={36}
+                />
               </span>
               <span className="mt-3 block text-xs font-black leading-4">
                 {avatar.label}

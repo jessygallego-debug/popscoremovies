@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import EmojiIcon from "@/app/components/emoji-icon";
 import {
   CoStarReaction,
   getCoStarCounts,
@@ -164,7 +165,11 @@ export default function CoStarReactions({
                       : "text-lg sm:text-xl"
                 }`}
               >
-                {reaction.emoji}
+                <EmojiIcon
+                  emoji={reaction.emoji}
+                  label={reaction.label}
+                  size={isMini ? 16 : isCompact ? 20 : 24}
+                />
               </span>
               <span
                 className={`mx-auto flex items-center justify-center whitespace-normal break-words leading-tight ${

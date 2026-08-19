@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import EmojiIcon from "@/app/components/emoji-icon";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CommunityPostComments from "@/app/components/community-post-comments";
@@ -926,7 +927,7 @@ function Avatar({
     <span
       className={`${sizeClass} inline-flex shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-[radial-gradient(circle_at_35%_25%,rgba(250,204,21,0.22),rgba(15,23,42,0.96)_58%)] font-black text-white shadow-lg shadow-yellow-400/10`}
     >
-      {label}
+      <EmojiIcon emoji={label} size={size === "xl" ? 34 : size === "lg" ? 28 : size === "sm" ? 16 : 22} />
     </span>
   );
 }
