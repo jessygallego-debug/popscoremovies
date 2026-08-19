@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import BrandHomeLink from "@/app/components/brand-home-link";
 import CoStarReactions from "@/app/components/co-star-reactions";
+import EmojiIcon from "@/app/components/emoji-icon";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
 import ProfileMenu from "@/app/components/profile-menu";
@@ -614,7 +615,7 @@ export async function MovieDetailPage({
                   >
                     <div className="flex items-start gap-3">
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-yellow-400/35 bg-yellow-400/10 text-2xl shadow-lg shadow-yellow-400/10">
-                        {review.avatar}
+                        <EmojiIcon emoji={review.avatar} size={28} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-2">

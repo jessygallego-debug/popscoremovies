@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AvatarPicker from "@/app/components/avatar-picker";
+import EmojiIcon from "@/app/components/emoji-icon";
 import FavoriteGenreSelector from "@/app/components/favorite-genre-selector";
 import { usePopFile } from "@/app/components/popfile-provider";
 import {
@@ -342,7 +343,7 @@ export default function ProfileEditor() {
       <div className="mt-6 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
         <div className="flex items-center gap-4">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black text-3xl">
-            {avatar.icon}
+            <EmojiIcon emoji={avatar.icon} label={avatar.label} size={36} />
           </span>
           <div>
             <p className="font-black text-white">{username || "username"}</p>

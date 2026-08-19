@@ -465,7 +465,7 @@ function ProfileSidebar({
     <aside className={profilePanelClass("p-4 sm:p-5 xl:sticky xl:top-6 xl:self-start")}>
       <div className="flex flex-col items-center text-center">
         <span className="flex h-20 w-20 items-center justify-center rounded-full border border-yellow-400/50 bg-yellow-400/10 text-4xl shadow-lg shadow-yellow-500/10 sm:h-28 sm:w-28 sm:text-6xl">
-          {avatar.icon}
+          <EmojiIcon emoji={avatar.icon} label={avatar.label} size={64} />
         </span>
         <h1 className="mt-3 break-all text-2xl font-black text-white sm:mt-4 sm:text-3xl">
           <ProfileUsernameLink username={profile.username}>
@@ -1473,7 +1473,7 @@ function FollowListDialog({
                   className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-black/25 p-3 transition hover:border-yellow-400/45 hover:bg-yellow-400/10"
                 >
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-yellow-400/35 bg-yellow-400/10 text-2xl">
-                    {user.avatar}
+                    <EmojiIcon emoji={user.avatar} size={28} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-black text-white">

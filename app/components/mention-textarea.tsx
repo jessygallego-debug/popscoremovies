@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import type { MentionableUser } from "@/lib/mentions";
+import EmojiIcon from "@/app/components/emoji-icon";
 
 type MentionTextareaProps = Omit<
   TextareaHTMLAttributes<HTMLTextAreaElement>,
@@ -207,7 +208,7 @@ export default function MentionTextarea({
               }`}
             >
               <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-yellow-400/10 text-sm font-black">
-                {user.avatar}
+                <EmojiIcon emoji={user.avatar} size={20} />
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-sm font-black">

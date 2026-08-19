@@ -15,6 +15,7 @@ import { NOTIFICATION_TARGET_CHANGED_EVENT } from "@/lib/notifications";
 import type { MentionableUser } from "@/lib/mentions";
 import MentionText from "@/app/components/mention-text";
 import MentionTextarea from "@/app/components/mention-textarea";
+import EmojiIcon from "@/app/components/emoji-icon";
 import ProfileUsernameLink from "@/app/components/profile-username-link";
 
 type CommunityPostCommentsProps = {
@@ -505,7 +506,7 @@ export default function CommunityPostComments({
                   className="flex scroll-mt-28 items-start gap-3 rounded-xl transition"
                 >
                   <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-yellow-400/25 bg-yellow-400/10 text-sm font-black text-white">
-                    {comment.avatar}
+                    <EmojiIcon emoji={comment.avatar} size={20} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
