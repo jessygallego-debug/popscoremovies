@@ -7,6 +7,7 @@ import {
 } from "@/lib/profile-store";
 import { avatarForKey, genreLabelForKey } from "@/lib/profile-config";
 import { createNotification } from "@/lib/notifications";
+import { checkAchievementEmails } from "@/lib/achievement-email-notifications";
 
 export const FOLLOWS_UPDATED_EVENT = "popscore-follows-updated";
 
@@ -469,6 +470,11 @@ export async function toggleFollow(target: FollowTarget) {
     followedUserId: target.userId,
     followerUserId: currentUser.id,
     followerUsername: currentProfile?.username ?? currentUser.email ?? null,
+  });
+  void checkAchievementEmails();
+  void checkAchievementEmails({
+    recipientUserId: target.userId,
+    type: "new_follower",
   });
 
   if (canUseLocalStorage()) {

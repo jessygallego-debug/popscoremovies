@@ -34,6 +34,7 @@ export type ProfileRecord = {
   id: string;
   user_id: string;
   email?: string | null;
+  email_achievement_notifications?: boolean | null;
   username: string;
   avatar_key: string;
   favorite_genre: string | null;

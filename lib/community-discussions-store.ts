@@ -19,6 +19,7 @@ export const COMMUNITY_DISCUSSIONS_UPDATED_EVENT =
 
 export type CommunityDiscussionAchievementStats = {
   discussionCount: number;
+  discussionReplyCount: number;
   maxDiscussionReplyCount: number;
 };
 
@@ -308,19 +309,25 @@ export async function getCommunityDiscussion(discussionId: string) {
 export async function getCommunityDiscussionAchievementStatsForUser(
   userId: string
 ): Promise<CommunityDiscussionAchievementStats> {
-  const rows = await supabaseFetch<
-    Pick<CommunityDiscussionRow, "comment_count" | "id">[]
-  >(
-    `/community_discussions?user_id=eq.${encodeURIComponent(
-      userId
-    )}&select=id,comment_count&limit=1000`
-  ).catch(() => []);
+  const [rows, replies] = await Promise.all([
+    supabaseFetch<Pick<CommunityDiscussionRow, "comment_count" | "id">[]>(
+      `/community_discussions?user_id=eq.${encodeURIComponent(
+        userId
+      )}&select=id,comment_count&limit=1000`
+    ).catch(() => []),
+    supabaseFetch<{ id: string }[]>(
+      `/community_discussion_replies?user_id=eq.${encodeURIComponent(
+        userId
+      )}&select=id&limit=1000`
+    ).catch(() => []),
+  ]);
   const realRows = rows.filter(
     (row) => !isPlaceholderCommunityDiscussionId(row.id)
   );
 
   return {
     discussionCount: realRows.length,
+    discussionReplyCount: replies.length,
     maxDiscussionReplyCount: Math.max(
       0,
       ...realRows.map((row) => row.comment_count ?? 0)

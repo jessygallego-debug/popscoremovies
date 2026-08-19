@@ -28,6 +28,7 @@ import {
   mergeCommunityDiscussions,
   notifyCommunityDiscussionsUpdated,
 } from "@/lib/community-discussions-store";
+import { checkAchievementEmails } from "@/lib/achievement-email-notifications";
 import { avatarForKey } from "@/lib/profile-config";
 import {
   FOLLOWS_UPDATED_EVENT,
@@ -3036,6 +3037,7 @@ export default function CommunityPage() {
 
           return nextDiscussions;
         });
+        void checkAchievementEmails();
       })
       .catch(() => undefined);
     setIsDiscussionDialogOpen(false);

@@ -24,6 +24,7 @@ import {
   REVIEW_COMMENT_MAX_LENGTH,
   validateReviewComment,
 } from "@/lib/review-comments";
+import { checkAchievementEmails } from "@/lib/achievement-email-notifications";
 import { movieHref } from "@/lib/urls";
 
 const genreConfigs = GENRE_RATING_CONFIGS;
@@ -215,6 +216,7 @@ export default function RateClient({
       })
       .then(() => {
         notifyPopScoreUpdates();
+        void checkAchievementEmails();
         return removeFromWatchlist(movieId).catch(() => null);
       })
       .then(() => {

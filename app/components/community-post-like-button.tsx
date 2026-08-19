@@ -7,6 +7,7 @@ import {
   notifyCommunityPostActivityUpdated,
   toggleCommunityPostLike,
 } from "@/lib/community-comments";
+import { checkAchievementEmails } from "@/lib/achievement-email-notifications";
 import type { CommunityPostLikeSummary } from "@/lib/community-comments";
 import {
   createNotification,
@@ -148,6 +149,13 @@ export default function CommunityPostLikeButton({
         setSummary(nextSummary);
         notifyCommunityPostActivityUpdated(postId);
         void createLikeNotification();
+        if (isCreatingLike && notificationRecipientUserId) {
+          void checkAchievementEmails({
+            postId,
+            recipientUserId: notificationRecipientUserId,
+            type: "post_like",
+          });
+        }
       })
       .catch((error: Error) => {
         if (shouldKeepLocalLike(error)) {

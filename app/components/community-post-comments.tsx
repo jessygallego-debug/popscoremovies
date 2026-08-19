@@ -10,6 +10,7 @@ import {
   toggleCommunityCommentLike,
   validateCommunityComment,
 } from "@/lib/community-comments";
+import { checkAchievementEmails } from "@/lib/achievement-email-notifications";
 import { NOTIFICATION_TARGET_CHANGED_EVENT } from "@/lib/notifications";
 import type { MentionableUser } from "@/lib/mentions";
 import MentionText from "@/app/components/mention-text";
@@ -364,6 +365,7 @@ export default function CommunityPostComments({
         setIsComposerOpen(false);
         setAreCommentsOpen(true);
         notifyCommunityPostActivityUpdated(postId);
+        void checkAchievementEmails();
       })
       .catch((error: Error) => {
         setMessage(userFriendlyError(error));
@@ -375,6 +377,7 @@ export default function CommunityPostComments({
 
   const handleLike = (comment: CommunityComment) => {
     const nextLikedByCurrentUser = !comment.likedByCurrentUser;
+    const isCreatingLike = nextLikedByCurrentUser;
     const updateCommentLike = (likedByCurrentUser: boolean) => {
       setComments((currentComments) =>
         currentComments.map((currentComment) => {
@@ -407,6 +410,13 @@ export default function CommunityPostComments({
     toggleCommunityCommentLike(comment, { movieId, movieTitle })
       .then((nextComments) => {
         setComments(nextComments);
+        if (isCreatingLike && !comment.isOwnComment) {
+          void checkAchievementEmails({
+            commentId: comment.id,
+            recipientUserId: comment.userId,
+            type: "comment_like",
+          });
+        }
       })
       .catch((error: Error) => {
         if (shouldKeepLocalLike(error)) {

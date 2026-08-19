@@ -19,6 +19,8 @@ import {
   COMMUNITY_DISCUSSIONS_UPDATED_EVENT,
   getCommunityDiscussion,
 } from "@/lib/community-discussions-store";
+import { recordCommunityDiscussionReply } from "@/lib/community-discussion-replies";
+import { checkAchievementEmails } from "@/lib/achievement-email-notifications";
 import {
   createNotification,
   getCurrentNotificationActor,
@@ -611,7 +613,7 @@ export default function DiscussionDetailClient({
       return;
     }
 
-    const replyId = `${Date.now()}`;
+    const replyId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const replyHref = discussionCommentHref(discussion.id, replyId);
 
     setAddedReplies((currentReplies) => [
@@ -627,6 +629,24 @@ export default function DiscussionDetailClient({
       ...currentReplies,
     ]);
     setReplyBody("");
+    void recordCommunityDiscussionReply({
+      body: trimmedReply,
+      discussionId: discussion.id,
+      replyId,
+    }).then((recordedReply) => {
+      if (recordedReply?.recorded) {
+        void checkAchievementEmails();
+      }
+
+      if (recordedReply?.recipientUserId && recordedReply.replyId) {
+        void checkAchievementEmails({
+          discussionId: discussion.id,
+          recipientUserId: recordedReply.recipientUserId,
+          replyId: recordedReply.replyId,
+          type: "discussion_reply",
+        });
+      }
+    });
     void getCurrentNotificationActor().then(async (actor) => {
       await createNotification({
         actorUserId: actor.userId,
