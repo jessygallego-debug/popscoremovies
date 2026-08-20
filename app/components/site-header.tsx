@@ -36,8 +36,23 @@ function SiteLogo() {
           </span>
         </span>
         <span>
-          <span className="block text-2xl font-black leading-none tracking-wide text-yellow-400 sm:text-3xl md:text-4xl">
-            POPSCORE
+          <span className="flex items-center text-2xl font-black leading-none tracking-wide sm:text-3xl md:text-4xl">
+            <span className="text-white">P</span>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 100 100"
+              className="mx-[0.03em] h-[0.78em] w-[0.78em] shrink-0 text-white"
+            >
+              <circle cx="50" cy="50" r="47" fill="currentColor" />
+              <circle cx="50" cy="50" r="9" fill="#111827" />
+              <circle cx="50" cy="24" r="12" fill="#111827" />
+              <circle cx="74.7" cy="42" r="12" fill="#111827" />
+              <circle cx="65.3" cy="71" r="12" fill="#111827" />
+              <circle cx="34.7" cy="71" r="12" fill="#111827" />
+              <circle cx="25.3" cy="42" r="12" fill="#111827" />
+            </svg>
+            <span className="text-white">P</span>
+            <span className="text-yellow-400">SCORE</span>
           </span>
           <span className="mt-1 block text-[8px] font-black uppercase tracking-[0.16em] text-slate-400 sm:text-[10px] sm:tracking-[0.22em] md:text-xs">
             Movie Ratings For Real Fans
