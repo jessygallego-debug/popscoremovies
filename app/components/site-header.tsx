@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
+import AnimatedLogoReel from "@/app/components/animated-logo-reel";
 import MobileSiteMenu from "@/app/components/mobile-site-menu";
 import NotificationBell from "@/app/components/notification-bell";
 import ProfileMenu from "@/app/components/profile-menu";
@@ -38,19 +39,7 @@ function SiteLogo() {
         <span>
           <span className="flex items-center text-2xl font-black leading-none tracking-wide sm:text-3xl md:text-4xl">
             <span className="text-white">P</span>
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 100 100"
-              className="mx-[0.03em] h-[0.78em] w-[0.78em] shrink-0 text-white"
-            >
-              <circle cx="50" cy="50" r="47" fill="currentColor" />
-              <circle cx="50" cy="50" r="9" fill="#111827" />
-              <circle cx="50" cy="24" r="12" fill="#111827" />
-              <circle cx="74.7" cy="42" r="12" fill="#111827" />
-              <circle cx="65.3" cy="71" r="12" fill="#111827" />
-              <circle cx="34.7" cy="71" r="12" fill="#111827" />
-              <circle cx="25.3" cy="42" r="12" fill="#111827" />
-            </svg>
+            <AnimatedLogoReel />
             <span className="text-white">P</span>
             <span className="text-yellow-400">SCORE</span>
           </span>

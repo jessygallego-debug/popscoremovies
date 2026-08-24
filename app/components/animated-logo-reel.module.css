@@ -1,0 +1,88 @@
+.stage {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 0.78em;
+  height: 0.78em;
+  margin-inline: 0.03em;
+  line-height: 0;
+  color: currentColor;
+}
+
+.reel,
+.filmStrip {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-box: border-box;
+}
+
+.artwork {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.filmStrip {
+  opacity: 0;
+}
+
+.reel {
+  transform-origin: center;
+}
+
+.filmStrip {
+  transform-origin: 14% 77%;
+}
+
+.stage[data-animate="true"] .reel {
+  animation: logoReelSpin 1.75s cubic-bezier(0.32, 0.02, 0.16, 1) 120ms both;
+}
+
+.stage[data-animate="true"] .filmStrip {
+  animation: logoFilmWind 1.75s cubic-bezier(0.4, 0, 0.12, 1) 120ms both;
+}
+
+@keyframes logoReelSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  82% {
+    transform: rotate(1040deg);
+  }
+
+  100% {
+    transform: rotate(1080deg);
+  }
+}
+
+@keyframes logoFilmWind {
+  0% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+
+  8% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  84% {
+    opacity: 1;
+    transform: scaleX(0.08);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scaleX(0.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage[data-animate="true"] .reel,
+  .stage[data-animate="true"] .filmStrip {
+    animation: none;
+  }
+}
