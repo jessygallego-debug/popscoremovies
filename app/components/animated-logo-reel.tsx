@@ -3,7 +3,16 @@
 import { useEffect, useRef } from "react";
 import styles from "@/app/components/animated-logo-reel.module.css";
 
-const REEL_ANIMATION_KEY = "popscore-logo-reel-animation-v1";
+const REEL_ANIMATION_KEY = "popscore-logo-reel-animation-date-v1";
+
+function getLocalDateKey() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
 
 export default function AnimatedLogoReel() {
   const stageRef = useRef<HTMLSpanElement>(null);
@@ -16,11 +25,13 @@ export default function AnimatedLogoReel() {
     }
 
     try {
-      if (window.localStorage.getItem(REEL_ANIMATION_KEY)) {
+      const localDateKey = getLocalDateKey();
+
+      if (window.localStorage.getItem(REEL_ANIMATION_KEY) === localDateKey) {
         return;
       }
 
-      window.localStorage.setItem(REEL_ANIMATION_KEY, "played");
+      window.localStorage.setItem(REEL_ANIMATION_KEY, localDateKey);
     } catch {
       // If browser storage is unavailable, the animation can safely play again.
     }
