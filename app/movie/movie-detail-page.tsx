@@ -501,26 +501,65 @@ export async function MovieDetailPage({
                 ))}
               </div>
 
-              <div className="mt-8 space-y-1">
-                <PopScoreDisplay
-                  movieId={String(movie.id)}
-                  className="font-bold text-yellow-400"
-                />
-                <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-8 max-w-2xl space-y-4">
+                <div className="rounded-2xl border border-slate-800 bg-black/45 p-4 shadow-lg shadow-black/20 backdrop-blur">
+                  <PopScoreDisplay
+                    movieId={String(movie.id)}
+                    className="text-base font-black text-yellow-300 sm:text-lg"
+                  />
+                </div>
+
+                <section className="rounded-[1.5rem] border border-yellow-200/70 bg-[linear-gradient(135deg,#fde047_0%,#facc15_50%,#f59e0b_100%)] p-4 text-black shadow-2xl shadow-yellow-500/20 sm:p-5">
+                  <div className="flex items-center gap-4">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/45 text-2xl font-black shadow-inner shadow-white/30 sm:h-16 sm:w-16 sm:text-3xl"
+                    >
+                      ★
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-2xl font-black leading-tight sm:text-3xl">
+                        Rate This Movie
+                      </h2>
+                      <p className="mt-1 max-w-lg text-sm font-bold leading-5 text-black/75 sm:text-base sm:leading-6">
+                        Score it across five categories and get your personal
+                        PopScore.
+                      </p>
+                    </div>
+                    <span aria-hidden="true" className="text-4xl font-black leading-none">
+                      ›
+                    </span>
+                  </div>
                   <Link
                     href={rateHref}
-                    className="inline-flex min-h-12 items-center justify-center rounded-lg bg-yellow-400 px-6 font-bold text-black hover:bg-yellow-300"
+                    className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-black px-6 text-sm font-black uppercase tracking-[0.12em] text-yellow-300 shadow-xl shadow-black/25 transition hover:-translate-y-0.5 hover:bg-slate-950 hover:text-yellow-200 sm:ml-[5rem] sm:w-auto sm:min-w-64"
                   >
                     Rate This Movie
                   </Link>
+                </section>
+
+                <MovieRatingSharePanel
+                  communityScore={
+                    aggregateRating?.count ? aggregateRating.score : null
+                  }
+                  movieId={String(movie.id)}
+                  movieTitle={movie.title}
+                  posterPath={movie.poster_path}
+                />
+
+                <div
+                  className={`grid gap-3 ${trailer ? "sm:grid-cols-2" : ""}`}
+                >
                   {trailer ? (
-                    <TrailerModalButton
-                      autoOpen={queryParams.trailer === "1"}
-                      moviePath={moviePath}
-                      movieTitle={movie.title}
-                      trailerKey={trailer.key}
-                      trailerTitle={trailer.name}
-                    />
+                    <div className="[&>button]:w-full">
+                      <TrailerModalButton
+                        autoOpen={queryParams.trailer === "1"}
+                        moviePath={moviePath}
+                        movieTitle={movie.title}
+                        trailerKey={trailer.key}
+                        trailerTitle={trailer.name}
+                      />
+                    </div>
                   ) : null}
                   <AddToWatchlistButton
                     movie={{
@@ -531,32 +570,35 @@ export async function MovieDetailPage({
                       posterPath: movie.poster_path,
                       releaseDate: movie.release_date,
                     }}
+                    className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
                   />
                 </div>
-                <div className="mt-3 max-w-[260px]">
-                  <CoStarReactions
-                    movie={{
-                      genre: movie.genres[0]?.name,
-                      genreNames: filterGenreNames,
-                      movieId: String(movie.id),
-                      movieTitle: movie.title,
-                      posterPath: movie.poster_path,
-                      releaseDate: movie.release_date,
-                    }}
-                    movieId={String(movie.id)}
-                    showTotal={false}
-                    variant="mini"
-                  />
-                </div>
-                <MovieRatingSharePanel
-                  communityScore={
-                    aggregateRating?.count ? aggregateRating.score : null
-                  }
-                  movieId={String(movie.id)}
-                  movieTitle={movie.title}
-                  posterPath={movie.poster_path}
-                  className="mt-4 max-w-xl"
-                />
+
+                <section className="rounded-2xl border border-slate-800 bg-black/45 p-4 shadow-lg shadow-black/20 backdrop-blur sm:p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-300">
+                    Quick Reaction
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-300">
+                    How did you feel about it?
+                  </p>
+                  <div className="mt-3">
+                    <CoStarReactions
+                      movie={{
+                        genre: movie.genres[0]?.name,
+                        genreNames: filterGenreNames,
+                        movieId: String(movie.id),
+                        movieTitle: movie.title,
+                        posterPath: movie.poster_path,
+                        releaseDate: movie.release_date,
+                      }}
+                      movieId={String(movie.id)}
+                      showTotal={false}
+                    />
+                  </div>
+                  <p className="mt-3 text-xs font-semibold text-slate-500">
+                    Quick reactions don&apos;t affect the PopScore.
+                  </p>
+                </section>
               </div>
 
               <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-200">
