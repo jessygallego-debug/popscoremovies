@@ -244,14 +244,14 @@ export function MovieRatingSharePanel({
 
   return (
     <div
-      className={`rounded-2xl border border-yellow-400/25 bg-yellow-400/10 p-4 ${className}`}
+      className={`rounded-xl border border-yellow-400/25 bg-yellow-400/10 p-3 ${className}`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-300">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-yellow-300">
             Your Rating
           </p>
-          <p className="mt-1 text-lg font-black text-white">
+          <p className="mt-0.5 text-base font-black text-white">
             {rating.popscore}% {getShareRatingLabel(rating.popscore)}
           </p>
         </div>

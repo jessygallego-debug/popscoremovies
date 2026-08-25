@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 type TrailerModalButtonProps = {
   autoOpen?: boolean;
+  className?: string;
   moviePath: string;
   movieTitle: string;
   trailerKey: string;
@@ -12,6 +13,7 @@ type TrailerModalButtonProps = {
 
 export default function TrailerModalButton({
   autoOpen = false,
+  className = "inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10",
   moviePath,
   movieTitle,
   trailerKey,
@@ -97,7 +99,7 @@ export default function TrailerModalButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
+        className={className}
       >
         Watch Trailer
       </button>

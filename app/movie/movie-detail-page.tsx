@@ -537,6 +537,7 @@ export async function MovieDetailPage({
                     <div className="[&>button]:w-full">
                       <TrailerModalButton
                         autoOpen={queryParams.trailer === "1"}
+                        className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-4 text-sm font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
                         moviePath={moviePath}
                         movieTitle={movie.title}
                         trailerKey={trailer.key}
@@ -553,7 +554,7 @@ export async function MovieDetailPage({
                       posterPath: movie.poster_path,
                       releaseDate: movie.release_date,
                     }}
-                    className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-4 text-sm font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
                   />
                 </div>
 
