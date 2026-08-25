@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import EmojiIcon from "@/app/components/emoji-icon";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
-import CoStarReactions from "@/app/components/co-star-reactions";
 import HomeGenreFilter from "@/app/components/home-genre-filter";
 import LovedItBadge from "@/app/components/loved-it-badge";
 import MovieSearch from "@/app/components/movie-search";
@@ -91,10 +90,6 @@ function HeroVisual({
       <div className="absolute left-3 top-3 z-30 rounded-2xl border border-yellow-400/25 bg-black/55 px-2.5 py-1.5 text-xs font-black text-yellow-300 shadow-lg shadow-yellow-400/10 backdrop-blur md:left-5 md:top-5 md:px-4 md:py-2.5 md:text-sm">
         <EmojiIcon emoji="🍿" size={16} /> {stats.totalRatings.toLocaleString()}
       </div>
-      <div className="absolute right-3 top-3 z-30 rounded-2xl border border-red-400/25 bg-black/55 px-2.5 py-1.5 text-xs font-black text-red-300 shadow-lg shadow-red-500/10 backdrop-blur md:right-5 md:top-5 md:px-4 md:py-2.5 md:text-sm">
-        <EmojiIcon emoji="🔥" size={16} /> {stats.totalReactions.toLocaleString()}
-      </div>
-
       <div className="relative z-10 flex h-full items-center justify-center">
         <div className="relative h-[210px] w-full max-w-[320px] sm:h-[280px] sm:max-w-[420px] lg:h-[340px] lg:max-w-[440px]">
           {heroMovies.map((movie, index) => {
@@ -474,19 +469,6 @@ export default async function Home({
                           </div>
                         ) : null}
                       </div>
-
-                      <CoStarReactions
-                        variant="compact"
-                        movie={{
-                          genre: genreLabels[0],
-                          genreNames: genreLabels,
-                          movieId: String(movie.id),
-                          movieTitle: movie.title,
-                          posterPath: movie.poster_path,
-                          releaseDate: movie.release_date,
-                        }}
-                        movieId={String(movie.id)}
-                      />
 
                       <AddToWatchlistButton
                         movie={{
