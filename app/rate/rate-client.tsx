@@ -446,16 +446,11 @@ export default function RateClient({
               </p>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-yellow-400/30 bg-black/40 p-4 shadow-inner shadow-yellow-400/10">
-              <div className="flex flex-wrap items-end justify-between gap-2">
-                <div>
-                  <h3 className="text-lg font-black text-yellow-300">
-                    💬 Optional Review Comment
-                  </h3>
-                  <p className="mt-1 text-sm font-bold text-gray-300">
-                    What stood out about this movie? (Optional)
-                  </p>
-                </div>
+            <div className="mt-3 rounded-xl border border-yellow-400/30 bg-black/40 p-3 shadow-inner shadow-yellow-400/10">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-bold text-gray-300">
+                  What stood out about this movie? (Optional)
+                </p>
                 <span className="text-xs font-bold text-gray-400">
                   {reviewComment.length} / {REVIEW_COMMENT_MAX_LENGTH} characters
                 </span>
@@ -469,9 +464,9 @@ export default function RateClient({
                   setSubmitMessage("");
                 }}
                 placeholder="Share your thoughts..."
-                className="mt-3 min-h-28 w-full resize-y rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-gray-500 focus:border-yellow-400/60 focus:bg-yellow-400/5 focus:shadow-[0_0_22px_rgba(250,204,21,0.18)]"
+                className="mt-2 min-h-20 w-full resize-y rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm font-bold leading-5 text-white outline-none transition placeholder:text-gray-500 focus:border-yellow-400/60 focus:bg-yellow-400/5 focus:shadow-[0_0_22px_rgba(250,204,21,0.18)]"
               />
-              <p className="mt-2 text-xs font-bold text-gray-400">
+              <p className="mt-1.5 text-xs font-bold text-gray-400">
                 Please keep comments respectful and spoiler-free.
               </p>
               {reviewCommentError ? (
