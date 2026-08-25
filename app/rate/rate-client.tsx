@@ -422,22 +422,24 @@ export default function RateClient({
         {allAnswered && (
           <div className="mt-6 rounded-3xl border border-yellow-400/40 bg-yellow-400/10 p-4 text-white shadow-xl shadow-yellow-400/20 sm:p-6">
             <p className="text-base font-bold sm:text-lg">Your PopScore</p>
-            <h2 className="text-5xl font-black text-yellow-300 sm:text-6xl">
-              {popScore}%
-            </h2>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <span className="relative block h-16 w-16 overflow-hidden rounded-full border border-yellow-300/40 bg-yellow-400/10 shadow-[0_0_24px_rgba(250,204,21,0.25)] sm:h-20 sm:w-20">
-                <Image
-                  src={popRating.iconSrc}
-                  alt={`${popRating.label} PopScore icon`}
-                  fill
-                  sizes="80px"
-                  className="object-contain"
-                />
-              </span>
-              <p className="text-xl font-bold text-yellow-200 sm:text-2xl">
-                {popRating.label}
-              </p>
+            <div className="mt-1 flex items-center gap-3 sm:gap-4">
+              <h2 className="shrink-0 text-5xl font-black text-yellow-300 sm:text-6xl">
+                {popScore}%
+              </h2>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="relative block h-14 w-14 shrink-0 overflow-hidden rounded-full border border-yellow-300/40 bg-yellow-400/10 shadow-[0_0_24px_rgba(250,204,21,0.25)] sm:h-16 sm:w-16">
+                  <Image
+                    src={popRating.iconSrc}
+                    alt={`${popRating.label} PopScore icon`}
+                    fill
+                    sizes="64px"
+                    className="object-contain"
+                  />
+                </span>
+                <p className="text-lg font-bold text-yellow-200 sm:text-xl">
+                  {popRating.label}
+                </p>
+              </div>
             </div>
 
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/40 p-4 text-gray-200">
