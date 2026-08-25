@@ -559,7 +559,7 @@ export async function MovieDetailPage({
                 </div>
 
                 <section className="rounded-xl border border-slate-800 bg-black/45 p-2.5 shadow-lg shadow-black/20 backdrop-blur sm:p-2">
-                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[120px_minmax(0,280px)_120px] sm:justify-between">
+                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[120px_minmax(0,280px)_120px] sm:justify-between md:grid-cols-[120px_minmax(0,300px)_120px]">
                     <div>
                       <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-[0.12em] text-yellow-300 sm:text-[10px] sm:tracking-[0.16em]">
                         Quick Reaction
@@ -568,7 +568,7 @@ export async function MovieDetailPage({
                         How did you feel?
                       </p>
                     </div>
-                    <div className="w-full max-w-[280px] [&_img]:h-3.5 [&_img]:w-3.5 sm:translate-x-16 sm:translate-y-1 sm:[&_img]:h-[22px] sm:[&_img]:w-[22px]">
+                    <div className="w-full max-w-[280px] [&_img]:h-3.5 [&_img]:w-3.5 sm:translate-x-16 sm:translate-y-1 sm:[&_img]:h-[22px] sm:[&_img]:w-[22px] md:max-w-[300px] md:translate-x-40 md:translate-y-2 md:[&_button]:min-h-14">
                       <CoStarReactions
                         movie={{
                           genre: movie.genres[0]?.name,
