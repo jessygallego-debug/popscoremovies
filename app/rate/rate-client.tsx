@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import EmojiIcon from "@/app/components/emoji-icon";
 import Link from "next/link";
 import { useState } from "react";
 import MoviePosterImage from "@/app/components/movie-poster-image";
@@ -276,9 +275,6 @@ export default function RateClient({
         </div>
 
         <div className="mb-5 text-center sm:mb-8">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 text-3xl shadow-lg shadow-yellow-400/20 sm:mb-4 sm:h-16 sm:w-16 sm:text-4xl">
-            <EmojiIcon emoji="🍿" size={40} />
-          </div>
           <h1 className="text-3xl font-black text-white sm:text-6xl">
             {movieTitle ? "Rate This Movie" : "Rate Movies Online"}
           </h1>
@@ -321,7 +317,7 @@ export default function RateClient({
           <div className="mb-5 sm:mb-8" />
         )}
 
-        <div className="mb-6 flex flex-wrap justify-center gap-3 sm:mb-10">
+        <div className="mb-4 flex flex-wrap justify-center gap-2 sm:mb-6">
           {genresToShow.map(([key, genre]) => (
             <button
               key={key}
@@ -332,7 +328,7 @@ export default function RateClient({
                   setSubmittedScore(null);
                 }
               }}
-              className="rounded-xl bg-yellow-400 px-5 py-3 font-bold text-black shadow-lg shadow-yellow-400/20"
+              className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-bold text-black shadow-lg shadow-yellow-400/20 sm:text-base"
             >
               {genre.title}
             </button>
