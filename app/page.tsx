@@ -355,31 +355,35 @@ export default async function Home({
           <HeroVisual movies={displayMovies} stats={siteStats} />
         </section>
 
-        <div className="border-t border-white/10 pt-7">
-          <WhyPopScore />
-        </div>
+        {!query ? (
+          <>
+            <div className="border-t border-white/10 pt-7">
+              <WhyPopScore />
+            </div>
 
-        <section id="genres" className="mt-8">
-          <HomeGenreFilter filters={genreFilters} />
-          <div
-            aria-label="Filter movies by genre"
-            className="hidden grid-cols-3 gap-2 sm:grid sm:grid-cols-4 sm:gap-3 md:grid-cols-8"
-          >
-            {genreFilters.map((genre) => (
-              <Link
-                key={genre.id}
-                href={genre.href}
-                className={`inline-flex min-h-9 min-w-0 items-center justify-center rounded-full border px-2 py-1.5 text-center text-xs font-black transition duration-300 hover:-translate-y-0.5 sm:min-h-10 sm:px-3 sm:text-sm md:min-h-11 md:px-4 ${
-                  genre.isActive
-                    ? "border-yellow-400/60 bg-yellow-400/10 text-yellow-300 shadow-inner shadow-black/20"
-                    : "border-slate-700/90 bg-slate-950/80 text-slate-300 hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-200"
-                }`}
+            <section id="genres" className="mt-8">
+              <HomeGenreFilter filters={genreFilters} />
+              <div
+                aria-label="Filter movies by genre"
+                className="hidden grid-cols-3 gap-2 sm:grid sm:grid-cols-4 sm:gap-3 md:grid-cols-8"
               >
-                {genre.name}
-              </Link>
-            ))}
-          </div>
-        </section>
+                {genreFilters.map((genre) => (
+                  <Link
+                    key={genre.id}
+                    href={genre.href}
+                    className={`inline-flex min-h-9 min-w-0 items-center justify-center rounded-full border px-2 py-1.5 text-center text-xs font-black transition duration-300 hover:-translate-y-0.5 sm:min-h-10 sm:px-3 sm:text-sm md:min-h-11 md:px-4 ${
+                      genre.isActive
+                        ? "border-yellow-400/60 bg-yellow-400/10 text-yellow-300 shadow-inner shadow-black/20"
+                        : "border-slate-700/90 bg-slate-950/80 text-slate-300 hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-200"
+                    }`}
+                  >
+                    {genre.name}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </>
+        ) : null}
 
         {hasMissingToken ? (
           <div className="mt-8 rounded-2xl border border-yellow-500/40 bg-yellow-400/10 p-5 text-yellow-100">
