@@ -558,8 +558,8 @@ export async function MovieDetailPage({
                   />
                 </div>
 
-                <section className="rounded-xl border border-slate-800 bg-black/45 p-2.5 shadow-lg shadow-black/20 backdrop-blur sm:p-3">
-                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[120px_minmax(0,280px)] sm:justify-between">
+                <section className="rounded-xl border border-slate-800 bg-black/45 p-2.5 shadow-lg shadow-black/20 backdrop-blur sm:p-2">
+                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[120px_minmax(0,280px)_120px] sm:justify-between">
                     <div>
                       <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-[0.12em] text-yellow-300 sm:text-[10px] sm:tracking-[0.16em]">
                         Quick Reaction
@@ -568,7 +568,7 @@ export async function MovieDetailPage({
                         How did you feel?
                       </p>
                     </div>
-                    <div className="w-full max-w-[280px] [&_img]:h-3.5 [&_img]:w-3.5 sm:justify-self-end sm:[&_img]:h-4 sm:[&_img]:w-4">
+                    <div className="w-full max-w-[280px] [&_img]:h-3.5 [&_img]:w-3.5 sm:[&_img]:h-[18px] sm:[&_img]:w-[18px]">
                       <CoStarReactions
                         movie={{
                           genre: movie.genres[0]?.name,
@@ -584,7 +584,7 @@ export async function MovieDetailPage({
                       />
                     </div>
                   </div>
-                  <p className="mt-1.5 text-[10px] font-semibold text-slate-600">
+                  <p className="mt-1.5 text-[10px] font-semibold text-slate-600 sm:mt-1">
                     Quick reactions don&apos;t affect the PopScore.
                   </p>
                 </section>
