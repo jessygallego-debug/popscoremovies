@@ -558,31 +558,33 @@ export async function MovieDetailPage({
                   />
                 </div>
 
-                <section className="rounded-xl border border-slate-800 bg-black/45 p-3 shadow-lg shadow-black/20 backdrop-blur">
-                  <div className="grid gap-2 sm:grid-cols-[140px_minmax(0,1fr)] sm:items-center">
+                <section className="rounded-xl border border-slate-800 bg-black/45 p-2.5 shadow-lg shadow-black/20 backdrop-blur sm:p-3">
+                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[120px_minmax(0,280px)] sm:justify-between">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-yellow-300">
+                      <p className="whitespace-nowrap text-[10px] font-black uppercase tracking-[0.16em] text-yellow-300">
                         Quick Reaction
                       </p>
                       <p className="mt-0.5 text-[11px] font-semibold text-slate-400">
                         How did you feel?
                       </p>
                     </div>
-                    <CoStarReactions
-                      movie={{
-                        genre: movie.genres[0]?.name,
-                        genreNames: filterGenreNames,
-                        movieId: String(movie.id),
-                        movieTitle: movie.title,
-                        posterPath: movie.poster_path,
-                        releaseDate: movie.release_date,
-                      }}
-                      movieId={String(movie.id)}
-                      showTotal={false}
-                      variant="mini"
-                    />
+                    <div className="w-full max-w-[280px] sm:justify-self-end">
+                      <CoStarReactions
+                        movie={{
+                          genre: movie.genres[0]?.name,
+                          genreNames: filterGenreNames,
+                          movieId: String(movie.id),
+                          movieTitle: movie.title,
+                          posterPath: movie.poster_path,
+                          releaseDate: movie.release_date,
+                        }}
+                        movieId={String(movie.id)}
+                        showTotal={false}
+                        variant="mini"
+                      />
+                    </div>
                   </div>
-                  <p className="mt-2 text-[10px] font-semibold text-slate-600">
+                  <p className="mt-1.5 text-[10px] font-semibold text-slate-600">
                     Quick reactions don&apos;t affect the PopScore.
                   </p>
                 </section>
