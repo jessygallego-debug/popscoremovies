@@ -568,7 +568,7 @@ export async function MovieDetailPage({
                         How did you feel?
                       </p>
                     </div>
-                    <div className="w-full max-w-[280px] [&_img]:h-3.5 [&_img]:w-3.5 sm:[&_img]:h-[18px] sm:[&_img]:w-[18px]">
+                    <div className="w-full max-w-[280px] [&_img]:h-3.5 [&_img]:w-3.5 sm:translate-x-10 sm:[&_img]:h-5 sm:[&_img]:w-5">
                       <CoStarReactions
                         movie={{
                           genre: movie.genres[0]?.name,
