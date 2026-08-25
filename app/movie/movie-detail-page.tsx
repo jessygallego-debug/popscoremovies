@@ -509,34 +509,17 @@ export async function MovieDetailPage({
                   />
                 </div>
 
-                <section className="rounded-[1.5rem] border border-yellow-200/70 bg-[linear-gradient(135deg,#fde047_0%,#facc15_50%,#f59e0b_100%)] p-4 text-black shadow-2xl shadow-yellow-500/20 sm:p-5">
-                  <div className="flex items-center gap-4">
-                    <span
-                      aria-hidden="true"
-                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/45 text-2xl font-black shadow-inner shadow-white/30 sm:h-16 sm:w-16 sm:text-3xl"
-                    >
-                      ★
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-2xl font-black leading-tight sm:text-3xl">
-                        Rate This Movie
-                      </h2>
-                      <p className="mt-1 max-w-lg text-sm font-bold leading-5 text-black/75 sm:text-base sm:leading-6">
-                        Score it across five categories and get your personal
-                        PopScore.
-                      </p>
-                    </div>
-                    <span aria-hidden="true" className="text-4xl font-black leading-none">
-                      ›
-                    </span>
-                  </div>
-                  <Link
-                    href={rateHref}
-                    className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-black px-6 text-sm font-black uppercase tracking-[0.12em] text-yellow-300 shadow-xl shadow-black/25 transition hover:-translate-y-0.5 hover:bg-slate-950 hover:text-yellow-200 sm:ml-[5rem] sm:w-auto sm:min-w-64"
-                  >
+                <Link
+                  href={rateHref}
+                  className="flex min-h-16 items-center justify-between rounded-[1.25rem] border border-yellow-200/70 bg-[linear-gradient(135deg,#fde047_0%,#facc15_50%,#f59e0b_100%)] px-5 py-4 text-black shadow-2xl shadow-yellow-500/20 transition hover:-translate-y-0.5 hover:brightness-105 sm:px-6"
+                >
+                  <span className="text-xl font-black sm:text-2xl">
                     Rate This Movie
-                  </Link>
-                </section>
+                  </span>
+                  <span aria-hidden="true" className="text-4xl font-black leading-none">
+                    ›
+                  </span>
+                </Link>
 
                 <MovieRatingSharePanel
                   communityScore={
@@ -574,14 +557,16 @@ export async function MovieDetailPage({
                   />
                 </div>
 
-                <section className="rounded-2xl border border-slate-800 bg-black/45 p-4 shadow-lg shadow-black/20 backdrop-blur sm:p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-300">
-                    Quick Reaction
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-300">
-                    How did you feel about it?
-                  </p>
-                  <div className="mt-3">
+                <section className="rounded-xl border border-slate-800 bg-black/45 p-3 shadow-lg shadow-black/20 backdrop-blur">
+                  <div className="grid gap-2 sm:grid-cols-[140px_minmax(0,1fr)] sm:items-center">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-yellow-300">
+                        Quick Reaction
+                      </p>
+                      <p className="mt-0.5 text-[11px] font-semibold text-slate-400">
+                        How did you feel?
+                      </p>
+                    </div>
                     <CoStarReactions
                       movie={{
                         genre: movie.genres[0]?.name,
@@ -593,9 +578,10 @@ export async function MovieDetailPage({
                       }}
                       movieId={String(movie.id)}
                       showTotal={false}
+                      variant="mini"
                     />
                   </div>
-                  <p className="mt-3 text-xs font-semibold text-slate-500">
+                  <p className="mt-2 text-[10px] font-semibold text-slate-600">
                     Quick reactions don&apos;t affect the PopScore.
                   </p>
                 </section>
