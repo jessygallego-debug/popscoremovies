@@ -455,21 +455,6 @@ export default async function Home({
                         <LovedItBadge movieId={String(movie.id)} />
                       </div>
 
-                      <div className="min-h-[4.25rem] md:min-h-0">
-                        {genreLabels.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {genreLabels.map((genreName) => (
-                              <span
-                                key={genreName}
-                                className="rounded-full border border-slate-700/80 bg-slate-900/80 px-2 py-1 text-[10px] font-bold text-slate-300 sm:px-3 sm:text-xs"
-                              >
-                                {genreName}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-
                       <AddToWatchlistButton
                         movie={{
                           genre: genreLabels[0],
