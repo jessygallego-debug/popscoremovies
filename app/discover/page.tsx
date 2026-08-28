@@ -53,11 +53,16 @@ export const metadata: Metadata = {
 export default async function DiscoverPage({
   searchParams,
 }: {
-  searchParams: Promise<{ genre?: string }>;
+  searchParams: Promise<{ genre?: string; ratedMovie?: string }>;
 }) {
   const params = await searchParams;
   const initialGenre =
     normalizeMovieFilterGenreKey(params.genre) || MOVIE_FILTER_GENRES[0].key;
+  const ratedMovieId = Number(params.ratedMovie);
+  const recentlyRatedMovieId =
+    Number.isSafeInteger(ratedMovieId) && ratedMovieId > 0
+      ? ratedMovieId
+      : undefined;
 
   return (
     <main className="min-h-screen overflow-hidden bg-black bg-[radial-gradient(circle_at_18%_8%,rgba(250,204,21,0.16),transparent_26%),radial-gradient(circle_at_82%_10%,rgba(59,130,246,0.16),transparent_30%),linear-gradient(180deg,#020617_0%,#020617_40%,#000_72%,#020617_100%)] text-white">
@@ -103,7 +108,10 @@ export default async function DiscoverPage({
           </div>
         </section>
 
-        <DiscoverClient initialGenre={initialGenre} />
+        <DiscoverClient
+          initialGenre={initialGenre}
+          recentlyRatedMovieId={recentlyRatedMovieId}
+        />
       </section>
     </main>
   );

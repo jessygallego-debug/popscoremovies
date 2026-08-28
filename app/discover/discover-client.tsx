@@ -92,6 +92,7 @@ function DiscoveryPoster({ movie }: { movie: DiscoveryRecommendation }) {
 
 type DiscoverClientProps = {
   initialGenre: string;
+  recentlyRatedMovieId?: number;
 };
 
 function discoveryReturnPathForGenre(genreKey: string) {
@@ -128,7 +129,10 @@ function normalizeCustomYear(value?: string | null) {
   return yearNumber >= 1888 && yearNumber <= nextYear ? year : "";
 }
 
-export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
+export default function DiscoverClient({
+  initialGenre,
+  recentlyRatedMovieId,
+}: DiscoverClientProps) {
   const {
     isLoading: isProfileLoading,
     profile,
@@ -180,8 +184,11 @@ export default function DiscoverClient({ initialGenre }: DiscoverClientProps) {
     [genre]
   );
   const visibleMovies = useMemo(
-    () => limitRecommendations(movies),
-    [movies]
+    () =>
+      limitRecommendations(
+        movies.filter((movie) => movie.id !== recentlyRatedMovieId)
+      ),
+    [movies, recentlyRatedMovieId]
   );
   const languageOptions = useMemo(
     () =>

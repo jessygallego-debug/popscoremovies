@@ -127,6 +127,13 @@ function movieReleaseYear(value?: string | null) {
   return value?.split("-")[0] ?? "";
 }
 
+function addRecentlyRatedMovie(path: string, movieId: string) {
+  const url = new URL(path, "https://popscore.local");
+  url.searchParams.set("ratedMovie", movieId);
+
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 export default function RateClient({
   movieId,
   movieGenreNames,
@@ -169,6 +176,14 @@ export default function RateClient({
       : returnTo;
   const exitHref = submitReturnTo ?? detailExitHref;
   const submitHref = submitReturnTo ?? detailExitHref;
+  const completedExitHref =
+    hasSubmittedScore && ratingSource === "movie_match" && movieId
+      ? addRecentlyRatedMovie(exitHref, movieId)
+      : exitHref;
+  const completedSubmitHref =
+    hasSubmittedScore && ratingSource === "movie_match" && movieId
+      ? addRecentlyRatedMovie(submitHref, movieId)
+      : submitHref;
   const popRating = getPopRating(popScore);
   const moviePosterSrc = posterUrl(moviePosterPath ?? null);
   const releaseYear = movieReleaseYear(movieReleaseDate);
@@ -241,7 +256,7 @@ export default function RateClient({
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#1e293b_0%,#050505_42%,#000_100%)] px-5 py-8 text-white sm:px-8 sm:py-12">
       <section className="relative mx-auto max-w-6xl rounded-3xl border border-white/10 bg-black/60 p-5 shadow-2xl shadow-yellow-400/10 backdrop-blur sm:p-8">
         <Link
-          href={exitHref}
+          href={completedExitHref}
           aria-label="Exit rating screen"
           className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg font-black text-gray-300 transition hover:border-yellow-400/50 hover:bg-yellow-400/10 hover:text-yellow-300"
         >
@@ -513,7 +528,7 @@ export default function RateClient({
                     ratingLabel={popRating.label}
                   />
                   <Link
-                    href={submitHref}
+                    href={completedSubmitHref}
                     className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-2 text-xs font-black text-white transition hover:border-yellow-400/50 hover:text-yellow-300 sm:px-5 sm:text-base"
                   >
                     Done
