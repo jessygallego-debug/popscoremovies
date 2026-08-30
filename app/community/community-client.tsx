@@ -2688,8 +2688,7 @@ export default function CommunityClient({
 
   useEffect(() => {
     const hasServerData =
-      initialCommunityData.ratings.length > 0 ||
-      initialCommunityData.reviewers.length > 0 ||
+      initialCommunityData.ratings.length > 0 &&
       initialCommunityData.users.length > 0;
 
     if (hasServerData) {
@@ -2728,9 +2727,7 @@ export default function CommunityClient({
           if (response.ok) {
             const overview = (await response.json()) as CommunityOverview;
             const hasCommunityData =
-              overview.ratings.length > 0 ||
-              overview.reviewers.length > 0 ||
-              overview.users.length > 0;
+              overview.ratings.length > 0 && overview.users.length > 0;
 
             if (hasCommunityData) {
               if (!controller.signal.aborted) {
