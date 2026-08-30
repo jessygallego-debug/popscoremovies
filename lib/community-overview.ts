@@ -64,13 +64,17 @@ function supabaseConfig() {
   };
 }
 
-async function supabaseGet<T>(path: string): Promise<T> {
+async function supabaseGet<T>(
+  path: string,
+  accessToken?: string
+): Promise<T> {
   const config = supabaseConfig();
+  const token = accessToken ?? config.key;
   const response = await fetch(`${config.restUrl}${path}`, {
     cache: "no-store",
     headers: {
       apikey: config.key,
-      Authorization: `Bearer ${config.key}`,
+      Authorization: `Bearer ${token}`,
     },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
@@ -82,13 +86,14 @@ async function supabaseGet<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function fetchAllPages<T>(path: string) {
+async function fetchAllPages<T>(path: string, accessToken?: string) {
   const rows: T[] = [];
 
   for (let offset = 0; ; offset += PAGE_SIZE) {
     const separator = path.includes("?") ? "&" : "?";
     const page = await supabaseGet<T[]>(
-      `${path}${separator}limit=${PAGE_SIZE}&offset=${offset}`
+      `${path}${separator}limit=${PAGE_SIZE}&offset=${offset}`,
+      accessToken
     );
     rows.push(...page);
 
@@ -130,19 +135,24 @@ function toFeedRating(
   };
 }
 
-async function loadCommunityOverview(): Promise<CommunityOverview> {
+async function loadCommunityOverview(
+  accessToken?: string
+): Promise<CommunityOverview> {
   const startedAt = Date.now();
 
   try {
     const [profiles, ratingRows, follows] = await Promise.all([
       fetchAllPages<CommunityProfileRow>(
-        "/profiles?select=user_id,username,avatar_key,favorite_genre&order=username.asc"
+        "/profiles?select=user_id,username,avatar_key,favorite_genre&order=username.asc",
+        accessToken
       ),
       fetchAllPages<CommunityRatingRow>(
-        "/movie_ratings?select=id,user_id,movie_id,movie_title,poster_path,release_date,genre,genre_names,ratings,weights,popscore,quick_reaction,rating_source,review_comment,created_at,updated_at&order=updated_at.desc"
+        "/movie_ratings?select=id,user_id,movie_id,movie_title,poster_path,release_date,genre,genre_names,ratings,weights,popscore,quick_reaction,rating_source,review_comment,created_at,updated_at&order=updated_at.desc",
+        accessToken
       ),
       fetchAllPages<FollowRow>(
-        "/user_follows?select=following_id&order=created_at.desc"
+        "/user_follows?select=following_id&order=created_at.desc",
+        accessToken
       ),
     ]);
     const profilesByUserId = new Map(
@@ -244,4 +254,10 @@ const getCachedCommunityOverview = unstable_cache(
 
 export async function getCommunityOverview(): Promise<CommunityOverview> {
   return getCachedCommunityOverview();
+}
+
+export async function getAuthenticatedCommunityOverview(
+  accessToken: string
+): Promise<CommunityOverview> {
+  return loadCommunityOverview(accessToken);
 }

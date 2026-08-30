@@ -45,6 +45,7 @@ import {
   getCurrentUser,
   getProfileByUserId,
   getRecentRatingsForUsers,
+  getSupabaseAccessToken,
   type CommunityRatingFeedItem,
   type DiscoverableUserSummary,
   type TopReviewerSummary,
@@ -2620,9 +2621,10 @@ export default function CommunityClient({
   const [createdDiscussions, setCreatedDiscussions] = useState<
     CommunityDiscussion[]
   >([]);
-  const communityRatings = initialCommunityData.ratings;
-  const discoverableUsers = initialCommunityData.users;
-  const topReviewers = initialCommunityData.reviewers;
+  const [communityData, setCommunityData] = useState(initialCommunityData);
+  const communityRatings = communityData.ratings;
+  const discoverableUsers = communityData.users;
+  const topReviewers = communityData.reviewers;
   const currentUserId = currentProfile?.user_id ?? currentUser?.id ?? null;
   const [focusedPostId, setFocusedPostId] = useState<string | null>(null);
   const [feedActivityRefreshKey, setFeedActivityRefreshKey] = useState(0);
@@ -2680,6 +2682,51 @@ export default function CommunityClient({
       window.scrollTo({ behavior: "smooth", top: 0 });
     });
   };
+
+  useEffect(() => {
+    const hasServerData =
+      initialCommunityData.ratings.length > 0 ||
+      initialCommunityData.reviewers.length > 0 ||
+      initialCommunityData.users.length > 0;
+
+    if (hasServerData) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadAuthenticatedCommunityData() {
+      const accessToken = await getSupabaseAccessToken().catch(() => null);
+
+      if (!accessToken || controller.signal.aborted) {
+        return;
+      }
+
+      const response = await fetch("/api/community/overview", {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Community overview failed with ${response.status}.`);
+      }
+
+      const overview = (await response.json()) as CommunityOverview;
+
+      if (!controller.signal.aborted) {
+        setCommunityData(overview);
+      }
+    }
+
+    loadAuthenticatedCommunityData().catch((error) => {
+      if (!controller.signal.aborted) {
+        console.error("Could not load Community data.", error);
+      }
+    });
+
+    return () => controller.abort();
+  }, [initialCommunityData]);
 
   useEffect(() => {
     const readFocusedPost = () => {
