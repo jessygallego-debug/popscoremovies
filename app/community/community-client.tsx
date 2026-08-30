@@ -43,9 +43,12 @@ import {
 } from "@/lib/community-comments";
 import {
   getCurrentUser,
+  getDiscoverableUsers,
   getProfileByUserId,
+  getRecentCommunityRatings,
   getRecentRatingsForUsers,
   getSupabaseAccessToken,
+  getTopReviewers,
   type CommunityRatingFeedItem,
   type DiscoverableUserSummary,
   type TopReviewerSummary,
@@ -2695,28 +2698,60 @@ export default function CommunityClient({
 
     const controller = new AbortController();
 
+    async function loadCommunityDataDirectly() {
+      const [ratings, reviewers, users] = await Promise.all([
+        getRecentCommunityRatings(30),
+        getTopReviewers(150),
+        getDiscoverableUsers(80),
+      ]);
+
+      if (!controller.signal.aborted) {
+        setCommunityData({ ratings, reviewers, users });
+      }
+    }
+
     async function loadAuthenticatedCommunityData() {
       const accessToken = await getSupabaseAccessToken().catch(() => null);
 
-      if (!accessToken || controller.signal.aborted) {
+      if (controller.signal.aborted) {
         return;
       }
 
-      const response = await fetch("/api/community/overview", {
-        cache: "no-store",
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: controller.signal,
-      });
+      if (accessToken) {
+        try {
+          const response = await fetch("/api/community/overview", {
+            cache: "no-store",
+            headers: { Authorization: `Bearer ${accessToken}` },
+            signal: controller.signal,
+          });
 
-      if (!response.ok) {
-        throw new Error(`Community overview failed with ${response.status}.`);
+          if (response.ok) {
+            const overview = (await response.json()) as CommunityOverview;
+            const hasCommunityData =
+              overview.ratings.length > 0 ||
+              overview.reviewers.length > 0 ||
+              overview.users.length > 0;
+
+            if (hasCommunityData) {
+              if (!controller.signal.aborted) {
+                setCommunityData(overview);
+              }
+              return;
+            }
+          }
+        } catch (error) {
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          console.warn(
+            "Consolidated Community request failed; using direct queries.",
+            error
+          );
+        }
       }
 
-      const overview = (await response.json()) as CommunityOverview;
-
-      if (!controller.signal.aborted) {
-        setCommunityData(overview);
-      }
+      await loadCommunityDataDirectly();
     }
 
     loadAuthenticatedCommunityData().catch((error) => {
