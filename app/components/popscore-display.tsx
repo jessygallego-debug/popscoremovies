@@ -8,6 +8,7 @@ import { getPopScore, subscribeToPopScoreUpdates } from "@/lib/popscore-store";
 type PopScoreDisplayProps = {
   movieId: string;
   className?: string;
+  compactOnDesktop?: boolean;
   showNumericScore?: boolean;
   variant?: "inline" | "card" | "posterBadge";
 };
@@ -38,6 +39,7 @@ function getPopScoreTitle(score: number) {
 export default function PopScoreDisplay({
   movieId,
   className,
+  compactOnDesktop = false,
   showNumericScore = true,
   variant = "inline",
 }: PopScoreDisplayProps) {
@@ -87,20 +89,36 @@ export default function PopScoreDisplay({
 
   if (!score && variant === "card") {
     return (
-      <div className="flex items-center gap-2 sm:gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-yellow-400/20 bg-yellow-400/10 text-xl sm:h-12 sm:w-12 sm:text-2xl">
+      <div
+        className={`flex items-center gap-2 sm:gap-3 ${
+          compactOnDesktop ? "lg:gap-2" : ""
+        }`}
+      >
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-yellow-400/20 bg-yellow-400/10 text-xl sm:h-12 sm:w-12 sm:text-2xl ${
+            compactOnDesktop ? "lg:h-9 lg:w-9 lg:text-xl" : ""
+          }`}
+        >
           <EmojiIcon emoji="🍿" label="Not rated yet" size={32} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-col items-start leading-tight sm:flex-row sm:items-baseline sm:gap-2">
-            <span className="text-xl font-black text-yellow-400 sm:text-2xl">
+            <span
+              className={`text-xl font-black text-yellow-400 sm:text-2xl ${
+                compactOnDesktop ? "lg:text-xl" : ""
+              }`}
+            >
               NR
             </span>
             <span className="max-w-full text-sm font-black leading-tight text-white">
               Not rated yet
             </span>
           </div>
-          <p className="mt-1 text-[11px] font-bold text-slate-500 sm:text-xs">
+          <p
+            className={`mt-1 text-[11px] font-bold text-slate-500 sm:text-xs ${
+              compactOnDesktop ? "lg:mt-0.5 lg:text-[10px]" : ""
+            }`}
+          >
             Be the first!
           </p>
         </div>
@@ -119,9 +137,21 @@ export default function PopScoreDisplay({
   const popScoreTitle = getPopScoreTitle(score.score);
   if (variant === "card") {
     return (
-      <div className="flex items-center gap-2 sm:gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-yellow-400/20 bg-yellow-400/10 sm:h-12 sm:w-12">
-          <span className="relative block h-8 w-8 sm:h-10 sm:w-10">
+      <div
+        className={`flex items-center gap-2 sm:gap-3 ${
+          compactOnDesktop ? "lg:gap-2" : ""
+        }`}
+      >
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-yellow-400/20 bg-yellow-400/10 sm:h-12 sm:w-12 ${
+            compactOnDesktop ? "lg:h-9 lg:w-9" : ""
+          }`}
+        >
+          <span
+            className={`relative block h-8 w-8 sm:h-10 sm:w-10 ${
+              compactOnDesktop ? "lg:h-7 lg:w-7" : ""
+            }`}
+          >
             <Image
               src={popScoreTitle.iconSrc}
               alt={`${popScoreTitle.label} PopScore icon`}
@@ -133,14 +163,22 @@ export default function PopScoreDisplay({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-col items-start leading-tight sm:flex-row sm:items-baseline sm:gap-2">
-            <span className="text-xl font-black text-yellow-400 sm:text-2xl">
+            <span
+              className={`text-xl font-black text-yellow-400 sm:text-2xl ${
+                compactOnDesktop ? "lg:text-xl" : ""
+              }`}
+            >
               {showNumericScore ? `${score.score}%` : "Rated"}
             </span>
             <span className="max-w-full whitespace-normal break-words text-sm font-black leading-tight text-white">
               {popScoreTitle.label}
             </span>
           </div>
-          <p className="mt-1 text-[11px] font-bold text-slate-500 sm:text-xs">
+          <p
+            className={`mt-1 text-[11px] font-bold text-slate-500 sm:text-xs ${
+              compactOnDesktop ? "lg:mt-0.5 lg:text-[10px]" : ""
+            }`}
+          >
             {score.count} {score.count === 1 ? "Rating" : "Ratings"}
           </p>
         </div>

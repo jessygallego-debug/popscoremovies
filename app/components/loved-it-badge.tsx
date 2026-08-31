@@ -5,6 +5,7 @@ import EmojiIcon from "@/app/components/emoji-icon";
 import { CoStarCounts, getCoStarCounts } from "@/lib/co-star-store";
 
 type LovedItBadgeProps = {
+  compactOnDesktop?: boolean;
   movieId: string;
 };
 
@@ -26,7 +27,10 @@ function lovedPercent(counts: CoStarCounts) {
   return Math.round((counts.loved / total) * 100);
 }
 
-export default function LovedItBadge({ movieId }: LovedItBadgeProps) {
+export default function LovedItBadge({
+  compactOnDesktop = false,
+  movieId,
+}: LovedItBadgeProps) {
   const [counts, setCounts] = useState<CoStarCounts>(emptyCounts);
 
   useEffect(() => {
@@ -67,7 +71,11 @@ export default function LovedItBadge({ movieId }: LovedItBadgeProps) {
   }, [movieId]);
 
   return (
-    <div className="flex items-center justify-center gap-1 rounded-2xl border border-slate-800 bg-black/25 px-2 py-2 text-center text-[11px] font-black text-yellow-300 sm:px-3 sm:text-sm">
+    <div
+      className={`flex items-center justify-center gap-1 rounded-2xl border border-slate-800 bg-black/25 px-2 py-2 text-center text-[11px] font-black text-yellow-300 sm:px-3 sm:text-sm ${
+        compactOnDesktop ? "lg:rounded-xl lg:px-2 lg:py-1.5 lg:text-xs" : ""
+      }`}
+    >
       <EmojiIcon emoji="🔥" size={16} /> {lovedPercent(counts)}% Loved It
     </div>
   );

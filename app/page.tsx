@@ -394,7 +394,7 @@ export default async function Home({
           </div>
 
           {displayMovies.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4 2xl:grid-cols-5">
               {displayMovies.map((movie) => {
                 const poster = movieArtworkUrl(movie);
                 const releaseDate = movie.release_date
@@ -416,7 +416,7 @@ export default async function Home({
                         <MoviePosterImage
                           src={poster}
                           alt={`${movie.title} movie poster`}
-                          sizes="(min-width: 1536px) 25vw, (min-width: 1280px) 33vw, (min-width: 768px) 50vw, 50vw"
+                          sizes="(min-width: 1536px) 20vw, (min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 50vw"
                           className="object-contain"
                           fallbackMovieId={String(movie.id)}
                         />
@@ -424,22 +424,22 @@ export default async function Home({
                           <PopScoreDisplay
                             movieId={String(movie.id)}
                             variant="posterBadge"
-                            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-[15px] font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl"
+                            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-[15px] font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl lg:h-11 lg:w-11 lg:text-base"
                           />
                         </div>
                       </div>
                     </Link>
 
-                    <div className="flex flex-1 flex-col space-y-3 p-3 sm:space-y-4 sm:p-4">
+                    <div className="flex flex-1 flex-col space-y-3 p-3 sm:space-y-4 sm:p-4 lg:space-y-2.5 lg:p-3">
                       <Link
                         data-remember-scroll
                         href={detailsHref}
-                        className="group/title block min-h-[4.25rem]"
+                        className="group/title block min-h-[4.25rem] lg:min-h-[3.5rem]"
                       >
-                        <h3 className="line-clamp-2 text-lg font-black leading-tight text-white transition group-hover/title:text-yellow-300 sm:text-2xl">
+                        <h3 className="line-clamp-2 text-lg font-black leading-tight text-white transition group-hover/title:text-yellow-300 sm:text-2xl lg:text-lg">
                           {movie.title}
                         </h3>
-                        <p className="mt-1 text-xs font-bold text-slate-300 sm:text-sm">
+                        <p className="mt-1 text-xs font-bold text-slate-300 sm:text-sm lg:text-xs">
                           {releaseDate || "TBA"}
                         </p>
                       </Link>
@@ -447,12 +447,19 @@ export default async function Home({
                         <Link
                           data-remember-scroll
                           href={rateHref}
-                          className="rounded-2xl border border-yellow-400/15 bg-yellow-400/10 p-2 transition hover:border-yellow-400/50 hover:bg-yellow-400/15 sm:p-3"
+                          className="rounded-2xl border border-yellow-400/15 bg-yellow-400/10 p-2 transition hover:border-yellow-400/50 hover:bg-yellow-400/15 sm:p-3 lg:rounded-xl lg:p-2"
                           aria-label={`Rate ${movie.title}`}
                         >
-                          <PopScoreDisplay movieId={String(movie.id)} variant="card" />
+                          <PopScoreDisplay
+                            movieId={String(movie.id)}
+                            variant="card"
+                            compactOnDesktop
+                          />
                         </Link>
-                        <LovedItBadge movieId={String(movie.id)} />
+                        <LovedItBadge
+                          movieId={String(movie.id)}
+                          compactOnDesktop
+                        />
                       </div>
 
                       <AddToWatchlistButton
@@ -464,7 +471,7 @@ export default async function Home({
                           posterPath: movie.poster_path,
                           releaseDate: movie.release_date,
                         }}
-                        className="mt-auto w-full rounded-2xl border border-slate-700 bg-slate-950 px-2 py-2.5 text-[11px] font-black text-slate-300 transition hover:border-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300 sm:px-3 sm:py-3 sm:text-xs"
+                        className="mt-auto w-full rounded-2xl border border-slate-700 bg-slate-950 px-2 py-2.5 text-[11px] font-black text-slate-300 transition hover:border-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300 sm:px-3 sm:py-3 sm:text-xs lg:rounded-xl lg:px-2 lg:py-2 lg:text-[11px]"
                       />
                     </div>
                   </article>
