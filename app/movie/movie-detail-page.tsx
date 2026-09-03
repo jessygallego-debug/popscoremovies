@@ -304,6 +304,7 @@ function WhereToWatchSection({
                           fill
                           sizes="32px"
                           className="object-cover"
+                          unoptimized
                         />
                       </span>
                     ) : null}
@@ -422,6 +423,7 @@ export async function MovieDetailPage({
             priority
             sizes="100vw"
             className="object-cover opacity-25"
+            unoptimized
           />
         ) : null}
 

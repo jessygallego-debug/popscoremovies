@@ -273,6 +273,10 @@ export function tmdbImagePath(path?: string | null) {
     try {
       const url = new URL(trimmedPath);
 
+      if (url.pathname === "/_next/image") {
+        return tmdbImagePath(url.searchParams.get("url"));
+      }
+
       if (url.hostname !== "image.tmdb.org") {
         return null;
       }

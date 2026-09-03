@@ -66,7 +66,7 @@ export default function MoviePosterImage({
       .then((data: { backdropPath?: string | null; posterPath?: string | null }) => {
         const fallbackSources = [
           posterUrl(data.posterPath ?? null),
-          backdropUrl(data.backdropPath ?? null),
+          backdropUrl(data.backdropPath ?? null, "w500"),
         ].filter(
           (candidate): candidate is string =>
             Boolean(candidate && candidate !== src && candidate !== failedSrc)

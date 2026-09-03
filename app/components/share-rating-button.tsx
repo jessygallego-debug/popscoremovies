@@ -9,6 +9,7 @@ import {
   getUserRatings,
   UserMovieRating,
 } from "@/lib/profile-store";
+import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
 
 type ShareRatingButtonProps = {
@@ -29,36 +30,6 @@ type MovieRatingSharePanelProps = {
   movieTitle: string;
   posterPath?: string | null;
 };
-
-function normalizePosterPath(path?: string | null) {
-  const trimmedPath = path?.trim();
-
-  if (
-    !trimmedPath ||
-    trimmedPath.toLowerCase() === "null" ||
-    trimmedPath.toLowerCase() === "undefined"
-  ) {
-    return null;
-  }
-
-  return trimmedPath;
-}
-
-function sharePosterUrl(path?: string | null, size = "w500") {
-  const normalizedPath = normalizePosterPath(path);
-
-  if (!normalizedPath) {
-    return null;
-  }
-
-  if (normalizedPath.startsWith("http")) {
-    return normalizedPath;
-  }
-
-  return `https://image.tmdb.org/t/p/${size}${
-    normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`
-  }`;
-}
 
 export function getShareRatingLabel(score: number) {
   if (score >= 90) {
@@ -174,7 +145,7 @@ function canvasToBlob(canvas: HTMLCanvasElement) {
 }
 
 async function getPosterForDownload(movieId: string, posterPath?: string | null) {
-  const primaryPoster = sharePosterUrl(posterPath, "w780");
+  const primaryPoster = posterUrl(posterPath ?? null, "w780");
 
   if (primaryPoster) {
     return primaryPoster;
@@ -186,7 +157,7 @@ async function getPosterForDownload(movieId: string, posterPath?: string | null)
     );
     const data = (await response.json()) as { posterPath?: string | null };
 
-    return sharePosterUrl(data.posterPath ?? null, "w780");
+    return posterUrl(data.posterPath ?? null, "w780");
   } catch {
     return null;
   }
@@ -286,7 +257,7 @@ export default function ShareRatingButton({
     typeof window === "undefined"
       ? moviePath
       : new URL(moviePath, window.location.origin).toString();
-  const poster = sharePosterUrl(posterPath);
+  const poster = posterUrl(posterPath ?? null);
   const finalRatingLabel = ratingLabel ?? getShareRatingLabel(popscore);
   const ratingIconSrc = getShareRatingIconSrc(popscore);
   const shareStatement = getShareRatingStatement(popscore);

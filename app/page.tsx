@@ -72,7 +72,9 @@ function hasMovieArtwork(movie: MovieSummary) {
 }
 
 function movieArtworkUrl(movie: MovieSummary) {
-  return posterUrl(movie.poster_path) ?? backdropUrl(movie.backdrop_path);
+  return (
+    posterUrl(movie.poster_path) ?? backdropUrl(movie.backdrop_path, "w500")
+  );
 }
 
 function HeroVisual({

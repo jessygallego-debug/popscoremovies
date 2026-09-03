@@ -70,6 +70,64 @@ test("Discovery defaults to recent, local-language recommendations", async ({
   ).toBe("false");
 });
 
+test("TMDB posters load directly while local branding stays optimized", async ({
+  page,
+}) => {
+  await page.route("https://image.tmdb.org/**", async (route) => {
+    await route.fulfill({
+      body: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+        "base64"
+      ),
+      contentType: "image/png",
+    });
+  });
+  await page.route("**/api/recommendations?**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      json: {
+        highRatedCount: 0,
+        message: "",
+        mode: "fallback",
+        movies: [
+          {
+            explanation: "Image delivery verification",
+            genre_ids: [28],
+            id: 123456,
+            original_language: "en",
+            overallPopScore: 90,
+            poster_path: "/popscore-image-delivery-test.jpg",
+            recommendationMode: "fallback",
+            release_date: "2024-01-01",
+            tasteMatchScore: 90,
+            title: "Transformation Test",
+            totalRatings: 0,
+            vote_average: 8.4,
+          },
+        ],
+      },
+    });
+  });
+
+  await page.goto("/discover");
+
+  const tmdbPoster = page.getByAltText(
+    "Transformation Test recommended movie on PopScore"
+  );
+  await expect(tmdbPoster).toHaveAttribute(
+    "src",
+    "https://image.tmdb.org/t/p/w500/popscore-image-delivery-test.jpg"
+  );
+  await expect(tmdbPoster).toHaveAttribute("loading", "lazy");
+  await expect(
+    page.locator('img[src*="/_next/image"][src*="image.tmdb.org"]')
+  ).toHaveCount(0);
+
+  await expect(
+    page.getByAltText("PopScore movie rating and recommendation site")
+  ).toHaveAttribute("src", /\/_next\/image\?url=/);
+});
+
 test("Discovery controls update recommendation query params", async ({
   page,
 }) => {
@@ -141,7 +199,9 @@ test("Fantasy and Western are rating genres but Superhero is filter-only", async
 
   await page.goto("/rate?genre=western");
 
-  await expect(page.getByRole("button", { name: "Western" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Western", exact: true })
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Storyline" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Character" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Rewatch Score" })).toBeVisible();
