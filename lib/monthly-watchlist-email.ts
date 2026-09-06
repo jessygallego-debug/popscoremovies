@@ -124,6 +124,7 @@ export function monthlyWatchlistSubject(month: number) {
 export function renderMonthlyWatchlistEmail(input: {
   month: number;
   movies: MonthlyWatchlistMovie[];
+  previewMode?: boolean;
   sendDate: string;
   unsubscribeUrl: string;
   year: number;
@@ -166,7 +167,7 @@ export function renderMonthlyWatchlistEmail(input: {
   return {
     subject,
     previewText,
-    text: `🍿 The PopScore Monthly Watchlist\nHere's what's coming home this month.\n\n${monthName.toUpperCase()} ${input.year}\n\n${textSections.join(
+    text: `${input.previewMode ? "DESIGN PREVIEW — SAMPLE MOVIE CONTENT\n\n" : ""}🍿 The PopScore Monthly Watchlist\nHere's what's coming home this month.\n\n${monthName.toUpperCase()} ${input.year}\n\n${textSections.join(
       "\n\n"
     )}\n\nDon't know what to watch?\nLet PopScore find your next movie based on what you actually like.\nFind My Movie: ${movieMatchUrl}\nRate more movies. Get better recommendations.\n\nUnsubscribe: ${input.unsubscribeUrl}`,
     html: `<!doctype html>
@@ -178,6 +179,7 @@ export function renderMonthlyWatchlistEmail(input: {
         <body style="background:#020617;margin:0;padding:0">
           <span style="display:none!important;max-height:0;max-width:0;opacity:0;overflow:hidden">${escapeHtml(previewText)}</span>
           <div style="background:#020617;color:#f8fafc;font-family:Arial,Helvetica,sans-serif;margin:0 auto;max-width:680px;padding:28px 12px">
+            ${input.previewMode ? '<div style="background:#facc15;border-radius:12px;color:#020617;font-size:12px;font-weight:900;letter-spacing:.12em;margin:0 18px 18px;padding:12px;text-align:center">DESIGN PREVIEW — SAMPLE MOVIE CONTENT</div>' : ""}
             <div style="padding:8px 18px 25px;text-align:center">
               <img src="${escapeHtml(logoUrl)}" width="56" height="56" alt="PopScore" style="border:0;border-radius:16px;display:inline-block;height:56px;object-fit:contain;width:56px" />
               <h1 style="color:#facc15;font-size:28px;line-height:1.15;margin:14px 0 8px">🍿 The PopScore Monthly Watchlist</h1>
