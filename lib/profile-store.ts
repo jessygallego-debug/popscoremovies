@@ -890,22 +890,40 @@ export async function upsertProfile(profile: {
     throw new Error("That username is already taken.");
   }
 
-  const rows = await supabaseFetch<ProfileRecord[]>(
-    "/profiles?on_conflict=user_id",
-    {
+  const profilePayload = {
+    avatar_key: profile.avatarKey,
+    email_monthly_watchlist: profile.emailMonthlyWatchlist,
+    favorite_genre: favoriteGenre,
+    user_id: userId,
+    username,
+  };
+  const saveProfile = (body: Record<string, unknown>) =>
+    supabaseFetch<ProfileRecord[]>("/profiles?on_conflict=user_id", {
       method: "POST",
       headers: {
         Prefer: "resolution=merge-duplicates,return=representation",
       },
-      body: JSON.stringify({
-        avatar_key: profile.avatarKey,
-        email_monthly_watchlist: profile.emailMonthlyWatchlist,
-        favorite_genre: favoriteGenre,
-        user_id: userId,
-        username,
-      }),
+      body: JSON.stringify(body),
+    });
+
+  let rows: ProfileRecord[];
+
+  try {
+    rows = await saveProfile(profilePayload);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const monthlyPreferenceColumnIsMissing =
+      message.includes("email_monthly_watchlist") &&
+      /(column|schema cache|PGRST204|42703)/i.test(message);
+
+    if (!monthlyPreferenceColumnIsMissing) {
+      throw error;
     }
-  );
+
+    const legacyProfilePayload: Record<string, unknown> = { ...profilePayload };
+    delete legacyProfilePayload.email_monthly_watchlist;
+    rows = await saveProfile(legacyProfilePayload);
+  }
 
   const savedProfile = rows[0] ?? existingProfile;
 
