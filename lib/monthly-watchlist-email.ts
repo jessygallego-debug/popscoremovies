@@ -84,20 +84,23 @@ function movieCard(movie: MonthlyWatchlistMovie, sendDate: string) {
   const service = movie.category === "digital" ? "Rent / Buy" : movie.provider;
 
   return `
-    <div class="movie-card" style="display:inline-block;vertical-align:top;width:48%;padding:0 1% 22px;box-sizing:border-box">
-      <div style="background:#0f172a;border:1px solid #263249;border-radius:16px;overflow:hidden;text-align:left">
-        <img src="${escapeHtml(image ?? "")}" width="280" alt="${escapeHtml(movie.movieTitle)} poster" style="border:0;display:block;height:auto;width:100%;aspect-ratio:2/3;object-fit:cover" />
-        <div style="padding:16px">
-          <h3 style="color:#f8fafc;font-size:18px;line-height:1.25;margin:0 0 10px">${escapeHtml(movie.movieTitle)}</h3>
+    <div class="movie-card" style="box-sizing:border-box;display:inline-block;padding:0 .5% 16px;vertical-align:top;width:25%">
+      <div class="movie-card-shell" style="background:#0f172a;border:1px solid #263249;border-radius:14px;overflow:hidden;text-align:left">
+        <div class="movie-poster-wrap">
+          <img class="movie-poster" src="${escapeHtml(image ?? "")}" width="160" alt="${escapeHtml(movie.movieTitle)} poster" style="border:0;display:block;height:auto;width:100%;aspect-ratio:2/3;object-fit:cover" />
+        </div>
+        <div class="movie-copy" style="padding:12px">
+          <h3 style="color:#f8fafc;font-size:16px;line-height:1.25;margin:0 0 8px">${escapeHtml(movie.movieTitle)}</h3>
           <p style="color:#facc15;font-size:14px;font-weight:800;line-height:1.4;margin:0 0 4px">${escapeHtml(availability)}</p>
-          <p style="color:#cbd5e1;font-size:14px;line-height:1.4;margin:0 0 16px">${escapeHtml(service ?? "")}</p>
-          <a href="${escapeHtml(movieUrl)}" style="background:#facc15;border-radius:999px;color:#020617;display:inline-block;font-size:14px;font-weight:800;padding:12px 18px;text-decoration:none">View on PopScore</a>
+          <p style="color:#cbd5e1;font-size:13px;line-height:1.4;margin:0 0 12px">${escapeHtml(service ?? "")}</p>
+          <a href="${escapeHtml(movieUrl)}" style="background:#facc15;border-radius:999px;color:#020617;display:inline-block;font-size:12px;font-weight:800;padding:10px 12px;text-decoration:none">View on PopScore</a>
         </div>
       </div>
     </div>`;
 }
 
 function movieSection(input: {
+  badge: string;
   heading: string;
   movies: MonthlyWatchlistMovie[];
   sendDate: string;
@@ -108,10 +111,13 @@ function movieSection(input: {
   }
 
   return `
-    <div style="padding:28px 16px 4px">
-      <p style="color:#facc15;font-size:12px;font-weight:900;letter-spacing:.16em;margin:0;text-transform:uppercase">${escapeHtml(input.heading)}</p>
-      <p style="color:#cbd5e1;font-size:15px;line-height:1.5;margin:7px 0 20px">${escapeHtml(input.subtitle)}</p>
-      <div style="font-size:0;margin:0 -1%">${input.movies
+    <div style="padding:24px 14px 2px">
+      <div style="background:#111827;border:1px solid #334155;border-left:6px solid #facc15;border-radius:14px;margin:0 0 16px;padding:15px 16px">
+        <p style="color:#facc15;font-size:17px;font-weight:900;letter-spacing:.08em;line-height:1.25;margin:0;text-transform:uppercase">${escapeHtml(input.heading)}</p>
+        <p style="color:#f8fafc;font-size:14px;font-weight:700;line-height:1.45;margin:6px 0 9px">${escapeHtml(input.subtitle)}</p>
+        <span style="background:#facc15;border-radius:999px;color:#020617;display:inline-block;font-size:10px;font-weight:900;letter-spacing:.1em;padding:6px 9px;text-transform:uppercase">${escapeHtml(input.badge)}</span>
+      </div>
+      <div style="font-size:0;margin:0 -.5%">${input.movies
         .map((movie) => movieCard(movie, input.sendDate))
         .join("")}</div>
     </div>`;
@@ -173,7 +179,7 @@ export function renderMonthlyWatchlistEmail(input: {
       <html>
         <head>
           <meta name="viewport" content="width=device-width,initial-scale=1" />
-          <style>@media only screen and (max-width:520px){.movie-card{display:block!important;padding-left:0!important;padding-right:0!important;width:100%!important}}</style>
+          <style>@media only screen and (max-width:520px){.movie-card{display:block!important;padding-left:0!important;padding-right:0!important;width:100%!important}.movie-card-shell{display:table!important;table-layout:fixed!important;width:100%!important}.movie-poster-wrap{display:table-cell!important;vertical-align:top!important;width:112px!important}.movie-poster{height:168px!important;max-width:112px!important;width:112px!important}.movie-copy{display:table-cell!important;padding:13px!important;vertical-align:middle!important}}</style>
         </head>
         <body style="background:#020617;margin:0;padding:0">
           <span style="display:none!important;max-height:0;max-width:0;opacity:0;overflow:hidden">${escapeHtml(previewText)}</span>
@@ -186,12 +192,14 @@ export function renderMonthlyWatchlistEmail(input: {
             </div>
             <div style="background:#071022;border:1px solid rgba(250,204,21,.35);border-radius:24px;overflow:hidden">
               ${movieSection({
+                badge: "Rent or Buy",
                 heading: "🎬 Coming to Digital",
                 movies: digitalMovies,
                 sendDate: input.sendDate,
                 subtitle: "Movies arriving to Rent or Buy this month",
               })}
               ${movieSection({
+                badge: "Included with Subscription",
                 heading: "📺 Coming to Streaming",
                 movies: streamingMovies,
                 sendDate: input.sendDate,

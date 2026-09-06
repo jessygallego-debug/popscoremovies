@@ -49,6 +49,9 @@ test("Monthly Watchlist email distinguishes current and future availability", ()
   expect(email.html).toContain("https://image.tmdb.org/t/p/w342/digital.jpg");
   expect(email.html).not.toContain("/_next/image");
   expect(email.html).toContain("@media only screen and (max-width:520px)");
+  expect(email.html).toContain('width:25%');
+  expect(email.html).toContain('width:112px!important');
+  expect(email.html).toContain("Included with Subscription");
 });
 
 test("Monthly Watchlist cron rejects unauthenticated requests", async ({ request }) => {
