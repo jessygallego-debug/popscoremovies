@@ -35,6 +35,7 @@ export type ProfileRecord = {
   user_id: string;
   email?: string | null;
   email_achievement_notifications?: boolean | null;
+  email_monthly_watchlist?: boolean | null;
   username: string;
   avatar_key: string;
   favorite_genre: string | null;
@@ -864,6 +865,7 @@ export async function upsertProfile(profile: {
   userId: string;
   username: string;
   avatarKey: string;
+  emailMonthlyWatchlist: boolean;
   favoriteGenre: string;
 }) {
   const currentUser = await getCurrentUser();
@@ -897,6 +899,7 @@ export async function upsertProfile(profile: {
       },
       body: JSON.stringify({
         avatar_key: profile.avatarKey,
+        email_monthly_watchlist: profile.emailMonthlyWatchlist,
         favorite_genre: favoriteGenre,
         user_id: userId,
         username,

@@ -75,6 +75,7 @@ export default function ProfileEditor() {
   const [username, setUsername] = useState("");
   const [avatarKey, setAvatarKey] = useState("clapper");
   const [favoriteGenre, setFavoriteGenre] = useState("horror");
+  const [emailMonthlyWatchlist, setEmailMonthlyWatchlist] = useState(false);
   const [ratedMovieCount, setRatedMovieCount] = useState(0);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [isSendingRecovery, setIsSendingRecovery] = useState(false);
@@ -120,6 +121,9 @@ export default function ProfileEditor() {
               : firstUnlockedAvatarKey(nextRatedMovieCount)
           );
           setFavoriteGenre(safeProfileGenreKey(nextProfile?.favorite_genre));
+          setEmailMonthlyWatchlist(
+            nextProfile?.email_monthly_watchlist === true
+          );
 
           if (authResult.signedIn && !authResult.isPasswordRecovery) {
             setMessage(
@@ -380,6 +384,7 @@ export default function ProfileEditor() {
           setMessage("");
           upsertProfile({
             avatarKey: selectedAvatar.key,
+            emailMonthlyWatchlist,
             favoriteGenre,
             userId: user.id,
             username,
@@ -439,6 +444,25 @@ export default function ProfileEditor() {
             value={favoriteGenre}
             onChange={setFavoriteGenre}
           />
+          <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-800 bg-black/35 p-4">
+            <input
+              type="checkbox"
+              checked={emailMonthlyWatchlist}
+              onChange={(event) =>
+                setEmailMonthlyWatchlist(event.target.checked)
+              }
+              className="mt-1 h-5 w-5 accent-yellow-400"
+            />
+            <span>
+              <span className="block font-black text-white">
+                🍿 The PopScore Monthly Watchlist
+              </span>
+              <span className="mt-1 block text-sm font-semibold leading-6 text-slate-400">
+                Email me once a month about notable movies coming to digital
+                and subscription streaming. You can turn this off anytime.
+              </span>
+            </span>
+          </label>
           <button
             type="button"
             onClick={() => setIsPasswordModalOpen(true)}
