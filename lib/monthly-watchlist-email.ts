@@ -100,7 +100,6 @@ function movieCard(movie: MonthlyWatchlistMovie, sendDate: string) {
 }
 
 function movieSection(input: {
-  badge: string;
   heading: string;
   movies: MonthlyWatchlistMovie[];
   sendDate: string;
@@ -114,8 +113,7 @@ function movieSection(input: {
     <div style="padding:24px 14px 2px">
       <div style="background:#111827;border:1px solid #334155;border-left:6px solid #facc15;border-radius:14px;margin:0 0 16px;padding:15px 16px">
         <p style="color:#facc15;font-size:17px;font-weight:900;letter-spacing:.08em;line-height:1.25;margin:0;text-transform:uppercase">${escapeHtml(input.heading)}</p>
-        <p style="color:#f8fafc;font-size:14px;font-weight:700;line-height:1.45;margin:6px 0 9px">${escapeHtml(input.subtitle)}</p>
-        <span style="background:#facc15;border-radius:999px;color:#020617;display:inline-block;font-size:10px;font-weight:900;letter-spacing:.1em;padding:6px 9px;text-transform:uppercase">${escapeHtml(input.badge)}</span>
+        <p style="color:#f8fafc;font-size:14px;font-weight:700;line-height:1.45;margin:6px 0 0">${escapeHtml(input.subtitle)}</p>
       </div>
       <div style="font-size:0;margin:0 -.5%">${input.movies
         .map((movie) => movieCard(movie, input.sendDate))
@@ -192,14 +190,12 @@ export function renderMonthlyWatchlistEmail(input: {
             </div>
             <div style="background:#071022;border:1px solid rgba(250,204,21,.35);border-radius:24px;overflow:hidden">
               ${movieSection({
-                badge: "Rent or Buy",
                 heading: "🎬 Coming to Digital",
                 movies: digitalMovies,
                 sendDate: input.sendDate,
                 subtitle: "Movies arriving to Rent or Buy this month",
               })}
               ${movieSection({
-                badge: "Included with Subscription",
                 heading: "📺 Coming to Streaming",
                 movies: streamingMovies,
                 sendDate: input.sendDate,
