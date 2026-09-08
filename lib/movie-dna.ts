@@ -200,6 +200,15 @@ function movieHighScore(a: MovieDnaRating, b: MovieDnaRating) {
   return b.popscore - a.popscore || compareNewest(a, b);
 }
 
+export function getMovieDnaRatingsForGenre(
+  ratings: MovieDnaRating[],
+  genre: string
+) {
+  return ratings
+    .filter((rating) => primaryGenre(rating) === genre)
+    .sort(movieHighScore);
+}
+
 function getPersonality(story: number, acting: number, rewatch: number) {
   const traits = [
     { label: "Storyline" as const, personality: "Story Seeker" as const, value: story },

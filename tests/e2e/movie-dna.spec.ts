@@ -6,6 +6,7 @@ import {
   getEligibleMovieDnaRatings,
   getMovieDnaGenreFilters,
   getMovieDnaGenreQuestionAverages,
+  getMovieDnaRatingsForGenre,
   type MovieDnaRating,
 } from "../../lib/movie-dna";
 
@@ -213,6 +214,18 @@ test.describe("Movie DNA calculations", () => {
       { average: 4, key: "originality", label: "Originality" },
     ]);
   });
+
+  test("returns the movies represented by a top-genre count", () => {
+    const ratings = [
+      rating("1", { genre: "horror", popscore: 81 }),
+      rating("2", { genre: "comedy", popscore: 99 }),
+      rating("3", { genre: "horror", popscore: 93 }),
+    ];
+
+    expect(
+      getMovieDnaRatingsForGenre(ratings, "Horror").map((movie) => movie.movieId)
+    ).toEqual(["3", "1"]);
+  });
 });
 
 const browserRatings = [
@@ -350,6 +363,24 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await expect(page.getByText("Scare Factor", { exact: true })).toBeVisible();
   await expect(page.getByText("Originality", { exact: true })).toBeVisible();
   await expect(page.getByText("Based on your answers for 3 fully rated Horror movies.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Show 3 rated Horror movies" }).click();
+  const genreDialog = page.getByRole("dialog", { name: "Horror Movies" });
+  await expect(genreDialog).toBeVisible();
+  await expect(genreDialog.getByRole("link")).toHaveCount(3);
+  await expect(genreDialog.getByText("Movie 1", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Close Horror movies" }).click();
+  await expect(genreDialog).toHaveCount(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Show 3 rated Horror movies" }).click();
+  await expect(genreDialog).toBeVisible();
+  const mobileDialog = await genreDialog.locator("section").boundingBox();
+  expect(mobileDialog).not.toBeNull();
+  expect(mobileDialog!.width).toBeLessThanOrEqual(390);
+  await page.keyboard.press("Escape");
+  await expect(genreDialog).toHaveCount(0);
+  await page.setViewportSize({ width: 1280, height: 720 });
 
   await page.getByRole("tab", { name: "Best Acting" }).click();
   await expect(page.getByRole("tab", { name: "Best Acting" })).toHaveAttribute("aria-selected", "true");

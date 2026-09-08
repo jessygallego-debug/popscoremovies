@@ -1,14 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ShareMovieDnaButton from "@/app/components/share-movie-dna-button";
 import {
   calculateMovieDna,
   getMovieDnaGenreFilters,
   getMovieDnaGenreQuestionAverages,
+  getMovieDnaRatingsForGenre,
+  type MovieDnaGenreStat,
   type MovieDnaRankingKey,
+  type MovieDnaRating,
   type MovieDnaResult,
 } from "@/lib/movie-dna";
 import type { GenreKey } from "@/lib/genre-rating-config";
@@ -209,7 +213,108 @@ function CoreBreakdown({ dna }: { dna: MovieDnaResult }) {
   );
 }
 
+function GenreMoviesDialog({
+  genre,
+  movies,
+  onClose,
+}: {
+  genre: string;
+  movies: MovieDnaRating[];
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      aria-labelledby="genre-movies-dialog-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[10000] flex items-start justify-center overflow-y-auto bg-black/80 px-3 py-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:px-4 sm:py-8"
+      role="dialog"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section className="flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-purple-400/35 bg-slate-950 text-white shadow-2xl shadow-purple-950/40 sm:max-h-[88vh]">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-800 p-4 sm:p-5">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
+              Your Top Genres
+            </p>
+            <h2 id="genre-movies-dialog-title" className="mt-1 text-xl font-black sm:text-2xl">
+              {genre} Movies
+            </h2>
+            <p className="mt-1 text-xs font-bold text-slate-400">
+              {movies.length} fully rated {movies.length === 1 ? "movie" : "movies"}
+            </p>
+          </div>
+          <button
+            autoFocus
+            type="button"
+            aria-label={`Close ${genre} movies`}
+            onClick={onClose}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-700 text-xl font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300"
+          >
+            ×
+          </button>
+        </div>
+
+        <ol className="grid min-h-0 gap-2 overflow-y-auto p-3 sm:grid-cols-2 sm:gap-3 sm:p-4">
+          {movies.map((movie) => (
+            <li key={movie.id}>
+              <Link
+                href={movieHref({ id: movie.movieId, title: movie.movieTitle })}
+                onClick={onClose}
+                className="grid min-h-[92px] grid-cols-[52px_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-slate-800 bg-black/30 p-2.5 transition hover:border-yellow-400/45 hover:bg-yellow-400/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
+              >
+                <span className="relative aspect-[2/3] w-[52px] overflow-hidden rounded-lg bg-slate-900">
+                  <MoviePosterImage
+                    src={posterUrl(movie.posterPath ?? null, "w342")}
+                    fallbackMovieId={movie.movieId}
+                    alt={`${movie.movieTitle} movie poster`}
+                    sizes="52px"
+                  />
+                </span>
+                <span className="min-w-0">
+                  <span className="line-clamp-2 text-sm font-black text-white">
+                    {movie.movieTitle}
+                  </span>
+                  <span className="mt-1 block text-xs font-bold text-slate-500">
+                    {movie.releaseDate?.slice(0, 4) || "Year unknown"}
+                  </span>
+                  <span className="mt-1 block text-xs font-black text-yellow-300">
+                    {Math.round(movie.popscore)}% PopScore
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </div>,
+    document.body
+  );
+}
+
 function GenreDna({ dna }: { dna: MovieDnaResult }) {
+  const [selectedGenre, setSelectedGenre] = useState<MovieDnaGenreStat | null>(
+    null
+  );
+  const selectedMovies = selectedGenre
+    ? getMovieDnaRatingsForGenre(dna.eligibleRatings, selectedGenre.genre)
+    : [];
+
   return (
     <div className={panelClass("p-5 sm:p-6")}>
       <h3 className="text-lg font-black text-white">Your Top Genres</h3>
@@ -219,7 +324,14 @@ function GenreDna({ dna }: { dna: MovieDnaResult }) {
             <article key={genre.genre} className="rounded-xl border border-slate-800 bg-slate-950/80 p-3.5">
               <div className="flex items-center justify-between gap-3">
                 <h4 className="font-black text-yellow-200">{genre.genre}</h4>
-                <span className="text-xs font-black text-purple-300">{genre.count} movies</span>
+                <button
+                  type="button"
+                  aria-label={`Show ${genre.count} rated ${genre.genre} ${genre.count === 1 ? "movie" : "movies"}`}
+                  onClick={() => setSelectedGenre(genre)}
+                  className="min-h-9 rounded-full border border-purple-400/35 bg-purple-500/10 px-3 text-xs font-black text-purple-200 transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
+                >
+                  {genre.count} {genre.count === 1 ? "movie" : "movies"}
+                </button>
               </div>
               <p className="mt-1 text-xs font-bold text-slate-400">
                 {genre.count} movies rated • {Math.round(genre.average)}% average
@@ -235,6 +347,13 @@ function GenreDna({ dna }: { dna: MovieDnaResult }) {
           Rate at least two movies in a genre to reveal your top genres.
         </p>
       )}
+      {selectedGenre ? (
+        <GenreMoviesDialog
+          genre={selectedGenre.genre}
+          movies={selectedMovies}
+          onClose={() => setSelectedGenre(null)}
+        />
+      ) : null}
     </div>
   );
 }
