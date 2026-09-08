@@ -6,6 +6,7 @@ import {
   getEligibleMovieDnaRatings,
   getMovieDnaGenreFilters,
   getMovieDnaGenreQuestionAverages,
+  getMovieDnaRanking,
   getMovieDnaRatingsForGenre,
   type MovieDnaRating,
 } from "../../lib/movie-dna";
@@ -132,26 +133,43 @@ test.describe("Movie DNA calculations", () => {
     expect(alphabetical.favoriteGenre?.genre).toBe("Action");
   });
 
-  test("follows every ranking tie-break rule", () => {
-    const older = rating("1", {
-      acting: 4,
-      popscore: 90,
-      rewatch: 4,
+  test("ranks category standouts separately from overall favorites", () => {
+    const storyStandout = rating("1", {
+      acting: 2,
+      popscore: 80,
+      rewatch: 2,
       story: 5,
-      updated: "2026-01-01T00:00:00Z",
     });
-    const newer = rating("2", {
-      acting: 4,
-      popscore: 90,
+    const overallFavorite = rating("2", {
+      acting: 5,
+      popscore: 96,
       rewatch: 5,
       story: 5,
-      updated: "2026-02-01T00:00:00Z",
     });
-    const dna = calculateMovieDna([older, newer, rating("3"), rating("4"), rating("5")]);
+    const dna = calculateMovieDna([
+      storyStandout,
+      overallFavorite,
+      rating("3"),
+      rating("4"),
+      rating("5"),
+    ]);
+
     expect(dna.rankings["top-rated"][0].movieId).toBe("2");
-    expect(dna.rankings.story[0].movieId).toBe("2");
-    expect(dna.rankings.acting[0].movieId).toBe("2");
-    expect(dna.rankings.rewatch[0].movieId).toBe("2");
+    expect(dna.rankings.story[0].movieId).toBe("1");
+    expect(dna.rankings.story[0].relevantScore).toBe(5);
+    expect(dna.rankings.story[0].standoutScore).toBe(2);
+  });
+
+  test("filters rankings by genre without truncating View All results", () => {
+    const ratings = [
+      rating("1", { genre: "horror", story: 5 }),
+      rating("2", { genre: "comedy", story: 5 }),
+      rating("3", { genre: "horror", story: 4 }),
+    ];
+    const horrorMovies = getMovieDnaRanking(ratings, "story", "horror");
+
+    expect(horrorMovies).toHaveLength(2);
+    expect(horrorMovies.map((movie) => movie.movieId)).not.toContain("2");
   });
 
   test("excludes deleted, incomplete, reaction-only, imported-only, and older duplicates", () => {
@@ -382,9 +400,22 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await expect(genreDialog).toHaveCount(0);
   await page.setViewportSize({ width: 1280, height: 720 });
 
-  await page.getByRole("tab", { name: "Best Acting" }).click();
-  await expect(page.getByRole("tab", { name: "Best Acting" })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: "Acting Standouts" }).click();
+  await expect(page.getByRole("tab", { name: "Acting Standouts" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByText(/\/5 Acting$/).first()).toBeVisible();
   await expect(page.locator('a[href^="/movies/"]').first()).toBeVisible();
+
+  const rankings = page
+    .getByRole("heading", { name: "Your Movie Rankings" })
+    .locator("../..");
+  await page.getByLabel("Filter movie rankings by genre").selectOption("comedy");
+  await expect(rankings.locator("ol > li")).toHaveCount(2);
+  await page.getByLabel("Filter movie rankings by genre").selectOption("all");
+  await expect(rankings.locator("ol > li")).toHaveCount(5);
+  await page.getByRole("button", { name: "View All 6 Movies" }).click();
+  await expect(rankings.locator("ol > li")).toHaveCount(6);
+  await page.getByRole("button", { name: "Show Top 5" }).click();
+  await expect(rankings.locator("ol > li")).toHaveCount(5);
 
   await page.getByRole("button", { name: "Share Movie DNA" }).click();
   await expect(page.getByRole("dialog", { name: "Share Movie DNA" })).toBeVisible();
@@ -417,7 +448,7 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
   await expect(section).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Most Rewatchable" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Rewatch Favorites" })).toBeVisible();
   await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-mobile.png") });
 });
 

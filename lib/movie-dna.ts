@@ -41,6 +41,7 @@ export type MovieDnaRankedMovie = MovieDnaRating & {
   actingScore: number | null;
   relevantScore: number;
   rewatchScore: number;
+  standoutScore: number | null;
   storyScore: number;
 };
 
@@ -235,24 +236,63 @@ function getPersonality(story: number, acting: number, rewatch: number) {
   return { personality: strongest.personality, strongestTrait: strongest.label };
 }
 
-function buildRanking(
+function isSelectedRankingQuestion(
+  questionKey: string,
+  rankingKey: Exclude<MovieDnaRankingKey, "top-rated">
+) {
+  if (rankingKey === "story") return questionKey === "story";
+  if (rankingKey === "rewatch") return questionKey === "rewatchability";
+  return ["acting", "voiceActing", "character"].includes(questionKey);
+}
+
+function getStandoutScore(
+  rating: MovieDnaRating,
+  key: Exclude<MovieDnaRankingKey, "top-rated">,
+  relevantScore: number
+) {
+  const otherScores = Array.from(
+    new Set(rating.weights.map((question) => question.key))
+  )
+    .filter((questionKey) => !isSelectedRankingQuestion(questionKey, key))
+    .map((questionKey) => rating.ratings[questionKey])
+    .filter((score) => Number.isFinite(score));
+
+  return otherScores.length > 0
+    ? relevantScore - average(otherScores)
+    : 0;
+}
+
+export function getMovieDnaRanking(
   ratings: MovieDnaRating[],
-  key: MovieDnaRankingKey
+  key: MovieDnaRankingKey,
+  genre: GenreKey | "all" = "all"
 ): MovieDnaRankedMovie[] {
-  const enriched = ratings.map((rating) => ({
-    ...rating,
-    actingScore: coreScore(rating, "acting"),
-    relevantScore:
+  const filteredRatings =
+    genre === "all"
+      ? ratings
+      : ratings.filter(
+          (rating) => normalizeProfileGenreKey(rating.genre) === genre
+        );
+  const enriched = filteredRatings.map((rating) => {
+    const relevantScore =
       key === "top-rated"
         ? rating.popscore
         : key === "story"
           ? coreScore(rating, "story")!
           : key === "acting"
             ? coreScore(rating, "acting")!
-            : coreScore(rating, "rewatch")!,
-    rewatchScore: coreScore(rating, "rewatch")!,
-    storyScore: coreScore(rating, "story")!,
-  }));
+            : coreScore(rating, "rewatch")!;
+
+    return {
+      ...rating,
+      actingScore: coreScore(rating, "acting"),
+      relevantScore,
+      rewatchScore: coreScore(rating, "rewatch")!,
+      standoutScore:
+        key === "top-rated" ? null : getStandoutScore(rating, key, relevantScore),
+      storyScore: coreScore(rating, "story")!,
+    };
+  });
 
   return enriched
     .sort((a, b) => {
@@ -265,12 +305,12 @@ function buildRanking(
       }
 
       return (
+        b.standoutScore! - a.standoutScore! ||
         b.relevantScore - a.relevantScore ||
         b.popscore - a.popscore ||
         compareNewest(a, b)
       );
-    })
-    .slice(0, 5);
+    });
 }
 
 export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
@@ -350,10 +390,10 @@ export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
     personalityDescription:
       eligibleRatings.length >= 5 ? PERSONALITY_DESCRIPTIONS[personality] : "",
     rankings: {
-      "top-rated": buildRanking(eligibleRatings, "top-rated"),
-      story: buildRanking(eligibleRatings, "story"),
-      acting: buildRanking(eligibleRatings, "acting"),
-      rewatch: buildRanking(eligibleRatings, "rewatch"),
+      "top-rated": getMovieDnaRanking(eligibleRatings, "top-rated").slice(0, 5),
+      story: getMovieDnaRanking(eligibleRatings, "story").slice(0, 5),
+      acting: getMovieDnaRanking(eligibleRatings, "acting").slice(0, 5),
+      rewatch: getMovieDnaRanking(eligibleRatings, "rewatch").slice(0, 5),
     },
     rewatchAverage,
     storyAverage,

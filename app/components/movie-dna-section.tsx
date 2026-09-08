@@ -9,6 +9,7 @@ import {
   calculateMovieDna,
   getMovieDnaGenreFilters,
   getMovieDnaGenreQuestionAverages,
+  getMovieDnaRanking,
   getMovieDnaRatingsForGenre,
   type MovieDnaGenreStat,
   type MovieDnaRankingKey,
@@ -26,11 +27,39 @@ type MovieDnaSectionProps = {
   username: string;
 };
 
-const RANKING_OPTIONS: { key: MovieDnaRankingKey; label: string }[] = [
-  { key: "top-rated", label: "Top Rated" },
-  { key: "story", label: "Best Storyline" },
-  { key: "acting", label: "Best Acting" },
-  { key: "rewatch", label: "Most Rewatchable" },
+const RANKING_OPTIONS: {
+  description: string;
+  key: MovieDnaRankingKey;
+  label: string;
+  scoreLabel: string;
+}[] = [
+  {
+    description: "Your highest overall PopScores.",
+    key: "top-rated",
+    label: "Top Rated",
+    scoreLabel: "PopScore",
+  },
+  {
+    description:
+      "Movies where Storyline scored especially high compared with your other answers.",
+    key: "story",
+    label: "Story Standouts",
+    scoreLabel: "Storyline",
+  },
+  {
+    description:
+      "Movies where Acting scored especially high compared with your other answers.",
+    key: "acting",
+    label: "Acting Standouts",
+    scoreLabel: "Acting",
+  },
+  {
+    description:
+      "Movies where Rewatch Score stood out compared with your other answers.",
+    key: "rewatch",
+    label: "Rewatch Favorites",
+    scoreLabel: "Rewatch Score",
+  },
 ];
 
 function panelClass(className = "") {
@@ -360,12 +389,50 @@ function GenreDna({ dna }: { dna: MovieDnaResult }) {
 
 function Rankings({ dna }: { dna: MovieDnaResult }) {
   const [selected, setSelected] = useState<MovieDnaRankingKey>("top-rated");
-  const movies = dna.rankings[selected];
-  const selectedLabel = RANKING_OPTIONS.find((option) => option.key === selected)!.label;
+  const [selectedGenre, setSelectedGenre] = useState<"all" | GenreKey>("all");
+  const [showAll, setShowAll] = useState(false);
+  const genreFilters = useMemo(
+    () => getMovieDnaGenreFilters(dna.eligibleRatings),
+    [dna.eligibleRatings]
+  );
+  const activeGenre =
+    selectedGenre !== "all" &&
+    genreFilters.some((genre) => genre.key === selectedGenre)
+      ? selectedGenre
+      : "all";
+  const selectedOption = RANKING_OPTIONS.find(
+    (option) => option.key === selected
+  )!;
+  const rankedMovies = useMemo(
+    () => getMovieDnaRanking(dna.eligibleRatings, selected, activeGenre),
+    [activeGenre, dna.eligibleRatings, selected]
+  );
+  const movies = showAll ? rankedMovies : rankedMovies.slice(0, 5);
 
   return (
     <div className={panelClass("min-w-0 overflow-hidden p-4 sm:p-6")}>
-      <h3 className="text-lg font-black text-white">Your Movie Rankings</h3>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-black text-white">Your Movie Rankings</h3>
+        <label className="flex items-center gap-2 text-xs font-black text-slate-400">
+          <span>Genre</span>
+          <select
+            aria-label="Filter movie rankings by genre"
+            value={activeGenre}
+            onChange={(event) => {
+              setSelectedGenre(event.target.value as "all" | GenreKey);
+              setShowAll(false);
+            }}
+            className="min-h-10 rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm font-black text-white outline-none transition focus:border-yellow-300"
+          >
+            <option value="all">All Genres</option>
+            {genreFilters.map((genre) => (
+              <option key={genre.key} value={genre.key}>
+                {genre.label} ({genre.count})
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <div
         className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-2"
         role="tablist"
@@ -377,7 +444,10 @@ function Rankings({ dna }: { dna: MovieDnaResult }) {
             type="button"
             role="tab"
             aria-selected={selected === option.key}
-            onClick={() => setSelected(option.key)}
+            onClick={() => {
+              setSelected(option.key);
+              setShowAll(false);
+            }}
             className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-black transition ${
               selected === option.key
                 ? "border-yellow-300 bg-yellow-400 text-black"
@@ -388,6 +458,10 @@ function Rankings({ dna }: { dna: MovieDnaResult }) {
           </button>
         ))}
       </div>
+
+      <p className="mt-1 text-xs font-bold leading-5 text-slate-500">
+        {selectedOption.description}
+      </p>
 
       <ol className="mt-3 grid gap-2 sm:grid-cols-2">
         {movies.map((movie, index) => (
@@ -413,16 +487,34 @@ function Rankings({ dna }: { dna: MovieDnaResult }) {
                 <span className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs font-black">
                   <span className="text-purple-300">
                     {selected === "top-rated"
-                      ? `${Math.round(movie.relevantScore)}% ${selectedLabel}`
-                      : `${movie.relevantScore.toFixed(1)}/5 ${selectedLabel}`}
+                      ? `${Math.round(movie.relevantScore)}% PopScore`
+                      : `${movie.relevantScore.toFixed(1)}/5 ${selectedOption.scoreLabel}`}
                   </span>
-                  <span className="text-yellow-300">{Math.round(movie.popscore)}% PopScore</span>
+                  {selected !== "top-rated" ? (
+                    <span className="text-yellow-300">
+                      {Math.round(movie.popscore)}% PopScore
+                    </span>
+                  ) : null}
                 </span>
               </span>
             </Link>
           </li>
         ))}
       </ol>
+      {rankedMovies.length > 5 ? (
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            aria-expanded={showAll}
+            onClick={() => setShowAll((current) => !current)}
+            className="min-h-10 rounded-full border border-purple-400/35 bg-purple-500/10 px-5 text-xs font-black text-purple-200 transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
+          >
+            {showAll
+              ? "Show Top 5"
+              : `View All ${rankedMovies.length} Movies`}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
