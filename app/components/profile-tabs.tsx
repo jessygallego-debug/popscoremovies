@@ -1737,14 +1737,17 @@ export default function ProfileTabs({ username }: { username: string }) {
           summary={summary}
           tier={currentTier}
         />
-        <ProfileStatsCard
-          followSummary={followSummary}
-          onOpenFollowList={openFollowList}
-          profile={profile}
-          summary={summary}
-        />
-
-        <MovieDnaSection ratings={ratings} username={profile.username} />
+        {activeTab === "ratings" ? null : (
+          <>
+            <ProfileStatsCard
+              followSummary={followSummary}
+              onOpenFollowList={openFollowList}
+              profile={profile}
+              summary={summary}
+            />
+            <MovieDnaSection ratings={ratings} username={profile.username} />
+          </>
+        )}
 
         {activeTab === "stats" ? (
           <SectionCard title="All Achievements">

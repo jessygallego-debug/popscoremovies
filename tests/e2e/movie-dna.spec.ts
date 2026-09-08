@@ -259,6 +259,16 @@ test("shows the zero and progress unlock states", async ({ page }) => {
   await expect(page.getByText("3 of 5 ratings completed")).toBeVisible();
 });
 
+test("Ratings tab hides overview statistics and Movie DNA", async ({ page }) => {
+  await mockPopFile(page, browserRatings);
+  await page.goto("/profile/movie_fan?tab=ratings");
+
+  await expect(page.getByRole("heading", { name: "Ratings History" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "PopFile Stats" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Your Movie DNA" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Your Movie Rankings" })).toHaveCount(0);
+});
+
 test("renders the full Movie DNA, links, filters, and share/download controls", async ({
   page,
 }) => {
