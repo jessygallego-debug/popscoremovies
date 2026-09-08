@@ -259,14 +259,28 @@ test("shows the zero and progress unlock states", async ({ page }) => {
   await expect(page.getByText("3 of 5 ratings completed")).toBeVisible();
 });
 
-test("Ratings tab hides overview statistics and Movie DNA", async ({ page }) => {
+test("Ratings tab hides overview panels and filters rating history", async ({ page }) => {
   await mockPopFile(page, browserRatings);
   await page.goto("/profile/movie_fan?tab=ratings");
 
-  await expect(page.getByRole("heading", { name: "Ratings History" })).toBeVisible();
+  const historyHeading = page.getByRole("heading", { name: "Ratings History" });
+  const historySection = historyHeading.locator("..");
+
+  await expect(historyHeading).toBeVisible();
   await expect(page.getByRole("heading", { name: "PopFile Stats" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Your Movie DNA" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Your Movie Rankings" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Achievements" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Recent Activity" })).toHaveCount(0);
+
+  await page.getByLabel("Filter ratings by genre").selectOption("Horror");
+  await page.getByLabel("Sort ratings").selectOption("lowest");
+  await expect(historySection.locator("article h3")).toHaveCount(3);
+  await expect(historySection.locator("article h3").first()).toHaveText("Movie 3");
+  await expect(page.getByText("Movie 4", { exact: true })).toHaveCount(0);
+
+  await page.getByLabel("Sort ratings").selectOption("highest");
+  await expect(historySection.locator("article h3").first()).toHaveText("Movie 1");
 });
 
 test("renders the full Movie DNA, links, filters, and share/download controls", async ({

@@ -1171,52 +1171,157 @@ function RecentActivityCard({
 }
 
 function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
+  const [genreFilter, setGenreFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<
+    "newest" | "oldest" | "highest" | "lowest" | "title"
+  >("newest");
+  const genres = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          ratings.map(
+            (rating) =>
+              rating.genreNames[0] ?? genreLabelForKey(rating.genre)
+          )
+        )
+      )
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b)),
+    [ratings]
+  );
+  const visibleRatings = useMemo(() => {
+    const filtered =
+      genreFilter === "all"
+        ? ratings
+        : ratings.filter(
+            (rating) =>
+              (rating.genreNames[0] ?? genreLabelForKey(rating.genre)) ===
+              genreFilter
+          );
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "highest") {
+        return b.popscore - a.popscore || a.movieTitle.localeCompare(b.movieTitle);
+      }
+
+      if (sortBy === "lowest") {
+        return a.popscore - b.popscore || a.movieTitle.localeCompare(b.movieTitle);
+      }
+
+      if (sortBy === "title") {
+        return a.movieTitle.localeCompare(b.movieTitle);
+      }
+
+      const dateDifference =
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      return sortBy === "oldest" ? -dateDifference : dateDifference;
+    });
+  }, [genreFilter, ratings, sortBy]);
+
   if (ratings.length === 0) {
     return <EmptyState text="No ratings yet." />;
   }
 
   return (
-    <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-      {ratings.map((rating) => (
-        <article
-          key={rating.id}
-          className="flex gap-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-3 sm:gap-4 sm:p-4"
-        >
-          <MoviePoster
-            movieId={rating.movieId}
-            path={rating.posterPath}
-            title={rating.movieTitle}
-          />
-          <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-2 text-sm font-black text-white sm:text-base">
-              {rating.movieTitle}
-            </h3>
-            <p className="mt-1 text-xs font-bold text-slate-400">
-              {rating.genreNames[0] ?? genreLabelForKey(rating.genre)}
-            </p>
-            <p className="mt-2 text-xl font-black text-yellow-400 sm:mt-3 sm:text-2xl">
-              {rating.popscore}%
-            </p>
-            <div className="mt-2">
-              {rating.quick_reaction ? (
-                <QuickReactionBadge reaction={rating.quick_reaction} />
-              ) : null}
-            </div>
-            <p className="mt-2 text-xs font-bold text-slate-500 sm:mt-3">
-              Rated {formatDate(rating.created_at)}
-            </p>
-            <div className="mt-3">
-              <ShareRatingButton
+    <div>
+      <div className="mb-4 grid gap-3 rounded-2xl border border-slate-800 bg-black/25 p-3 sm:grid-cols-2 sm:p-4">
+        <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+          Genre
+          <select
+            aria-label="Filter ratings by genre"
+            value={genreFilter}
+            onChange={(event) => setGenreFilter(event.target.value)}
+            className="mt-2 min-h-11 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm font-bold normal-case tracking-normal text-white outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
+          >
+            <option value="all">All Genres</option>
+            {genres.map((genre) => (
+              <option key={genre} value={genre}>
+                {genre}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+          Sort By
+          <select
+            aria-label="Sort ratings"
+            value={sortBy}
+            onChange={(event) =>
+              setSortBy(
+                event.target.value as
+                  | "newest"
+                  | "oldest"
+                  | "highest"
+                  | "lowest"
+                  | "title"
+              )
+            }
+            className="mt-2 min-h-11 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm font-bold normal-case tracking-normal text-white outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20"
+          >
+            <option value="newest">Newest Rated</option>
+            <option value="oldest">Oldest Rated</option>
+            <option value="highest">Highest PopScore</option>
+            <option value="lowest">Lowest PopScore</option>
+            <option value="title">Movie Title A–Z</option>
+          </select>
+        </label>
+      </div>
+
+      {visibleRatings.length > 0 ? (
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+          {visibleRatings.map((rating) => (
+            <article
+              key={rating.id}
+              className="flex gap-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-3 sm:gap-4 sm:p-4"
+            >
+              <MoviePoster
                 movieId={rating.movieId}
-                movieTitle={rating.movieTitle}
-                popscore={rating.popscore}
-                posterPath={rating.posterPath}
-                variant="compact"
+                path={rating.posterPath}
+                title={rating.movieTitle}
               />
-            </div>
-          </div>
-        </article>
-      ))}
+              <div className="min-w-0 flex-1">
+                <h3 className="line-clamp-2 text-sm font-black text-white sm:text-base">
+                  {rating.movieTitle}
+                </h3>
+                <p className="mt-1 text-xs font-bold text-slate-400">
+                  {rating.genreNames[0] ?? genreLabelForKey(rating.genre)}
+                </p>
+                <p className="mt-2 text-xl font-black text-yellow-400 sm:mt-3 sm:text-2xl">
+                  {rating.popscore}%
+                </p>
+                <div className="mt-2">
+                  {rating.quick_reaction ? (
+                    <QuickReactionBadge reaction={rating.quick_reaction} />
+                  ) : null}
+                </div>
+                <p className="mt-2 text-xs font-bold text-slate-500 sm:mt-3">
+                  Rated {formatDate(rating.created_at)}
+                </p>
+                <div className="mt-3">
+                  <ShareRatingButton
+                    movieId={rating.movieId}
+                    movieTitle={rating.movieTitle}
+                    popscore={rating.popscore}
+                    posterPath={rating.posterPath}
+                    variant="compact"
+                  />
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-slate-700 bg-black/25 p-6 text-center">
+          <p className="font-black text-white">No ratings in this genre.</p>
+          <button
+            type="button"
+            onClick={() => setGenreFilter("all")}
+            className="mt-3 text-sm font-black text-yellow-300 hover:text-yellow-200"
+          >
+            Show all ratings
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1720,7 +1825,13 @@ export default function ProfileTabs({ username }: { username: string }) {
   const fullRatings = ratings.filter(hasPopScoreRating);
 
   return (
-    <div className="grid gap-4 sm:gap-6 xl:grid-cols-[260px_minmax(0,1fr)_380px] 2xl:grid-cols-[280px_minmax(0,1fr)_430px]">
+    <div
+      className={`grid gap-4 sm:gap-6 ${
+        activeTab === "ratings"
+          ? "xl:grid-cols-[260px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)]"
+          : "xl:grid-cols-[260px_minmax(0,1fr)_380px] 2xl:grid-cols-[280px_minmax(0,1fr)_430px]"
+      }`}
+    >
       <ProfileSidebar
         activeTab={activeTab}
         followSummary={followSummary}
@@ -1764,13 +1875,15 @@ export default function ProfileTabs({ username }: { username: string }) {
         ) : null}
       </main>
 
-      <aside className="space-y-4 sm:space-y-6 xl:sticky xl:top-6 xl:self-start">
-        <AchievementsCard summary={summary} />
-        <RecentActivityCard
-          ratings={ratings}
-          onViewAll={() => setActiveTab("activity")}
-        />
-      </aside>
+      {activeTab === "ratings" ? null : (
+        <aside className="space-y-4 sm:space-y-6 xl:sticky xl:top-6 xl:self-start">
+          <AchievementsCard summary={summary} />
+          <RecentActivityCard
+            ratings={ratings}
+            onViewAll={() => setActiveTab("activity")}
+          />
+        </aside>
+      )}
 
       {followListMode ? (
         <FollowListDialog
