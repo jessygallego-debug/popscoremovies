@@ -51,6 +51,10 @@ import {
   UserRatingCount,
 } from "@/lib/profile-store";
 import { POPSCORE_RATINGS_UPDATED_EVENT } from "@/lib/popscore-store";
+import {
+  getCurrentRatingStreak,
+  getLongestRatingStreak,
+} from "@/lib/rating-streaks";
 import { posterUrl } from "@/lib/tmdb";
 
 type TabKey =
@@ -62,6 +66,7 @@ type FollowListMode = "followers" | "following";
 
 type ProfileStatSummary = AchievementProgressSummary & {
   average: number;
+  currentRatingStreakDays: number;
   highestGenre: string;
   lowestGenre: string;
   mostRatedGenre: string;
@@ -275,30 +280,6 @@ function getPrimaryRatingGenre(rating: UserMovieRating) {
   return genreLabelForKey(rating.genreNames[0] ?? rating.genre);
 }
 
-function getLongestStreak(ratings: UserMovieRating[]) {
-  const dateKeys = Array.from(
-    new Set(ratings.map((rating) => localDateKey(rating.created_at)))
-  ).sort();
-
-  if (dateKeys.length === 0) {
-    return 0;
-  }
-
-  let current = 1;
-  let longest = 1;
-
-  for (let index = 1; index < dateKeys.length; index += 1) {
-    const previous = new Date(`${dateKeys[index - 1]}T00:00:00`);
-    const next = new Date(`${dateKeys[index]}T00:00:00`);
-    const difference = Math.round((next.getTime() - previous.getTime()) / DAY_MS);
-
-    current = difference === 1 ? current + 1 : 1;
-    longest = Math.max(longest, current);
-  }
-
-  return longest;
-}
-
 function getMaxRatingDaysInMonth(ratings: UserMovieRating[]) {
   const daysByMonth = new Map<string, Set<string>>();
 
@@ -362,6 +343,7 @@ function getProfileStatSummary(
 
   return {
     average,
+    currentRatingStreakDays: getCurrentRatingStreak(popScoreRatings),
     discussionCount: activityStats.discussionCount,
     followerCount: activityStats.followerCount,
     followingCount: activityStats.followingCount,
@@ -377,7 +359,7 @@ function getProfileStatSummary(
     movieMatchRatingsCount: movieMatchRatings.length,
     quickReactionCount: ratings.filter((rating) => Boolean(rating.quick_reaction))
       .length,
-    ratingStreakDays: getLongestStreak(popScoreRatings),
+    ratingStreakDays: getLongestRatingStreak(popScoreRatings),
     ratings90Plus: popScoreRatings.filter((rating) => rating.popscore >= 90).length,
     ratingsThisWeek: popScoreRatings.filter(
       (rating) => new Date(rating.created_at).getTime() >= weekAgo
@@ -552,7 +534,7 @@ function ProfileSidebar({
 
       <div className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3 sm:mt-6 sm:p-4">
         <p className="text-xs font-black text-yellow-300 sm:text-sm">PopFile Momentum</p>
-        <div className="mt-2 flex items-end justify-between gap-3 sm:mt-3">
+        <div className="mt-2 grid grid-cols-3 gap-2 sm:mt-3">
           <div>
             <p className="text-2xl font-black text-white sm:text-3xl">
               {summary.totalMoviesRated}
@@ -563,7 +545,17 @@ function ProfileSidebar({
             <p className="text-2xl font-black text-yellow-300 sm:text-3xl">
               {summary.ratingStreakDays}
             </p>
-            <p className="text-[11px] font-bold text-slate-400 sm:text-xs">day streak</p>
+            <p className="text-[11px] font-bold leading-tight text-slate-400 sm:text-xs">
+              Longest Streak
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-black text-purple-300 sm:text-3xl">
+              {summary.currentRatingStreakDays}
+            </p>
+            <p className="text-[11px] font-bold leading-tight text-slate-400 sm:text-xs">
+              Current Streak
+            </p>
           </div>
         </div>
       </div>

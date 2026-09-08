@@ -259,6 +259,14 @@ test("shows the zero and progress unlock states", async ({ page }) => {
   await expect(page.getByText("3 of 5 ratings completed")).toBeVisible();
 });
 
+test("Overview labels longest and current rating streaks", async ({ page }) => {
+  await mockPopFile(page, browserRatings);
+  await page.goto("/profile/movie_fan");
+
+  await expect(page.getByText("Longest Streak", { exact: true })).toBeVisible();
+  await expect(page.getByText("Current Streak", { exact: true })).toBeVisible();
+});
+
 test("Ratings tab hides overview panels and filters rating history", async ({ page }) => {
   await mockPopFile(page, browserRatings);
   await page.goto("/profile/movie_fan?tab=ratings");
