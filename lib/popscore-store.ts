@@ -1,6 +1,6 @@
 "use client";
 
-const UPDATE_EVENT = "popscore-ratings-updated";
+export const POPSCORE_RATINGS_UPDATED_EVENT = "popscore-ratings-updated";
 
 type RatingQuestion = {
   key: string;
@@ -134,7 +134,7 @@ async function fetchRatingRows(
 }
 
 export function notifyPopScoreUpdates() {
-  window.dispatchEvent(new Event(UPDATE_EVENT));
+  window.dispatchEvent(new Event(POPSCORE_RATINGS_UPDATED_EVENT));
 }
 
 function hasCompletedRating(submission: RatingRow) {
@@ -190,9 +190,9 @@ export async function getPopScore(movieId: string) {
 }
 
 export function subscribeToPopScoreUpdates(callback: () => void) {
-  window.addEventListener(UPDATE_EVENT, callback);
+  window.addEventListener(POPSCORE_RATINGS_UPDATED_EVENT, callback);
 
   return () => {
-    window.removeEventListener(UPDATE_EVENT, callback);
+    window.removeEventListener(POPSCORE_RATINGS_UPDATED_EVENT, callback);
   };
 }

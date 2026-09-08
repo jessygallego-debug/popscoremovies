@@ -6,6 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import EmojiIcon from "@/app/components/emoji-icon";
 import FollowButton from "@/app/components/follow-button";
+import MovieDnaSection, {
+  MovieDnaSkeleton,
+} from "@/app/components/movie-dna-section";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileUsernameLink, {
   profileStatsHref,
@@ -47,6 +50,7 @@ import {
   UserMovieRating,
   UserRatingCount,
 } from "@/lib/profile-store";
+import { POPSCORE_RATINGS_UPDATED_EVENT } from "@/lib/popscore-store";
 import { posterUrl } from "@/lib/tmdb";
 
 type TabKey =
@@ -1521,6 +1525,7 @@ export default function ProfileTabs({ username }: { username: string }) {
     );
   const [ratingPopulation, setRatingPopulation] = useState<UserRatingCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     queueMicrotask(() => setActiveTab(initialTab));
@@ -1529,52 +1534,73 @@ export default function ProfileTabs({ username }: { username: string }) {
   useEffect(() => {
     let isCurrent = true;
 
-    getProfileByUsername(username).then((nextProfile) => {
-      if (!isCurrent) {
-        return;
+    queueMicrotask(() => {
+      if (isCurrent) {
+        setIsLoading(true);
+        setLoadError("");
       }
+    });
 
-      setProfile(nextProfile);
-      setFollowSummary(null);
-      setFollowListMode(null);
-      setFollowListUsers([]);
-      setFollowListError("");
-      setProfileCommunityStats(EMPTY_PROFILE_COMMUNITY_STATS);
-      if (!nextProfile) {
-        setIsLoading(false);
-        return;
-      }
-
-      Promise.all([
-        getUserRatings(nextProfile.user_id),
-        getAllUserRatingCounts(),
-      ]).then(([nextRatings, nextRatingPopulation]) => {
+    getProfileByUsername(username)
+      .then((nextProfile) => {
         if (!isCurrent) {
           return;
         }
 
-        setRatings(nextRatings);
-        setRatingPopulation(nextRatingPopulation);
-        setIsLoading(false);
+        setProfile(nextProfile);
+        setFollowSummary(null);
+        setFollowListMode(null);
+        setFollowListUsers([]);
+        setFollowListError("");
+        setProfileCommunityStats(EMPTY_PROFILE_COMMUNITY_STATS);
+        if (!nextProfile) {
+          setIsLoading(false);
+          return;
+        }
 
-        void Promise.all([
-          getCommunityEngagementStatsForUser({
-            ratingIds: nextRatings.map((rating) => rating.id),
-            userId: nextProfile.user_id,
-          }),
-          getCommunityDiscussionAchievementStatsForUser(nextProfile.user_id),
-        ]).then(([nextEngagementStats, nextDiscussionStats]) => {
-          if (!isCurrent) {
-            return;
-          }
+        Promise.all([
+          getUserRatings(nextProfile.user_id),
+          getAllUserRatingCounts(),
+        ])
+          .then(([nextRatings, nextRatingPopulation]) => {
+            if (!isCurrent) {
+              return;
+            }
 
-          setProfileCommunityStats({
-            ...nextEngagementStats,
-            ...nextDiscussionStats,
+            setRatings(nextRatings);
+            setRatingPopulation(nextRatingPopulation);
+            setIsLoading(false);
+
+            void Promise.all([
+              getCommunityEngagementStatsForUser({
+                ratingIds: nextRatings.map((rating) => rating.id),
+                userId: nextProfile.user_id,
+              }),
+              getCommunityDiscussionAchievementStatsForUser(nextProfile.user_id),
+            ]).then(([nextEngagementStats, nextDiscussionStats]) => {
+              if (!isCurrent) {
+                return;
+              }
+
+              setProfileCommunityStats({
+                ...nextEngagementStats,
+                ...nextDiscussionStats,
+              });
+            });
+          })
+          .catch(() => {
+            if (isCurrent) {
+              setLoadError("Movie DNA and profile ratings could not be loaded. Please try again.");
+              setIsLoading(false);
+            }
           });
-        });
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setLoadError("This PopFile could not be loaded. Please try again.");
+          setIsLoading(false);
+        }
       });
-    });
 
     return () => {
       isCurrent = false;
@@ -1606,6 +1632,29 @@ export default function ProfileTabs({ username }: { username: string }) {
     return () => {
       isCurrent = false;
       window.removeEventListener(FOLLOWS_UPDATED_EVENT, loadFollowSummary);
+    };
+  }, [profile]);
+
+  useEffect(() => {
+    if (!profile) {
+      return;
+    }
+
+    let isCurrent = true;
+    const refreshRatings = () => {
+      void getUserRatings(profile.user_id)
+        .then((nextRatings) => {
+          if (isCurrent) {
+            setRatings(nextRatings);
+          }
+        })
+        .catch(() => null);
+    };
+
+    window.addEventListener(POPSCORE_RATINGS_UPDATED_EVENT, refreshRatings);
+    return () => {
+      isCurrent = false;
+      window.removeEventListener(POPSCORE_RATINGS_UPDATED_EVENT, refreshRatings);
     };
   }, [profile]);
 
@@ -1643,7 +1692,16 @@ export default function ProfileTabs({ username }: { username: string }) {
   };
 
   if (isLoading) {
-    return <EmptyState text="Loading PopFile..." />;
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <EmptyState text="Loading PopFile..." />
+        <MovieDnaSkeleton />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return <EmptyState text={loadError} />;
   }
 
   if (!profile) {
@@ -1673,7 +1731,7 @@ export default function ProfileTabs({ username }: { username: string }) {
         summary={summary}
       />
 
-      <main className="space-y-4 sm:space-y-6">
+      <main className="min-w-0 space-y-4 sm:space-y-6">
         <PopScoreStatusCard
           percentile={percentile}
           summary={summary}
@@ -1685,6 +1743,8 @@ export default function ProfileTabs({ username }: { username: string }) {
           profile={profile}
           summary={summary}
         />
+
+        <MovieDnaSection ratings={ratings} username={profile.username} />
 
         {activeTab === "stats" ? (
           <SectionCard title="All Achievements">
