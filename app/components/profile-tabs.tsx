@@ -271,6 +271,10 @@ function getRatingGenres(rating: UserMovieRating) {
     .map((genre) => genre.trim());
 }
 
+function getPrimaryRatingGenre(rating: UserMovieRating) {
+  return genreLabelForKey(rating.genreNames[0] ?? rating.genre);
+}
+
 function getLongestStreak(ratings: UserMovieRating[]) {
   const dateKeys = Array.from(
     new Set(ratings.map((rating) => localDateKey(rating.created_at)))
@@ -1179,10 +1183,7 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
     () =>
       Array.from(
         new Set(
-          ratings.map(
-            (rating) =>
-              rating.genreNames[0] ?? genreLabelForKey(rating.genre)
-          )
+          ratings.map(getPrimaryRatingGenre)
         )
       )
         .filter(Boolean)
@@ -1194,9 +1195,7 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
       genreFilter === "all"
         ? ratings
         : ratings.filter(
-            (rating) =>
-              (rating.genreNames[0] ?? genreLabelForKey(rating.genre)) ===
-              genreFilter
+            (rating) => getPrimaryRatingGenre(rating) === genreFilter
           );
 
     return [...filtered].sort((a, b) => {
@@ -1284,7 +1283,7 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
                   {rating.movieTitle}
                 </h3>
                 <p className="mt-1 text-xs font-bold text-slate-400">
-                  {rating.genreNames[0] ?? genreLabelForKey(rating.genre)}
+                  {getPrimaryRatingGenre(rating)}
                 </p>
                 <p className="mt-2 text-xl font-black text-yellow-400 sm:mt-3 sm:text-2xl">
                   {rating.popscore}%
