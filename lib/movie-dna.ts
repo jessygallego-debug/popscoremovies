@@ -1,4 +1,11 @@
-import { genreLabelForKey } from "@/lib/profile-config";
+import {
+  genreLabelForKey,
+  normalizeProfileGenreKey,
+} from "@/lib/profile-config";
+import {
+  GENRE_RATING_CONFIGS,
+  type GenreKey,
+} from "@/lib/genre-rating-config";
 
 export type MovieDnaRating = {
   created_at: string;
@@ -58,6 +65,18 @@ export type MovieDnaResult = {
   storyAverage: number;
   strongestTrait: "Storyline" | "Acting" | "Rewatch Score" | null;
   topGenres: MovieDnaGenreStat[];
+};
+
+export type MovieDnaGenreFilter = {
+  count: number;
+  key: GenreKey;
+  label: string;
+};
+
+export type MovieDnaQuestionAverage = {
+  average: number | null;
+  key: string;
+  label: string;
 };
 
 const PERSONALITY_DESCRIPTIONS: Record<MovieDnaPersonality, string> = {
@@ -132,6 +151,45 @@ export function getEligibleMovieDnaRatings(ratings: MovieDnaRating[]) {
   });
 
   return Array.from(newestByMovie.values()).filter(isEligibleRating);
+}
+
+export function getMovieDnaGenreFilters(
+  ratings: MovieDnaRating[]
+): MovieDnaGenreFilter[] {
+  const counts = new Map<GenreKey, number>();
+
+  ratings.forEach((rating) => {
+    const key = normalizeProfileGenreKey(rating.genre) as GenreKey;
+    if (!key || !(key in GENRE_RATING_CONFIGS)) return;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  });
+
+  return Array.from(counts, ([key, count]) => ({
+    count,
+    key,
+    label: GENRE_RATING_CONFIGS[key].title,
+  })).sort((first, second) => first.label.localeCompare(second.label));
+}
+
+export function getMovieDnaGenreQuestionAverages(
+  ratings: MovieDnaRating[],
+  genre: GenreKey
+): MovieDnaQuestionAverage[] {
+  const genreRatings = ratings.filter(
+    (rating) => normalizeProfileGenreKey(rating.genre) === genre
+  );
+
+  return GENRE_RATING_CONFIGS[genre].questions.map((question) => {
+    const values = genreRatings
+      .map((rating) => rating.ratings[question.key])
+      .filter((value) => Number.isFinite(value));
+
+    return {
+      average: values.length > 0 ? average(values) : null,
+      key: question.key,
+      label: question.name,
+    };
+  });
 }
 
 function average(values: number[]) {

@@ -6,9 +6,12 @@ import MoviePosterImage from "@/app/components/movie-poster-image";
 import ShareMovieDnaButton from "@/app/components/share-movie-dna-button";
 import {
   calculateMovieDna,
+  getMovieDnaGenreFilters,
+  getMovieDnaGenreQuestionAverages,
   type MovieDnaRankingKey,
   type MovieDnaResult,
 } from "@/lib/movie-dna";
+import type { GenreKey } from "@/lib/genre-rating-config";
 import { ratingToPercent } from "@/lib/popscore-store";
 import type { UserMovieRating } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
@@ -125,32 +128,72 @@ function SummaryCard({ dna, username }: { dna: MovieDnaResult; username: string 
 }
 
 function CoreBreakdown({ dna }: { dna: MovieDnaResult }) {
-  const traits = [
+  const [selectedGenre, setSelectedGenre] = useState<"all" | GenreKey>("all");
+  const genreFilters = useMemo(
+    () => getMovieDnaGenreFilters(dna.eligibleRatings),
+    [dna.eligibleRatings]
+  );
+  const overallTraits = [
     ["Storyline", dna.storyAverage],
     ["Acting", dna.actingAverage],
     ["Rewatch Score", dna.rewatchAverage],
   ] as const;
+  const selectedGenreDetails =
+    selectedGenre === "all"
+      ? null
+      : genreFilters.find((genre) => genre.key === selectedGenre) ?? null;
+  const traits =
+    selectedGenreDetails
+      ? getMovieDnaGenreQuestionAverages(
+          dna.eligibleRatings,
+          selectedGenreDetails.key
+        )
+      : overallTraits.map(([label, average]) => ({ average, key: label, label }));
+
   return (
     <div className={panelClass("p-5 sm:p-6")}>
-      <h3 className="text-lg font-black text-white">What Matters Most to You</h3>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-black text-white">How You Rate Movies</h3>
+        <label className="flex items-center gap-2 text-xs font-black text-slate-400">
+          <span>Genre</span>
+          <select
+            aria-label="Filter How You Rate Movies by genre"
+            value={selectedGenreDetails?.key ?? "all"}
+            onChange={(event) =>
+              setSelectedGenre(event.target.value as "all" | GenreKey)
+            }
+            className="min-h-10 rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm font-black text-white outline-none transition focus:border-yellow-300"
+          >
+            <option value="all">All Genres</option>
+            {genreFilters.map((genre) => (
+              <option key={genre.key} value={genre.key}>
+                {genre.label} ({genre.count})
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <div className="mt-5 space-y-4">
-        {traits.map(([label, value]) => {
-          const percent = averageToPercent(value);
+        {traits.map((trait) => {
+          const percent =
+            trait.average === null ? null : averageToPercent(trait.average);
           return (
-            <div key={label}>
+            <div key={trait.key}>
               <div className="flex items-center justify-between gap-3 text-sm font-black">
-                <span className="text-slate-200">{label}</span>
-                <span className="text-yellow-300">{percent}%</span>
+                <span className="text-slate-200">{trait.label}</span>
+                <span className="text-yellow-300">
+                  {percent === null ? "Not yet rated" : `${percent}%`}
+                </span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
                 <div
                   className="h-full rounded-full bg-purple-500"
-                  style={{ width: `${percent}%` }}
+                  style={{ width: `${percent ?? 0}%` }}
                   role="meter"
-                  aria-label={`${label} average`}
+                  aria-label={`${trait.label} average`}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  aria-valuenow={percent}
+                  aria-valuenow={percent ?? 0}
                 />
               </div>
             </div>
@@ -158,7 +201,9 @@ function CoreBreakdown({ dna }: { dna: MovieDnaResult }) {
         })}
       </div>
       <p className="mt-5 text-xs font-bold text-slate-500">
-        Based on your answers across all fully rated movies.
+        {selectedGenreDetails
+          ? `Based on your answers for ${selectedGenreDetails.count} fully rated ${selectedGenreDetails.label} ${selectedGenreDetails.count === 1 ? "movie" : "movies"}.`
+          : "Based on your answers across all fully rated movies."}
       </p>
     </div>
   );

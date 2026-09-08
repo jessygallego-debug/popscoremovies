@@ -4,6 +4,8 @@ import { join } from "node:path";
 import {
   calculateMovieDna,
   getEligibleMovieDnaRatings,
+  getMovieDnaGenreFilters,
+  getMovieDnaGenreQuestionAverages,
   type MovieDnaRating,
 } from "../../lib/movie-dna";
 
@@ -173,6 +175,44 @@ test.describe("Movie DNA calculations", () => {
     expect(eligible).toHaveLength(1);
     expect(eligible[0].id).toBe("newest");
   });
+
+  test("builds a five-question breakdown for a selected genre", () => {
+    const horrorRatings = [
+      {
+        ...rating("1", { genre: "horror" }),
+        ratings: {
+          acting: 3,
+          originality: 4,
+          rewatchability: 4,
+          scareFactor: 5,
+          story: 4,
+        },
+      },
+      {
+        ...rating("2", { genre: "horror" }),
+        ratings: {
+          acting: 5,
+          originality: 4,
+          rewatchability: 2,
+          scareFactor: 3,
+          story: 4,
+        },
+      },
+      rating("3", { genre: "comedy" }),
+    ];
+
+    expect(getMovieDnaGenreFilters(horrorRatings)).toEqual([
+      { count: 1, key: "comedy", label: "Comedy" },
+      { count: 2, key: "horror", label: "Horror" },
+    ]);
+    expect(getMovieDnaGenreQuestionAverages(horrorRatings, "horror")).toEqual([
+      { average: 4, key: "story", label: "Storyline" },
+      { average: 4, key: "acting", label: "Acting" },
+      { average: 3, key: "rewatchability", label: "Rewatch Score" },
+      { average: 4, key: "scareFactor", label: "Scare Factor" },
+      { average: 4, key: "originality", label: "Originality" },
+    ]);
+  });
 });
 
 const browserRatings = [
@@ -299,8 +339,17 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await page.goto("/profile/movie_fan#movie-dna");
   await expect(page.getByRole("heading", { name: "Your Movie DNA" })).toBeVisible();
   await expect(page.getByText("Story Seeker", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "What Matters Most to You" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How You Rate Movies" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your Top Genres" })).toBeVisible();
+
+  const ratingBreakdown = page
+    .getByRole("heading", { name: "How You Rate Movies" })
+    .locator("../..");
+  await page.getByLabel("Filter How You Rate Movies by genre").selectOption("horror");
+  await expect(ratingBreakdown.getByRole("meter")).toHaveCount(5);
+  await expect(page.getByText("Scare Factor", { exact: true })).toBeVisible();
+  await expect(page.getByText("Originality", { exact: true })).toBeVisible();
+  await expect(page.getByText("Based on your answers for 3 fully rated Horror movies.")).toBeVisible();
 
   await page.getByRole("tab", { name: "Best Acting" }).click();
   await expect(page.getByRole("tab", { name: "Best Acting" })).toHaveAttribute("aria-selected", "true");
