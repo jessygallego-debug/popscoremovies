@@ -23,7 +23,9 @@ import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
 
 type MovieDnaSectionProps = {
+  percentile: number;
   ratings: UserMovieRating[];
+  totalMoviesRated: number;
   username: string;
 };
 
@@ -116,46 +118,75 @@ function UnlockCard({ count }: { count: number }) {
   );
 }
 
-function SummaryCard({ dna, username }: { dna: MovieDnaResult; username: string }) {
+function getLoveTags(dna: MovieDnaResult) {
+  const traits = [
+    { label: "Strong Stories", value: dna.storyAverage },
+    { label: "Great Performances", value: dna.actingAverage },
+    { label: "High Rewatch Value", value: dna.rewatchAverage },
+  ].sort((first, second) => second.value - first.value);
   const favorite = insightGenre(dna);
+  return [
+    ...traits.slice(0, 2).map((trait) => trait.label),
+    ...(favorite ? [`${favorite.genre} Movies`] : []),
+    ...(dna.averagePopScore >= 85 ? ["Standout Favorites"] : []),
+  ];
+}
+
+function SummaryCard({
+  dna,
+  percentile,
+  totalMoviesRated,
+  username,
+}: {
+  dna: MovieDnaResult;
+  percentile: number;
+  totalMoviesRated: number;
+  username: string;
+}) {
+  const favorite = insightGenre(dna);
+  const loveTags = getLoveTags(dna);
   return (
-    <div className={panelClass("overflow-hidden border-purple-500/35")}>
-      <div className="border-b border-purple-400/20 bg-purple-950/25 p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-purple-300">
-              Movie DNA Personality
-            </p>
-            <h3 className="mt-2 break-words text-3xl font-black text-white sm:text-4xl">
-              {dna.personality}
-            </h3>
-            <p className="mt-2 max-w-xl text-sm font-bold leading-6 text-slate-300">
-              {dna.personalityDescription}
-            </p>
-            <p className="mt-3 text-xs font-black text-yellow-200">
-              Based on {dna.eligibleRatings.length} full PopScore ratings
-            </p>
-          </div>
-          <ShareMovieDnaButton dna={dna} username={username} />
-        </div>
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <article className="rounded-2xl bg-gradient-to-br from-yellow-400/20 to-amber-950/20 p-5 ring-1 ring-yellow-400/30">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">#1 Genre</p>
+          <p className="mt-2 text-3xl font-black text-white">{favorite?.genre ?? "Still forming"}</p>
+          <p className="mt-2 text-xs font-bold text-slate-400">
+            {favorite ? `${favorite.count} fully rated movies` : "Keep rating to reveal your favorite"}
+          </p>
+        </article>
+        <article className="rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-950/20 p-5 ring-1 ring-purple-400/30">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-purple-300">Average PopScore</p>
+          <p className="mt-2 text-4xl font-black text-white">{Math.round(dna.averagePopScore)}%</p>
+          <p className="mt-1 text-xs font-bold text-slate-400">Across {dna.eligibleRatings.length} full ratings</p>
+        </article>
       </div>
-      <dl className="grid grid-cols-2 gap-px bg-slate-800 sm:grid-cols-4">
-        {[
-          ["Ratings Analyzed", `${dna.eligibleRatings.length} Ratings`],
-          ["Average PopScore", `${Math.round(dna.averagePopScore)}% Average`],
-          [dna.favoriteGenre ? "Favorite Genre" : "Most Rated Genre", favorite?.genre ?? "None yet"],
-          ["Strongest Trait", dna.strongestTrait ?? "Still forming"],
-        ].map(([label, value]) => (
-          <div key={label} className="min-w-0 bg-slate-950/95 p-3.5 sm:p-4">
-            <dt className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
-              {label}
-            </dt>
-            <dd className="mt-1 break-words text-sm font-black text-white sm:text-base">
-              {value}
-            </dd>
+
+      <article className="rounded-2xl bg-purple-950/25 p-5 ring-1 ring-purple-400/20 sm:p-6">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
+          <div className="min-w-0 sm:flex-1">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-purple-300">Your Movie Personality</p>
+            <h3 className="mt-2 break-words text-2xl font-black text-white sm:text-3xl">{dna.personality}</h3>
+            <p className="mt-2 max-w-xl text-sm font-bold leading-6 text-slate-300">{dna.personalityDescription}</p>
           </div>
-        ))}
-      </dl>
+          <div className="w-full sm:w-auto">
+            <ShareMovieDnaButton
+              dna={dna}
+              percentile={percentile}
+              totalMoviesRated={totalMoviesRated}
+              username={username}
+            />
+          </div>
+        </div>
+        <div className="mt-5 border-t border-purple-400/15 pt-4">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">You Love</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {loveTags.map((tag) => (
+              <span key={tag} className="rounded-full bg-yellow-400/10 px-3 py-1.5 text-xs font-black text-yellow-200 ring-1 ring-yellow-400/25">{tag}</span>
+            ))}
+          </div>
+        </div>
+      </article>
     </div>
   );
 }
@@ -348,26 +379,18 @@ function GenreDna({ dna }: { dna: MovieDnaResult }) {
     <div className={panelClass("p-5 sm:p-6")}>
       <h3 className="text-lg font-black text-white">Your Top Genres</h3>
       {dna.topGenres.length ? (
-        <div className="mt-4 grid gap-3">
+        <div className="mt-4 flex flex-wrap gap-2">
           {dna.topGenres.map((genre) => (
-            <article key={genre.genre} className="rounded-xl border border-slate-800 bg-slate-950/80 p-3.5">
-              <div className="flex items-center justify-between gap-3">
-                <h4 className="font-black text-yellow-200">{genre.genre}</h4>
+            <article key={genre.genre} className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/80 p-1.5 pl-4">
+                <h4 className="text-sm font-black text-yellow-200">{genre.genre}</h4>
                 <button
                   type="button"
                   aria-label={`Show ${genre.count} rated ${genre.genre} ${genre.count === 1 ? "movie" : "movies"}`}
                   onClick={() => setSelectedGenre(genre)}
-                  className="min-h-9 rounded-full border border-purple-400/35 bg-purple-500/10 px-3 text-xs font-black text-purple-200 transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
+                  className="min-h-8 rounded-full bg-purple-500/15 px-3 text-xs font-black text-purple-200 transition hover:bg-yellow-400/15 hover:text-yellow-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
                 >
                   {genre.count} {genre.count === 1 ? "movie" : "movies"}
                 </button>
-              </div>
-              <p className="mt-1 text-xs font-bold text-slate-400">
-                {genre.count} movies rated • {Math.round(genre.average)}% average
-              </p>
-              <p className="mt-2 line-clamp-2 text-xs font-bold text-slate-300">
-                Highest rated: {genre.highestRatedMovie.movieTitle} — {Math.round(genre.highestRatedMovie.popscore)}%
-              </p>
             </article>
           ))}
         </div>
@@ -529,7 +552,7 @@ export function MovieDnaSkeleton() {
   );
 }
 
-export default function MovieDnaSection({ ratings, username }: MovieDnaSectionProps) {
+export default function MovieDnaSection({ percentile, ratings, totalMoviesRated, username }: MovieDnaSectionProps) {
   const dna = useMemo(() => calculateMovieDna(ratings), [ratings]);
   const count = dna.eligibleRatings.length;
 
@@ -540,9 +563,8 @@ export default function MovieDnaSection({ ratings, username }: MovieDnaSectionPr
       aria-labelledby="movie-dna-heading"
     >
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-300">Personal taste profile</p>
         <h2 id="movie-dna-heading" className="mt-1 text-2xl font-black text-white sm:text-3xl">Your Movie DNA</h2>
-        <p className="mt-1 text-sm font-bold text-slate-400">See what your ratings reveal about your movie taste.</p>
+        <p className="mt-1 text-sm font-bold text-slate-400">A look at what makes you, you.</p>
       </div>
 
       <div className="mt-5">
@@ -550,11 +572,9 @@ export default function MovieDnaSection({ ratings, username }: MovieDnaSectionPr
           <UnlockCard count={count} />
         ) : (
           <div className="space-y-4 sm:space-y-5">
-            <SummaryCard dna={dna} username={username} />
-            <div className="grid gap-4 lg:grid-cols-2">
-              <CoreBreakdown dna={dna} />
-              <GenreDna dna={dna} />
-            </div>
+            <SummaryCard dna={dna} percentile={percentile} totalMoviesRated={totalMoviesRated} username={username} />
+            <GenreDna dna={dna} />
+            <CoreBreakdown dna={dna} />
             <Rankings dna={dna} />
           </div>
         )}

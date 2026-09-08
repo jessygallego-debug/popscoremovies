@@ -335,7 +335,12 @@ test("Overview labels longest and current rating streaks", async ({ page }) => {
   await page.goto("/profile/movie_fan");
 
   await expect(page.getByText("Longest Streak", { exact: true })).toBeVisible();
-  await expect(page.getByText("Current Streak", { exact: true })).toBeVisible();
+  await expect(page.getByText("Current Streak", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "PopFile Stats" })).toHaveCount(0);
+  await expect(page.getByText("A look at what makes you, you.")).toBeVisible();
+  await expect(page.getByText("#1 Genre", { exact: true })).toBeVisible();
+  await expect(page.getByText("You Love", { exact: true })).toBeVisible();
+  await expect(page.getByText("Your Movie Personality", { exact: true })).toBeVisible();
 });
 
 test("Ratings tab hides overview panels and filters rating history", async ({ page }) => {
@@ -417,7 +422,7 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await page.getByRole("button", { name: "Show Top 5" }).click();
   await expect(rankings.locator("ol > li")).toHaveCount(5);
 
-  await page.getByRole("button", { name: "Share Movie DNA" }).click();
+  await page.getByRole("button", { name: "Share My Movie DNA" }).click();
   await expect(page.getByRole("dialog", { name: "Share Movie DNA" })).toBeVisible();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download Image" }).click();

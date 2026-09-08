@@ -60,6 +60,8 @@ import { posterUrl } from "@/lib/tmdb";
 type TabKey =
   | "stats"
   | "ratings"
+  | "reviews"
+  | "achievements"
   | "activity";
 
 type FollowListMode = "followers" | "following";
@@ -435,7 +437,6 @@ function ProfileSidebar({
   onFollowChange,
   onOpenFollowList,
   profile,
-  summary,
 }: {
   activeTab: TabKey;
   followSummary: FollowSummary | null;
@@ -443,12 +444,13 @@ function ProfileSidebar({
   onFollowChange: (summary: FollowSummary) => void;
   onOpenFollowList: (mode: FollowListMode) => void;
   profile: ProfileRecord;
-  summary: ProfileStatSummary;
 }) {
   const avatar = avatarForKey(profile.avatar_key);
   const navItems: { key: TabKey; label: string }[] = [
     { key: "stats", label: "Overview" },
     { key: "ratings", label: "Ratings" },
+    { key: "reviews", label: "Reviews" },
+    { key: "achievements", label: "Achievements" },
   ];
 
   return (
@@ -494,7 +496,7 @@ function ProfileSidebar({
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-800 pt-5 sm:mt-6 sm:block sm:space-y-2 sm:pt-6">
+      <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-800 pt-5 sm:mt-6 sm:block sm:space-y-1.5 sm:pt-6">
         {navItems.map((item) => (
           <button
             key={item.key}
@@ -509,6 +511,12 @@ function ProfileSidebar({
             {item.label}
           </button>
         ))}
+        <Link
+          href="/watchlist"
+          className="flex w-full items-center justify-center rounded-2xl border border-transparent px-4 py-2.5 text-center text-sm font-black text-slate-300 transition hover:border-slate-700 hover:bg-white/5 hover:text-white sm:justify-start sm:px-5 sm:py-3 sm:text-left"
+        >
+          Lists
+        </Link>
       </div>
 
       <div className="mt-4 sm:mt-6">
@@ -532,33 +540,6 @@ function ProfileSidebar({
         )}
       </div>
 
-      <div className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3 sm:mt-6 sm:p-4">
-        <p className="text-xs font-black text-yellow-300 sm:text-sm">PopFile Momentum</p>
-        <div className="mt-2 grid grid-cols-3 gap-2 sm:mt-3">
-          <div>
-            <p className="text-2xl font-black text-white sm:text-3xl">
-              {summary.totalMoviesRated}
-            </p>
-            <p className="text-[11px] font-bold text-slate-400 sm:text-xs">movies rated</p>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-black text-yellow-300 sm:text-3xl">
-              {summary.ratingStreakDays}
-            </p>
-            <p className="text-[11px] font-bold leading-tight text-slate-400 sm:text-xs">
-              Longest Streak
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-black text-purple-300 sm:text-3xl">
-              {summary.currentRatingStreakDays}
-            </p>
-            <p className="text-[11px] font-bold leading-tight text-slate-400 sm:text-xs">
-              Current Streak
-            </p>
-          </div>
-        </div>
-      </div>
     </aside>
   );
 }
@@ -650,8 +631,6 @@ function PopScoreStatusCard({
   const ratingsRemaining = nextTier
     ? Math.max(0, progressTarget - summary.totalMoviesRated)
     : 0;
-  const circlePercent = Math.max(4, 100 - percentile.topPercentile);
-
   return (
     <section className={profilePanelClass("overflow-hidden p-4 sm:p-6")}>
       <div className="flex items-start justify-between gap-4">
@@ -666,7 +645,7 @@ function PopScoreStatusCard({
         </span>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:mt-5 lg:grid-cols-[auto_minmax(0,1fr)_128px] lg:items-center">
+      <div className="mt-5 grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
         <TierBadge tier={tier} />
         <div className="min-w-0">
           <h3 className="text-2xl font-black sm:text-3xl" style={{ color: tier.accent }}>
@@ -678,46 +657,32 @@ function PopScoreStatusCard({
             PopScore raters.
           </p>
 
-          <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-3">
-            <MiniMetric
-              label="Total Movies Rated"
-              value={summary.totalMoviesRated}
-            />
-            <MiniMetric
-              label="Rating Percentile"
-              value={`Top ${percentile.topPercentile}%`}
-            />
-            <MiniMetric label="Ranking" value={`#${percentile.rank}`} />
-          </div>
-        </div>
-
-        <div
-          className="mx-auto flex h-24 w-24 items-center justify-center rounded-full p-2 sm:h-28 sm:w-28 sm:p-2.5"
-          style={{
-            background: `conic-gradient(${tier.accent} ${circlePercent}%, rgba(30, 41, 59, 0.85) 0)`,
-          }}
-        >
-          <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-slate-950 text-center">
-            <span className="text-[10px] font-black uppercase text-slate-400 sm:text-xs">Top</span>
-            <span className="text-2xl font-black sm:text-3xl" style={{ color: tier.accent }}>
-              {percentile.topPercentile}%
-            </span>
-            <span className="text-[10px] font-bold text-slate-400 sm:text-xs">of raters</span>
+          <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-slate-800 pt-4 sm:grid-cols-4">
+            {[
+              ["Movies Rated", summary.totalMoviesRated],
+              ["Percentile", `Top ${percentile.topPercentile}%`],
+              ["Overall Rank", `#${percentile.rank}`],
+              ["Current Streak", `${summary.currentRatingStreakDays} days`],
+            ].map(([label, value]) => (
+              <div key={label} className="min-w-0">
+                <p className="break-words text-lg font-black text-white sm:text-xl">{value}</p>
+                <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-slate-500">{label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       <div className="mt-4 sm:mt-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-bold text-slate-300 sm:text-base">
-            Progress to next tier:{" "}
-            <span style={{ color: nextTier?.accent ?? tier.accent }}>
-              {nextTier?.name ?? "Top tier reached"}
-            </span>
+          <p className="text-sm font-black text-slate-200 sm:text-base">
+            {nextTier
+              ? `${ratingsRemaining} more ${ratingsRemaining === 1 ? "rating" : "ratings"} until ${nextTier.name}`
+              : "Top tier reached"}
           </p>
           <p className="text-xs font-bold text-slate-400 sm:text-sm">
             {nextTier
-              ? `${ratingsRemaining} more ratings to go`
+              ? `${summary.totalMoviesRated} / ${progressTarget}`
               : "You reached the highest tier"}
           </p>
         </div>
@@ -728,11 +693,6 @@ function PopScoreStatusCard({
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <span className="w-16 text-right text-xs font-black text-white sm:w-20 sm:text-sm">
-            {nextTier
-              ? `${summary.totalMoviesRated} / ${progressTarget}`
-              : `${summary.totalMoviesRated}`}
-          </span>
         </div>
       </div>
 
@@ -755,122 +715,6 @@ function PopScoreStatusCard({
             </p>
           </div>
         ))}
-      </div>
-    </section>
-  );
-}
-
-function MiniMetric({
-  label,
-  value,
-}: {
-  label: string;
-  value: number | string;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-black/30 p-2 sm:p-3">
-      <p className="break-words text-lg font-black text-white sm:text-xl">{value}</p>
-      <p className="mt-1 text-[10px] font-bold leading-tight text-slate-500 sm:text-xs">{label}</p>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  onClick,
-  value,
-}: {
-  label: string;
-  onClick?: () => void;
-  value: string | number;
-}) {
-  const className =
-    "min-h-[72px] rounded-2xl border border-slate-800 bg-black/35 p-2 text-left transition sm:min-h-28 sm:p-4";
-  const content = (
-    <>
-      <p className="break-words text-base font-black leading-tight text-white sm:text-2xl">{value}</p>
-      <p className="mt-1 text-[9px] font-bold leading-tight text-slate-500 sm:text-xs">{label}</p>
-    </>
-  );
-
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={`${className} hover:border-yellow-400/50 hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/40`}
-      >
-        {content}
-      </button>
-    );
-  }
-
-  return (
-    <div className={className}>
-      {content}
-    </div>
-  );
-}
-
-function ProfileStatsCard({
-  followSummary,
-  onOpenFollowList,
-  profile,
-  summary,
-}: {
-  followSummary: FollowSummary | null;
-  onOpenFollowList: (mode: FollowListMode) => void;
-  profile: ProfileRecord;
-  summary: ProfileStatSummary;
-}) {
-  return (
-    <section className={profilePanelClass("p-4 sm:p-6")}>
-      <h2 className="text-lg font-black text-white sm:text-xl">
-        PopFile Stats
-      </h2>
-      <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-5 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-        <StatCard
-          label="Total Movies Rated"
-          value={summary.totalMoviesRated}
-        />
-        <StatCard
-          label="Followers"
-          onClick={() => onOpenFollowList("followers")}
-          value={followSummary?.followersCount ?? 0}
-        />
-        <StatCard
-          label="Following"
-          onClick={() => onOpenFollowList("following")}
-          value={followSummary?.followingCount ?? 0}
-        />
-        <StatCard
-          label="Favorite Genre"
-          value={
-            profile.favorite_genre
-              ? genreLabelForKey(profile.favorite_genre)
-              : "Not set"
-          }
-        />
-        <StatCard
-          label="Total Movie Reactions"
-          value={summary.totalMovieReactions}
-        />
-        <StatCard
-          label="Average PopScore"
-          value={summary.totalMoviesRated ? `${summary.average}%` : "NR"}
-        />
-        <StatCard
-          label="Most Rated Genre"
-          value={summary.mostRatedGenre}
-        />
-        <StatCard
-          label="Highest Rated Genre"
-          value={summary.highestGenre}
-        />
-        <StatCard
-          label="Lowest Rated Genre"
-          value={summary.lowestGenre}
-        />
       </div>
     </section>
   );
@@ -1021,8 +865,10 @@ function AchievementBadge({
 }
 
 function AchievementsCard({
+  onViewAll,
   summary,
 }: {
+  onViewAll: () => void;
   summary: ProfileStatSummary;
 }) {
   const featured = ACHIEVEMENTS.slice(0, 4);
@@ -1032,6 +878,13 @@ function AchievementsCard({
     <section className={profilePanelClass("p-4 sm:p-5")}>
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-lg font-black text-white sm:text-xl">Achievements</h2>
+        <button
+          type="button"
+          onClick={onViewAll}
+          className="text-xs font-black text-purple-300 transition hover:text-yellow-300 sm:text-sm"
+        >
+          View all
+        </button>
       </div>
 
       <div className="mt-4 grid grid-cols-4 gap-2 sm:mt-6 sm:gap-3">
@@ -1313,6 +1166,56 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function MomentumCard({ summary }: { summary: ProfileStatSummary }) {
+  return (
+    <section className={profilePanelClass("p-4 sm:p-5")}>
+      <h2 className="text-lg font-black text-white sm:text-xl">PopFile Momentum</h2>
+      <div className="mt-4 grid grid-cols-2 divide-x divide-slate-800">
+        <div className="pr-4">
+          <p className="text-3xl font-black text-yellow-300">{summary.ratingStreakDays}</p>
+          <p className="mt-1 text-xs font-bold text-slate-400">Longest Streak</p>
+        </div>
+        <div className="pl-4">
+          <p className="text-3xl font-black text-purple-300">{summary.currentRatingStreakDays}</p>
+          <p className="mt-1 text-xs font-bold text-slate-400">Current Streak</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ReviewsHistory({ ratings }: { ratings: UserMovieRating[] }) {
+  const reviews = ratings.filter((rating) => rating.reviewComment?.trim());
+
+  if (reviews.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-700 bg-black/25 p-6 text-center">
+        <p className="font-black text-white">No written reviews yet</p>
+        <p className="mt-2 text-sm font-bold text-slate-400">
+          Add a comment when you rate a movie and it will appear here.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {reviews.map((rating) => (
+        <article key={rating.id} className="flex gap-3 rounded-2xl border border-slate-800 bg-black/25 p-3">
+          <MoviePoster movieId={rating.movieId} path={rating.posterPath} size="small" title={rating.movieTitle} />
+          <div className="min-w-0">
+            <h3 className="line-clamp-1 font-black text-white">{rating.movieTitle}</h3>
+            <p className="mt-1 text-sm font-black text-yellow-300">{rating.popscore}% PopScore</p>
+            <p className="mt-2 line-clamp-4 text-sm font-bold leading-5 text-slate-300">
+              “{rating.reviewComment}”
+            </p>
+          </div>
+        </article>
+      ))}
     </div>
   );
 }
@@ -1601,6 +1504,8 @@ export default function ProfileTabs({ username }: { username: string }) {
   const requestedTab = searchParams.get("tab");
   const initialTab: TabKey =
     requestedTab === "ratings" ||
+    requestedTab === "reviews" ||
+    requestedTab === "achievements" ||
     requestedTab === "activity"
       ? requestedTab
       : "stats";
@@ -1818,9 +1723,9 @@ export default function ProfileTabs({ username }: { username: string }) {
   return (
     <div
       className={`grid gap-4 sm:gap-6 ${
-        activeTab === "ratings"
-          ? "xl:grid-cols-[260px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)]"
-          : "xl:grid-cols-[260px_minmax(0,1fr)_380px] 2xl:grid-cols-[280px_minmax(0,1fr)_430px]"
+        activeTab === "stats"
+          ? "lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_320px] 2xl:grid-cols-[230px_minmax(0,1fr)_350px]"
+          : "lg:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[230px_minmax(0,1fr)]"
       }`}
     >
       <ProfileSidebar
@@ -1830,7 +1735,6 @@ export default function ProfileTabs({ username }: { username: string }) {
         onFollowChange={setFollowSummary}
         onOpenFollowList={openFollowList}
         profile={profile}
-        summary={summary}
       />
 
       <main className="min-w-0 space-y-4 sm:space-y-6">
@@ -1839,19 +1743,16 @@ export default function ProfileTabs({ username }: { username: string }) {
           summary={summary}
           tier={currentTier}
         />
-        {activeTab === "ratings" ? null : (
-          <>
-            <ProfileStatsCard
-              followSummary={followSummary}
-              onOpenFollowList={openFollowList}
-              profile={profile}
-              summary={summary}
-            />
-            <MovieDnaSection ratings={ratings} username={profile.username} />
-          </>
-        )}
-
         {activeTab === "stats" ? (
+          <MovieDnaSection
+            percentile={percentile.topPercentile}
+            ratings={ratings}
+            totalMoviesRated={summary.totalMoviesRated}
+            username={profile.username}
+          />
+        ) : null}
+
+        {activeTab === "achievements" ? (
           <SectionCard title="All Achievements">
             <AllAchievements summary={summary} />
           </SectionCard>
@@ -1861,20 +1762,30 @@ export default function ProfileTabs({ username }: { username: string }) {
             <RatingsHistory ratings={fullRatings} />
           </SectionCard>
         ) : null}
+        {activeTab === "reviews" ? (
+          <SectionCard title="Reviews">
+            <ReviewsHistory ratings={fullRatings} />
+          </SectionCard>
+        ) : null}
         {activeTab === "activity" ? (
           <RecentActivityCard ratings={ratings} showAll />
         ) : null}
       </main>
 
-      {activeTab === "ratings" ? null : (
-        <aside className="space-y-4 sm:space-y-6 xl:sticky xl:top-6 xl:self-start">
-          <AchievementsCard summary={summary} />
+      {activeTab === "stats" ? (
+        <aside className="space-y-4 sm:space-y-6 lg:col-start-2 xl:col-start-3 xl:row-start-1 xl:sticky xl:top-6 xl:self-start">
+          <AchievementsCard
+            summary={summary}
+            onViewAll={() => setActiveTab("achievements")}
+          />
+          <MomentumCard summary={summary} />
           <RecentActivityCard
+            limit={4}
             ratings={ratings}
             onViewAll={() => setActiveTab("activity")}
           />
         </aside>
-      )}
+      ) : null}
 
       {followListMode ? (
         <FollowListDialog

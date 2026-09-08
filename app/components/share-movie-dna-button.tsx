@@ -7,6 +7,8 @@ import type { MovieDnaResult } from "@/lib/movie-dna";
 type ShareMovieDnaButtonProps = {
   dna: MovieDnaResult;
   isPublic?: boolean;
+  percentile: number;
+  totalMoviesRated: number;
   username: string;
 };
 
@@ -59,9 +61,12 @@ function drawWrappedText(
 export default function ShareMovieDnaButton({
   dna,
   isPublic = true,
+  percentile,
+  totalMoviesRated,
   username,
 }: ShareMovieDnaButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [format, setFormat] = useState<"feed" | "story">("feed");
   const [status, setStatus] = useState("");
   const topMovies = dna.rankings["top-rated"].slice(0, 3);
   const profilePath = `/profile/${encodeURIComponent(username)}#movie-dna`;
@@ -69,7 +74,7 @@ export default function ShareMovieDnaButton({
     isPublic && typeof window !== "undefined"
       ? new URL(profilePath, window.location.origin).toString()
       : null;
-  const fileName = `${fileSafe(username)}-movie-dna.png`;
+  const fileName = `${fileSafe(username)}-movie-dna${format === "story" ? "-story" : ""}.png`;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -88,16 +93,17 @@ export default function ShareMovieDnaButton({
   const previewRows = useMemo(
     () => [
       ["Favorite genre", dna.favoriteGenre?.genre ?? dna.mostRatedGenre?.genre ?? "Still forming"],
-      ["Strongest trait", dna.strongestTrait ?? "Still forming"],
-      ["Ratings analyzed", String(dna.eligibleRatings.length)],
+      ["Average PopScore", `${Math.round(dna.averagePopScore)}%`],
+      ["Movies rated", String(totalMoviesRated)],
+      ["Percentile", `Top ${percentile}%`],
     ],
-    [dna]
+    [dna, percentile, totalMoviesRated]
   );
 
   const createImage = async () => {
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
-    canvas.height = 1350;
+    canvas.height = format === "story" ? 1920 : 1350;
     const context = canvas.getContext("2d");
     if (!context) return null;
 
@@ -107,7 +113,7 @@ export default function ShareMovieDnaButton({
     context.fillRect(0, 0, canvas.width, 330);
     context.strokeStyle = "rgba(250,204,21,0.55)";
     context.lineWidth = 4;
-    context.roundRect(52, 52, 976, 1246, 40);
+    context.roundRect(52, 52, 976, canvas.height - 104, 40);
     context.stroke();
 
     context.fillStyle = "#facc15";
@@ -121,20 +127,31 @@ export default function ShareMovieDnaButton({
     drawWrappedText(context, dna.personality ?? "Movie DNA", 96, 280, 880, 78);
 
     previewRows.forEach(([label, value], index) => {
-      const x = 96 + (index % 3) * 304;
+      const x = 96 + (index % 4) * 222;
       context.fillStyle = "#94a3b8";
       context.font = "800 21px Arial, sans-serif";
       context.fillText(label.toUpperCase(), x, 440);
       context.fillStyle = "#fef08a";
       context.font = "900 31px Arial, sans-serif";
-      drawWrappedText(context, value, x, 486, 270, 36);
+      drawWrappedText(context, value, x, 486, 195, 36);
     });
+
+    context.fillStyle = "#94a3b8";
+    context.font = "800 21px Arial, sans-serif";
+    context.fillText("TOP GENRES", 96, 565);
+    context.fillStyle = "#fef08a";
+    context.font = "900 28px Arial, sans-serif";
+    context.fillText(
+      dna.topGenres.map((genre) => genre.genre).join("  •  ") || "Still forming",
+      96,
+      606
+    );
 
     context.fillStyle = "#ffffff";
     context.font = "900 36px Arial, sans-serif";
     context.fillText("MY TOP MOVIES", 96, 650);
     topMovies.forEach((movie, index) => {
-      const y = 735 + index * 128;
+      const y = (format === "story" ? 820 : 735) + index * (format === "story" ? 170 : 128);
       context.fillStyle = "rgba(255,255,255,0.06)";
       context.roundRect(96, y - 62, 888, 98, 22);
       context.fill();
@@ -153,7 +170,7 @@ export default function ShareMovieDnaButton({
     context.fillStyle = "#facc15";
     context.font = "900 34px Arial, sans-serif";
     context.textAlign = "center";
-    context.fillText("popscoremovies.com", 540, 1230);
+    context.fillText("popscoremovies.com", 540, canvas.height - 120);
     context.textAlign = "start";
     return canvasToBlob(canvas);
   };
@@ -243,7 +260,7 @@ export default function ShareMovieDnaButton({
                   {username}&apos;s Movie DNA
                 </p>
                 <p className="mt-2 text-3xl font-black">{dna.personality}</p>
-                <div className="mt-5 grid grid-cols-3 gap-2">
+                <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {previewRows.map(([label, value]) => (
                     <div key={label} className="rounded-xl bg-black/35 p-2.5">
                       <p className="text-[9px] font-black uppercase text-slate-400">{label}</p>
@@ -263,6 +280,25 @@ export default function ShareMovieDnaButton({
                 <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
                   popscoremovies.com
                 </p>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2" aria-label="Social image format">
+                <button
+                  type="button"
+                  aria-pressed={format === "feed"}
+                  onClick={() => setFormat("feed")}
+                  className={`min-h-10 rounded-xl border text-xs font-black ${format === "feed" ? "border-yellow-300 bg-yellow-400 text-black" : "border-slate-700 text-slate-300"}`}
+                >
+                  Feed Post · 4:5
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={format === "story"}
+                  onClick={() => setFormat("story")}
+                  className={`min-h-10 rounded-xl border text-xs font-black ${format === "story" ? "border-yellow-300 bg-yellow-400 text-black" : "border-slate-700 text-slate-300"}`}
+                >
+                  Story / Reel · 9:16
+                </button>
               </div>
 
               <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -290,7 +326,7 @@ export default function ShareMovieDnaButton({
         }}
         className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-4 text-sm font-black text-yellow-200 transition hover:bg-yellow-400/20"
       >
-        Share Movie DNA
+        Share My Movie DNA
       </button>
       {dialog}
     </>
