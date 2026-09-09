@@ -370,6 +370,27 @@ test("Ratings tab hides overview panels and filters rating history", async ({ pa
 
   await page.getByLabel("Sort ratings").selectOption("highest");
   await expect(historySection.locator("article h3").first()).toHaveText("Movie 1");
+
+  const firstRatingCard = historySection.locator("article").first();
+  const scoreBox = await firstRatingCard.getByText("94%", { exact: true }).boundingBox();
+  const shareBox = await firstRatingCard.getByRole("button", { name: "Share My Rating" }).boundingBox();
+  const cardBox = await firstRatingCard.boundingBox();
+  expect(scoreBox).not.toBeNull();
+  expect(shareBox).not.toBeNull();
+  expect(cardBox).not.toBeNull();
+  expect(Math.abs(scoreBox!.y - shareBox!.y)).toBeLessThan(10);
+  expect(cardBox!.height).toBeLessThan(140);
+
+  mkdirSync(join(process.cwd(), "artifacts"), { recursive: true });
+  await historySection.screenshot({
+    path: join(process.cwd(), "artifacts", "ratings-history-desktop.png"),
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(firstRatingCard.getByRole("button", { name: "Share My Rating" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+  await historySection.screenshot({
+    path: join(process.cwd(), "artifacts", "ratings-history-mobile.png"),
+  });
 });
 
 test("renders the full Movie DNA, links, filters, and share/download controls", async ({

@@ -1142,11 +1142,12 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
           {visibleRatings.map((rating) => (
             <article
               key={rating.id}
-              className="flex gap-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-3 sm:gap-4 sm:p-4"
+              className="flex gap-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-3"
             >
               <MoviePoster
                 movieId={rating.movieId}
                 path={rating.posterPath}
+                size="small"
                 title={rating.movieTitle}
               />
               <div className="min-w-0 flex-1">
@@ -1156,25 +1157,26 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
                 <p className="mt-1 text-xs font-bold text-slate-400">
                   {getPrimaryRatingGenre(rating)}
                 </p>
-                <p className="mt-2 text-xl font-black text-yellow-400 sm:mt-3 sm:text-2xl">
-                  {rating.popscore}%
-                </p>
-                <div className="mt-2">
-                  {rating.quick_reaction ? (
-                    <QuickReactionBadge reaction={rating.quick_reaction} />
-                  ) : null}
-                </div>
-                <p className="mt-2 text-xs font-bold text-slate-500 sm:mt-3">
-                  Rated {formatDate(rating.created_at)}
-                </p>
-                <div className="mt-3">
+                <div className="mt-2 flex min-w-0 items-center gap-3">
+                  <p className="shrink-0 text-xl font-black text-yellow-400 sm:text-2xl">
+                    {rating.popscore}%
+                  </p>
                   <ShareRatingButton
+                    className="ml-auto !min-h-9 shrink-0 whitespace-nowrap !px-3 text-xs sm:!px-4 sm:text-sm"
                     movieId={rating.movieId}
                     movieTitle={rating.movieTitle}
                     popscore={rating.popscore}
                     posterPath={rating.posterPath}
                     variant="compact"
                   />
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  {rating.quick_reaction ? (
+                    <QuickReactionBadge reaction={rating.quick_reaction} />
+                  ) : null}
+                  <p className="text-xs font-bold text-slate-500">
+                    Rated {formatDate(rating.created_at)}
+                  </p>
                 </div>
               </div>
             </article>
