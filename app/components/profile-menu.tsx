@@ -9,7 +9,7 @@ import { avatarForKey } from "@/lib/profile-config";
 
 const menuItems = [
   { href: "/profile/edit", label: "Edit PopFile" },
-  { href: "stats", label: "PopFile Stats" },
+  { href: "stats", label: "Stats" },
   { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/discover", label: "Movie Match" },

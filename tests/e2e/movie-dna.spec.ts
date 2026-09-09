@@ -330,13 +330,18 @@ test("shows the zero and progress unlock states", async ({ page }) => {
   await expect(page.getByText("3 of 5 ratings completed")).toBeVisible();
 });
 
-test("Overview labels longest and current rating streaks", async ({ page }) => {
+test("Stats labels the overview and rating streaks", async ({ page }) => {
   await mockPopFile(page, browserRatings);
   await page.goto("/profile/movie_fan");
 
   await expect(page.getByText("Longest Streak", { exact: true })).toBeVisible();
   await expect(page.getByText("Current Streak", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Stats", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "PopScore Stats" })).toBeVisible();
+  await expect(page.getByText(/Current tier: Popcorn Rookie/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "PopFile Stats" })).toHaveCount(0);
+  await expect(page.getByText("Rate Different.").first()).toBeVisible();
+  await expect(page.getByText(/Watch Better/).first()).toBeVisible();
   await expect(page.getByText("A look at what makes you, you.")).toBeVisible();
   await expect(page.getByText("#1 Genre", { exact: true })).toBeVisible();
   await expect(page.getByText(/You Love/).first()).toBeVisible();
@@ -471,10 +476,12 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
   expect(mobileLayout, JSON.stringify(mobileLayout.offenders)).toMatchObject({
     clientWidth: mobileLayout.scrollWidth,
   });
+  const collapsedPageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+  expect(collapsedPageHeight).toBeLessThan(3300);
+  await page.screenshot({ fullPage: true, path: join(process.cwd(), "artifacts", "popfile-overview-mobile.png") });
   await page.locator("#movie-dna summary").click();
   await expect(page.getByRole("tab", { name: "Rewatch Favorites" })).toBeVisible();
   await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-mobile.png") });
-  await page.screenshot({ fullPage: true, path: join(process.cwd(), "artifacts", "popfile-overview-mobile.png") });
 });
 
 });

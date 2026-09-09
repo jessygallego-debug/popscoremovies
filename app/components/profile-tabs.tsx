@@ -463,20 +463,20 @@ function ProfileSidebar({
 }) {
   const avatar = avatarForKey(profile.avatar_key);
   const navItems: { icon: "achievements" | "overview" | "ratings" | "reviews"; key: TabKey; label: string }[] = [
-    { key: "stats", label: "Overview", icon: "overview" },
+    { key: "stats", label: "Stats", icon: "overview" },
     { key: "ratings", label: "Ratings", icon: "ratings" },
     { key: "reviews", label: "Reviews", icon: "reviews" },
     { key: "achievements", label: "Achievements", icon: "achievements" },
   ];
 
   return (
-    <aside className={profilePanelClass(`${styles.sidebar} w-full min-w-0 max-w-full overflow-hidden p-4 lg:sticky lg:top-5 lg:self-start lg:p-5 xl:flex xl:min-h-[calc(100vh-7.5rem)] xl:flex-col`)}>
-      <div className="flex items-center gap-4 text-left lg:flex-col lg:text-center">
-        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-yellow-400/60 bg-yellow-400/10 shadow-[0_0_30px_rgba(250,204,21,0.12)] lg:h-28 lg:w-28">
-          <EmojiIcon emoji={avatar.icon} label={avatar.label} size={60} />
+    <aside className={profilePanelClass(`${styles.sidebar} w-full min-w-0 max-w-full overflow-hidden p-3.5 lg:sticky lg:top-5 lg:self-start lg:p-4 xl:flex xl:min-h-[calc(100vh-7.5rem)] xl:flex-col`)}>
+      <div className="flex items-center gap-3 text-left lg:flex-col lg:text-center">
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-yellow-400/60 bg-yellow-400/10 shadow-[0_0_30px_rgba(250,204,21,0.12)] lg:h-24 lg:w-24">
+          <EmojiIcon emoji={avatar.icon} label={avatar.label} size={52} />
         </span>
         <div className="min-w-0 flex-1 lg:w-full">
-          <h1 className="break-all text-xl font-black text-white lg:mt-4 lg:text-2xl">
+          <h1 className="break-all text-xl font-black text-white lg:mt-3 lg:text-2xl">
             <ProfileUsernameLink username={profile.username}>@{profile.username}</ProfileUsernameLink>
           </h1>
           {profile.favorite_genre ? (
@@ -487,7 +487,7 @@ function ProfileSidebar({
           <p className="mt-2 text-xs font-medium text-slate-400">Member since {formatDate(profile.created_at)}</p>
         </div>
       </div>
-      <div className="mt-4 grid w-full grid-cols-2 divide-x divide-slate-700/70 border-y border-slate-700/45 py-3">
+      <div className="mt-3 grid w-full grid-cols-2 divide-x divide-slate-700/70 border-y border-slate-700/45 py-2.5">
           <button
             type="button"
             onClick={() => onOpenFollowList("followers")}
@@ -510,7 +510,7 @@ function ProfileSidebar({
           </button>
       </div>
 
-      <nav aria-label="PopFile sections" className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1.5 lg:overflow-visible">
+      <nav aria-label="PopFile sections" className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:overflow-visible">
         {navItems.slice(0, 3).map((item) => (
           <button
             key={item.key}
@@ -546,7 +546,7 @@ function ProfileSidebar({
         ))}
       </nav>
 
-      <div className="mt-4 lg:mt-6">
+      <div className="mt-3 lg:mt-4">
         {followSummary?.isOwnProfile ? (
           <Link
             href="/profile/edit"
@@ -662,27 +662,30 @@ function PopScoreStatusCard({
     ? Math.max(0, progressTarget - summary.totalMoviesRated)
     : 0;
   return (
-    <section className={profilePanelClass(`${styles.statusHero} relative overflow-hidden p-4 sm:p-6`)}>
+    <section className={profilePanelClass(`${styles.statusHero} relative overflow-hidden p-4 sm:p-5`)}>
       <span className={styles.filmReel} aria-hidden="true" />
       <span className="absolute right-4 top-4 z-10 rounded-full border border-slate-600/60 bg-slate-950/60 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm sm:right-6 sm:top-5">
         All-time
       </span>
 
-      <div className="relative z-10 grid gap-4 pr-16 sm:grid-cols-[96px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:pr-24">
+      <div className="relative z-10 grid gap-3 pr-16 sm:grid-cols-[96px_minmax(0,1fr)] sm:items-center sm:gap-5 sm:pr-24">
         <TierBadge tier={tier} />
         <div className="min-w-0">
           <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-300">Your PopScore Status</h2>
-          <h3 className="mt-1 text-3xl font-black leading-none sm:text-5xl" style={{ color: "#ffd23f" }}>
-            {tier.name}
+          <h3 className="mt-1 text-3xl font-black leading-none sm:text-4xl" style={{ color: "#ffd23f" }}>
+            PopScore Stats
           </h3>
-          <p className="mt-3 text-sm font-medium text-slate-200 sm:text-base">
+          <p className="mt-2 text-sm font-medium text-slate-200 sm:text-base">
             You&apos;re in the top <span className="font-black text-white">{percentile.topPercentile}%</span> of all PopScore raters.
           </p>
-          <p className="mt-1 text-xs text-slate-400">{tier.description}</p>
+          <p className="mt-1 text-xs text-slate-400">
+            <span className="font-black" style={{ color: tier.accent }}>Current tier: {tier.name}.</span>{" "}
+            {tier.description}
+          </p>
         </div>
       </div>
 
-      <div className="relative z-10 mt-5 grid grid-cols-2 gap-y-4 border-y border-slate-700/45 py-4 sm:grid-cols-4">
+      <div className="relative z-10 mt-4 grid grid-cols-2 gap-y-3 border-y border-slate-700/45 py-3 sm:grid-cols-4">
         {[
           ["Movies Rated", summary.totalMoviesRated],
           ["Rating Percentile", `Top ${percentile.topPercentile}%`],
@@ -696,7 +699,7 @@ function PopScoreStatusCard({
         ))}
       </div>
 
-      <div className="relative z-10 mt-5">
+      <div className="relative z-10 mt-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-medium text-slate-200">
             {nextTier
@@ -709,7 +712,7 @@ function PopScoreStatusCard({
               : "You reached the highest tier"}
           </p>
         </div>
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-2 flex items-center gap-3">
           <div className="h-3 flex-1 overflow-hidden rounded-full border border-white/5 bg-slate-800/90 p-0.5">
             <div
               className="h-full rounded-full bg-gradient-to-r from-yellow-300 via-pink-500 to-blue-500 shadow-[0_0_14px_rgba(59,130,246,0.45)]"
@@ -719,7 +722,7 @@ function PopScoreStatusCard({
         </div>
       </div>
 
-      <div className="relative z-10 -mx-1 mt-5 flex gap-3 overflow-x-auto px-1 pb-2 sm:justify-between sm:gap-2">
+      <div className="relative z-10 -mx-1 mt-4 flex gap-3 overflow-x-auto px-1 pb-1 sm:justify-between sm:gap-2">
         {POPSCORE_TIERS.map((item, index) => (
           <div key={item.id} className="flex w-[82px] shrink-0 flex-col items-center text-center sm:w-auto sm:min-w-0 sm:flex-1">
             <TierBadge
@@ -728,12 +731,12 @@ function PopScoreStatusCard({
               isMuted={index > currentTierIndex}
             />
             <p
-              className="mt-2 text-[10px] font-black leading-tight sm:text-xs"
+              className="mt-1.5 text-[10px] font-black leading-tight sm:text-xs"
               style={{ color: index <= currentTierIndex ? item.accent : "#94a3b8" }}
             >
               {item.name}
             </p>
-            <p className="mt-1 text-[10px] font-bold text-slate-500 sm:text-[11px]">
+            <p className="mt-0.5 text-[10px] font-bold text-slate-500 sm:text-[11px]">
               {item.requirementLabel}
             </p>
           </div>
@@ -1219,7 +1222,7 @@ function CinematicBanner({ className = "" }: { className?: string }) {
     <section className={`${styles.panel} ${styles.brandBanner} flex min-h-24 items-center justify-between gap-5 px-5 py-4 sm:px-7 ${className}`} aria-label="PopScore Movies">
       <p className="text-lg font-medium leading-7 text-purple-100 sm:text-2xl">
         <span aria-hidden="true" className="mr-2 text-3xl font-black text-purple-400">“</span>
-        Different perspectives.<br />A better way to watch.
+        Rate Different.<br />Watch Better<span aria-hidden="true" className="ml-1 text-3xl font-black text-purple-400">”</span>
       </p>
       <div className="shrink-0 text-right">
         <p className="text-xl font-black tracking-tight text-white sm:text-3xl">POP<span className="text-yellow-400">SCORE</span></p>
@@ -1778,7 +1781,7 @@ export default function ProfileTabs({ username }: { username: string }) {
         profile={profile}
       />
 
-      <main className="min-w-0 space-y-4 sm:space-y-6">
+      <main className="min-w-0 space-y-4 sm:space-y-5">
         <PopScoreStatusCard
           percentile={percentile}
           summary={summary}
@@ -1817,14 +1820,14 @@ export default function ProfileTabs({ username }: { username: string }) {
       </main>
 
       {activeTab === "stats" ? (
-        <aside className="space-y-4 sm:space-y-6 lg:col-start-2 xl:col-start-3 xl:row-start-1 xl:sticky xl:top-6 xl:self-start">
+        <aside className="space-y-4 sm:space-y-5 lg:col-start-2 xl:col-start-3 xl:row-start-1 xl:sticky xl:top-6 xl:self-start">
           <AchievementsCard
             summary={summary}
             onViewAll={() => setActiveTab("achievements")}
           />
           <MomentumCard summary={summary} />
           <RecentActivityCard
-            limit={4}
+            limit={3}
             ratings={ratings}
             onViewAll={() => setActiveTab("activity")}
           />

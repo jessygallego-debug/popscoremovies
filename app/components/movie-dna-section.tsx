@@ -142,23 +142,23 @@ function SummaryCard({
   const loveTags = getLoveTags(dna);
   return (
     <div className="space-y-3">
-      <div className="grid gap-3 md:grid-cols-[1.15fr_.9fr_1.15fr]">
-        <article className={`${styles.genreVisual} min-h-36 rounded-2xl border border-yellow-400/25 p-5`}>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-[1.15fr_.9fr_1.15fr]">
+        <article className={`${styles.genreVisual} min-h-28 rounded-2xl border border-yellow-400/25 p-4`}>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">#1 Genre</p>
-          <p className="mt-2 text-3xl font-black text-white">{favorite?.genre ?? "Still forming"}</p>
-          <p className="mt-2 text-xs font-medium text-slate-300">
+          <p className="mt-2 break-words text-2xl font-black text-white sm:text-3xl">{favorite?.genre ?? "Still forming"}</p>
+          <p className="mt-1.5 text-xs font-medium text-slate-300">
             {favorite ? `${favorite.count} fully rated movies` : "Keep rating to reveal your favorite"}
           </p>
         </article>
-        <article className="relative min-h-36 overflow-hidden rounded-2xl border border-purple-400/25 bg-gradient-to-br from-purple-500/25 to-purple-950/25 p-5">
+        <article className="relative min-h-28 overflow-hidden rounded-2xl border border-purple-400/25 bg-gradient-to-br from-purple-500/25 to-purple-950/25 p-4">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-purple-300">Average PopScore</p>
-          <p className="mt-2 text-4xl font-black text-white">{Math.round(dna.averagePopScore)}%</p>
+          <p className="mt-2 text-3xl font-black text-white sm:text-4xl">{Math.round(dna.averagePopScore)}%</p>
           <p className="mt-1 text-xs font-medium text-slate-300">Across {dna.eligibleRatings.length} full ratings</p>
-          <span aria-hidden="true" className="absolute bottom-5 right-5 flex items-end gap-1 opacity-35">
+          <span aria-hidden="true" className="absolute bottom-4 right-4 hidden items-end gap-1 opacity-35 sm:flex">
             {[18, 30, 46, 64].map((height) => <span key={height} className="w-2 rounded-t bg-purple-400" style={{ height }} />)}
           </span>
         </article>
-        <GenreDna dna={dna} />
+        <GenreDna className="col-span-2 md:col-span-1" dna={dna} />
       </div>
 
       <div className="grid gap-3 md:grid-cols-[1.2fr_.9fr]">
@@ -361,7 +361,7 @@ function GenreMoviesDialog({
   );
 }
 
-function GenreDna({ dna }: { dna: MovieDnaResult }) {
+function GenreDna({ className = "", dna }: { className?: string; dna: MovieDnaResult }) {
   const [selectedGenre, setSelectedGenre] = useState<MovieDnaGenreStat | null>(
     null
   );
@@ -375,7 +375,7 @@ function GenreDna({ dna }: { dna: MovieDnaResult }) {
     .slice(0, 3);
 
   return (
-    <div className="min-h-36 rounded-2xl border border-slate-700/70 bg-[#0b1424]/75 p-4">
+    <div className={`${className} min-h-28 rounded-2xl border border-slate-700/70 bg-[#0b1424]/75 p-4`}>
       <h3 className="text-xs font-black uppercase tracking-[0.16em] text-sky-400">Top Genres</h3>
       {dna.topGenres.length ? (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -563,15 +563,15 @@ export default function MovieDnaSection({ percentile, ratings, totalMoviesRated,
   return (
     <section
       id="movie-dna"
-      className={`${styles.panel} ${styles.movieDna} w-full min-w-0 scroll-mt-6 overflow-hidden p-4 sm:p-5`}
+      className={`${styles.panel} ${styles.movieDna} w-full min-w-0 scroll-mt-6 overflow-hidden p-3.5 sm:p-5`}
       aria-labelledby="movie-dna-heading"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <span aria-hidden="true" className="text-3xl text-purple-400">🧬</span>
           <div>
             <h2 id="movie-dna-heading" className="text-2xl font-black text-white sm:text-3xl">Your Movie DNA</h2>
-            <p className="mt-1 text-sm font-medium text-slate-400">A look at what makes you, you.</p>
+            <p className="mt-0.5 text-sm font-medium text-slate-400">A look at what makes you, you.</p>
           </div>
         </div>
         {count >= 5 ? (
@@ -584,7 +584,7 @@ export default function MovieDnaSection({ percentile, ratings, totalMoviesRated,
         ) : null}
       </div>
 
-      <div className="mt-5">
+      <div className="mt-4">
         {count < 5 ? (
           <UnlockCard count={count} />
         ) : (
