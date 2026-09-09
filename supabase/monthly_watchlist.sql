@@ -1,7 +1,7 @@
 create extension if not exists pgcrypto;
 
 alter table public.profiles
-add column if not exists email_monthly_watchlist boolean default false not null;
+add column if not exists email_monthly_watchlist boolean default true not null;
 
 create table if not exists public.monthly_watchlists (
   id uuid primary key default gen_random_uuid(),

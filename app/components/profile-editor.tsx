@@ -31,6 +31,10 @@ import {
   upsertProfile,
   UserMovieRating,
 } from "@/lib/profile-store";
+import {
+  DEFAULT_MONTHLY_WATCHLIST_PREFERENCE,
+  resolveMonthlyWatchlistPreference,
+} from "@/lib/monthly-watchlist-preference";
 
 function getSafeReturnPath(returnTo: string | null) {
   if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
@@ -75,7 +79,9 @@ export default function ProfileEditor() {
   const [username, setUsername] = useState("");
   const [avatarKey, setAvatarKey] = useState("clapper");
   const [favoriteGenre, setFavoriteGenre] = useState("horror");
-  const [emailMonthlyWatchlist, setEmailMonthlyWatchlist] = useState(false);
+  const [emailMonthlyWatchlist, setEmailMonthlyWatchlist] = useState(
+    DEFAULT_MONTHLY_WATCHLIST_PREFERENCE
+  );
   const [ratedMovieCount, setRatedMovieCount] = useState(0);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [isSendingRecovery, setIsSendingRecovery] = useState(false);
@@ -122,7 +128,9 @@ export default function ProfileEditor() {
           );
           setFavoriteGenre(safeProfileGenreKey(nextProfile?.favorite_genre));
           setEmailMonthlyWatchlist(
-            nextProfile?.email_monthly_watchlist === true
+            resolveMonthlyWatchlistPreference(
+              nextProfile?.email_monthly_watchlist
+            )
           );
 
           if (authResult.signedIn && !authResult.isPasswordRecovery) {

@@ -7,6 +7,7 @@ import {
 } from "@/lib/monthly-watchlist-email";
 import { absoluteUrl } from "@/lib/site-url";
 import { tmdbImagePath } from "@/lib/tmdb";
+import { filterEligibleMonthlyWatchlistRecipients } from "@/lib/monthly-watchlist-preference";
 
 type SupabaseConfig = {
   authUrl: string;
@@ -618,8 +619,14 @@ async function prepareRecipients(watchlistId: string) {
     );
   }
 
-  return supabaseRest<RecipientRow[]>(
+  const pendingRecipients = await supabaseRest<RecipientRow[]>(
     `/monthly_watchlist_recipients?watchlist_id=eq.${watchlistId}&status=eq.pending&select=*`
+  );
+
+  return filterEligibleMonthlyWatchlistRecipients(
+    pendingRecipients,
+    eligibleIds,
+    suppressed
   );
 }
 

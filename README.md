@@ -44,7 +44,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Monthly Watchlist campaign
 
 Apply `supabase/monthly_watchlist.sql`, then configure these server-side Vercel
-environment variables:
+environment variables. For an existing installation created before monthly
+emails defaulted on, apply
+`supabase/monthly_watchlist_default_opt_in_20260909.sql` once as well. That
+migration checks the setting for current deliverable users, preserves provider
+suppressions, and makes the setting checked by default for new profiles.
 
 ```text
 CRON_SECRET=...

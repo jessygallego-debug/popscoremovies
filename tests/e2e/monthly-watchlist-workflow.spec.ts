@@ -4,6 +4,33 @@ import {
   monthKeyWithOffset,
   sendMonthlyWatchlist,
 } from "@/lib/monthly-watchlist";
+import {
+  filterEligibleMonthlyWatchlistRecipients,
+  resolveMonthlyWatchlistPreference,
+} from "@/lib/monthly-watchlist-preference";
+
+test("Monthly Watchlist defaults on and preserves an explicit opt-out", () => {
+  expect(resolveMonthlyWatchlistPreference(undefined)).toBe(true);
+  expect(resolveMonthlyWatchlistPreference(null)).toBe(true);
+  expect(resolveMonthlyWatchlistPreference(true)).toBe(true);
+  expect(resolveMonthlyWatchlistPreference(false)).toBe(false);
+});
+
+test("Monthly Watchlist sends only to checked and unsuppressed recipients", () => {
+  const recipients = [
+    { email: "checked@example.com", user_id: "checked" },
+    { email: "unchecked@example.com", user_id: "unchecked" },
+    { email: "suppressed@example.com", user_id: "suppressed" },
+  ];
+
+  expect(
+    filterEligibleMonthlyWatchlistRecipients(
+      recipients,
+      new Set(["checked", "suppressed"]),
+      new Set(["suppressed@example.com"])
+    )
+  ).toEqual([{ email: "checked@example.com", user_id: "checked" }]);
+});
 
 test("Monthly Watchlist workflow is persisted and sends each recipient once", async () => {
   const originalFetch = global.fetch;
