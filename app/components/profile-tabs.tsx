@@ -542,7 +542,7 @@ function ProfileSidebar({
           className="flex min-h-11 shrink-0 items-center gap-3 rounded-xl border border-transparent px-4 text-sm font-bold text-slate-300 transition duration-200 hover:border-slate-700/70 hover:bg-white/5 hover:text-white lg:w-full"
         >
           <SidebarIcon name="lists" />
-          Lists
+          Watchlist
         </Link>
       </nav>
 
@@ -611,6 +611,12 @@ function TierBadge({
         borderColor: tier.accent,
         boxShadow: `0 0 22px ${tier.accent}55, 0 12px 26px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -14px 22px rgba(0,0,0,0.36)`,
       };
+  const iconSize =
+    !isMuted && tier.icon === "★"
+      ? size === "large"
+        ? "text-5xl"
+        : "text-2xl sm:text-3xl"
+      : dimensions.icon;
 
   return (
     <span
@@ -622,7 +628,7 @@ function TierBadge({
       <span className={`absolute inset-x-5 ${dimensions.shine} rounded-full bg-white/20 blur-sm`} />
       <span className="absolute bottom-0 h-1/2 w-full bg-gradient-to-t from-black/35 to-transparent" />
       <span
-        className={`relative z-10 leading-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] ${dimensions.icon}`}
+        className={`relative z-10 leading-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] ${iconSize}`}
         style={{
           color: isMuted ? "#94a3b8" : tier.accent,
         }}

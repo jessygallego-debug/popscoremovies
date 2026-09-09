@@ -331,14 +331,23 @@ test("shows the zero and progress unlock states", async ({ page }) => {
 });
 
 test("Stats labels the overview and rating streaks", async ({ page }) => {
-  await mockPopFile(page, browserRatings);
+  const proRatings = Array.from({ length: 100 }, (_, index) => {
+    const source = browserRatings[index % browserRatings.length];
+    return {
+      ...source,
+      id: `pro-rating-${index + 1}`,
+      movieId: `pro-movie-${index + 1}`,
+      movieTitle: `Pro Movie ${index + 1}`,
+    };
+  });
+  await mockPopFile(page, proRatings);
   await page.goto("/profile/movie_fan");
 
   await expect(page.getByText("Longest Streak", { exact: true })).toBeVisible();
   await expect(page.getByText("Current Streak", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Stats", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "PopScore Stats" })).toBeVisible();
-  await expect(page.getByText(/Current tier: Popcorn Rookie/)).toBeVisible();
+  await expect(page.getByText(/Current tier: PopScore Pro/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "PopFile Stats" })).toHaveCount(0);
   await expect(page.getByText("Rate Different.").first()).toBeVisible();
   await expect(page.getByText(/Watch Better/).first()).toBeVisible();
@@ -355,8 +364,29 @@ test("Stats labels the overview and rating streaks", async ({ page }) => {
     "Ratings",
     "Reviews",
     "Achievements",
-    "Lists",
+    "Watchlist",
   ]);
+  const statusCard = page
+    .getByRole("heading", { name: "PopScore Stats" })
+    .locator("xpath=ancestor::section[1]");
+  const starSizes = await statusCard.getByText("★", { exact: true }).evaluateAll((stars) =>
+    stars.map((star) => Number.parseFloat(window.getComputedStyle(star).fontSize))
+  );
+  expect(starSizes).toContain(48);
+  expect(starSizes).toContain(30);
+  mkdirSync(join(process.cwd(), "artifacts"), { recursive: true });
+  await statusCard.screenshot({
+    path: join(process.cwd(), "artifacts", "popscore-pro-stars-desktop.png"),
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileStarSizes = await statusCard.getByText("★", { exact: true }).evaluateAll((stars) =>
+    stars.map((star) => Number.parseFloat(window.getComputedStyle(star).fontSize))
+  );
+  expect(mobileStarSizes).toContain(48);
+  expect(mobileStarSizes).toContain(24);
+  await statusCard.screenshot({
+    path: join(process.cwd(), "artifacts", "popscore-pro-stars-mobile.png"),
+  });
 });
 
 test("Ratings tab hides overview panels and filters rating history", async ({ page }) => {
