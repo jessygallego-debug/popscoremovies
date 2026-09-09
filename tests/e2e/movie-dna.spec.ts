@@ -346,6 +346,17 @@ test("Stats labels the overview and rating streaks", async ({ page }) => {
   await expect(page.getByText("#1 Genre", { exact: true })).toBeVisible();
   await expect(page.getByText(/You Love/).first()).toBeVisible();
   await expect(page.getByText(/Your Movie Personality/).first()).toBeVisible();
+  const navigationLabels = await page
+    .getByRole("navigation", { name: "PopFile sections" })
+    .locator("button, a")
+    .allTextContents();
+  expect(navigationLabels.map((label) => label.trim())).toEqual([
+    "Stats",
+    "Ratings",
+    "Reviews",
+    "Achievements",
+    "Lists",
+  ]);
 });
 
 test("Ratings tab hides overview panels and filters rating history", async ({ page }) => {
@@ -469,12 +480,29 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
   page,
 }) => {
   mkdirSync(join(process.cwd(), "artifacts"), { recursive: true });
-  await mockPopFile(page, browserRatings);
+  const adventureRatings = browserRatings.map((rating) => ({
+    ...rating,
+    genre: "adventure",
+  }));
+  await mockPopFile(page, adventureRatings);
 
-  await page.setViewportSize({ width: 1440, height: 1050 });
+  await page.setViewportSize({ width: 1800, height: 1050 });
   await page.goto("/profile/movie_fan#movie-dna");
   const section = page.locator("#movie-dna");
   await expect(section).toBeVisible();
+  const favoriteGenre = section.locator("article").first().getByText("Adventure", { exact: true });
+  const getFavoriteGenreLineCount = () =>
+    favoriteGenre.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return range.getClientRects().length;
+    });
+  expect(await getFavoriteGenreLineCount()).toBe(1);
+  await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-wide-desktop.png") });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(favoriteGenre).toBeVisible();
+  expect(await getFavoriteGenreLineCount()).toBe(1);
   await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-desktop.png") });
   await page.screenshot({ fullPage: true, path: join(process.cwd(), "artifacts", "popfile-overview-desktop.png") });
 

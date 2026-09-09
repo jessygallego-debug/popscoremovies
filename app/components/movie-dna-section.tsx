@@ -142,10 +142,10 @@ function SummaryCard({
   const loveTags = getLoveTags(dna);
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-[1.15fr_.9fr_1.15fr]">
+      <div className={styles.summaryGrid}>
         <article className={`${styles.genreVisual} min-h-28 rounded-2xl border border-yellow-400/25 p-4`}>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">#1 Genre</p>
-          <p className="mt-2 break-words text-2xl font-black text-white sm:text-3xl">{favorite?.genre ?? "Still forming"}</p>
+          <p className={`${styles.favoriteGenreName} mt-2 font-black text-white`}>{favorite?.genre ?? "Still forming"}</p>
           <p className="mt-1.5 text-xs font-medium text-slate-300">
             {favorite ? `${favorite.count} fully rated movies` : "Keep rating to reveal your favorite"}
           </p>
@@ -158,7 +158,7 @@ function SummaryCard({
             {[18, 30, 46, 64].map((height) => <span key={height} className="w-2 rounded-t bg-purple-400" style={{ height }} />)}
           </span>
         </article>
-        <GenreDna className="col-span-2 md:col-span-1" dna={dna} />
+        <GenreDna className={styles.genreDnaSummary} dna={dna} />
       </div>
 
       <div className="grid gap-3 md:grid-cols-[1.2fr_.9fr]">

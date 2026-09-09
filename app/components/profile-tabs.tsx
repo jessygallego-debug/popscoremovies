@@ -526,13 +526,6 @@ function ProfileSidebar({
             {item.label}
           </button>
         ))}
-        <Link
-          href="/watchlist"
-          className="flex min-h-11 shrink-0 items-center gap-3 rounded-xl border border-transparent px-4 text-sm font-bold text-slate-300 transition duration-200 hover:border-slate-700/70 hover:bg-white/5 hover:text-white lg:w-full"
-        >
-          <SidebarIcon name="lists" />
-          Lists
-        </Link>
         {navItems.slice(3).map((item) => (
           <button
             key={item.key}
@@ -544,6 +537,13 @@ function ProfileSidebar({
             {item.label}
           </button>
         ))}
+        <Link
+          href="/watchlist"
+          className="flex min-h-11 shrink-0 items-center gap-3 rounded-xl border border-transparent px-4 text-sm font-bold text-slate-300 transition duration-200 hover:border-slate-700/70 hover:bg-white/5 hover:text-white lg:w-full"
+        >
+          <SidebarIcon name="lists" />
+          Lists
+        </Link>
       </nav>
 
       <div className="mt-3 lg:mt-4">
