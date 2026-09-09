@@ -52,11 +52,11 @@ function SiteLogo() {
   );
 }
 
-export default function SiteHeader() {
+export default function SiteHeader({ showSearch = false }: { showSearch?: boolean }) {
   return (
     <header className="relative z-[2000] flex items-center justify-between gap-5 border-b border-white/10 pb-5">
       <SiteLogo />
-      <nav className="hidden items-center gap-8 text-sm font-black text-slate-200 md:flex">
+      <nav className={`hidden items-center text-sm font-black text-slate-200 md:flex ${showSearch ? "gap-4 xl:gap-5" : "gap-8"}`}>
         {navItems.map((item) => (
           <Link
             key={item.label}
@@ -67,6 +67,21 @@ export default function SiteHeader() {
           </Link>
         ))}
       </nav>
+      {showSearch ? (
+        <form action="/" role="search" className="hidden min-w-0 max-w-md flex-1 items-center gap-2 rounded-full border border-slate-700/70 bg-[#131d2e]/85 px-4 shadow-inner shadow-black/20 xl:flex">
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 shrink-0 fill-none stroke-slate-400 stroke-2" strokeLinecap="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m16.5 16.5 4 4" />
+          </svg>
+          <input
+            type="search"
+            name="query"
+            aria-label="Search movies, people, or genres"
+            placeholder="Search movies, people, or genres..."
+            className="h-11 min-w-0 flex-1 bg-transparent text-sm font-medium text-white outline-none placeholder:text-slate-400"
+          />
+        </form>
+      ) : null}
       <div className="hidden items-center gap-3 md:flex">
         <Suspense
           fallback={

@@ -21,6 +21,7 @@ import { ratingToPercent } from "@/lib/popscore-store";
 import type { UserMovieRating } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
+import styles from "@/app/components/profile-tabs.module.css";
 
 type MovieDnaSectionProps = {
   percentile: number;
@@ -134,59 +135,52 @@ function getLoveTags(dna: MovieDnaResult) {
 
 function SummaryCard({
   dna,
-  percentile,
-  totalMoviesRated,
-  username,
 }: {
   dna: MovieDnaResult;
-  percentile: number;
-  totalMoviesRated: number;
-  username: string;
 }) {
   const favorite = insightGenre(dna);
   const loveTags = getLoveTags(dna);
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <article className="rounded-2xl bg-gradient-to-br from-yellow-400/20 to-amber-950/20 p-5 ring-1 ring-yellow-400/30">
+    <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-[1.15fr_.9fr_1.15fr]">
+        <article className={`${styles.genreVisual} min-h-36 rounded-2xl border border-yellow-400/25 p-5`}>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">#1 Genre</p>
           <p className="mt-2 text-3xl font-black text-white">{favorite?.genre ?? "Still forming"}</p>
-          <p className="mt-2 text-xs font-bold text-slate-400">
+          <p className="mt-2 text-xs font-medium text-slate-300">
             {favorite ? `${favorite.count} fully rated movies` : "Keep rating to reveal your favorite"}
           </p>
         </article>
-        <article className="rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-950/20 p-5 ring-1 ring-purple-400/30">
+        <article className="relative min-h-36 overflow-hidden rounded-2xl border border-purple-400/25 bg-gradient-to-br from-purple-500/25 to-purple-950/25 p-5">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-purple-300">Average PopScore</p>
           <p className="mt-2 text-4xl font-black text-white">{Math.round(dna.averagePopScore)}%</p>
-          <p className="mt-1 text-xs font-bold text-slate-400">Across {dna.eligibleRatings.length} full ratings</p>
+          <p className="mt-1 text-xs font-medium text-slate-300">Across {dna.eligibleRatings.length} full ratings</p>
+          <span aria-hidden="true" className="absolute bottom-5 right-5 flex items-end gap-1 opacity-35">
+            {[18, 30, 46, 64].map((height) => <span key={height} className="w-2 rounded-t bg-purple-400" style={{ height }} />)}
+          </span>
         </article>
+        <GenreDna dna={dna} />
       </div>
 
-      <article className="rounded-2xl bg-purple-950/25 p-5 ring-1 ring-purple-400/20 sm:p-6">
-        <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
-          <div className="min-w-0 sm:flex-1">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-purple-300">Your Movie Personality</p>
-            <h3 className="mt-2 break-words text-2xl font-black text-white sm:text-3xl">{dna.personality}</h3>
-            <p className="mt-2 max-w-xl text-sm font-bold leading-6 text-slate-300">{dna.personalityDescription}</p>
-          </div>
-          <div className="w-full sm:w-auto">
-            <ShareMovieDnaButton
-              dna={dna}
-              percentile={percentile}
-              totalMoviesRated={totalMoviesRated}
-              username={username}
-            />
-          </div>
-        </div>
-        <div className="mt-5 border-t border-purple-400/15 pt-4">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">You Love</p>
-          <div className="mt-3 flex flex-wrap gap-2">
+      <div className="grid gap-3 md:grid-cols-[1.2fr_.9fr]">
+        <article className="rounded-2xl border border-slate-700/70 bg-[#0b1424]/75 p-4">
+          <p className="flex items-center gap-2 text-sm font-black text-white"><span aria-hidden="true">❤️</span> You Love</p>
+          <div className="mt-4 flex flex-wrap gap-2">
             {loveTags.map((tag) => (
-              <span key={tag} className="rounded-full bg-yellow-400/10 px-3 py-1.5 text-xs font-black text-yellow-200 ring-1 ring-yellow-400/25">{tag}</span>
+              <span key={tag} className="rounded-full border border-slate-600/60 bg-slate-800/65 px-3 py-1.5 text-xs font-medium text-slate-100">{tag}</span>
             ))}
           </div>
-        </div>
-      </article>
+        </article>
+        <article className="rounded-2xl border border-purple-400/25 bg-purple-950/20 p-4">
+          <p className="flex items-center gap-2 text-sm font-black text-white"><span aria-hidden="true">🧠</span> Your Movie Personality</p>
+          <div className="mt-3 flex items-start gap-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-purple-400/40 bg-purple-500/15 text-2xl shadow-[0_0_20px_rgba(168,85,247,0.18)]" aria-hidden="true">🧠</span>
+            <div className="min-w-0">
+              <h3 className="text-lg font-black text-yellow-300">{dna.personality}</h3>
+              <p className="mt-1 text-xs font-medium leading-5 text-slate-300">{dna.personalityDescription}</p>
+            </div>
+          </div>
+        </article>
+      </div>
     </div>
   );
 }
@@ -374,31 +368,41 @@ function GenreDna({ dna }: { dna: MovieDnaResult }) {
   const selectedMovies = selectedGenre
     ? getMovieDnaRatingsForGenre(dna.eligibleRatings, selectedGenre.genre)
     : [];
+  const topGenreNames = new Set(dna.topGenres.map((genre) => genre.genre));
+  const otherFavorites = [...dna.genreStats]
+    .filter((genre) => !topGenreNames.has(genre.genre))
+    .sort((first, second) => second.count - first.count || second.average - first.average)
+    .slice(0, 3);
 
   return (
-    <div className={panelClass("p-5 sm:p-6")}>
-      <h3 className="text-lg font-black text-white">Your Top Genres</h3>
+    <div className="min-h-36 rounded-2xl border border-slate-700/70 bg-[#0b1424]/75 p-4">
+      <h3 className="text-xs font-black uppercase tracking-[0.16em] text-sky-400">Top Genres</h3>
       {dna.topGenres.length ? (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {dna.topGenres.map((genre) => (
-            <article key={genre.genre} className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/80 p-1.5 pl-4">
-                <h4 className="text-sm font-black text-yellow-200">{genre.genre}</h4>
+            <article key={genre.genre} className="flex items-center gap-1 rounded-full border border-slate-700/70 bg-slate-900/80 p-1 pl-3">
+                <h4 className="text-xs font-black text-slate-100">{genre.genre}</h4>
                 <button
                   type="button"
                   aria-label={`Show ${genre.count} rated ${genre.genre} ${genre.count === 1 ? "movie" : "movies"}`}
                   onClick={() => setSelectedGenre(genre)}
-                  className="min-h-8 rounded-full bg-purple-500/15 px-3 text-xs font-black text-purple-200 transition hover:bg-yellow-400/15 hover:text-yellow-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
+                  className="min-h-7 rounded-full bg-purple-500/20 px-2 text-[10px] font-black text-purple-200 transition duration-200 hover:bg-yellow-400/15 hover:text-yellow-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
                 >
-                  {genre.count} {genre.count === 1 ? "movie" : "movies"}
+                  {genre.count}
                 </button>
             </article>
           ))}
         </div>
       ) : (
-        <p className="mt-4 text-sm font-bold leading-6 text-slate-400">
+        <p className="mt-3 text-xs font-medium leading-5 text-slate-400">
           Rate at least two movies in a genre to reveal your top genres.
         </p>
       )}
+      {otherFavorites.length ? (
+        <p className="mt-3 text-[11px] font-medium text-slate-400">
+          Other favorites: {otherFavorites.map((genre) => genre.genre).join(" · ")}
+        </p>
+      ) : null}
       {selectedGenre ? (
         <GenreMoviesDialog
           genre={selectedGenre.genre}
@@ -559,12 +563,25 @@ export default function MovieDnaSection({ percentile, ratings, totalMoviesRated,
   return (
     <section
       id="movie-dna"
-      className="w-full min-w-0 scroll-mt-6 overflow-hidden rounded-3xl border border-purple-500/25 bg-slate-950/85 p-4 shadow-xl shadow-purple-950/15 sm:p-6"
+      className={`${styles.panel} ${styles.movieDna} w-full min-w-0 scroll-mt-6 overflow-hidden p-4 sm:p-5`}
       aria-labelledby="movie-dna-heading"
     >
-      <div>
-        <h2 id="movie-dna-heading" className="mt-1 text-2xl font-black text-white sm:text-3xl">Your Movie DNA</h2>
-        <p className="mt-1 text-sm font-bold text-slate-400">A look at what makes you, you.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span aria-hidden="true" className="text-3xl text-purple-400">🧬</span>
+          <div>
+            <h2 id="movie-dna-heading" className="text-2xl font-black text-white sm:text-3xl">Your Movie DNA</h2>
+            <p className="mt-1 text-sm font-medium text-slate-400">A look at what makes you, you.</p>
+          </div>
+        </div>
+        {count >= 5 ? (
+          <ShareMovieDnaButton
+            dna={dna}
+            percentile={percentile}
+            totalMoviesRated={totalMoviesRated}
+            username={username}
+          />
+        ) : null}
       </div>
 
       <div className="mt-5">
@@ -572,10 +589,17 @@ export default function MovieDnaSection({ percentile, ratings, totalMoviesRated,
           <UnlockCard count={count} />
         ) : (
           <div className="space-y-4 sm:space-y-5">
-            <SummaryCard dna={dna} percentile={percentile} totalMoviesRated={totalMoviesRated} username={username} />
-            <GenreDna dna={dna} />
-            <CoreBreakdown dna={dna} />
-            <Rankings dna={dna} />
+            <SummaryCard dna={dna} />
+            <details className="group rounded-2xl border border-slate-700/60 bg-[#081020]/65">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-black text-slate-200 transition duration-200 hover:text-yellow-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300">
+                Explore your full Movie DNA
+                <span aria-hidden="true" className="text-lg text-purple-300 transition duration-200 group-open:rotate-180 motion-reduce:transform-none">⌄</span>
+              </summary>
+              <div className="space-y-4 border-t border-slate-700/60 p-3 sm:p-4">
+                <CoreBreakdown dna={dna} />
+                <Rankings dna={dna} />
+              </div>
+            </details>
           </div>
         )}
       </div>

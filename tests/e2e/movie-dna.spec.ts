@@ -339,8 +339,8 @@ test("Overview labels longest and current rating streaks", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "PopFile Stats" })).toHaveCount(0);
   await expect(page.getByText("A look at what makes you, you.")).toBeVisible();
   await expect(page.getByText("#1 Genre", { exact: true })).toBeVisible();
-  await expect(page.getByText("You Love", { exact: true })).toBeVisible();
-  await expect(page.getByText("Your Movie Personality", { exact: true })).toBeVisible();
+  await expect(page.getByText(/You Love/).first()).toBeVisible();
+  await expect(page.getByText(/Your Movie Personality/).first()).toBeVisible();
 });
 
 test("Ratings tab hides overview panels and filters rating history", async ({ page }) => {
@@ -375,8 +375,9 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await page.goto("/profile/movie_fan#movie-dna");
   await expect(page.getByRole("heading", { name: "Your Movie DNA" })).toBeVisible();
   await expect(page.getByText("Story Seeker", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Top Genres" })).toBeVisible();
+  await page.locator("#movie-dna summary").click();
   await expect(page.getByRole("heading", { name: "How You Rate Movies" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Your Top Genres" })).toBeVisible();
 
   const ratingBreakdown = page
     .getByRole("heading", { name: "How You Rate Movies" })
@@ -449,12 +450,31 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
   const section = page.locator("#movie-dna");
   await expect(section).toBeVisible();
   await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-desktop.png") });
+  await page.screenshot({ fullPage: true, path: join(process.cwd(), "artifacts", "popfile-overview-desktop.png") });
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
   await expect(section).toBeVisible();
+  const mobileLayout = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    offenders: Array.from(document.querySelectorAll<HTMLElement>("body *"))
+      .map((element) => ({
+        className: typeof element.className === "string" ? element.className : "",
+        right: Math.round(element.getBoundingClientRect().right),
+        tagName: element.tagName,
+        width: Math.round(element.getBoundingClientRect().width),
+      }))
+      .filter((element) => element.right > document.documentElement.clientWidth + 1)
+      .slice(0, 8),
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(mobileLayout, JSON.stringify(mobileLayout.offenders)).toMatchObject({
+    clientWidth: mobileLayout.scrollWidth,
+  });
+  await page.locator("#movie-dna summary").click();
   await expect(page.getByRole("tab", { name: "Rewatch Favorites" })).toBeVisible();
   await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-mobile.png") });
+  await page.screenshot({ fullPage: true, path: join(process.cwd(), "artifacts", "popfile-overview-mobile.png") });
 });
 
 });

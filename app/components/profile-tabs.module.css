@@ -1,0 +1,121 @@
+.panel {
+  background: linear-gradient(145deg, rgba(17, 24, 39, 0.97), rgba(8, 16, 32, 0.98));
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.sidebar {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08), transparent 36%),
+    linear-gradient(180deg, rgba(11, 20, 36, 0.98), rgba(8, 16, 32, 0.98));
+}
+
+.statusHero {
+  isolation: isolate;
+  background:
+    linear-gradient(90deg, rgba(8, 16, 32, 0.98) 0%, rgba(8, 16, 32, 0.9) 58%, rgba(8, 16, 32, 0.66) 100%),
+    radial-gradient(ellipse at 75% 110%, rgba(124, 58, 237, 0.34), transparent 48%),
+    linear-gradient(145deg, #111827, #081020);
+}
+
+.statusHero::before {
+  position: absolute;
+  inset: auto 0 0 42%;
+  z-index: -2;
+  height: 48%;
+  content: "";
+  opacity: 0.28;
+  background:
+    radial-gradient(ellipse at 12% 100%, #7c3aed 0 11%, transparent 12%),
+    radial-gradient(ellipse at 35% 100%, #7c3aed 0 12%, transparent 13%),
+    radial-gradient(ellipse at 58% 100%, #7c3aed 0 12%, transparent 13%),
+    radial-gradient(ellipse at 81% 100%, #7c3aed 0 11%, transparent 12%);
+  filter: blur(5px);
+}
+
+.filmReel {
+  position: absolute;
+  top: 14%;
+  right: -4%;
+  z-index: -1;
+  width: 230px;
+  aspect-ratio: 1;
+  border: 12px solid rgba(251, 191, 36, 0.22);
+  border-radius: 999px;
+  opacity: 0.55;
+  transform: rotate(-16deg);
+  background:
+    radial-gradient(circle at 50% 22%, rgba(8, 16, 32, 0.9) 0 13%, transparent 14%),
+    radial-gradient(circle at 76% 42%, rgba(8, 16, 32, 0.9) 0 13%, transparent 14%),
+    radial-gradient(circle at 66% 72%, rgba(8, 16, 32, 0.9) 0 13%, transparent 14%),
+    radial-gradient(circle at 34% 72%, rgba(8, 16, 32, 0.9) 0 13%, transparent 14%),
+    radial-gradient(circle at 24% 42%, rgba(8, 16, 32, 0.9) 0 13%, transparent 14%),
+    radial-gradient(circle, rgba(251, 191, 36, 0.42) 0 12%, rgba(100, 116, 139, 0.28) 13% 55%, rgba(15, 23, 42, 0.8) 56%);
+  box-shadow: 0 0 60px rgba(236, 72, 153, 0.2);
+}
+
+.movieDna {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(124, 58, 237, 0.2), transparent 34%),
+    linear-gradient(145deg, rgba(17, 24, 39, 0.98), rgba(8, 16, 32, 0.98));
+}
+
+.genreVisual {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(24, 18, 8, 0.98), rgba(24, 18, 8, 0.62)),
+    radial-gradient(ellipse at 80% 110%, rgba(250, 204, 21, 0.35), transparent 42%),
+    linear-gradient(145deg, #30220f, #111827);
+}
+
+.genreVisual::after {
+  position: absolute;
+  right: -5%;
+  bottom: -22%;
+  z-index: -1;
+  width: 64%;
+  height: 72%;
+  content: "";
+  opacity: 0.55;
+  background: linear-gradient(145deg, transparent 8%, #92400e 9% 30%, transparent 31%),
+    linear-gradient(215deg, transparent 12%, #78350f 13% 42%, transparent 43%);
+  clip-path: polygon(0 100%, 15% 52%, 29% 70%, 49% 18%, 66% 58%, 78% 36%, 100% 100%);
+}
+
+.brandBanner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(75, 16, 94, 0.92), rgba(8, 16, 32, 0.86) 62%, rgba(24, 18, 8, 0.94)),
+    radial-gradient(ellipse at 50% 110%, rgba(124, 58, 237, 0.7), transparent 55%);
+}
+
+.brandBanner::before {
+  position: absolute;
+  inset: 52% 0 auto;
+  z-index: -1;
+  height: 70%;
+  content: "";
+  opacity: 0.25;
+  background: repeating-radial-gradient(ellipse at 50% 100%, #a855f7 0 12px, transparent 13px 52px);
+  filter: blur(3px);
+}
+
+@media (max-width: 639px) {
+  .filmReel {
+    top: 8%;
+    right: -28%;
+    width: 190px;
+    opacity: 0.34;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel * {
+    scroll-behavior: auto;
+  }
+}

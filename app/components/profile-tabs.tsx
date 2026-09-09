@@ -56,6 +56,7 @@ import {
   getLongestRatingStreak,
 } from "@/lib/rating-streaks";
 import { posterUrl } from "@/lib/tmdb";
+import styles from "@/app/components/profile-tabs.module.css";
 
 type TabKey =
   | "stats"
@@ -427,7 +428,22 @@ function getCurrentTier(totalMoviesRated: number, topPercentile: number) {
 }
 
 function profilePanelClass(className = "") {
-  return `rounded-3xl border border-slate-800/90 bg-slate-950/90 shadow-xl shadow-black/25 ${className}`;
+  return `${styles.panel} ${className}`;
+}
+
+function SidebarIcon({ name }: { name: "achievements" | "lists" | "overview" | "ratings" | "reviews" }) {
+  const paths = {
+    overview: <path d="M3 11.5 12 4l9 7.5M5.5 10v10h13V10M9.5 20v-6h5v6" />,
+    ratings: <path d="M5 20V10m4 10V4m4 16v-7m4 7V7m4 13H3" />,
+    reviews: <path d="M4 5h16v11H9l-5 4V5Zm4 4h8m-8 3h6" />,
+    lists: <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />,
+    achievements: <path d="M8 4h8v5a4 4 0 0 1-8 0V4Zm4 9v4m-4 3h8M6 6H3v2a4 4 0 0 0 5 4m10-6h3v2a4 4 0 0 1-5 4" />,
+  };
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 shrink-0 fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round">
+      {paths[name]}
+    </svg>
+  );
 }
 
 function ProfileSidebar({
@@ -446,37 +462,36 @@ function ProfileSidebar({
   profile: ProfileRecord;
 }) {
   const avatar = avatarForKey(profile.avatar_key);
-  const navItems: { key: TabKey; label: string }[] = [
-    { key: "stats", label: "Overview" },
-    { key: "ratings", label: "Ratings" },
-    { key: "reviews", label: "Reviews" },
-    { key: "achievements", label: "Achievements" },
+  const navItems: { icon: "achievements" | "overview" | "ratings" | "reviews"; key: TabKey; label: string }[] = [
+    { key: "stats", label: "Overview", icon: "overview" },
+    { key: "ratings", label: "Ratings", icon: "ratings" },
+    { key: "reviews", label: "Reviews", icon: "reviews" },
+    { key: "achievements", label: "Achievements", icon: "achievements" },
   ];
 
   return (
-    <aside className={profilePanelClass("p-4 sm:p-5 xl:sticky xl:top-6 xl:self-start")}>
-      <div className="flex flex-col items-center text-center">
-        <span className="flex h-20 w-20 items-center justify-center rounded-full border border-yellow-400/50 bg-yellow-400/10 text-4xl shadow-lg shadow-yellow-500/10 sm:h-28 sm:w-28 sm:text-6xl">
-          <EmojiIcon emoji={avatar.icon} label={avatar.label} size={64} />
+    <aside className={profilePanelClass(`${styles.sidebar} w-full min-w-0 max-w-full overflow-hidden p-4 lg:sticky lg:top-5 lg:self-start lg:p-5 xl:flex xl:min-h-[calc(100vh-7.5rem)] xl:flex-col`)}>
+      <div className="flex items-center gap-4 text-left lg:flex-col lg:text-center">
+        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-yellow-400/60 bg-yellow-400/10 shadow-[0_0_30px_rgba(250,204,21,0.12)] lg:h-28 lg:w-28">
+          <EmojiIcon emoji={avatar.icon} label={avatar.label} size={60} />
         </span>
-        <h1 className="mt-3 break-all text-2xl font-black text-white sm:mt-4 sm:text-3xl">
-          <ProfileUsernameLink username={profile.username}>
-            @{profile.username}
-          </ProfileUsernameLink>
-        </h1>
-        {profile.favorite_genre ? (
-          <span className="mt-2 rounded-full bg-yellow-400 px-3 py-1 text-xs font-black text-black sm:mt-3 sm:px-4 sm:py-1.5 sm:text-sm">
-            {genreLabelForKey(profile.favorite_genre)}
-          </span>
-        ) : null}
-        <p className="mt-2 text-xs font-bold text-slate-400 sm:mt-3 sm:text-sm">
-          Member since {formatDate(profile.created_at)}
-        </p>
-        <div className="mt-4 grid w-full grid-cols-2 gap-2 rounded-2xl border border-slate-800 bg-black/20 p-2">
+        <div className="min-w-0 flex-1 lg:w-full">
+          <h1 className="break-all text-xl font-black text-white lg:mt-4 lg:text-2xl">
+            <ProfileUsernameLink username={profile.username}>@{profile.username}</ProfileUsernameLink>
+          </h1>
+          {profile.favorite_genre ? (
+            <span className="mt-2 inline-flex rounded-full bg-[#ffd23f] px-3 py-1 text-xs font-black text-[#081020]">
+              {genreLabelForKey(profile.favorite_genre)}
+            </span>
+          ) : null}
+          <p className="mt-2 text-xs font-medium text-slate-400">Member since {formatDate(profile.created_at)}</p>
+        </div>
+      </div>
+      <div className="mt-4 grid w-full grid-cols-2 divide-x divide-slate-700/70 border-y border-slate-700/45 py-3">
           <button
             type="button"
             onClick={() => onOpenFollowList("followers")}
-            className="rounded-xl p-2 text-center transition hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
+            className="rounded-xl px-2 text-center transition duration-200 hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
           >
             <p className="text-lg font-black text-white">
               {followSummary?.followersCount ?? 0}
@@ -486,44 +501,56 @@ function ProfileSidebar({
           <button
             type="button"
             onClick={() => onOpenFollowList("following")}
-            className="rounded-xl p-2 text-center transition hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
+            className="rounded-xl px-2 text-center transition duration-200 hover:bg-yellow-400/10 focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
           >
             <p className="text-lg font-black text-white">
               {followSummary?.followingCount ?? 0}
             </p>
             <p className="text-[11px] font-bold text-slate-500">Following</p>
           </button>
-        </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-800 pt-5 sm:mt-6 sm:block sm:space-y-1.5 sm:pt-6">
-        {navItems.map((item) => (
+      <nav aria-label="PopFile sections" className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1.5 lg:overflow-visible">
+        {navItems.slice(0, 3).map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={() => onTabChange(item.key)}
-            className={`flex w-full items-center justify-center rounded-2xl border px-4 py-2.5 text-center text-sm font-black transition sm:justify-start sm:px-5 sm:py-3 sm:text-left ${
+            className={`flex min-h-11 shrink-0 items-center gap-3 rounded-xl border px-4 text-sm font-bold transition duration-200 lg:w-full ${
               activeTab === item.key
-                ? "border-yellow-400/50 bg-yellow-400/10 text-yellow-300"
-                : "border-transparent text-slate-300 hover:border-slate-700 hover:bg-white/5 hover:text-white"
+                ? "border-yellow-400/55 bg-gradient-to-r from-yellow-400/20 to-yellow-400/5 text-yellow-300 shadow-[0_0_20px_rgba(250,204,21,0.1)]"
+                : "border-transparent text-slate-300 hover:border-slate-700/70 hover:bg-white/5 hover:text-white"
             }`}
           >
+            <SidebarIcon name={item.icon} />
             {item.label}
           </button>
         ))}
         <Link
           href="/watchlist"
-          className="flex w-full items-center justify-center rounded-2xl border border-transparent px-4 py-2.5 text-center text-sm font-black text-slate-300 transition hover:border-slate-700 hover:bg-white/5 hover:text-white sm:justify-start sm:px-5 sm:py-3 sm:text-left"
+          className="flex min-h-11 shrink-0 items-center gap-3 rounded-xl border border-transparent px-4 text-sm font-bold text-slate-300 transition duration-200 hover:border-slate-700/70 hover:bg-white/5 hover:text-white lg:w-full"
         >
+          <SidebarIcon name="lists" />
           Lists
         </Link>
-      </div>
+        {navItems.slice(3).map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => onTabChange(item.key)}
+            className={`flex min-h-11 shrink-0 items-center gap-3 rounded-xl border px-4 text-sm font-bold transition duration-200 lg:w-full ${activeTab === item.key ? "border-yellow-400/55 bg-gradient-to-r from-yellow-400/20 to-yellow-400/5 text-yellow-300" : "border-transparent text-slate-300 hover:border-slate-700/70 hover:bg-white/5 hover:text-white"}`}
+          >
+            <SidebarIcon name={item.icon} />
+            {item.label}
+          </button>
+        ))}
+      </nav>
 
-      <div className="mt-4 sm:mt-6">
+      <div className="mt-4 lg:mt-6">
         {followSummary?.isOwnProfile ? (
           <Link
             href="/profile/edit"
-            className="flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-black/30 px-4 py-2.5 text-sm font-black text-slate-200 transition hover:border-yellow-400 hover:text-yellow-300 sm:py-3"
+            className="flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-600/80 bg-slate-950/45 px-4 text-sm font-black text-slate-100 transition duration-200 hover:-translate-y-0.5 hover:border-yellow-400 hover:text-yellow-300 motion-reduce:transform-none"
           >
             Edit PopFile
           </Link>
@@ -539,7 +566,10 @@ function ProfileSidebar({
           />
         )}
       </div>
-
+      <blockquote className="mt-auto hidden pt-24 text-lg font-medium leading-7 text-slate-300 xl:block">
+        “Good movies<br />make life better.”
+        <span className="mt-5 block h-1 w-12 rounded-full bg-yellow-400" />
+      </blockquote>
     </aside>
   );
 }
@@ -632,73 +662,66 @@ function PopScoreStatusCard({
     ? Math.max(0, progressTarget - summary.totalMoviesRated)
     : 0;
   return (
-    <section className={profilePanelClass("overflow-hidden p-4 sm:p-6")}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-black text-white sm:text-xl">Your PopScore Status</h2>
-          <p className="mt-1 text-xs font-bold text-slate-400 sm:text-sm">
-            {tier.description}
-          </p>
-        </div>
-        <span className="rounded-full border border-slate-700 px-3 py-1 text-xs font-black text-slate-300">
-          All-time
-        </span>
-      </div>
+    <section className={profilePanelClass(`${styles.statusHero} relative overflow-hidden p-4 sm:p-6`)}>
+      <span className={styles.filmReel} aria-hidden="true" />
+      <span className="absolute right-4 top-4 z-10 rounded-full border border-slate-600/60 bg-slate-950/60 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm sm:right-6 sm:top-5">
+        All-time
+      </span>
 
-      <div className="mt-5 grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+      <div className="relative z-10 grid gap-4 pr-16 sm:grid-cols-[96px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:pr-24">
         <TierBadge tier={tier} />
         <div className="min-w-0">
-          <h3 className="text-2xl font-black sm:text-3xl" style={{ color: tier.accent }}>
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-300">Your PopScore Status</h2>
+          <h3 className="mt-1 text-3xl font-black leading-none sm:text-5xl" style={{ color: "#ffd23f" }}>
             {tier.name}
           </h3>
-          <p className="mt-2 text-xs font-bold text-slate-300 sm:text-sm">
-            You&apos;re in the top{" "}
-            <span className="text-white">{percentile.topPercentile}%</span> of all
-            PopScore raters.
+          <p className="mt-3 text-sm font-medium text-slate-200 sm:text-base">
+            You&apos;re in the top <span className="font-black text-white">{percentile.topPercentile}%</span> of all PopScore raters.
           </p>
-
-          <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-slate-800 pt-4 sm:grid-cols-4">
-            {[
-              ["Movies Rated", summary.totalMoviesRated],
-              ["Percentile", `Top ${percentile.topPercentile}%`],
-              ["Overall Rank", `#${percentile.rank}`],
-              ["Current Streak", `${summary.currentRatingStreakDays} days`],
-            ].map(([label, value]) => (
-              <div key={label} className="min-w-0">
-                <p className="break-words text-lg font-black text-white sm:text-xl">{value}</p>
-                <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-slate-500">{label}</p>
-              </div>
-            ))}
-          </div>
+          <p className="mt-1 text-xs text-slate-400">{tier.description}</p>
         </div>
       </div>
 
-      <div className="mt-4 sm:mt-5">
+      <div className="relative z-10 mt-5 grid grid-cols-2 gap-y-4 border-y border-slate-700/45 py-4 sm:grid-cols-4">
+        {[
+          ["Movies Rated", summary.totalMoviesRated],
+          ["Rating Percentile", `Top ${percentile.topPercentile}%`],
+          ["Overall Rank", `#${percentile.rank}`],
+          ["Current Streak", `${summary.currentRatingStreakDays} ${summary.currentRatingStreakDays === 1 ? "day" : "days"}`],
+        ].map(([label, value], index) => (
+          <div key={label} className={`min-w-0 px-3 first:pl-0 sm:px-5 ${index > 0 ? "sm:border-l sm:border-slate-700/55" : ""}`}>
+            <p className="break-words text-xl font-black text-white sm:text-2xl">{value}</p>
+            <p className="mt-0.5 text-xs font-medium text-slate-400">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="relative z-10 mt-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-black text-slate-200 sm:text-base">
+          <p className="text-sm font-medium text-slate-200">
             {nextTier
               ? `${ratingsRemaining} more ${ratingsRemaining === 1 ? "rating" : "ratings"} until ${nextTier.name}`
               : "Top tier reached"}
           </p>
-          <p className="text-xs font-bold text-slate-400 sm:text-sm">
+          <p className="text-xs font-bold text-slate-300 sm:text-sm">
             {nextTier
               ? `${summary.totalMoviesRated} / ${progressTarget}`
               : "You reached the highest tier"}
           </p>
         </div>
         <div className="mt-3 flex items-center gap-3">
-          <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-800">
+          <div className="h-3 flex-1 overflow-hidden rounded-full border border-white/5 bg-slate-800/90 p-0.5">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-yellow-300 via-purple-500 to-blue-500"
+              className="h-full rounded-full bg-gradient-to-r from-yellow-300 via-pink-500 to-blue-500 shadow-[0_0_14px_rgba(59,130,246,0.45)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-4 gap-2 sm:mt-6 sm:grid-cols-4 sm:gap-3 xl:grid-cols-7">
+      <div className="relative z-10 -mx-1 mt-5 flex gap-3 overflow-x-auto px-1 pb-2 sm:justify-between sm:gap-2">
         {POPSCORE_TIERS.map((item, index) => (
-          <div key={item.id} className="flex flex-col items-center text-center">
+          <div key={item.id} className="flex w-[82px] shrink-0 flex-col items-center text-center sm:w-auto sm:min-w-0 sm:flex-1">
             <TierBadge
               tier={item}
               size="small"
@@ -972,14 +995,14 @@ function RecentActivityCard({
       </div>
 
       {items.length > 0 ? (
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:block sm:divide-y sm:divide-slate-800">
+        <div className="mt-3 divide-y divide-slate-800/80 sm:mt-4">
           {items.map((rating) => {
             const isFullRating = hasPopScoreRating(rating);
 
             return (
               <article
                 key={rating.id}
-                className="grid grid-cols-[52px_minmax(0,1fr)] gap-2 rounded-2xl border border-slate-800 bg-black/25 p-2 sm:grid-cols-[52px_minmax(0,1fr)_auto] sm:gap-4 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:py-4"
+                className="grid grid-cols-[52px_minmax(0,1fr)_auto] gap-3 py-3"
               >
                 <MoviePoster
                   movieId={rating.movieId}
@@ -988,11 +1011,11 @@ function RecentActivityCard({
                   size="small"
                 />
                 <div className="min-w-0">
-                  <p className="line-clamp-2 text-[11px] font-black leading-tight text-white sm:text-base">
+                  <p className="line-clamp-2 text-sm font-black leading-tight text-white">
                     {isFullRating ? "Rated" : "Reacted to"} {rating.movieTitle}
                   </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-1 sm:mt-2 sm:gap-2">
-                    <span className="rounded-full bg-yellow-400/10 px-1.5 py-0.5 text-[10px] font-black text-yellow-300 sm:px-2.5 sm:py-1 sm:text-sm">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-yellow-400/10 px-2 py-0.5 text-[11px] font-black text-yellow-300">
                       {isFullRating ? `${rating.popscore}%` : "Reaction"}
                     </span>
                     {rating.quick_reaction ? (
@@ -1000,7 +1023,7 @@ function RecentActivityCard({
                     ) : null}
                   </div>
                 </div>
-                <p className="col-start-2 text-[10px] font-bold text-slate-500 sm:col-start-auto sm:pt-1 sm:text-right sm:text-xs">
+                <p className="pt-0.5 text-right text-[10px] font-medium text-slate-500">
                   {formatDate(rating.updated_at)}
                 </p>
               </article>
@@ -1175,14 +1198,32 @@ function MomentumCard({ summary }: { summary: ProfileStatSummary }) {
     <section className={profilePanelClass("p-4 sm:p-5")}>
       <h2 className="text-lg font-black text-white sm:text-xl">PopFile Momentum</h2>
       <div className="mt-4 grid grid-cols-2 divide-x divide-slate-800">
-        <div className="pr-4">
-          <p className="text-3xl font-black text-yellow-300">{summary.ratingStreakDays}</p>
-          <p className="mt-1 text-xs font-bold text-slate-400">Longest Streak</p>
+        <div className="flex items-center gap-3 pr-4">
+          <EmojiIcon emoji="🔥" label="Rating streak" size={28} />
+          <div>
+            <p className="text-3xl font-black text-yellow-300">{summary.ratingStreakDays}</p>
+            <p className="mt-1 text-xs font-medium text-slate-400">Longest Streak</p>
+          </div>
         </div>
         <div className="pl-4">
           <p className="text-3xl font-black text-purple-300">{summary.currentRatingStreakDays}</p>
-          <p className="mt-1 text-xs font-bold text-slate-400">Current Streak</p>
+          <p className="mt-1 text-xs font-medium text-slate-400">Current Streak</p>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function CinematicBanner({ className = "" }: { className?: string }) {
+  return (
+    <section className={`${styles.panel} ${styles.brandBanner} flex min-h-24 items-center justify-between gap-5 px-5 py-4 sm:px-7 ${className}`} aria-label="PopScore Movies">
+      <p className="text-lg font-medium leading-7 text-purple-100 sm:text-2xl">
+        <span aria-hidden="true" className="mr-2 text-3xl font-black text-purple-400">“</span>
+        Different perspectives.<br />A better way to watch.
+      </p>
+      <div className="shrink-0 text-right">
+        <p className="text-xl font-black tracking-tight text-white sm:text-3xl">POP<span className="text-yellow-400">SCORE</span></p>
+        <p className="text-[8px] font-black uppercase tracking-[0.38em] text-slate-300 sm:text-[10px]">Movies</p>
       </div>
     </section>
   );
@@ -1744,12 +1785,15 @@ export default function ProfileTabs({ username }: { username: string }) {
           tier={currentTier}
         />
         {activeTab === "stats" ? (
-          <MovieDnaSection
-            percentile={percentile.topPercentile}
-            ratings={ratings}
-            totalMoviesRated={summary.totalMoviesRated}
-            username={profile.username}
-          />
+          <>
+            <MovieDnaSection
+              percentile={percentile.topPercentile}
+              ratings={ratings}
+              totalMoviesRated={summary.totalMoviesRated}
+              username={profile.username}
+            />
+            <CinematicBanner className="hidden xl:flex" />
+          </>
         ) : null}
 
         {activeTab === "achievements" ? (
@@ -1785,6 +1829,10 @@ export default function ProfileTabs({ username }: { username: string }) {
             onViewAll={() => setActiveTab("activity")}
           />
         </aside>
+      ) : null}
+
+      {activeTab === "stats" ? (
+        <CinematicBanner className="lg:col-start-2 xl:hidden" />
       ) : null}
 
       {followListMode ? (
