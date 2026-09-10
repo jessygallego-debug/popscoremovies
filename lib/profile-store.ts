@@ -36,6 +36,7 @@ export type ProfileRecord = {
   email?: string | null;
   email_achievement_notifications?: boolean | null;
   email_monthly_watchlist?: boolean | null;
+  email_yearly_recap?: boolean | null;
   username: string;
   avatar_key: string;
   favorite_genre: string | null;
@@ -906,6 +907,7 @@ export async function upsertProfile(profile: {
   username: string;
   avatarKey: string;
   emailMonthlyWatchlist: boolean;
+  emailYearlyRecap: boolean;
   favoriteGenre: string;
 }) {
   const currentUser = await getCurrentUser();
@@ -933,6 +935,7 @@ export async function upsertProfile(profile: {
   const profilePayload = {
     avatar_key: profile.avatarKey,
     email_monthly_watchlist: profile.emailMonthlyWatchlist,
+    email_yearly_recap: profile.emailYearlyRecap,
     favorite_genre: favoriteGenre,
     user_id: userId,
     username,
@@ -952,16 +955,22 @@ export async function upsertProfile(profile: {
     rows = await saveProfile(profilePayload);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const monthlyPreferenceColumnIsMissing =
-      message.includes("email_monthly_watchlist") &&
+    const emailPreferenceColumnIsMissing =
+      (message.includes("email_monthly_watchlist") ||
+        message.includes("email_yearly_recap")) &&
       /(column|schema cache|PGRST204|42703)/i.test(message);
 
-    if (!monthlyPreferenceColumnIsMissing) {
+    if (!emailPreferenceColumnIsMissing) {
       throw error;
     }
 
     const legacyProfilePayload: Record<string, unknown> = { ...profilePayload };
-    delete legacyProfilePayload.email_monthly_watchlist;
+    if (message.includes("email_monthly_watchlist")) {
+      delete legacyProfilePayload.email_monthly_watchlist;
+    }
+    if (message.includes("email_yearly_recap")) {
+      delete legacyProfilePayload.email_yearly_recap;
+    }
     rows = await saveProfile(legacyProfilePayload);
   }
 

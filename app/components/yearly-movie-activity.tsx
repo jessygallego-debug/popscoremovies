@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import ShareMovieActivityButton from "@/app/components/share-movie-activity-button";
 import WatchDateEditor from "@/app/components/watch-date-editor";
 import {
   getWatchActivityYears,
@@ -58,16 +60,24 @@ function ActivityMetric({ label, value }: { label: string; value: string | numbe
 export default function YearlyMovieActivity({
   isOwnProfile,
   ratings,
+  username,
   watches,
 }: {
   isOwnProfile: boolean;
   ratings: UserMovieRating[];
+  username: string;
   watches: UserMovieWatch[];
 }) {
+  const searchParams = useSearchParams();
   const activityYears = useMemo(() => getWatchActivityYears(watches), [watches]);
   const currentYear = new Date().getFullYear();
+  const requestedYear = Number(searchParams.get("activityYear"));
   const [selectedYear, setSelectedYear] = useState(
-    activityYears.includes(currentYear) ? currentYear : activityYears[0] ?? currentYear
+    activityYears.includes(requestedYear)
+      ? requestedYear
+      : activityYears.includes(currentYear)
+        ? currentYear
+        : activityYears[0] ?? currentYear
   );
   const [showAll, setShowAll] = useState(false);
   const visibleYear = activityYears.includes(selectedYear)
@@ -86,7 +96,7 @@ export default function YearlyMovieActivity({
   const visibleWatches = showAll ? activity.watches : activity.watches.slice(0, 6);
 
   return (
-    <section className="rounded-3xl border border-slate-700/70 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.10),transparent_34%),linear-gradient(145deg,rgba(17,24,39,0.98),rgba(8,16,32,0.98))] p-4 shadow-2xl shadow-black/25 sm:p-5">
+    <section id="movie-activity" className="scroll-mt-24 rounded-3xl border border-slate-700/70 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.10),transparent_34%),linear-gradient(145deg,rgba(17,24,39,0.98),rgba(8,16,32,0.98))] p-4 shadow-2xl shadow-black/25 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-300">
@@ -99,10 +109,11 @@ export default function YearlyMovieActivity({
             Every rating can quietly build your year in movies.
           </p>
         </div>
-        {activityYears.length > 0 ? (
-          <label className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
-            Year
-            <select
+        <div className="flex items-start gap-2">
+          {activityYears.length > 0 ? (
+            <label className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
+              Year
+              <select
               aria-label="Select movie activity year"
               value={visibleYear}
               onChange={(event) => {
@@ -110,13 +121,19 @@ export default function YearlyMovieActivity({
                 setShowAll(false);
               }}
               className="ml-2 min-h-10 rounded-xl border border-yellow-400/35 bg-slate-950 px-3 text-sm font-black normal-case tracking-normal text-yellow-300 outline-none focus:border-yellow-300"
-            >
-              {activityYears.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+              >
+                {activityYears.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <ShareMovieActivityButton
+            activity={activity}
+            isOwnProfile={isOwnProfile}
+            username={username}
+          />
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">

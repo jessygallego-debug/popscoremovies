@@ -1833,6 +1833,7 @@ export default function ProfileTabs({ username }: { username: string }) {
             <YearlyMovieActivity
               isOwnProfile={followSummary?.isOwnProfile ?? false}
               ratings={fullRatings}
+              username={profile.username}
               watches={watches}
             />
             <CinematicBanner className="hidden xl:flex" />

@@ -35,6 +35,10 @@ import {
   DEFAULT_MONTHLY_WATCHLIST_PREFERENCE,
   resolveMonthlyWatchlistPreference,
 } from "@/lib/monthly-watchlist-preference";
+import {
+  DEFAULT_YEARLY_RECAP_PREFERENCE,
+  resolveYearlyRecapPreference,
+} from "@/lib/yearly-recap-preference";
 
 function getSafeReturnPath(returnTo: string | null) {
   if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
@@ -81,6 +85,9 @@ export default function ProfileEditor() {
   const [favoriteGenre, setFavoriteGenre] = useState("horror");
   const [emailMonthlyWatchlist, setEmailMonthlyWatchlist] = useState(
     DEFAULT_MONTHLY_WATCHLIST_PREFERENCE
+  );
+  const [emailYearlyRecap, setEmailYearlyRecap] = useState(
+    DEFAULT_YEARLY_RECAP_PREFERENCE
   );
   const [ratedMovieCount, setRatedMovieCount] = useState(0);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
@@ -131,6 +138,9 @@ export default function ProfileEditor() {
             resolveMonthlyWatchlistPreference(
               nextProfile?.email_monthly_watchlist
             )
+          );
+          setEmailYearlyRecap(
+            resolveYearlyRecapPreference(nextProfile?.email_yearly_recap)
           );
 
           if (authResult.signedIn && !authResult.isPasswordRecovery) {
@@ -393,6 +403,7 @@ export default function ProfileEditor() {
           upsertProfile({
             avatarKey: selectedAvatar.key,
             emailMonthlyWatchlist,
+            emailYearlyRecap,
             favoriteGenre,
             userId: user.id,
             username,
@@ -468,6 +479,22 @@ export default function ProfileEditor() {
               <span className="mt-1 block text-sm font-semibold leading-6 text-slate-400">
                 Email me once a month about notable movies coming to digital
                 and subscription streaming. You can turn this off anytime.
+              </span>
+            </span>
+          </label>
+          <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-800 bg-black/35 p-4">
+            <input
+              type="checkbox"
+              checked={emailYearlyRecap}
+              onChange={(event) => setEmailYearlyRecap(event.target.checked)}
+              className="mt-1 h-5 w-5 accent-yellow-400"
+            />
+            <span>
+              <span className="block font-black text-white">
+                🎬 My Annual Movie Recap
+              </span>
+              <span className="mt-1 block text-sm font-semibold leading-6 text-slate-400">
+                Email my movie activity recap every January 1. You can turn this off anytime.
               </span>
             </span>
           </label>
