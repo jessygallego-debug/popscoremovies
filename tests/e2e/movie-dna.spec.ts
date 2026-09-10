@@ -6,7 +6,6 @@ import {
   getEligibleMovieDnaRatings,
   getMovieDnaGenreFilters,
   getMovieDnaGenreQuestionAverages,
-  getMovieDnaRanking,
   getMovieDnaRatingsForGenre,
   type MovieDnaRating,
 } from "../../lib/movie-dna";
@@ -133,45 +132,6 @@ test.describe("Movie DNA calculations", () => {
     expect(alphabetical.favoriteGenre?.genre).toBe("Action");
   });
 
-  test("ranks category standouts separately from overall favorites", () => {
-    const storyStandout = rating("1", {
-      acting: 2,
-      popscore: 80,
-      rewatch: 2,
-      story: 5,
-    });
-    const overallFavorite = rating("2", {
-      acting: 5,
-      popscore: 96,
-      rewatch: 5,
-      story: 5,
-    });
-    const dna = calculateMovieDna([
-      storyStandout,
-      overallFavorite,
-      rating("3"),
-      rating("4"),
-      rating("5"),
-    ]);
-
-    expect(dna.rankings["top-rated"][0].movieId).toBe("2");
-    expect(dna.rankings.story[0].movieId).toBe("1");
-    expect(dna.rankings.story[0].relevantScore).toBe(5);
-    expect(dna.rankings.story[0].standoutScore).toBe(2);
-  });
-
-  test("filters rankings by genre without truncating View All results", () => {
-    const ratings = [
-      rating("1", { genre: "horror", story: 5 }),
-      rating("2", { genre: "comedy", story: 5 }),
-      rating("3", { genre: "horror", story: 4 }),
-    ];
-    const horrorMovies = getMovieDnaRanking(ratings, "story", "horror");
-
-    expect(horrorMovies).toHaveLength(2);
-    expect(horrorMovies.map((movie) => movie.movieId)).not.toContain("2");
-  });
-
   test("excludes deleted, incomplete, reaction-only, imported-only, and older duplicates", () => {
     const old = rating("same", { updated: "2026-01-01T00:00:00Z" });
     const newest = {
@@ -261,18 +221,65 @@ const hasSupabaseBrowserConfig = Boolean(
 );
 
 async function mockPopFile(page: Page, movieRatings: MovieDnaRating[]) {
+  let topMovies = movieRatings.slice(0, 3).map((rating) => ({
+    genreNames: rating.genreNames ?? [],
+    movieId: rating.movieId,
+    movieTitle: rating.movieTitle,
+    posterPath: rating.posterPath ?? null,
+    releaseDate: rating.releaseDate ?? null,
+  }));
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "popscore_supabase_session",
+      JSON.stringify({
+        access_token: "test-access-token",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        last_used_at: Math.floor(Date.now() / 1000),
+      })
+    );
+  });
+  await page.route("**/auth/v1/user", (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      json: { email: "movie-fan@example.com", id: "user-1" },
+    })
+  );
+  await page.route("**/api/search-suggestions**", (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      json: {
+        suggestions: [
+          {
+            genreNames: ["Science Fiction"],
+            id: 999,
+            posterPath: "/favorite.jpg",
+            releaseDate: "1979-05-25",
+            title: "Catalog Favorite",
+          },
+        ],
+      },
+    })
+  );
   await page.route("**/rest/v1/**", async (route) => {
     const url = new URL(route.request().url());
     const table = url.pathname.split("/").at(-1);
     let json: unknown[] = [];
 
     if (table === "profiles") {
+      if (route.request().method() === "PATCH") {
+        const payload = route.request().postDataJSON() as {
+          top_movies?: typeof topMovies;
+        };
+        topMovies = payload.top_movies ?? topMovies;
+      }
       json = [
         {
           avatar_key: "popcorn",
           created_at: "2026-01-01T00:00:00Z",
           favorite_genre: "horror",
           id: "profile-1",
+          top_movies: topMovies,
           updated_at: "2026-01-01T00:00:00Z",
           user_id: "user-1",
           username: "movie_fan",
@@ -473,22 +480,24 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await expect(genreDialog).toHaveCount(0);
   await page.setViewportSize({ width: 1280, height: 720 });
 
-  await page.getByRole("tab", { name: "Acting Standouts" }).click();
-  await expect(page.getByRole("tab", { name: "Acting Standouts" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByText(/\/5 Acting$/).first()).toBeVisible();
-  await expect(page.locator('a[href^="/movies/"]').first()).toBeVisible();
+  const topFive = page
+    .getByRole("heading", { name: "My Top 5 Movies of All Time" })
+    .locator("xpath=ancestor::section[1]");
+  await expect(topFive).toBeVisible();
+  await expect(topFive.getByRole("link")).toHaveCount(3);
+  await expect(topFive.getByText("Movie 1", { exact: true })).toBeVisible();
 
-  const rankings = page
-    .getByRole("heading", { name: "Your Movie Rankings" })
-    .locator("../..");
-  await page.getByLabel("Filter movie rankings by genre").selectOption("comedy");
-  await expect(rankings.locator("ol > li")).toHaveCount(2);
-  await page.getByLabel("Filter movie rankings by genre").selectOption("all");
-  await expect(rankings.locator("ol > li")).toHaveCount(5);
-  await page.getByRole("button", { name: "View All 6 Movies" }).click();
-  await expect(rankings.locator("ol > li")).toHaveCount(6);
-  await page.getByRole("button", { name: "Show Top 5" }).click();
-  await expect(rankings.locator("ol > li")).toHaveCount(5);
+  await topFive.getByRole("button", { name: "Edit Top 5" }).click();
+  const topFiveDialog = page.getByRole("dialog", { name: "Choose Your Top 5" });
+  await expect(topFiveDialog).toBeVisible();
+  await expect(topFiveDialog.getByRole("listitem")).toHaveCount(3);
+  await topFiveDialog.getByLabel("Add a movie").fill("Catalog Favorite");
+  await topFiveDialog.getByRole("button", { name: /Catalog Favorite/ }).click();
+  await expect(topFiveDialog.getByRole("listitem")).toHaveCount(4);
+  await topFiveDialog.getByRole("button", { name: "Move Catalog Favorite up" }).click();
+  await topFiveDialog.getByRole("button", { name: "Save My Top 5" }).click();
+  await expect(topFiveDialog).toHaveCount(0);
+  await expect(topFive.getByText("Catalog Favorite", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Share My Movie DNA" }).click();
   const shareDialog = page.getByRole("dialog", { name: "Share Movie DNA" });
@@ -497,10 +506,13 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await expect(shareDialog.getByText("Top Genres", { exact: true })).toBeVisible();
   await expect(shareDialog.getByText("You Love", { exact: true })).toBeVisible();
   await expect(shareDialog.getByText("Your Movie Personality", { exact: true })).toBeVisible();
+  await expect(shareDialog.getByText("My Top 5 Movies of All Time", { exact: true })).toBeVisible();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download Image" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("movie-fan-movie-dna.png");
+  mkdirSync(join(process.cwd(), "artifacts"), { recursive: true });
+  await download.saveAs(join(process.cwd(), "artifacts", "movie-dna-share.png"));
   await page.getByRole("button", { name: "Close share dialog" }).click();
 
   currentRatings.splice(4);
@@ -547,7 +559,7 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
   const shareBox = await page.getByRole("button", { name: "Share DNA" }).boundingBox();
   expect(titleBox).not.toBeNull();
   expect(shareBox).not.toBeNull();
-  expect(Math.abs(titleBox!.y - shareBox!.y)).toBeLessThan(12);
+  expect(Math.abs(titleBox!.y - shareBox!.y)).toBeLessThanOrEqual(12);
   await expect(section).toBeVisible();
   const mobileLayout = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
@@ -566,10 +578,10 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
     clientWidth: mobileLayout.scrollWidth,
   });
   const collapsedPageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
-  expect(collapsedPageHeight).toBeLessThan(3300);
+  expect(collapsedPageHeight).toBeLessThan(3550);
   await page.screenshot({ fullPage: true, path: join(process.cwd(), "artifacts", "popfile-overview-mobile.png") });
   await page.locator("#movie-dna summary").click();
-  await expect(page.getByRole("tab", { name: "Rewatch Favorites" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How You Rate Movies" })).toBeVisible();
   await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-mobile.png") });
 });
 

@@ -1825,8 +1825,11 @@ export default function ProfileTabs({ username }: { username: string }) {
         {activeTab === "stats" ? (
           <>
             <MovieDnaSection
+              key={profile.user_id}
+              isOwnProfile={followSummary?.isOwnProfile ?? false}
               percentile={percentile.topPercentile}
               ratings={ratings}
+              topMovies={profile.top_movies ?? []}
               totalMoviesRated={summary.totalMoviesRated}
               username={profile.username}
             />

@@ -45,6 +45,7 @@ export type ProfileRecord = {
   preferred_movie_era?: string | null;
   preferred_movie_language?: string | null;
   preferred_movie_region?: string | null;
+  top_movies?: ProfileTopMovie[] | null;
   created_at: string;
   updated_at: string;
 };
@@ -56,6 +57,14 @@ export type MovieMeta = {
   releaseDate?: string | null;
   genreNames?: string[];
   runtimeMinutes?: number | null;
+};
+
+export type ProfileTopMovie = {
+  genreNames: string[];
+  movieId: string;
+  movieTitle: string;
+  posterPath: string | null;
+  releaseDate: string | null;
 };
 
 export type ProfileQuickReaction = "loved_it" | "worth_watching" | "trash";
@@ -1021,6 +1030,50 @@ function mapRatingRow(row: MovieRatingRow): UserMovieRating {
     user_id: row.user_id,
     weights: row.weights,
   };
+}
+
+export async function updateProfileTopMovies(movies: ProfileTopMovie[]) {
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser) {
+    throw new Error("Please sign in before updating your Top 5 movies.");
+  }
+
+  if (movies.length > 5) {
+    throw new Error("Choose no more than five movies.");
+  }
+
+  const seenMovieIds = new Set<string>();
+  const topMovies = movies.map((movie) => {
+    const movieId = String(movie.movieId).trim();
+    const movieTitle = movie.movieTitle.trim();
+
+    if (!movieId || !movieTitle || seenMovieIds.has(movieId)) {
+      throw new Error("Each Top 5 selection must be a unique movie.");
+    }
+
+    seenMovieIds.add(movieId);
+    return {
+      genreNames: movie.genreNames.slice(0, 3),
+      movieId,
+      movieTitle,
+      posterPath: movie.posterPath?.trim() || null,
+      releaseDate: movie.releaseDate?.trim() || null,
+    };
+  });
+
+  const rows = await supabaseFetch<ProfileRecord[]>(
+    `/profiles?user_id=eq.${encodeURIComponent(currentUser.id)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({ top_movies: topMovies }),
+    }
+  );
+
+  return rows[0]?.top_movies ?? topMovies;
 }
 
 type MovieWatchRow = {

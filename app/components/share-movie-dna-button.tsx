@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import type { MovieDnaResult } from "@/lib/movie-dna";
+import type { ProfileTopMovie } from "@/lib/profile-store";
 
 type ShareMovieDnaButtonProps = {
   dna: MovieDnaResult;
   isPublic?: boolean;
   percentile: number;
+  topMovies: ProfileTopMovie[];
   totalMoviesRated: number;
   username: string;
 };
@@ -77,6 +79,7 @@ export default function ShareMovieDnaButton({
   dna,
   isPublic = true,
   percentile,
+  topMovies,
   totalMoviesRated,
   username,
 }: ShareMovieDnaButtonProps) {
@@ -131,6 +134,9 @@ export default function ShareMovieDnaButton({
     context.fillStyle = "#cbd5e1";
     context.font = "700 24px Arial, sans-serif";
     context.fillText(`${username} · A look at what makes you, you.`, 96, 246);
+    context.fillStyle = "#94a3b8";
+    context.font = "700 19px Arial, sans-serif";
+    context.fillText(`${totalMoviesRated} movies rated · Top ${percentile}%`, 96, 282);
 
     const startY = format === "story" ? 410 : 330;
     const card = (x: number, y: number, width: number, height: number, fill: string) => {
@@ -198,14 +204,25 @@ export default function ShareMovieDnaButton({
     context.font = "700 24px Arial, sans-serif";
     drawWrappedText(context, dna.personalityDescription, 126, personalityY + 145, 810, 34, 2);
 
-    context.fillStyle = "#94a3b8";
-    context.font = "700 20px Arial, sans-serif";
-    context.fillText(`${totalMoviesRated} movies rated · Top ${percentile}%`, 96, personalityY + 267);
+    if (topMovies.length) {
+      label("My Top 5 Movies of All Time", 126, personalityY + 260);
+      context.font = "800 22px Arial, sans-serif";
+      topMovies.slice(0, 5).forEach((movie, index) => {
+        const column = index % 2;
+        const row = Math.floor(index / 2);
+        const x = column === 0 ? 126 : 556;
+        const y = personalityY + 298 + row * 34;
+        context.fillStyle = "#facc15";
+        context.fillText(`${index + 1}.`, x, y);
+        context.fillStyle = "#ffffff";
+        drawWrappedText(context, movie.movieTitle, x + 34, y, 360, 26, 1);
+      });
+    }
 
     context.fillStyle = "#facc15";
     context.font = "900 34px Arial, sans-serif";
     context.textAlign = "center";
-    context.fillText("popscoremovies.com", 540, canvas.height - 120);
+    context.fillText("popscoremovies.com", 540, canvas.height - 90);
     context.textAlign = "start";
     return canvasToBlob(canvas);
   };
@@ -320,6 +337,16 @@ export default function ShareMovieDnaButton({
                   <p className="mt-1 text-lg font-black text-yellow-300">{dna.personality ?? "Still forming"}</p>
                   <p className="mt-1 text-xs font-medium leading-5 text-slate-300">{dna.personalityDescription}</p>
                 </div>
+                {topMovies.length ? (
+                  <div className="mt-2 rounded-xl bg-black/35 p-3">
+                    <p className="text-[9px] font-black uppercase text-yellow-300">My Top 5 Movies of All Time</p>
+                    <ol className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-xs font-black text-white">
+                      {topMovies.slice(0, 5).map((movie, index) => (
+                        <li key={movie.movieId} className="truncate"><span className="mr-1 text-yellow-300">{index + 1}.</span>{movie.movieTitle}</li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
                 <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
                   popscoremovies.com
                 </p>

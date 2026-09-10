@@ -4,66 +4,32 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import ProfileTopMovies from "@/app/components/profile-top-movies";
 import ShareMovieDnaButton from "@/app/components/share-movie-dna-button";
 import {
   calculateMovieDna,
   getMovieDnaGenreFilters,
   getMovieDnaGenreQuestionAverages,
-  getMovieDnaRanking,
   getMovieDnaRatingsForGenre,
   type MovieDnaGenreStat,
-  type MovieDnaRankingKey,
   type MovieDnaRating,
   type MovieDnaResult,
 } from "@/lib/movie-dna";
 import type { GenreKey } from "@/lib/genre-rating-config";
 import { ratingToPercent } from "@/lib/popscore-store";
-import type { UserMovieRating } from "@/lib/profile-store";
+import type { ProfileTopMovie, UserMovieRating } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
 import styles from "@/app/components/profile-tabs.module.css";
 
 type MovieDnaSectionProps = {
+  isOwnProfile: boolean;
   percentile: number;
   ratings: UserMovieRating[];
+  topMovies: ProfileTopMovie[];
   totalMoviesRated: number;
   username: string;
 };
-
-const RANKING_OPTIONS: {
-  description: string;
-  key: MovieDnaRankingKey;
-  label: string;
-  scoreLabel: string;
-}[] = [
-  {
-    description: "Your highest overall PopScores.",
-    key: "top-rated",
-    label: "Top Rated",
-    scoreLabel: "PopScore",
-  },
-  {
-    description:
-      "Movies where Storyline scored especially high compared with your other answers.",
-    key: "story",
-    label: "Story Standouts",
-    scoreLabel: "Storyline",
-  },
-  {
-    description:
-      "Movies where Acting scored especially high compared with your other answers.",
-    key: "acting",
-    label: "Acting Standouts",
-    scoreLabel: "Acting",
-  },
-  {
-    description:
-      "Movies where Rewatch Score stood out compared with your other answers.",
-    key: "rewatch",
-    label: "Rewatch Favorites",
-    scoreLabel: "Rewatch Score",
-  },
-];
 
 function panelClass(className = "") {
   return `rounded-2xl border border-slate-800 bg-black/30 ${className}`;
@@ -414,138 +380,6 @@ function GenreDna({ className = "", dna }: { className?: string; dna: MovieDnaRe
   );
 }
 
-function Rankings({ dna }: { dna: MovieDnaResult }) {
-  const [selected, setSelected] = useState<MovieDnaRankingKey>("top-rated");
-  const [selectedGenre, setSelectedGenre] = useState<"all" | GenreKey>("all");
-  const [showAll, setShowAll] = useState(false);
-  const genreFilters = useMemo(
-    () => getMovieDnaGenreFilters(dna.eligibleRatings),
-    [dna.eligibleRatings]
-  );
-  const activeGenre =
-    selectedGenre !== "all" &&
-    genreFilters.some((genre) => genre.key === selectedGenre)
-      ? selectedGenre
-      : "all";
-  const selectedOption = RANKING_OPTIONS.find(
-    (option) => option.key === selected
-  )!;
-  const rankedMovies = useMemo(
-    () => getMovieDnaRanking(dna.eligibleRatings, selected, activeGenre),
-    [activeGenre, dna.eligibleRatings, selected]
-  );
-  const movies = showAll ? rankedMovies : rankedMovies.slice(0, 5);
-
-  return (
-    <div className={panelClass("min-w-0 overflow-hidden p-4 sm:p-6")}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-lg font-black text-white">Your Movie Rankings</h3>
-        <label className="flex items-center gap-2 text-xs font-black text-slate-400">
-          <span>Genre</span>
-          <select
-            aria-label="Filter movie rankings by genre"
-            value={activeGenre}
-            onChange={(event) => {
-              setSelectedGenre(event.target.value as "all" | GenreKey);
-              setShowAll(false);
-            }}
-            className="min-h-10 rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm font-black text-white outline-none transition focus:border-yellow-300"
-          >
-            <option value="all">All Genres</option>
-            {genreFilters.map((genre) => (
-              <option key={genre.key} value={genre.key}>
-                {genre.label} ({genre.count})
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div
-        className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-2"
-        role="tablist"
-        aria-label="Movie ranking category"
-      >
-        {RANKING_OPTIONS.map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            role="tab"
-            aria-selected={selected === option.key}
-            onClick={() => {
-              setSelected(option.key);
-              setShowAll(false);
-            }}
-            className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-black transition ${
-              selected === option.key
-                ? "border-yellow-300 bg-yellow-400 text-black"
-                : "border-slate-700 bg-slate-950 text-slate-300 hover:border-purple-400 hover:text-white"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      <p className="mt-1 text-xs font-bold leading-5 text-slate-500">
-        {selectedOption.description}
-      </p>
-
-      <ol className="mt-3 grid gap-2 sm:grid-cols-2">
-        {movies.map((movie, index) => (
-          <li key={movie.id}>
-            <Link
-              href={movieHref({ id: movie.movieId, title: movie.movieTitle })}
-              className="group grid min-h-[92px] grid-cols-[28px_48px_minmax(0,1fr)] items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/80 p-2.5 transition hover:border-purple-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
-            >
-              <span className="text-center text-lg font-black text-yellow-300">{index + 1}</span>
-              <span className="relative aspect-[2/3] w-12 overflow-hidden rounded-lg bg-slate-900">
-                <MoviePosterImage
-                  src={posterUrl(movie.posterPath ?? null, "w342")}
-                  fallbackMovieId={movie.movieId}
-                  alt={`${movie.movieTitle} movie poster`}
-                  sizes="48px"
-                />
-              </span>
-              <span className="min-w-0">
-                <span className="line-clamp-2 text-sm font-black text-white group-hover:text-yellow-200">{movie.movieTitle}</span>
-                <span className="mt-1 block text-xs font-bold text-slate-500">
-                  {movie.releaseDate?.slice(0, 4) || "Year unknown"}
-                </span>
-                <span className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs font-black">
-                  <span className="text-purple-300">
-                    {selected === "top-rated"
-                      ? `${Math.round(movie.relevantScore)}% PopScore`
-                      : `${movie.relevantScore.toFixed(1)}/5 ${selectedOption.scoreLabel}`}
-                  </span>
-                  {selected !== "top-rated" ? (
-                    <span className="text-yellow-300">
-                      {Math.round(movie.popscore)}% PopScore
-                    </span>
-                  ) : null}
-                </span>
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ol>
-      {rankedMovies.length > 5 ? (
-        <div className="mt-4 flex justify-center">
-          <button
-            type="button"
-            aria-expanded={showAll}
-            onClick={() => setShowAll((current) => !current)}
-            className="min-h-10 rounded-full border border-purple-400/35 bg-purple-500/10 px-5 text-xs font-black text-purple-200 transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
-          >
-            {showAll
-              ? "Show Top 5"
-              : `View All ${rankedMovies.length} Movies`}
-          </button>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export function MovieDnaSkeleton() {
   return (
     <section aria-label="Loading Movie DNA" className="animate-pulse rounded-3xl border border-slate-800 bg-slate-950/85 p-5 motion-reduce:animate-none sm:p-6">
@@ -556,7 +390,14 @@ export function MovieDnaSkeleton() {
   );
 }
 
-export default function MovieDnaSection({ percentile, ratings, totalMoviesRated, username }: MovieDnaSectionProps) {
+export default function MovieDnaSection({
+  isOwnProfile,
+  percentile,
+  ratings,
+  topMovies,
+  totalMoviesRated,
+  username,
+}: MovieDnaSectionProps) {
   const dna = useMemo(() => calculateMovieDna(ratings), [ratings]);
   const count = dna.eligibleRatings.length;
 
@@ -575,6 +416,7 @@ export default function MovieDnaSection({ percentile, ratings, totalMoviesRated,
           <ShareMovieDnaButton
             dna={dna}
             percentile={percentile}
+            topMovies={topMovies}
             totalMoviesRated={totalMoviesRated}
             username={username}
           />
@@ -593,13 +435,19 @@ export default function MovieDnaSection({ percentile, ratings, totalMoviesRated,
                 Explore your full Movie DNA
                 <span aria-hidden="true" className="text-lg text-purple-300 transition duration-200 group-open:rotate-180 motion-reduce:transform-none">⌄</span>
               </summary>
-              <div className="space-y-4 border-t border-slate-700/60 p-3 sm:p-4">
+              <div className="border-t border-slate-700/60 p-3 sm:p-4">
                 <CoreBreakdown dna={dna} />
-                <Rankings dna={dna} />
               </div>
             </details>
           </div>
         )}
+        <div className="mt-4 sm:mt-5">
+          <ProfileTopMovies
+            initialMovies={topMovies}
+            isOwnProfile={isOwnProfile}
+            ratings={ratings}
+          />
+        </div>
       </div>
     </section>
   );
