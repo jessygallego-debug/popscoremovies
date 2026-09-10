@@ -324,9 +324,10 @@ export default function ShareMovieDnaButton({
           setStatus("");
           setIsOpen(true);
         }}
-        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-4 text-sm font-black text-yellow-200 transition hover:bg-yellow-400/20"
+        className="inline-flex min-h-9 w-fit self-start items-center justify-center rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-3 text-xs font-black text-yellow-200 transition hover:bg-yellow-400/20 sm:min-h-11 sm:self-auto sm:rounded-2xl sm:px-4 sm:text-sm"
       >
-        Share My Movie DNA
+        <span className="sm:hidden">Share DNA</span>
+        <span className="hidden sm:inline">Share My Movie DNA</span>
       </button>
       {dialog}
     </>

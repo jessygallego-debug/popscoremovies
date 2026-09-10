@@ -149,9 +149,12 @@ export default function ShareMovieActivityButton({
         type="button"
         disabled={activity.totalWatches === 0}
         onClick={() => void share()}
-        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-3 text-xs font-black text-yellow-200 transition hover:bg-yellow-400/20 disabled:cursor-not-allowed disabled:opacity-45 sm:text-sm"
+        className="inline-flex min-h-9 items-center justify-center rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-2.5 text-[11px] font-black text-yellow-200 transition hover:bg-yellow-400/20 disabled:cursor-not-allowed disabled:opacity-45 sm:min-h-10 sm:px-3 sm:text-sm"
       >
-        {isOwnProfile ? "Share My Activity" : "Share Activity"}
+        <span className="sm:hidden">Share</span>
+        <span className="hidden sm:inline">
+          {isOwnProfile ? "Share My Activity" : "Share Activity"}
+        </span>
       </button>
       {status ? <p role="status" className="max-w-52 text-right text-[10px] font-bold text-slate-400">{status}</p> : null}
     </div>

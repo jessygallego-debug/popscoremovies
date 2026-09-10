@@ -97,7 +97,7 @@ export default function YearlyMovieActivity({
 
   return (
     <section id="movie-activity" className="scroll-mt-24 rounded-3xl border border-slate-700/70 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.10),transparent_34%),linear-gradient(145deg,rgba(17,24,39,0.98),rgba(8,16,32,0.98))] p-4 shadow-2xl shadow-black/25 sm:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-300">
             Movie activity
@@ -105,22 +105,19 @@ export default function YearlyMovieActivity({
           <h2 className="mt-1 text-2xl font-black text-white sm:text-3xl">
             Your {visibleYear}
           </h2>
-          <p className="mt-1 text-xs font-medium text-slate-400">
-            Every rating can quietly build your year in movies.
-          </p>
         </div>
-        <div className="flex items-start gap-2">
+        <div className="flex items-center justify-end gap-2">
           {activityYears.length > 0 ? (
             <label className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
-              Year
+              <span className="sr-only sm:not-sr-only">Year</span>
               <select
-              aria-label="Select movie activity year"
-              value={visibleYear}
-              onChange={(event) => {
-                setSelectedYear(Number(event.target.value));
-                setShowAll(false);
-              }}
-              className="ml-2 min-h-10 rounded-xl border border-yellow-400/35 bg-slate-950 px-3 text-sm font-black normal-case tracking-normal text-yellow-300 outline-none focus:border-yellow-300"
+                aria-label="Select movie activity year"
+                value={visibleYear}
+                onChange={(event) => {
+                  setSelectedYear(Number(event.target.value));
+                  setShowAll(false);
+                }}
+                className="min-h-9 rounded-xl border border-yellow-400/35 bg-slate-950 px-2 text-xs font-black normal-case tracking-normal text-yellow-300 outline-none focus:border-yellow-300 sm:ml-2 sm:min-h-10 sm:px-3 sm:text-sm"
               >
                 {activityYears.map((year) => (
                   <option key={year} value={year}>{year}</option>
@@ -134,6 +131,9 @@ export default function YearlyMovieActivity({
             username={username}
           />
         </div>
+        <p className="col-span-2 text-xs font-medium text-slate-400">
+          Every rating can quietly build your year in movies.
+        </p>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
