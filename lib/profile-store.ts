@@ -54,10 +54,50 @@ export type MovieMeta = {
   posterPath?: string | null;
   releaseDate?: string | null;
   genreNames?: string[];
+  runtimeMinutes?: number | null;
 };
 
 export type ProfileQuickReaction = "loved_it" | "worth_watching" | "trash";
-export type UserMovieRatingSource = "movie_match";
+export type UserMovieRatingSource =
+  | "movie_match"
+  | "onboarding"
+  | "bulk"
+  | "imported";
+
+export type UserMovieWatchType =
+  | "first_watch"
+  | "rewatch"
+  | "historical"
+  | "imported";
+
+export type UserMovieWatch = {
+  createdAt: string;
+  id: string;
+  movieId: string;
+  ratingId: string | null;
+  runtimeMinutes: number | null;
+  updatedAt: string;
+  userId: string;
+  watchedDate: string | null;
+  watchType: UserMovieWatchType;
+};
+
+export type SavedUserMovieRating = {
+  rating: UserMovieRating;
+  watch: UserMovieWatch | null;
+};
+
+export const POPSCORE_WATCHES_UPDATED_EVENT = "popscore:watches-updated";
+
+export function watchTypeForRatingSource(
+  ratingSource?: UserMovieRatingSource
+): UserMovieWatchType {
+  if (ratingSource === "imported") return "imported";
+  if (ratingSource === "onboarding" || ratingSource === "bulk") {
+    return "historical";
+  }
+  return "first_watch";
+}
 
 export type UserMovieRating = MovieMeta & {
   id: string;
@@ -934,7 +974,7 @@ export async function upsertProfile(profile: {
   return savedProfile;
 }
 
-function mapRatingRow(row: {
+type MovieRatingRow = {
   id: string;
   user_id: string;
   movie_id: string;
@@ -951,7 +991,9 @@ function mapRatingRow(row: {
   review_comment: string | null;
   created_at: string;
   updated_at: string;
-}): UserMovieRating {
+};
+
+function mapRatingRow(row: MovieRatingRow): UserMovieRating {
   return {
     created_at: row.created_at,
     genre: row.genre,
@@ -970,6 +1012,79 @@ function mapRatingRow(row: {
     user_id: row.user_id,
     weights: row.weights,
   };
+}
+
+type MovieWatchRow = {
+  created_at: string;
+  id: string;
+  movie_id: string;
+  rating_id: string | null;
+  runtime_minutes: number | null;
+  updated_at: string;
+  user_id: string;
+  watched_date: string | null;
+  watch_type: UserMovieWatchType;
+};
+
+function mapMovieWatchRow(row: MovieWatchRow): UserMovieWatch {
+  return {
+    createdAt: row.created_at,
+    id: row.id,
+    movieId: row.movie_id,
+    ratingId: row.rating_id,
+    runtimeMinutes: row.runtime_minutes,
+    updatedAt: row.updated_at,
+    userId: row.user_id,
+    watchedDate: row.watched_date,
+    watchType: row.watch_type,
+  };
+}
+
+export function movieWatchDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function notifyMovieWatchUpdates() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(POPSCORE_WATCHES_UPDATED_EVENT));
+  }
+}
+
+async function insertUserMovieWatch({
+  movie,
+  ratingId,
+  userId,
+  watchedDate,
+  watchType,
+}: {
+  movie: MovieMeta;
+  ratingId: string | null;
+  userId: string;
+  watchedDate: string | null;
+  watchType: UserMovieWatchType;
+}) {
+  const rows = await supabaseFetch<MovieWatchRow[]>("/user_movie_watches", {
+    body: JSON.stringify({
+      movie_id: movie.movieId,
+      rating_id: ratingId,
+      runtime_minutes:
+        movie.runtimeMinutes && movie.runtimeMinutes > 0
+          ? Math.round(movie.runtimeMinutes)
+          : null,
+      user_id: userId,
+      watched_date: watchedDate,
+      watch_type: watchType,
+    }),
+    headers: { Prefer: "return=representation" },
+    method: "POST",
+  });
+  const watch = rows[0] ? mapMovieWatchRow(rows[0]) : null;
+
+  if (watch) notifyMovieWatchUpdates();
+  return watch;
 }
 
 function rowHasPopScoreRating(row: {
@@ -1013,6 +1128,7 @@ export async function saveUserMovieRating({
   ratingSource,
   ratings,
   reviewComment = "",
+  watchType,
 }: {
   genre: string;
   movie: MovieMeta;
@@ -1021,7 +1137,8 @@ export async function saveUserMovieRating({
   ratingSource?: UserMovieRatingSource;
   ratings: Record<string, number>;
   reviewComment?: string;
-}) {
+  watchType?: UserMovieWatchType | null;
+}): Promise<SavedUserMovieRating | null> {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -1073,7 +1190,7 @@ export async function saveUserMovieRating({
     options: RequestInit
   ) => {
     try {
-      return await supabaseFetch<unknown[]>(path, options);
+      return await supabaseFetch<MovieRatingRow[]>(path, options);
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
 
@@ -1084,18 +1201,24 @@ export async function saveUserMovieRating({
       const fallbackBody = { ...ratingBody };
       delete fallbackBody.rating_source;
 
-      return supabaseFetch<unknown[]>(path, {
+      return supabaseFetch<MovieRatingRow[]>(path, {
         ...options,
         body: JSON.stringify(fallbackBody),
       });
     }
   };
 
-  const existingRows = await supabaseFetch<{ id: string }[]>(
+  const existingRows = await supabaseFetch<
+    Pick<MovieRatingRow, "id" | "ratings" | "weights">[]
+  >(
     `/movie_ratings?user_id=eq.${encodeURIComponent(
       user.id
-    )}&movie_id=eq.${encodeURIComponent(movie.movieId)}&select=id`
+    )}&movie_id=eq.${encodeURIComponent(movie.movieId)}&select=id,ratings,weights`
   );
+  const wasAlreadyFullyRated = rowHasPopScoreRating(existingRows[0] ?? {});
+  const resolvedWatchType =
+    watchType === undefined ? watchTypeForRatingSource(ratingSource) : watchType;
+  let savedRow: MovieRatingRow | null = null;
 
   if (existingRows[0]) {
     const rows = await saveWithRatingSourceFallback(
@@ -1109,21 +1232,130 @@ export async function saveUserMovieRating({
       }
     );
 
-    return rows[0] ?? existingRows[0];
+    savedRow = rows[0] ?? null;
+  } else {
+    const rows = await saveWithRatingSourceFallback(
+      "/movie_ratings?on_conflict=user_id,movie_id",
+      {
+        method: "POST",
+        headers: {
+          Prefer: "resolution=merge-duplicates,return=representation",
+        },
+        body: JSON.stringify(ratingBody),
+      }
+    );
+
+    savedRow = rows[0] ?? null;
   }
 
-  const rows = await saveWithRatingSourceFallback(
-    "/movie_ratings?on_conflict=user_id,movie_id",
-    {
-      method: "POST",
-      headers: {
-        Prefer: "resolution=merge-duplicates,return=representation",
-      },
-      body: JSON.stringify(ratingBody),
-    }
+  if (!savedRow) {
+    throw new Error("Rating saved but could not be loaded. Please try again.");
+  }
+
+  const watch =
+    resolvedWatchType && !wasAlreadyFullyRated
+      ? await insertUserMovieWatch({
+          movie,
+          ratingId: savedRow.id,
+          userId: user.id,
+          watchedDate:
+            resolvedWatchType === "historical" || resolvedWatchType === "imported"
+              ? null
+              : movieWatchDateKey(),
+          watchType: resolvedWatchType,
+        })
+      : null;
+
+  return { rating: mapRatingRow(savedRow), watch };
+}
+
+export async function getUserMovieWatches(userId: string) {
+  const rows = await supabaseFetch<MovieWatchRow[]>(
+    `/user_movie_watches?user_id=eq.${encodeURIComponent(
+      userId
+    )}&select=*&order=watched_date.desc.nullslast,created_at.desc`
   );
 
-  return rows[0] ?? null;
+  return rows.map(mapMovieWatchRow);
+}
+
+export async function logUserMovieRewatch({
+  movie,
+  ratingId,
+}: {
+  movie: MovieMeta;
+  ratingId: string;
+}) {
+  const user = await getCurrentUser();
+
+  if (!user) throw new Error("Please sign in before logging a rewatch.");
+
+  return insertUserMovieWatch({
+    movie,
+    ratingId,
+    userId: user.id,
+    watchedDate: movieWatchDateKey(),
+    watchType: "rewatch",
+  });
+}
+
+export async function updateUserMovieWatchDate({
+  id,
+  watchedDate,
+  watchType,
+}: {
+  id: string;
+  watchedDate: string | null;
+  watchType: UserMovieWatchType;
+}) {
+  const user = await getCurrentUser();
+
+  if (!user) throw new Error("Please sign in before changing a watched date.");
+  if (watchedDate && !/^\d{4}-\d{2}-\d{2}$/.test(watchedDate)) {
+    throw new Error("Choose a valid watched date.");
+  }
+  if (watchedDate && watchedDate > movieWatchDateKey()) {
+    throw new Error("A watched date cannot be in the future.");
+  }
+
+  const nextType = watchedDate
+    ? watchType === "historical"
+      ? "first_watch"
+      : watchType
+    : watchType === "imported"
+      ? "imported"
+      : "historical";
+  const rows = await supabaseFetch<MovieWatchRow[]>(
+    `/user_movie_watches?id=eq.${encodeURIComponent(
+      id
+    )}&user_id=eq.${encodeURIComponent(user.id)}`,
+    {
+      body: JSON.stringify({
+        watched_date: watchedDate,
+        watch_type: nextType,
+      }),
+      headers: { Prefer: "return=representation" },
+      method: "PATCH",
+    }
+  );
+  const watch = rows[0] ? mapMovieWatchRow(rows[0]) : null;
+
+  if (watch) notifyMovieWatchUpdates();
+  return watch;
+}
+
+export async function removeUserMovieWatch(id: string) {
+  const user = await getCurrentUser();
+
+  if (!user) throw new Error("Please sign in before removing a watch.");
+
+  await supabaseFetch(
+    `/user_movie_watches?id=eq.${encodeURIComponent(
+      id
+    )}&user_id=eq.${encodeURIComponent(user.id)}`,
+    { headers: { Prefer: "return=minimal" }, method: "DELETE" }
+  );
+  notifyMovieWatchUpdates();
 }
 
 export async function saveUserQuickReaction({

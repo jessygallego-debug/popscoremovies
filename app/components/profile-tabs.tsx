@@ -15,6 +15,7 @@ import ProfileUsernameLink, {
 } from "@/app/components/profile-username-link";
 import QuickReactionBadge from "@/app/components/quick-reaction-badge";
 import ShareRatingButton from "@/app/components/share-rating-button";
+import YearlyMovieActivity from "@/app/components/yearly-movie-activity";
 import {
   FOLLOWS_UPDATED_EVENT,
   getFollowerUsers,
@@ -45,8 +46,11 @@ import {
 import {
   getAllUserRatingCounts,
   getProfileByUsername,
+  getUserMovieWatches,
   getUserRatings,
+  POPSCORE_WATCHES_UPDATED_EVENT,
   ProfileRecord,
+  UserMovieWatch,
   UserMovieRating,
   UserRatingCount,
 } from "@/lib/profile-store";
@@ -1564,6 +1568,7 @@ export default function ProfileTabs({ username }: { username: string }) {
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [ratings, setRatings] = useState<UserMovieRating[]>([]);
+  const [watches, setWatches] = useState<UserMovieWatch[]>([]);
   const [followSummary, setFollowSummary] = useState<FollowSummary | null>(
     null
   );
@@ -1601,6 +1606,7 @@ export default function ProfileTabs({ username }: { username: string }) {
         }
 
         setProfile(nextProfile);
+        setWatches([]);
         setFollowSummary(null);
         setFollowListMode(null);
         setFollowListUsers([]);
@@ -1614,13 +1620,15 @@ export default function ProfileTabs({ username }: { username: string }) {
         Promise.all([
           getUserRatings(nextProfile.user_id),
           getAllUserRatingCounts(),
+          getUserMovieWatches(nextProfile.user_id).catch(() => []),
         ])
-          .then(([nextRatings, nextRatingPopulation]) => {
+          .then(([nextRatings, nextRatingPopulation, nextWatches]) => {
             if (!isCurrent) {
               return;
             }
 
             setRatings(nextRatings);
+            setWatches(nextWatches);
             setRatingPopulation(nextRatingPopulation);
             setIsLoading(false);
 
@@ -1685,6 +1693,25 @@ export default function ProfileTabs({ username }: { username: string }) {
     return () => {
       isCurrent = false;
       window.removeEventListener(FOLLOWS_UPDATED_EVENT, loadFollowSummary);
+    };
+  }, [profile]);
+
+  useEffect(() => {
+    if (!profile) return;
+
+    let isCurrent = true;
+    const refreshWatches = () => {
+      void getUserMovieWatches(profile.user_id)
+        .then((nextWatches) => {
+          if (isCurrent) setWatches(nextWatches);
+        })
+        .catch(() => null);
+    };
+
+    window.addEventListener(POPSCORE_WATCHES_UPDATED_EVENT, refreshWatches);
+    return () => {
+      isCurrent = false;
+      window.removeEventListener(POPSCORE_WATCHES_UPDATED_EVENT, refreshWatches);
     };
   }, [profile]);
 
@@ -1802,6 +1829,11 @@ export default function ProfileTabs({ username }: { username: string }) {
               ratings={ratings}
               totalMoviesRated={summary.totalMoviesRated}
               username={profile.username}
+            />
+            <YearlyMovieActivity
+              isOwnProfile={followSummary?.isOwnProfile ?? false}
+              ratings={fullRatings}
+              watches={watches}
             />
             <CinematicBanner className="hidden xl:flex" />
           </>

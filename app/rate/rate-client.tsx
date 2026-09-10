@@ -7,10 +7,13 @@ import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileMenu from "@/app/components/profile-menu";
 import RatingInfoPopover from "@/app/components/rating-info-popover";
 import ShareRatingButton from "@/app/components/share-rating-button";
+import WatchDateEditor from "@/app/components/watch-date-editor";
 import {
   getCurrentProfile,
+  movieWatchDateKey,
   removeFromWatchlist,
   saveUserMovieRating,
+  type UserMovieWatch,
   type UserMovieRatingSource,
 } from "@/lib/profile-store";
 import { ratingInfoForKey } from "@/lib/rating-info-copy";
@@ -71,6 +74,7 @@ type RateClientProps = {
   movieGenreNames?: string[];
   moviePosterPath?: string | null;
   movieReleaseDate?: string | null;
+  movieRuntimeMinutes?: number | null;
   initialGenre: GenreKey;
   lockGenre: boolean;
   movieTitle?: string;
@@ -127,6 +131,21 @@ function movieReleaseYear(value?: string | null) {
   return value?.split("-")[0] ?? "";
 }
 
+function watchedDateLabel(value: string) {
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (value === movieWatchDateKey(today)) return "Watched today";
+  if (value === movieWatchDateKey(yesterday)) return "Watched yesterday";
+  return `Watched ${new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(`${value}T12:00:00Z`))}`;
+}
+
 function addRecentlyRatedMovie(path: string, movieId: string) {
   const url = new URL(path, "https://popscore.local");
   url.searchParams.set("ratedMovie", movieId);
@@ -139,6 +158,7 @@ export default function RateClient({
   movieGenreNames,
   moviePosterPath,
   movieReleaseDate,
+  movieRuntimeMinutes,
   initialGenre,
   lockGenre,
   movieTitle,
@@ -151,6 +171,7 @@ export default function RateClient({
   const [reviewComment, setReviewComment] = useState("");
   const [reviewCommentError, setReviewCommentError] = useState("");
   const [submittedScore, setSubmittedScore] = useState<number | null>(null);
+  const [submittedWatch, setSubmittedWatch] = useState<UserMovieWatch | null>(null);
   const [submitMessage, setSubmitMessage] = useState("");
 
   const currentGenre = genreConfigs[selectedGenre];
@@ -221,6 +242,7 @@ export default function RateClient({
             movieTitle: movieTitle ?? `Movie ${movieId}`,
             posterPath: moviePosterPath,
             releaseDate: movieReleaseDate,
+            runtimeMinutes: movieRuntimeMinutes,
           },
           popscore: popScore,
           questions: currentGenre.questions,
@@ -229,13 +251,16 @@ export default function RateClient({
           reviewComment: reviewValidation.reviewComment ?? "",
         });
       })
-      .then(() => {
+      .then((result) => {
         notifyPopScoreUpdates();
         void checkAchievementEmails();
-        return removeFromWatchlist(movieId).catch(() => null);
+        return removeFromWatchlist(movieId)
+          .catch(() => null)
+          .then(() => result);
       })
-      .then(() => {
+      .then((result) => {
         setSubmittedScore(popScore);
+        setSubmittedWatch(result?.watch ?? null);
         setSubmitMessage("");
       })
       .catch((error: Error) => {
@@ -516,8 +541,21 @@ export default function RateClient({
             {movieId && hasSubmittedScore ? (
               <div className="mt-5 rounded-2xl border border-yellow-400/30 bg-black/45 p-4">
                 <p className="font-black text-yellow-200">
-                  Rating submitted.
+                  Rating saved
                 </p>
+                {submittedWatch ? (
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-bold text-slate-300">
+                    <span>
+                      {submittedWatch.watchedDate
+                        ? `Added to your ${submittedWatch.watchedDate.slice(0, 4)} movies · ${watchedDateLabel(submittedWatch.watchedDate)}`
+                        : "Saved as previously watched · Not counted in yearly totals"}
+                    </span>
+                    <WatchDateEditor
+                      watch={submittedWatch}
+                      onChanged={(watch) => setSubmittedWatch(watch)}
+                    />
+                  </div>
+                ) : null}
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <ShareRatingButton
                     className="w-full !px-2 !text-xs sm:!px-5 sm:!text-base"

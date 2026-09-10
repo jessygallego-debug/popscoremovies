@@ -64,6 +64,13 @@ RESEND_FROM_EMAIL=PopScore <watchlist@popscoremovies.com>
 RESEND_WEBHOOK_SECRET=...
 ```
 
+## Movie watch tracking
+
+Apply `supabase/user_movie_watches.sql` before deploying the movie tracking
+feature. The migration creates the separate watch log, indexes, ownership
+policies, and date-edit support. It intentionally does not backfill existing
+ratings because a rating timestamp does not prove when a movie was watched.
+
 The release feed is queried with `month=YYYY-MM&region=US` and must return:
 
 ```json

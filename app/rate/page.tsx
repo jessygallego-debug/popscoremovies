@@ -89,6 +89,7 @@ export default async function RatePage({
       movieGenreNames={movie ? movieFilterGenreNames(movie) : undefined}
       moviePosterPath={movie?.poster_path}
       movieReleaseDate={movie?.release_date}
+      movieRuntimeMinutes={movie?.runtime}
       movieTitle={movie?.title}
       ratingSource={ratingSource}
       returnTo={getSafeReturnPath(params.returnTo)}

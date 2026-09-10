@@ -1,13 +1,17 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import WatchDateEditor from "@/app/components/watch-date-editor";
 import {
   getCurrentProfile,
   getUserRatings,
+  logUserMovieRewatch,
   UserMovieRating,
+  UserMovieWatch,
 } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
@@ -26,9 +30,13 @@ type ShareRatingButtonProps = {
 type MovieRatingSharePanelProps = {
   className?: string;
   communityScore?: number | null;
+  genreNames?: string[];
   movieId: string;
   movieTitle: string;
   posterPath?: string | null;
+  rateHref: string;
+  releaseDate?: string | null;
+  runtimeMinutes?: number | null;
 };
 
 export function getShareRatingLabel(score: number) {
@@ -166,11 +174,19 @@ async function getPosterForDownload(movieId: string, posterPath?: string | null)
 export function MovieRatingSharePanel({
   className = "",
   communityScore,
+  genreNames = [],
   movieId,
   movieTitle,
   posterPath,
+  rateHref,
+  releaseDate,
+  runtimeMinutes,
 }: MovieRatingSharePanelProps) {
   const [rating, setRating] = useState<UserMovieRating | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingRewatch, setIsLoggingRewatch] = useState(false);
+  const [rewatch, setRewatch] = useState<UserMovieWatch | null>(null);
+  const [rewatchMessage, setRewatchMessage] = useState("");
 
   useEffect(() => {
     let isCurrent = true;
@@ -197,10 +213,12 @@ export function MovieRatingSharePanel({
           ) ?? null;
 
         setRating(movieRating);
+        setIsLoading(false);
       })
       .catch(() => {
         if (isCurrent) {
           setRating(null);
+          setIsLoading(false);
         }
       });
 
@@ -209,15 +227,51 @@ export function MovieRatingSharePanel({
     };
   }, [movieId]);
 
-  if (!rating) {
-    return null;
+  if (isLoading) {
+    return (
+      <div className="min-h-16 animate-pulse rounded-[1.25rem] border border-yellow-200/30 bg-yellow-400/20 motion-reduce:animate-none" />
+    );
   }
+
+  if (!rating) {
+    return (
+      <Link
+        href={rateHref}
+        className="flex min-h-16 items-center justify-between rounded-[1.25rem] border border-yellow-200/70 bg-[linear-gradient(135deg,#fde047_0%,#facc15_50%,#f59e0b_100%)] px-5 py-4 text-black shadow-2xl shadow-yellow-500/20 transition hover:-translate-y-0.5 hover:brightness-105 sm:px-6"
+      >
+        <span className="text-xl font-black sm:text-2xl">Rate This Movie</span>
+        <span aria-hidden="true" className="text-4xl font-black leading-none">›</span>
+      </Link>
+    );
+  }
+
+  const logRewatch = () => {
+    setIsLoggingRewatch(true);
+    setRewatchMessage("");
+    logUserMovieRewatch({
+      movie: {
+        genreNames,
+        movieId,
+        movieTitle,
+        posterPath,
+        releaseDate,
+        runtimeMinutes,
+      },
+      ratingId: rating.id,
+    })
+      .then((watch) => {
+        setRewatch(watch);
+        setRewatchMessage(watch ? "Rewatch added" : "Could not log this rewatch.");
+      })
+      .catch(() => setRewatchMessage("Could not log this rewatch. Please try again."))
+      .finally(() => setIsLoggingRewatch(false));
+  };
 
   return (
     <div
       className={`rounded-xl border border-yellow-400/25 bg-yellow-400/10 p-3 ${className}`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-yellow-300">
             Your Rating
@@ -234,6 +288,27 @@ export function MovieRatingSharePanel({
           posterPath={rating.posterPath ?? posterPath}
           variant="compact"
         />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-yellow-400/15 pt-3">
+        <button
+          type="button"
+          disabled={isLoggingRewatch}
+          onClick={logRewatch}
+          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-yellow-400/45 bg-black/35 px-4 text-sm font-black text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10 disabled:cursor-wait disabled:opacity-60"
+        >
+          {isLoggingRewatch ? "Logging..." : "+ Log Rewatch"}
+        </button>
+        {rewatchMessage ? (
+          <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-300">
+            <span>{rewatchMessage}</span>
+            {rewatch ? (
+              <WatchDateEditor
+                watch={rewatch}
+                onChanged={(nextWatch) => setRewatch(nextWatch)}
+              />
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

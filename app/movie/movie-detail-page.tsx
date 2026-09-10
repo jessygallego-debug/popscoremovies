@@ -511,25 +511,17 @@ export async function MovieDetailPage({
                   />
                 </div>
 
-                <Link
-                  href={rateHref}
-                  className="flex min-h-16 items-center justify-between rounded-[1.25rem] border border-yellow-200/70 bg-[linear-gradient(135deg,#fde047_0%,#facc15_50%,#f59e0b_100%)] px-5 py-4 text-black shadow-2xl shadow-yellow-500/20 transition hover:-translate-y-0.5 hover:brightness-105 sm:px-6"
-                >
-                  <span className="text-xl font-black sm:text-2xl">
-                    Rate This Movie
-                  </span>
-                  <span aria-hidden="true" className="text-4xl font-black leading-none">
-                    ›
-                  </span>
-                </Link>
-
                 <MovieRatingSharePanel
                   communityScore={
                     aggregateRating?.count ? aggregateRating.score : null
                   }
+                  genreNames={filterGenreNames}
                   movieId={String(movie.id)}
                   movieTitle={movie.title}
                   posterPath={movie.poster_path}
+                  rateHref={rateHref}
+                  releaseDate={movie.release_date}
+                  runtimeMinutes={movie.runtime}
                 />
 
                 <div
