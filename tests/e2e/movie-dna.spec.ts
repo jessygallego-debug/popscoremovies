@@ -491,7 +491,12 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await expect(rankings.locator("ol > li")).toHaveCount(5);
 
   await page.getByRole("button", { name: "Share My Movie DNA" }).click();
-  await expect(page.getByRole("dialog", { name: "Share Movie DNA" })).toBeVisible();
+  const shareDialog = page.getByRole("dialog", { name: "Share Movie DNA" });
+  await expect(shareDialog).toBeVisible();
+  await expect(shareDialog.getByText("#1 Genre", { exact: true })).toBeVisible();
+  await expect(shareDialog.getByText("Top Genres", { exact: true })).toBeVisible();
+  await expect(shareDialog.getByText("You Love", { exact: true })).toBeVisible();
+  await expect(shareDialog.getByText("Your Movie Personality", { exact: true })).toBeVisible();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download Image" }).click();
   const download = await downloadPromise;
@@ -538,6 +543,11 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
+  const titleBox = await page.getByRole("heading", { name: "Your Movie DNA" }).boundingBox();
+  const shareBox = await page.getByRole("button", { name: "Share DNA" }).boundingBox();
+  expect(titleBox).not.toBeNull();
+  expect(shareBox).not.toBeNull();
+  expect(Math.abs(titleBox!.y - shareBox!.y)).toBeLessThan(12);
   await expect(section).toBeVisible();
   const mobileLayout = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,

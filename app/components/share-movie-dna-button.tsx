@@ -58,6 +58,21 @@ function drawWrappedText(
   });
 }
 
+function getLoveTags(dna: MovieDnaResult) {
+  const traits = [
+    { label: "Strong Stories", value: dna.storyAverage },
+    { label: "Great Performances", value: dna.actingAverage },
+    { label: "High Rewatch Value", value: dna.rewatchAverage },
+  ].sort((first, second) => second.value - first.value);
+  const favorite = dna.favoriteGenre ?? dna.mostRatedGenre;
+
+  return [
+    ...traits.slice(0, 2).map((trait) => trait.label),
+    ...(favorite ? [`${favorite.genre} Movies`] : []),
+    ...(dna.averagePopScore >= 85 ? ["Standout Favorites"] : []),
+  ];
+}
+
 export default function ShareMovieDnaButton({
   dna,
   isPublic = true,
@@ -68,7 +83,8 @@ export default function ShareMovieDnaButton({
   const [isOpen, setIsOpen] = useState(false);
   const [format, setFormat] = useState<"feed" | "story">("feed");
   const [status, setStatus] = useState("");
-  const topMovies = dna.rankings["top-rated"].slice(0, 3);
+  const favoriteGenre = dna.favoriteGenre ?? dna.mostRatedGenre;
+  const loveTags = useMemo(() => getLoveTags(dna), [dna]);
   const profilePath = `/profile/${encodeURIComponent(username)}#movie-dna`;
   const publicUrl =
     isPublic && typeof window !== "undefined"
@@ -90,16 +106,6 @@ export default function ShareMovieDnaButton({
     };
   }, [isOpen]);
 
-  const previewRows = useMemo(
-    () => [
-      ["Favorite genre", dna.favoriteGenre?.genre ?? dna.mostRatedGenre?.genre ?? "Still forming"],
-      ["Average PopScore", `${Math.round(dna.averagePopScore)}%`],
-      ["Movies rated", String(totalMoviesRated)],
-      ["Percentile", `Top ${percentile}%`],
-    ],
-    [dna, percentile, totalMoviesRated]
-  );
-
   const createImage = async () => {
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
@@ -110,7 +116,7 @@ export default function ShareMovieDnaButton({
     context.fillStyle = "#020617";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "rgba(126,34,206,0.22)";
-    context.fillRect(0, 0, canvas.width, 330);
+    context.fillRect(0, 0, canvas.width, format === "story" ? 390 : 300);
     context.strokeStyle = "rgba(250,204,21,0.55)";
     context.lineWidth = 4;
     context.roundRect(52, 52, 976, canvas.height - 104, 40);
@@ -119,53 +125,82 @@ export default function ShareMovieDnaButton({
     context.fillStyle = "#facc15";
     context.font = "900 44px Arial, sans-serif";
     context.fillText("POPSCORE MOVIES", 96, 132);
-    context.fillStyle = "#cbd5e1";
-    context.font = "800 28px Arial, sans-serif";
-    context.fillText(`${username}'s MOVIE DNA`, 96, 190);
     context.fillStyle = "#ffffff";
-    context.font = "900 72px Arial, sans-serif";
-    drawWrappedText(context, dna.personality ?? "Movie DNA", 96, 280, 880, 78);
+    context.font = "900 54px Arial, sans-serif";
+    context.fillText("YOUR MOVIE DNA", 96, 205);
+    context.fillStyle = "#cbd5e1";
+    context.font = "700 24px Arial, sans-serif";
+    context.fillText(`${username} · A look at what makes you, you.`, 96, 246);
 
-    previewRows.forEach(([label, value], index) => {
-      const x = 96 + (index % 4) * 222;
-      context.fillStyle = "#94a3b8";
-      context.font = "800 21px Arial, sans-serif";
-      context.fillText(label.toUpperCase(), x, 440);
-      context.fillStyle = "#fef08a";
-      context.font = "900 31px Arial, sans-serif";
-      drawWrappedText(context, value, x, 486, 195, 36);
-    });
+    const startY = format === "story" ? 410 : 330;
+    const card = (x: number, y: number, width: number, height: number, fill: string) => {
+      context.fillStyle = fill;
+      context.beginPath();
+      context.roundRect(x, y, width, height, 24);
+      context.fill();
+      context.strokeStyle = "rgba(148,163,184,0.28)";
+      context.lineWidth = 2;
+      context.stroke();
+    };
+    const label = (text: string, x: number, y: number, color = "#facc15") => {
+      context.fillStyle = color;
+      context.font = "900 20px Arial, sans-serif";
+      context.fillText(text.toUpperCase(), x, y);
+    };
 
-    context.fillStyle = "#94a3b8";
-    context.font = "800 21px Arial, sans-serif";
-    context.fillText("TOP GENRES", 96, 565);
-    context.fillStyle = "#fef08a";
-    context.font = "900 28px Arial, sans-serif";
+    card(96, startY, 430, 180, "rgba(66,42,3,0.58)");
+    label("#1 Genre", 126, startY + 42);
+    context.fillStyle = "#ffffff";
+    context.font = "900 43px Arial, sans-serif";
+    drawWrappedText(context, favoriteGenre?.genre ?? "Still forming", 126, startY + 98, 370, 46, 1);
+    context.fillStyle = "#cbd5e1";
+    context.font = "700 21px Arial, sans-serif";
     context.fillText(
-      dna.topGenres.map((genre) => genre.genre).join("  •  ") || "Still forming",
-      96,
-      606
+      favoriteGenre ? `${favoriteGenre.count} fully rated movies` : "Keep rating to reveal your favorite",
+      126,
+      startY + 142
     );
 
+    card(554, startY, 430, 180, "rgba(88,28,135,0.45)");
+    label("Average PopScore", 584, startY + 42, "#d8b4fe");
     context.fillStyle = "#ffffff";
-    context.font = "900 36px Arial, sans-serif";
-    context.fillText("MY TOP MOVIES", 96, 650);
-    topMovies.forEach((movie, index) => {
-      const y = (format === "story" ? 820 : 735) + index * (format === "story" ? 170 : 128);
-      context.fillStyle = "rgba(255,255,255,0.06)";
-      context.roundRect(96, y - 62, 888, 98, 22);
-      context.fill();
-      context.fillStyle = "#facc15";
-      context.font = "900 35px Arial, sans-serif";
-      context.fillText(String(index + 1), 126, y);
-      context.fillStyle = "#ffffff";
-      context.font = "900 30px Arial, sans-serif";
-      drawWrappedText(context, movie.movieTitle, 188, y, 610, 34, 1);
-      context.fillStyle = "#facc15";
-      context.textAlign = "right";
-      context.fillText(`${Math.round(movie.popscore)}%`, 948, y);
-      context.textAlign = "start";
-    });
+    context.font = "900 58px Arial, sans-serif";
+    context.fillText(`${Math.round(dna.averagePopScore)}%`, 584, startY + 108);
+    context.fillStyle = "#cbd5e1";
+    context.font = "700 21px Arial, sans-serif";
+    context.fillText(`Across ${dna.eligibleRatings.length} full ratings`, 584, startY + 145);
+
+    const topGenresY = startY + 208;
+    card(96, topGenresY, 888, 128, "rgba(8,20,38,0.92)");
+    label("Top Genres", 126, topGenresY + 38, "#38bdf8");
+    context.fillStyle = "#f8fafc";
+    context.font = "900 28px Arial, sans-serif";
+    context.fillText(
+      dna.topGenres.map((genre) => `${genre.genre} (${genre.count})`).join("   •   ") || "Still forming",
+      126,
+      topGenresY + 88
+    );
+
+    const loveY = topGenresY + 156;
+    card(96, loveY, 888, 150, "rgba(8,20,38,0.92)");
+    label("You Love", 126, loveY + 40, "#fb7185");
+    context.fillStyle = "#ffffff";
+    context.font = "800 27px Arial, sans-serif";
+    drawWrappedText(context, loveTags.join("   •   "), 126, loveY + 91, 825, 34, 2);
+
+    const personalityY = loveY + 178;
+    card(96, personalityY, 888, 220, "rgba(59,7,100,0.42)");
+    label("Your Movie Personality", 126, personalityY + 42, "#f0abfc");
+    context.fillStyle = "#facc15";
+    context.font = "900 39px Arial, sans-serif";
+    context.fillText(dna.personality ?? "Still forming", 126, personalityY + 98);
+    context.fillStyle = "#cbd5e1";
+    context.font = "700 24px Arial, sans-serif";
+    drawWrappedText(context, dna.personalityDescription, 126, personalityY + 145, 810, 34, 2);
+
+    context.fillStyle = "#94a3b8";
+    context.font = "700 20px Arial, sans-serif";
+    context.fillText(`${totalMoviesRated} movies rated · Top ${percentile}%`, 96, personalityY + 267);
 
     context.fillStyle = "#facc15";
     context.font = "900 34px Arial, sans-serif";
@@ -201,7 +236,7 @@ export default function ShareMovieDnaButton({
     const file = new File([blob], fileName, { type: "image/png" });
     const data: ShareData = {
       files: [file],
-      text: `My PopScore Movie DNA is ${dna.personality}.`,
+      text: `My PopScore Movie DNA is ${dna.personality ?? "taking shape"}.`,
       ...(publicUrl ? { url: publicUrl } : {}),
     };
 
@@ -259,24 +294,32 @@ export default function ShareMovieDnaButton({
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
                   {username}&apos;s Movie DNA
                 </p>
-                <p className="mt-2 text-3xl font-black">{dna.personality}</p>
-                <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {previewRows.map(([label, value]) => (
-                    <div key={label} className="rounded-xl bg-black/35 p-2.5">
-                      <p className="text-[9px] font-black uppercase text-slate-400">{label}</p>
-                      <p className="mt-1 break-words text-sm font-black text-yellow-200">{value}</p>
-                    </div>
-                  ))}
+                <p className="mt-1 text-sm font-medium text-slate-300">A look at what makes you, you.</p>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-yellow-400/20 bg-yellow-950/25 p-3">
+                    <p className="text-[9px] font-black uppercase text-yellow-300">#1 Genre</p>
+                    <p className="mt-1 break-words text-lg font-black text-white">{favoriteGenre?.genre ?? "Still forming"}</p>
+                    <p className="mt-1 text-[10px] font-bold text-slate-400">{favoriteGenre ? `${favoriteGenre.count} fully rated movies` : "Keep rating"}</p>
+                  </div>
+                  <div className="rounded-xl border border-purple-400/20 bg-purple-900/25 p-3">
+                    <p className="text-[9px] font-black uppercase text-purple-300">Average PopScore</p>
+                    <p className="mt-1 text-2xl font-black text-white">{Math.round(dna.averagePopScore)}%</p>
+                    <p className="mt-1 text-[10px] font-bold text-slate-400">Across {dna.eligibleRatings.length} full ratings</p>
+                  </div>
                 </div>
-                <ol className="mt-5 space-y-2">
-                  {topMovies.map((movie, index) => (
-                    <li key={movie.id} className="flex gap-3 rounded-xl bg-black/35 p-2 text-sm font-black">
-                      <span className="text-yellow-300">{index + 1}</span>
-                      <span className="min-w-0 flex-1 truncate">{movie.movieTitle}</span>
-                      <span className="text-yellow-300">{Math.round(movie.popscore)}%</span>
-                    </li>
-                  ))}
-                </ol>
+                <div className="mt-2 rounded-xl bg-black/35 p-3">
+                  <p className="text-[9px] font-black uppercase text-sky-300">Top Genres</p>
+                  <p className="mt-1 text-xs font-black text-white">{dna.topGenres.map((genre) => `${genre.genre} (${genre.count})`).join(" · ") || "Still forming"}</p>
+                </div>
+                <div className="mt-2 rounded-xl bg-black/35 p-3">
+                  <p className="text-[9px] font-black uppercase text-rose-300">You Love</p>
+                  <p className="mt-1 text-xs font-black text-white">{loveTags.join(" · ")}</p>
+                </div>
+                <div className="mt-2 rounded-xl border border-purple-400/20 bg-purple-900/20 p-3">
+                  <p className="text-[9px] font-black uppercase text-purple-300">Your Movie Personality</p>
+                  <p className="mt-1 text-lg font-black text-yellow-300">{dna.personality ?? "Still forming"}</p>
+                  <p className="mt-1 text-xs font-medium leading-5 text-slate-300">{dna.personalityDescription}</p>
+                </div>
                 <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
                   popscoremovies.com
                 </p>

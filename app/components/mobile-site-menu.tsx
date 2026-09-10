@@ -26,6 +26,9 @@ export default function MobileSiteMenu() {
   const popFileHref = profile
     ? `/profile/${profile.username}`
     : `/profile/edit?returnTo=${encodeURIComponent(currentPath)}`;
+  const statsHref = profile
+    ? `/profile/${profile.username}?tab=stats`
+    : null;
   const popFileAvatar = profile ? avatarForKey(profile.avatar_key).icon : "★";
 
   function handleSignOut() {
@@ -102,13 +105,22 @@ export default function MobileSiteMenu() {
               </Link>
             )}
             {!isProfileLoading && profile ? (
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="mt-2 flex w-full items-center justify-center rounded-2xl border border-slate-700/90 bg-slate-950/70 px-4 py-3 text-sm font-black text-slate-200 transition hover:border-yellow-400/55 hover:bg-yellow-400/10 hover:text-yellow-300"
-              >
-                Sign Out
-              </button>
+              <>
+                <Link
+                  href={statsHref ?? popFileHref}
+                  onClick={() => setIsOpen(false)}
+                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-slate-700/90 bg-slate-950/70 px-4 py-3 text-sm font-black text-slate-200 transition hover:border-yellow-400/55 hover:bg-yellow-400/10 hover:text-yellow-300"
+                >
+                  Stats
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-slate-700/90 bg-slate-950/70 px-4 py-3 text-sm font-black text-slate-200 transition hover:border-yellow-400/55 hover:bg-yellow-400/10 hover:text-yellow-300"
+                >
+                  Sign Out
+                </button>
+              </>
             ) : null}
           </div>
         </div>

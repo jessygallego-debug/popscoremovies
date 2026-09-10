@@ -563,16 +563,13 @@ export default function MovieDnaSection({ percentile, ratings, totalMoviesRated,
   return (
     <section
       id="movie-dna"
-      className={`${styles.panel} ${styles.movieDna} w-full min-w-0 scroll-mt-6 overflow-hidden p-3.5 sm:p-5`}
+      className={`${styles.panel} ${styles.movieDna} w-full min-w-0 scroll-mt-6 overflow-hidden p-2.5 sm:p-5`}
       aria-labelledby="movie-dna-heading"
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <span aria-hidden="true" className="text-3xl text-purple-400">🧬</span>
-          <div>
-            <h2 id="movie-dna-heading" className="text-2xl font-black text-white sm:text-3xl">Your Movie DNA</h2>
-            <p className="mt-0.5 text-sm font-medium text-slate-400">A look at what makes you, you.</p>
-          </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+          <span aria-hidden="true" className="text-2xl text-purple-400 sm:text-3xl">🧬</span>
+          <h2 id="movie-dna-heading" className="min-w-0 text-xl font-black text-white sm:text-3xl">Your Movie DNA</h2>
         </div>
         {count >= 5 ? (
           <ShareMovieDnaButton
@@ -582,9 +579,10 @@ export default function MovieDnaSection({ percentile, ratings, totalMoviesRated,
             username={username}
           />
         ) : null}
+        <p className="col-span-2 ml-9 text-sm font-medium text-slate-400 sm:ml-12">A look at what makes you, you.</p>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-2.5 sm:mt-4">
         {count < 5 ? (
           <UnlockCard count={count} />
         ) : (
