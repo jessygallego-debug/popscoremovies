@@ -554,7 +554,7 @@ function ProfileSidebar({
         {followSummary?.isOwnProfile ? (
           <Link
             href="/profile/edit"
-            className="flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-600/80 bg-slate-950/45 px-4 text-sm font-black text-slate-100 transition duration-200 hover:-translate-y-0.5 hover:border-yellow-400 hover:text-yellow-300 motion-reduce:transform-none"
+            className="flex min-h-9 w-full items-center justify-center rounded-lg border border-slate-600/80 bg-slate-950/45 px-3 py-1 text-xs font-black text-slate-100 transition duration-200 hover:-translate-y-0.5 hover:border-yellow-400 hover:text-yellow-300 motion-reduce:transform-none lg:min-h-10"
           >
             Edit PopFile
           </Link>
