@@ -13,6 +13,7 @@ import {
 import type { UserMovieRating, UserMovieWatch } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
+import styles from "@/app/components/yearly-movie-activity.module.css";
 
 const MONTHS = [
   "January",
@@ -48,9 +49,9 @@ function formatHours(minutes: number) {
 
 function ActivityMetric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-slate-700/70 bg-black/30 p-3 sm:p-4">
+    <div className="flex min-w-0 flex-col justify-center rounded-2xl border border-slate-700/70 bg-black/30 p-3 text-center sm:p-4">
       <p className="text-xl font-black text-white sm:text-2xl">{value}</p>
-      <p className="mt-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 sm:text-xs">
+      <p className="mt-1 break-words text-[10px] font-black uppercase leading-snug tracking-[0.1em] text-slate-400 sm:text-xs">
         {label}
       </p>
     </div>
@@ -96,7 +97,7 @@ export default function YearlyMovieActivity({
   const visibleWatches = showAll ? activity.watches : activity.watches.slice(0, 6);
 
   return (
-    <section id="movie-activity" className="scroll-mt-24 rounded-3xl border border-slate-700/70 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.10),transparent_34%),linear-gradient(145deg,rgba(17,24,39,0.98),rgba(8,16,32,0.98))] p-4 shadow-2xl shadow-black/25 sm:p-5">
+    <section id="movie-activity" className={`${styles.activityContainer} scroll-mt-24 rounded-3xl border border-slate-700/70 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.10),transparent_34%),linear-gradient(145deg,rgba(17,24,39,0.98),rgba(8,16,32,0.98))] p-4 shadow-2xl shadow-black/25 sm:p-5`}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-300">
@@ -136,7 +137,7 @@ export default function YearlyMovieActivity({
         </p>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+      <div className={`${styles.metricGrid} mt-4`}>
         <ActivityMetric label="Movies Watched" value={activity.totalWatches} />
         <ActivityMetric label="Unique Movies" value={activity.uniqueMovies} />
         <ActivityMetric label="Rewatches" value={activity.rewatches} />
