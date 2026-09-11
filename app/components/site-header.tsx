@@ -44,7 +44,7 @@ function SiteLogo() {
             <span className="text-yellow-400">SCORE</span>
           </span>
           <span className="mt-1 block text-[8px] font-black uppercase tracking-[0.16em] text-slate-400 sm:text-[10px] sm:tracking-[0.22em] md:text-xs">
-            Movie Ratings For Real Fans
+            Movie Ratings for Movie Lovers
           </span>
         </span>
       </div>
