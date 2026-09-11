@@ -29,6 +29,11 @@ export default function MobileSiteMenu() {
   const statsHref = profile
     ? `/profile/${profile.username}?tab=stats`
     : null;
+  const navigationItems = mobileNavItems.flatMap((item) =>
+    item.label === "Movie Match" && statsHref
+      ? [item, { href: statsHref, label: "Stats" }]
+      : [item]
+  );
   const popFileAvatar = profile ? avatarForKey(profile.avatar_key).icon : "★";
 
   function handleSignOut() {
@@ -69,7 +74,7 @@ export default function MobileSiteMenu() {
       {isOpen ? (
         <div className="absolute right-0 z-40 mt-3 w-[calc(100vw-2.5rem)] max-w-xs overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl shadow-black/60 backdrop-blur">
           <div className="grid gap-1">
-            {mobileNavItems.map((item) => (
+            {navigationItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
@@ -105,22 +110,13 @@ export default function MobileSiteMenu() {
               </Link>
             )}
             {!isProfileLoading && profile ? (
-              <>
-                <Link
-                  href={statsHref ?? popFileHref}
-                  onClick={() => setIsOpen(false)}
-                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-slate-700/90 bg-slate-950/70 px-4 py-3 text-sm font-black text-slate-200 transition hover:border-yellow-400/55 hover:bg-yellow-400/10 hover:text-yellow-300"
-                >
-                  Stats
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-slate-700/90 bg-slate-950/70 px-4 py-3 text-sm font-black text-slate-200 transition hover:border-yellow-400/55 hover:bg-yellow-400/10 hover:text-yellow-300"
-                >
-                  Sign Out
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="mt-2 flex w-full items-center justify-center rounded-2xl border border-slate-700/90 bg-slate-950/70 px-4 py-3 text-sm font-black text-slate-200 transition hover:border-yellow-400/55 hover:bg-yellow-400/10 hover:text-yellow-300"
+              >
+                Sign Out
+              </button>
             ) : null}
           </div>
         </div>

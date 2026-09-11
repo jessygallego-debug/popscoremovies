@@ -213,9 +213,7 @@ test("Fantasy and Western are rating genres but Superhero is filter-only", async
   await expect(page.getByRole("button", { name: "Superhero" })).toHaveCount(0);
 });
 
-test("My PopFile does not navigate to edit while profile is still loading", async ({
-  page,
-}) => {
+test("My PopFile loading and navigation order stay consistent", async ({ page }) => {
   test.skip(
     !process.env.NEXT_PUBLIC_SUPABASE_URL,
     "Supabase URL is required for the profile loading regression."
@@ -274,7 +272,41 @@ test("My PopFile does not navigate to edit while profile is still loading", asyn
   await loadingPopFile.click();
   await expect(page).not.toHaveURL(/\/profile\/edit/);
 
-  await expect(page.locator("summary", { hasText: "My PopFile" })).toBeVisible();
+  const profileSummary = page.locator("summary", { hasText: "My PopFile" });
+  await expect(profileSummary).toBeVisible();
+  await profileSummary.click();
+
+  const desktopMenuLabels = await profileSummary
+    .locator("xpath=following-sibling::div[1]")
+    .locator("a")
+    .allTextContents();
+  expect(desktopMenuLabels.map((label) => label.trim())).toEqual([
+    "Edit PopFile",
+    "Community",
+    "Watchlist",
+    "Movie Match",
+    "Stats",
+  ]);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileMenuButton = page.getByRole("button", {
+    name: "Open navigation menu",
+  });
+  await mobileMenuButton.click();
+
+  const mobileMenuLabels = await mobileMenuButton
+    .locator("xpath=following-sibling::div[1]")
+    .locator("a")
+    .allTextContents();
+  expect(mobileMenuLabels.map((label) => label.trim())).toEqual([
+    "Movies",
+    "Community",
+    "Watchlist",
+    "Movie Match",
+    "Stats",
+    "FAQ",
+    "My PopFile",
+  ]);
 });
 
 test("placeholder discussion links do not render sample replies", async ({
