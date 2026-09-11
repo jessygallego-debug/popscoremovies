@@ -12,6 +12,7 @@ import {
   getCurrentProfile,
   movieWatchDateKey,
   removeFromWatchlist,
+  saveMovieRatingGenreVote,
   saveUserMovieRating,
   type UserMovieWatch,
   type UserMovieRatingSource,
@@ -76,6 +77,7 @@ type RateClientProps = {
   movieReleaseDate?: string | null;
   movieRuntimeMinutes?: number | null;
   initialGenre: GenreKey;
+  genreChoiceOptions?: GenreKey[];
   lockGenre: boolean;
   movieTitle?: string;
   ratingSource?: UserMovieRatingSource;
@@ -160,6 +162,7 @@ export default function RateClient({
   movieReleaseDate,
   movieRuntimeMinutes,
   initialGenre,
+  genreChoiceOptions = [],
   lockGenre,
   movieTitle,
   ratingSource,
@@ -185,9 +188,11 @@ export default function RateClient({
     }, 0) * 100
   );
 
-  const genresToShow: GenreEntry[] = lockGenre
-    ? [[selectedGenre, currentGenre]]
-    : (Object.entries(genreConfigs) as GenreEntry[]);
+  const genresToShow: GenreEntry[] = genreChoiceOptions.length > 1
+    ? genreChoiceOptions.map((genre) => [genre, genreConfigs[genre]])
+    : lockGenre
+      ? [[selectedGenre, currentGenre]]
+      : (Object.entries(genreConfigs) as GenreEntry[]);
   const detailExitHref =
     movieId && movieTitle
       ? `${movieHref({
@@ -251,7 +256,12 @@ export default function RateClient({
           reviewComment: reviewValidation.reviewComment ?? "",
         });
       })
-      .then((result) => {
+      .then(async (result) => {
+        if (movieId && genreChoiceOptions.length > 1) {
+          await saveMovieRatingGenreVote(movieId, selectedGenre).catch(
+            () => null
+          );
+        }
         notifyPopScoreUpdates();
         void checkAchievementEmails();
         return removeFromWatchlist(movieId)
@@ -357,18 +367,29 @@ export default function RateClient({
           <div className="mb-5 sm:mb-8" />
         )}
 
+        {genreChoiceOptions.length > 1 ? (
+          <p className="mb-2 text-center text-xs font-bold text-slate-300 sm:text-sm">
+            Which questions fit this movie best? Your choice helps future raters.
+          </p>
+        ) : null}
         <div className="mb-4 flex flex-wrap justify-center gap-2 sm:mb-6">
           {genresToShow.map(([key, genre]) => (
             <button
+              type="button"
               key={key}
               onClick={() => {
-                if (!lockGenre) {
+                if (!lockGenre || genreChoiceOptions.length > 1) {
                   setSelectedGenre(key);
                   setRatings({});
                   setSubmittedScore(null);
                 }
               }}
-              className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-bold text-black shadow-lg shadow-yellow-400/20 sm:text-base"
+              aria-pressed={selectedGenre === key}
+              className={`rounded-lg border px-4 py-2 text-sm font-bold transition sm:text-base ${
+                selectedGenre === key
+                  ? "border-yellow-300 bg-yellow-400 text-black shadow-lg shadow-yellow-400/20"
+                  : "border-white/20 bg-white/5 text-slate-200 hover:border-yellow-400/60 hover:text-yellow-300"
+              }`}
             >
               {genre.title}
             </button>

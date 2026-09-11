@@ -1331,6 +1331,31 @@ export async function saveUserMovieRating({
   return { rating: mapRatingRow(savedRow), watch };
 }
 
+export async function saveMovieRatingGenreVote(
+  movieId: string,
+  genre: string
+) {
+  const user = await getCurrentUser();
+
+  if (!user || !/^\d+$/.test(movieId)) return null;
+
+  return supabaseFetch<null>(
+    "/movie_rating_genre_votes?on_conflict=user_id,movie_id",
+    {
+      method: "POST",
+      headers: {
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify({
+        genre,
+        movie_id: movieId,
+        updated_at: new Date().toISOString(),
+        user_id: user.id,
+      }),
+    }
+  );
+}
+
 export async function getUserMovieWatches(userId: string) {
   const rows = await supabaseFetch<MovieWatchRow[]>(
     `/user_movie_watches?user_id=eq.${encodeURIComponent(
