@@ -588,6 +588,33 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await expect(page.getByText("4 of 5 ratings completed")).toBeVisible();
 });
 
+test("mobile Stats genre filter uses the PopScore filter colors", async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+  await mockPopFile(page, browserRatings);
+  await page.goto("/profile/movie_fan");
+
+  await page
+    .locator("summary")
+    .filter({ hasText: "Explore your full Movie DNA" })
+    .click();
+
+  const genreSummary = page.locator(
+    'summary[aria-label="Filter How You Rate Movies by genre"]'
+  );
+  const genreMenu = genreSummary.locator("..");
+
+  await expect(genreSummary).toBeVisible();
+  await expect(genreSummary).toHaveClass(/bg-\[#020617\]/);
+  await expect(genreSummary).toHaveClass(/border-yellow-400\/55/);
+  await expect(genreSummary).toHaveClass(/text-yellow-300/);
+
+  await genreSummary.click();
+  await genreMenu.getByRole("button", { name: /Horror/ }).click();
+  await expect(genreSummary).toContainText("Horror");
+});
+
 test("Movie DNA is responsive and produces desktop and mobile screenshots", async ({
   page,
 }) => {

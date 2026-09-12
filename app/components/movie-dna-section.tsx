@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import MobileFilterMenu from "@/app/components/mobile-filter-menu";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileTopMovies from "@/app/components/profile-top-movies";
 import ShareMovieDnaButton from "@/app/components/share-movie-dna-button";
@@ -166,6 +167,14 @@ function CoreBreakdown({ dna }: { dna: MovieDnaResult }) {
     selectedGenre === "all"
       ? null
       : genreFilters.find((genre) => genre.key === selectedGenre) ?? null;
+  const selectedGenreValue = selectedGenreDetails?.key ?? "all";
+  const genreFilterOptions = [
+    { label: "All Genres", value: "all" },
+    ...genreFilters.map((genre) => ({
+      label: `${genre.label} (${genre.count})`,
+      value: genre.key,
+    })),
+  ];
   const traits =
     selectedGenreDetails
       ? getMovieDnaGenreQuestionAverages(
@@ -178,11 +187,19 @@ function CoreBreakdown({ dna }: { dna: MovieDnaResult }) {
     <div className={panelClass("p-5 sm:p-6")}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-lg font-black text-white">How You Rate Movies</h3>
-        <label className="flex items-center gap-2 text-xs font-black text-slate-400">
+        <MobileFilterMenu
+          ariaLabel="Filter How You Rate Movies by genre"
+          className="relative z-[400] block w-full sm:w-auto md:hidden"
+          label="Genre"
+          onSelect={(value) => setSelectedGenre(value as "all" | GenreKey)}
+          options={genreFilterOptions}
+          selectedValue={selectedGenreValue}
+        />
+        <label className="hidden items-center gap-2 text-xs font-black text-slate-400 md:flex">
           <span>Genre</span>
           <select
             aria-label="Filter How You Rate Movies by genre"
-            value={selectedGenreDetails?.key ?? "all"}
+            value={selectedGenreValue}
             onChange={(event) =>
               setSelectedGenre(event.target.value as "all" | GenreKey)
             }

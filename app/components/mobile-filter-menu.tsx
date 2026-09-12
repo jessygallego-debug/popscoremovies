@@ -8,6 +8,7 @@ export type MobileFilterOption = {
 };
 
 type MobileFilterMenuProps = {
+  ariaLabel?: string;
   className?: string;
   label: string;
   labelClassName?: string;
@@ -19,6 +20,7 @@ type MobileFilterMenuProps = {
 };
 
 export default function MobileFilterMenu({
+  ariaLabel,
   className,
   label,
   labelClassName,
@@ -77,6 +79,7 @@ export default function MobileFilterMenu({
         onToggle={(event) => setIsOpen(event.currentTarget.open)}
       >
         <summary
+          aria-label={ariaLabel}
           className={
             summaryClassName ??
             "flex min-h-9 cursor-pointer list-none items-center justify-between gap-2 rounded-full border border-yellow-400/55 bg-[#020617] px-3 text-xs font-black text-yellow-300 shadow-inner shadow-black/30 outline-none transition hover:border-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 sm:min-h-10 sm:text-sm [&::-webkit-details-marker]:hidden"
