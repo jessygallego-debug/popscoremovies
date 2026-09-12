@@ -9,11 +9,13 @@ type SiteStatsRow = {
 };
 
 type SiteEngagementTotals = {
+  totalMoviesRated: number;
   totalRatings: number;
   totalReactions: number;
 };
 
 const EMPTY_SITE_ENGAGEMENT_TOTALS: SiteEngagementTotals = {
+  totalMoviesRated: 0,
   totalRatings: 0,
   totalReactions: 0,
 };
@@ -146,6 +148,7 @@ async function loadSiteEngagementTotals(
     ),
   ]);
   const ratingKeys = new Set<string>();
+  const ratedMovieIds = new Set<string>();
   const reactionKeys = new Set<string>();
 
   [...profileRatings, ...legacyRatings].forEach((row, index) => {
@@ -154,6 +157,10 @@ async function loadSiteEngagementTotals(
     }
 
     ratingKeys.add(uniqueInteractionKey(row, `rating:${row.id ?? index}`));
+
+    if (row.movie_id) {
+      ratedMovieIds.add(row.movie_id);
+    }
   });
 
   profileRatings.forEach((row, index) => {
@@ -177,6 +184,7 @@ async function loadSiteEngagementTotals(
   });
 
   return {
+    totalMoviesRated: ratedMovieIds.size,
     totalRatings: ratingKeys.size,
     totalReactions: reactionKeys.size,
   };

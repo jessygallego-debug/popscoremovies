@@ -89,8 +89,17 @@ function HeroVisual({
   return (
     <div className="relative min-h-[250px] w-full overflow-hidden rounded-[1.5rem] border border-slate-800/80 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.24),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-black/40 sm:min-h-[340px] sm:rounded-[2rem] sm:p-6 lg:min-h-[420px] lg:max-w-[720px] lg:justify-self-end">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(250,204,21,0.18),transparent_28%),radial-gradient(circle_at_15%_80%,rgba(59,130,246,0.16),transparent_30%)]" />
-      <div className="absolute left-3 top-3 z-30 rounded-2xl border border-yellow-400/25 bg-black/55 px-2.5 py-1.5 text-xs font-black text-yellow-300 shadow-lg shadow-yellow-400/10 backdrop-blur md:left-5 md:top-5 md:px-4 md:py-2.5 md:text-sm">
+      <div
+        aria-label={`${stats.totalRatings.toLocaleString()} ratings submitted`}
+        className="absolute left-3 top-3 z-30 rounded-2xl border border-yellow-400/25 bg-black/55 px-2.5 py-1.5 text-xs font-black text-yellow-300 shadow-lg shadow-yellow-400/10 backdrop-blur md:left-5 md:top-5 md:px-4 md:py-2.5 md:text-sm"
+      >
         <EmojiIcon emoji="🍿" size={16} /> {stats.totalRatings.toLocaleString()}
+      </div>
+      <div
+        aria-label={`${stats.totalMoviesRated.toLocaleString()} movies rated`}
+        className="absolute right-3 top-3 z-30 rounded-2xl border border-yellow-400/25 bg-black/55 px-2.5 py-1.5 text-xs font-black text-yellow-300 shadow-lg shadow-yellow-400/10 backdrop-blur md:right-5 md:top-5 md:px-4 md:py-2.5 md:text-sm"
+      >
+        <EmojiIcon emoji="🎬" size={16} /> {stats.totalMoviesRated.toLocaleString()}
       </div>
       <div className="relative z-10 flex h-full items-center justify-center">
         <div className="relative h-[210px] w-full max-w-[320px] sm:h-[280px] sm:max-w-[420px] lg:h-[340px] lg:max-w-[440px]">
