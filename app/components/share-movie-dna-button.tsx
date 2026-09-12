@@ -155,7 +155,7 @@ export default function ShareMovieDnaButton({
     };
 
     card(96, startY, 430, 180, "rgba(66,42,3,0.58)");
-    label("#1 Genre", 126, startY + 42);
+    label("Favorite Genre", 126, startY + 42);
     context.fillStyle = "#ffffff";
     context.font = "900 43px Arial, sans-serif";
     drawWrappedText(context, favoriteGenre?.genre ?? "Still forming", 126, startY + 98, 370, 46, 1);
@@ -178,7 +178,7 @@ export default function ShareMovieDnaButton({
 
     const topGenresY = startY + 208;
     card(96, topGenresY, 888, 128, "rgba(8,20,38,0.92)");
-    label("Top Genres", 126, topGenresY + 38, "#38bdf8");
+    label("Most Rated Genres", 126, topGenresY + 38, "#38bdf8");
     context.fillStyle = "#f8fafc";
     context.font = "900 28px Arial, sans-serif";
     context.fillText(
@@ -314,7 +314,7 @@ export default function ShareMovieDnaButton({
                 <p className="mt-1 text-sm font-medium text-slate-300">A look at what makes you, you.</p>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <div className="rounded-xl border border-yellow-400/20 bg-yellow-950/25 p-3">
-                    <p className="text-[9px] font-black uppercase text-yellow-300">#1 Genre</p>
+                    <p className="text-[9px] font-black uppercase text-yellow-300">Favorite Genre</p>
                     <p className="mt-1 break-words text-lg font-black text-white">{favoriteGenre?.genre ?? "Still forming"}</p>
                     <p className="mt-1 text-[10px] font-bold text-slate-400">{favoriteGenre ? `${favoriteGenre.count} fully rated movies` : "Keep rating"}</p>
                   </div>
@@ -325,7 +325,7 @@ export default function ShareMovieDnaButton({
                   </div>
                 </div>
                 <div className="mt-2 rounded-xl bg-black/35 p-3">
-                  <p className="text-[9px] font-black uppercase text-sky-300">Top Genres</p>
+                  <p className="text-[9px] font-black uppercase text-sky-300">Most Rated Genres</p>
                   <p className="mt-1 text-xs font-black text-white">{dna.topGenres.map((genre) => `${genre.genre} (${genre.count})`).join(" · ") || "Still forming"}</p>
                 </div>
                 <div className="mt-2 rounded-xl bg-black/35 p-3">

@@ -390,7 +390,7 @@ test("Stats labels the overview and rating streaks", async ({ page }) => {
   await expect(page.getByText("Rate Different.").first()).toBeVisible();
   await expect(page.getByText(/Watch Better/).first()).toBeVisible();
   await expect(page.getByText("A look at what makes you, you.")).toBeVisible();
-  await expect(page.getByText("#1 Genre", { exact: true })).toBeVisible();
+  await expect(page.getByText("Favorite Genre", { exact: true })).toBeVisible();
   await expect(page.getByText(/You Love/).first()).toBeVisible();
   await expect(page.getByText(/Your Movie Personality/).first()).toBeVisible();
   const navigationLabels = await page
@@ -514,14 +514,21 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await page.goto("/profile/movie_fan#movie-dna");
   await expect(page.getByRole("heading", { name: "Your Movie DNA" })).toBeVisible();
   await expect(page.getByText("Story Seeker", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Top Genres" })).toBeVisible();
-  await page.locator("#movie-dna summary").click();
+  await expect(page.getByRole("heading", { name: "Most Rated Genres" })).toBeVisible();
+  await page
+    .locator("#movie-dna summary")
+    .filter({ hasText: "Explore your full Movie DNA" })
+    .click();
   await expect(page.getByRole("heading", { name: "How You Rate Movies" })).toBeVisible();
 
   const ratingBreakdown = page
     .getByRole("heading", { name: "How You Rate Movies" })
     .locator("../..");
-  await page.getByLabel("Filter How You Rate Movies by genre").selectOption("horror");
+  await page
+    .getByRole("combobox", {
+      name: "Filter How You Rate Movies by genre",
+    })
+    .selectOption("horror");
   await expect(ratingBreakdown.getByRole("meter")).toHaveCount(5);
   await expect(page.getByText("Scare Factor", { exact: true })).toBeVisible();
   await expect(page.getByText("Originality", { exact: true })).toBeVisible();
@@ -567,8 +574,8 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await page.getByRole("button", { name: "Share My Movie DNA" }).click();
   const shareDialog = page.getByRole("dialog", { name: "Share Movie DNA" });
   await expect(shareDialog).toBeVisible();
-  await expect(shareDialog.getByText("#1 Genre", { exact: true })).toBeVisible();
-  await expect(shareDialog.getByText("Top Genres", { exact: true })).toBeVisible();
+  await expect(shareDialog.getByText("Favorite Genre", { exact: true })).toBeVisible();
+  await expect(shareDialog.getByText("Most Rated Genres", { exact: true })).toBeVisible();
   await expect(shareDialog.getByText("You Love", { exact: true })).toBeVisible();
   await expect(shareDialog.getByText("Your Movie Personality", { exact: true })).toBeVisible();
   await expect(shareDialog.getByText("My Top 5 Movies of All Time", { exact: true })).toBeVisible();

@@ -111,7 +111,7 @@ function SummaryCard({
     <div className="space-y-3">
       <div className={styles.summaryGrid}>
         <article className={`${styles.genreVisual} min-h-28 rounded-2xl border border-yellow-400/25 p-4`}>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">#1 Genre</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">Favorite Genre</p>
           <p className={`${styles.favoriteGenreName} mt-2 font-black text-white`}>{favorite?.genre ?? "Still forming"}</p>
           <p className="mt-1.5 text-xs font-medium text-slate-300">
             {favorite ? `${favorite.count} fully rated movies` : "Keep rating to reveal your favorite"}
@@ -287,7 +287,7 @@ function GenreMoviesDialog({
         <div className="flex items-start justify-between gap-4 border-b border-slate-800 p-4 sm:p-5">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.16em] text-yellow-300">
-              Your Top Genres
+              Your Most Rated Genres
             </p>
             <h2 id="genre-movies-dialog-title" className="mt-1 text-xl font-black sm:text-2xl">
               {genre} Movies
@@ -359,7 +359,7 @@ function GenreDna({ className = "", dna }: { className?: string; dna: MovieDnaRe
 
   return (
     <div className={`${className} min-h-28 rounded-2xl border border-slate-700/70 bg-[#0b1424]/75 p-4`}>
-      <h3 className="text-xs font-black uppercase tracking-[0.16em] text-sky-400">Top Genres</h3>
+      <h3 className="text-xs font-black uppercase tracking-[0.16em] text-sky-400">Most Rated Genres</h3>
       {dna.topGenres.length ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {dna.topGenres.map((genre) => (
@@ -378,7 +378,7 @@ function GenreDna({ className = "", dna }: { className?: string; dna: MovieDnaRe
         </div>
       ) : (
         <p className="mt-3 text-xs font-medium leading-5 text-slate-400">
-          Rate at least two movies in a genre to reveal your top genres.
+          Rate at least two movies in a genre to reveal your most rated genres.
         </p>
       )}
       {otherFavorites.length ? (
