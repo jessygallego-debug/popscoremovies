@@ -12,6 +12,7 @@ import { checkAchievementEmails } from "@/lib/achievement-email-notifications";
 export const FOLLOWS_UPDATED_EVENT = "popscore-follows-updated";
 
 const LOCAL_FOLLOWS_KEY = "popscore-user-follows";
+const FOLLOW_SUMMARY_RETRY_DELAY_MS = 350;
 
 type FollowRow = {
   created_at: string;
@@ -142,6 +143,12 @@ function writeLocalFollows(rows: FollowRow[]) {
 
   window.localStorage.setItem(LOCAL_FOLLOWS_KEY, JSON.stringify(rows));
   window.dispatchEvent(new Event(FOLLOWS_UPDATED_EVENT));
+}
+
+function waitForFollowSummaryRetry() {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, FOLLOW_SUMMARY_RETRY_DELAY_MS);
+  });
 }
 
 function localFollowId(followerId: string, followingId: string) {
@@ -283,39 +290,45 @@ export async function getFollowSummary(
     currentProfile?.username
   );
 
-  try {
-    const [followers, following, currentFollow] = await Promise.all([
-      supabaseFetch<FollowRow[]>(
-        `/user_follows?following_id=eq.${encodeURIComponent(
-          target.userId
-        )}&select=id,follower_id,following_id,created_at`
-      ),
-      supabaseFetch<FollowRow[]>(
-        `/user_follows?follower_id=eq.${encodeURIComponent(
-          target.userId
-        )}&select=id,follower_id,following_id,created_at`
-      ),
-      currentUserId
-        ? supabaseFetch<FollowRow[]>(
-            `/user_follows?follower_id=eq.${encodeURIComponent(
-              currentUserId
-            )}&following_id=eq.${encodeURIComponent(
-              target.userId
-            )}&select=id,follower_id,following_id,created_at`
-          )
-        : Promise.resolve([]),
-    ]);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const [followers, following, currentFollow] = await Promise.all([
+        supabaseFetch<FollowRow[]>(
+          `/user_follows?following_id=eq.${encodeURIComponent(
+            target.userId
+          )}&select=id,follower_id,following_id,created_at`
+        ),
+        supabaseFetch<FollowRow[]>(
+          `/user_follows?follower_id=eq.${encodeURIComponent(
+            target.userId
+          )}&select=id,follower_id,following_id,created_at`
+        ),
+        currentUserId
+          ? supabaseFetch<FollowRow[]>(
+              `/user_follows?follower_id=eq.${encodeURIComponent(
+                currentUserId
+              )}&following_id=eq.${encodeURIComponent(
+                target.userId
+              )}&select=id,follower_id,following_id,created_at`
+            )
+          : Promise.resolve([]),
+      ]);
 
-    return {
-      currentUserId,
-      followersCount: followers.length,
-      followingCount: following.length,
-      isFollowing: currentFollow.length > 0,
-      isOwnProfile,
-    };
-  } catch {
-    return localSummary(target, currentUserId, isOwnProfile);
+      return {
+        currentUserId,
+        followersCount: followers.length,
+        followingCount: following.length,
+        isFollowing: currentFollow.length > 0,
+        isOwnProfile,
+      };
+    } catch {
+      if (attempt === 0) {
+        await waitForFollowSummaryRetry();
+      }
+    }
   }
+
+  return localSummary(target, currentUserId, isOwnProfile);
 }
 
 export async function getFollowingUserIdsForCurrentUser() {

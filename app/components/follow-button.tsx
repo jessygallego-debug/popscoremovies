@@ -132,7 +132,7 @@ export default function FollowButton({
             : "border-yellow-400/65 bg-yellow-400 text-black shadow-yellow-400/20 hover:bg-yellow-300"
         } disabled:cursor-not-allowed disabled:border-slate-700 disabled:bg-slate-900/70 disabled:text-slate-500 disabled:shadow-black/10`}
       >
-        {isSaving ? "Saving..." : buttonLabel}
+        {isLoading ? "Checking..." : isSaving ? "Saving..." : buttonLabel}
       </button>
       {message ? (
         <span className="max-w-44 text-[11px] font-bold leading-4 text-red-200">

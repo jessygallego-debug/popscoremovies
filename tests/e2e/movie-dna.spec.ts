@@ -220,7 +220,16 @@ const hasSupabaseBrowserConfig = Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 );
 
-async function mockPopFile(page: Page, movieRatings: MovieDnaRating[]) {
+async function mockPopFile(
+  page: Page,
+  movieRatings: MovieDnaRating[],
+  options: {
+    followDelayMs?: number;
+    isFollowing?: boolean;
+    profileUserId?: string;
+  } = {}
+) {
+  const profileUserId = options.profileUserId ?? "user-1";
   let topMovies = movieRatings.slice(0, 3).map((rating) => ({
     genreNames: rating.genreNames ?? [],
     movieId: rating.movieId,
@@ -281,7 +290,7 @@ async function mockPopFile(page: Page, movieRatings: MovieDnaRating[]) {
           id: "profile-1",
           top_movies: topMovies,
           updated_at: "2026-01-01T00:00:00Z",
-          user_id: "user-1",
+          user_id: profileUserId,
           username: "movie_fan",
         },
       ];
@@ -301,9 +310,31 @@ async function mockPopFile(page: Page, movieRatings: MovieDnaRating[]) {
         release_date: item.releaseDate,
         review_comment: null,
         updated_at: item.updated_at,
-        user_id: "user-1",
+        user_id: profileUserId,
         weights: item.weights,
       }));
+    } else if (table === "user_follows") {
+      if (options.followDelayMs) {
+        await new Promise((resolve) => setTimeout(resolve, options.followDelayMs));
+      }
+
+      const rows = options.isFollowing
+        ? [
+            {
+              created_at: "2026-01-01T00:00:00Z",
+              follower_id: "user-1",
+              following_id: profileUserId,
+              id: "follow-1",
+            },
+          ]
+        : [];
+      const followerId = url.searchParams.get("follower_id")?.replace(/^eq\./, "");
+      const followingId = url.searchParams.get("following_id")?.replace(/^eq\./, "");
+      json = rows.filter(
+        (row) =>
+          (!followerId || row.follower_id === followerId) &&
+          (!followingId || row.following_id === followingId)
+      );
     }
 
     await route.fulfill({ contentType: "application/json", json });
@@ -455,6 +486,24 @@ test("PopFile section buttons return the page to the top", async ({ page }) => {
       .click();
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   }
+});
+
+test("mobile follow status does not show Follow while an existing relationship loads", async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+  await mockPopFile(page, browserRatings, {
+    followDelayMs: 500,
+    isFollowing: true,
+    profileUserId: "user-2",
+  });
+  await page.goto("/profile/movie_fan");
+
+  await expect(page.getByRole("button", { name: "Checking..." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Following" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { exact: true, name: "Follow" })
+  ).toHaveCount(0);
 });
 
 test("renders the full Movie DNA, links, filters, and share/download controls", async ({
