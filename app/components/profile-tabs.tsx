@@ -1585,6 +1585,11 @@ export default function ProfileTabs({ username }: { username: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
+  const handleTabChange = (tab: TabKey) => {
+    setActiveTab(tab);
+    window.scrollTo({ behavior: "auto", left: 0, top: 0 });
+  };
+
   useEffect(() => {
     queueMicrotask(() => setActiveTab(initialTab));
   }, [initialTab]);
@@ -1810,7 +1815,7 @@ export default function ProfileTabs({ username }: { username: string }) {
       <ProfileSidebar
         activeTab={activeTab}
         followSummary={followSummary}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         onFollowChange={setFollowSummary}
         onOpenFollowList={openFollowList}
         profile={profile}
@@ -1867,13 +1872,13 @@ export default function ProfileTabs({ username }: { username: string }) {
         <aside className="space-y-4 sm:space-y-5 lg:col-start-2 xl:col-start-3 xl:row-start-1 xl:sticky xl:top-6 xl:self-start">
           <AchievementsCard
             summary={summary}
-            onViewAll={() => setActiveTab("achievements")}
+            onViewAll={() => handleTabChange("achievements")}
           />
           <MomentumCard summary={summary} />
           <RecentActivityCard
             limit={3}
             ratings={ratings}
-            onViewAll={() => setActiveTab("activity")}
+            onViewAll={() => handleTabChange("activity")}
           />
         </aside>
       ) : null}

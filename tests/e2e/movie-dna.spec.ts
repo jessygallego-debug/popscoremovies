@@ -441,6 +441,22 @@ test("Ratings tab hides overview panels and filters rating history", async ({ pa
   });
 });
 
+test("PopFile section buttons return the page to the top", async ({ page }) => {
+  await mockPopFile(page, browserRatings);
+  await page.setViewportSize({ height: 420, width: 1280 });
+  await page.goto("/profile/movie_fan");
+
+  for (const tabName of ["Ratings", "Reviews", "Achievements"]) {
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    await page
+      .getByRole("navigation", { name: "PopFile sections" })
+      .getByRole("button", { name: tabName, exact: true })
+      .click();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  }
+});
+
 test("renders the full Movie DNA, links, filters, and share/download controls", async ({
   page,
 }) => {
