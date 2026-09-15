@@ -227,6 +227,7 @@ async function mockPopFile(
     followDelayMs?: number;
     isFollowing?: boolean;
     profileUserId?: string;
+    topMoviesMissingPosterPaths?: boolean;
   } = {}
 ) {
   const profileUserId = options.profileUserId ?? "user-1";
@@ -234,7 +235,9 @@ async function mockPopFile(
     genreNames: rating.genreNames ?? [],
     movieId: rating.movieId,
     movieTitle: rating.movieTitle,
-    posterPath: rating.posterPath ?? null,
+    posterPath: options.topMoviesMissingPosterPaths
+      ? null
+      : (rating.posterPath ?? null),
     releaseDate: rating.releaseDate ?? null,
   }));
 
@@ -268,6 +271,12 @@ async function mockPopFile(
           },
         ],
       },
+    })
+  );
+  await page.route("**/api/movie-poster?**", (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      json: { posterPath: "/recovered-poster.jpg" },
     })
   );
   await page.route("**/rest/v1/**", async (route) => {
@@ -341,11 +350,8 @@ async function mockPopFile(
   });
   await page.route("https://image.tmdb.org/**", (route) =>
     route.fulfill({
-      body: Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-        "base64"
-      ),
-      contentType: "image/png",
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="342" height="513"><rect width="342" height="513" fill="#facc15"/><path d="M0 513L342 0V513Z" fill="#7e22ce"/></svg>',
+      contentType: "image/svg+xml",
     })
   );
 }
@@ -510,7 +516,9 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   page,
 }) => {
   const currentRatings = [...browserRatings];
-  await mockPopFile(page, currentRatings);
+  await mockPopFile(page, currentRatings, {
+    topMoviesMissingPosterPaths: true,
+  });
   await page.goto("/profile/movie_fan#movie-dna");
   await expect(page.getByRole("heading", { name: "Your Movie DNA" })).toBeVisible();
   await expect(page.getByText("Story Seeker", { exact: true })).toBeVisible();
@@ -569,6 +577,12 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
       value: undefined,
     });
   });
+  const posterRecoveryRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/api/movie-poster?")) {
+      posterRecoveryRequests.push(request.url());
+    }
+  });
   const topFiveDownloadPromise = page.waitForEvent("download");
   await topFive.getByRole("button", { name: "Share My Top 5" }).click();
   const topFiveDownload = await topFiveDownloadPromise;
@@ -582,6 +596,7 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await expect(
     topFive.getByText("Top 5 image downloaded and PopFile link copied.")
   ).toBeVisible();
+  expect(posterRecoveryRequests).toHaveLength(3);
 
   await topFive.getByRole("button", { name: "Edit Top 5" }).click();
   const topFiveDialog = page.getByRole("dialog", { name: "Choose Your Top 5" });

@@ -25,7 +25,7 @@ function loadImage(src: string) {
     const image = new window.Image();
     const timeout = window.setTimeout(
       () => reject(new Error("Poster load timed out.")),
-      5000
+      12000
     );
     image.crossOrigin = "anonymous";
     image.onload = () => {
@@ -38,6 +38,43 @@ function loadImage(src: string) {
     };
     image.src = src;
   });
+}
+
+async function loadMoviePoster(movie: ProfileTopMovie) {
+  const primaryPoster = posterUrl(movie.posterPath ?? null, "w342");
+
+  if (primaryPoster) {
+    try {
+      return await loadImage(primaryPoster);
+    } catch {
+      // Recover below using the movie id, just like the visible poster component.
+    }
+  }
+
+  try {
+    const params = new URLSearchParams({ movie: movie.movieId });
+
+    if (movie.posterPath) {
+      params.set("failed", movie.posterPath);
+    }
+
+    const response = await fetch(`/api/movie-poster?${params.toString()}`);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as { posterPath?: string | null };
+    const recoveredPoster = posterUrl(data.posterPath ?? null, "w342");
+
+    if (!recoveredPoster || recoveredPoster === primaryPoster) {
+      return null;
+    }
+
+    return await loadImage(recoveredPoster);
+  } catch {
+    return null;
+  }
 }
 
 function drawWrappedText(
@@ -147,16 +184,7 @@ export default function ShareTopMoviesButton({
     context.fillText(`@${username}`, 90, 238);
 
     const posterImages = await Promise.all(
-      visibleMovies.map(async (movie) => {
-        const src = posterUrl(movie.posterPath ?? null, "w342");
-        if (!src) return null;
-
-        try {
-          return await loadImage(src);
-        } catch {
-          return null;
-        }
-      })
+      visibleMovies.map((movie) => loadMoviePoster(movie))
     );
     const positions = [
       { x: 90, y: 280 },
