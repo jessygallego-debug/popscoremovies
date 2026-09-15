@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import MoviePosterImage from "@/app/components/movie-poster-image";
+import ShareTopMoviesButton from "@/app/components/share-top-movies-button";
 import {
   updateProfileTopMovies,
   type ProfileTopMovie,
@@ -24,6 +25,7 @@ type ProfileTopMoviesProps = {
   initialMovies: ProfileTopMovie[];
   isOwnProfile: boolean;
   ratings: UserMovieRating[];
+  username: string;
 };
 
 function asTopMovie(movie: MovieSuggestion): ProfileTopMovie {
@@ -44,6 +46,7 @@ export default function ProfileTopMovies({
   initialMovies,
   isOwnProfile,
   ratings,
+  username,
 }: ProfileTopMoviesProps) {
   const [movies, setMovies] = useState(initialMovies.slice(0, 5));
   const [draftMovies, setDraftMovies] = useState(initialMovies.slice(0, 5));
@@ -264,17 +267,26 @@ export default function ProfileTopMovies({
       : null;
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-black/30 p-3 sm:p-5" aria-labelledby="top-five-heading">
+    <section id="top-five-movies" className="scroll-mt-6 rounded-2xl border border-slate-800 bg-black/30 p-3 sm:p-5" aria-labelledby="top-five-heading">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-yellow-300">All-time favorites</p>
           <h3 id="top-five-heading" className="mt-1 text-lg font-black text-white sm:text-xl">My Top 5 Movies of All Time</h3>
         </div>
-        {isOwnProfile ? (
-          <button type="button" onClick={openEditor} className="min-h-9 shrink-0 rounded-xl border border-yellow-400/35 bg-yellow-400/10 px-3 text-xs font-black text-yellow-200 transition hover:bg-yellow-400/20 sm:min-h-10 sm:px-4">
-            {movies.length ? "Edit Top 5" : "Choose Top 5"}
-          </button>
-        ) : null}
+        <div className="flex shrink-0 items-start gap-2">
+          {movies.length ? (
+            <ShareTopMoviesButton
+              isOwnProfile={isOwnProfile}
+              movies={movies}
+              username={username}
+            />
+          ) : null}
+          {isOwnProfile ? (
+            <button type="button" onClick={openEditor} className="min-h-9 shrink-0 rounded-xl border border-yellow-400/35 bg-yellow-400/10 px-3 text-xs font-black text-yellow-200 transition hover:bg-yellow-400/20 sm:min-h-10 sm:px-4">
+              {movies.length ? "Edit Top 5" : "Choose Top 5"}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {movies.length ? (

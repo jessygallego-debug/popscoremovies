@@ -559,6 +559,30 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await expect(topFive.getByRole("link")).toHaveCount(3);
   await expect(topFive.getByText("Movie 1", { exact: true })).toBeVisible();
 
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(navigator, "canShare", {
+      configurable: true,
+      value: undefined,
+    });
+  });
+  const topFiveDownloadPromise = page.waitForEvent("download");
+  await topFive.getByRole("button", { name: "Share My Top 5" }).click();
+  const topFiveDownload = await topFiveDownloadPromise;
+  expect(topFiveDownload.suggestedFilename()).toBe(
+    "movie-fan-top-5-movies.png"
+  );
+  mkdirSync(join(process.cwd(), "artifacts"), { recursive: true });
+  await topFiveDownload.saveAs(
+    join(process.cwd(), "artifacts", "top-5-movies-share.png")
+  );
+  await expect(
+    topFive.getByText("Top 5 image downloaded and PopFile link copied.")
+  ).toBeVisible();
+
   await topFive.getByRole("button", { name: "Edit Top 5" }).click();
   const topFiveDialog = page.getByRole("dialog", { name: "Choose Your Top 5" });
   await expect(topFiveDialog).toBeVisible();
@@ -679,7 +703,10 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
   const collapsedPageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
   expect(collapsedPageHeight).toBeLessThan(3550);
   await page.screenshot({ fullPage: true, path: join(process.cwd(), "artifacts", "popfile-overview-mobile.png") });
-  await page.locator("#movie-dna summary").click();
+  await page
+    .locator("#movie-dna summary")
+    .filter({ hasText: "Explore your full Movie DNA" })
+    .click();
   await expect(page.getByRole("heading", { name: "How You Rate Movies" })).toBeVisible();
   await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-mobile.png") });
 });

@@ -463,6 +463,7 @@ export default function MovieDnaSection({
             initialMovies={topMovies}
             isOwnProfile={isOwnProfile}
             ratings={ratings}
+            username={username}
           />
         </div>
       </div>
