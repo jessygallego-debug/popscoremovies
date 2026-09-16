@@ -92,6 +92,9 @@ test.describe("profile photo moderation and upload", () => {
       try {
         const result = await POST(await photoRequest());
         expect(result.status).toBe(mode === "unavailable" ? 503 : 422);
+        if (mode === "unavailable") {
+          expect((await result.json()).error).toContain("HTTP 503, upstream_error");
+        }
         expect(calls.some((url) => url.includes("/storage/v1/object/"))).toBe(false);
         expect(calls.some((url) => url.endsWith("/v1/responses"))).toBe(false);
       } finally {
@@ -99,6 +102,34 @@ test.describe("profile photo moderation and upload", () => {
       }
     });
   }
+
+  test("shows only a safe moderation status and code, never the provider message", async () => {
+    const originalFetch = global.fetch;
+    const originalError = console.error;
+    const logs: unknown[][] = [];
+    console.error = (...args) => { logs.push(args); };
+    global.fetch = async (input) => {
+      const url = String(input);
+      if (url.endsWith("/auth/v1/user")) return Response.json({ id: userId });
+      if (url.includes("/rest/v1/profiles?")) return Response.json([{ id: "profile-1", avatar_key: "popcorn" }]);
+      if (url.endsWith("/v1/moderations")) return Response.json({
+        error: { code: "invalid_api_key", message: "private upstream details" },
+      }, { status: 401 });
+      throw new Error(`Unexpected request: ${url}`);
+    };
+    try {
+      const result = await POST(await photoRequest());
+      expect(result.status).toBe(503);
+      const body = (await result.json()) as { error: string };
+      expect(body.error).toContain("HTTP 401, invalid_api_key");
+      expect(body.error).not.toContain("private upstream details");
+      expect(JSON.stringify(logs)).toContain('"status":401');
+      expect(JSON.stringify(logs)).not.toContain("private upstream details");
+    } finally {
+      global.fetch = originalFetch;
+      console.error = originalError;
+    }
+  });
 
   for (const category of ["sexual", "violence/graphic", "hate", "illicit"] as const) {
     test(`blocks ${category} even if it is movie art`, async () => {

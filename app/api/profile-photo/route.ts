@@ -10,6 +10,12 @@ type ModerationResult = {
   results?: { flagged?: boolean; categories?: Record<string, boolean | null> }[];
 };
 
+class ModerationError extends Error {
+  constructor(readonly status: number | null, readonly code: string) {
+    super("Profile photo moderation failed.");
+  }
+}
+
 function response(error: string, status: number) {
   return NextResponse.json({ error }, { status });
 }
@@ -30,11 +36,18 @@ async function reviewPhoto(bytes: Buffer, key: string) {
     signal: AbortSignal.timeout(20000),
   });
 
-  if (!moderation.ok) throw new Error("Moderation is unavailable.");
-  const moderationResult = (await moderation.json()) as ModerationResult;
-  const result = moderationResult.results?.[0];
+  if (!moderation.ok) {
+    const failure = (await moderation.json().catch(() => null)) as { error?: { code?: unknown } } | null;
+    const rawCode = failure?.error?.code;
+    const code = typeof rawCode === "string" && /^[a-z0-9_]{1,64}$/.test(rawCode)
+      ? rawCode
+      : "upstream_error";
+    throw new ModerationError(moderation.status, code);
+  }
+  const moderationResult = (await moderation.json().catch(() => null)) as ModerationResult | null;
+  const result = moderationResult?.results?.[0];
   if (!result || typeof result.flagged !== "boolean") {
-    throw new Error("Moderation returned an invalid result.");
+    throw new ModerationError(moderation.status, "invalid_response");
   }
   const flaggedCategories = Object.entries(result.categories ?? {})
     .filter(([, isFlagged]) => isFlagged === true)
@@ -103,8 +116,13 @@ export async function POST(request: Request) {
     if (!(await reviewPhoto(bytes, moderationKey))) {
       return response("This image cannot be used as a public profile photo. Please choose another.", 422);
     }
-  } catch {
-    return response("Image safety review is unavailable. Please try again later.", 503);
+  } catch (error) {
+    const failure = error instanceof ModerationError
+      ? error
+      : new ModerationError(null, error instanceof Error && error.name === "TimeoutError" ? "timeout" : "network_error");
+    console.error("Profile photo moderation failed", { status: failure.status, code: failure.code });
+    const detail = failure.status === null ? failure.code : `HTTP ${failure.status}, ${failure.code}`;
+    return response(`Image safety review is unavailable (${detail}). Please try again later.`, 503);
   }
 
   const objectPath = `${user.id}/${crypto.randomUUID()}.webp`;
