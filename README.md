@@ -119,23 +119,9 @@ Configure Resend to send bounce, complaint, and suppression webhooks to
 `/api/email/resend-webhook`, and store its signing secret as
 `RESEND_WEBHOOK_SECRET`.
 
-## Profile photos
+## Profile avatars
 
-Apply `supabase/profile_photos.sql` in the Supabase SQL editor before enabling
-uploads. The public `profile-photos` bucket has no client-write policy; the
-authenticated server route is the only upload path. Configure these variables
-on the server (never expose service-role or OpenAI keys to the browser):
-
-```text
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...
-OPENAI_API_KEY=...
-```
-
-Users save a PopFile before uploading a photo. The server re-encodes it to a
-512-pixel WebP, screens it with image moderation plus visual review, and only
-then writes it to storage and updates the avatar. Fictional, non-graphic horror
-art is allowed; graphic gore and real-world harm are not. Review failures and missing
-credentials reject the upload. Automated screening is not infallible; keep a
-process for handling reports of missed content.
+Users choose from the available emoji avatars in PopFile settings. Custom photo
+uploads are disabled. Existing stored profile photos remain visible until their
+owners choose a different avatar; do not remove the historical storage bucket
+or its objects solely because uploads are disabled.
