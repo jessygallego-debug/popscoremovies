@@ -74,7 +74,7 @@ test.describe("profile photo moderation and upload", () => {
     await expect(page.locator("[data-nextjs-dialog]")).toHaveCount(0);
   });
 
-  for (const mode of ["flagged", "unavailable", "visual-reject"] as const) {
+  for (const mode of ["flagged", "unavailable"] as const) {
     test(`rejects ${mode} images before storage`, async () => {
       const originalFetch = global.fetch;
       const calls: string[] = [];
@@ -85,13 +85,7 @@ test.describe("profile photo moderation and upload", () => {
         if (url.includes("/rest/v1/profiles?")) return Response.json([{ id: "profile-1", avatar_key: "popcorn" }]);
         if (url.endsWith("/v1/moderations")) {
           if (mode === "unavailable") return new Response(null, { status: 503 });
-          return Response.json({ results: [{
-            flagged: true,
-            categories: mode === "visual-reject" ? { violence: true } : {},
-          }] });
-        }
-        if (url.endsWith("/v1/responses")) {
-          return Response.json({ output: [{ content: [{ type: "output_text", text: "REJECT" }] }] });
+          return Response.json({ results: [{ flagged: true, categories: {} }] });
         }
         throw new Error(`Unexpected request: ${url}`);
       };
@@ -99,7 +93,7 @@ test.describe("profile photo moderation and upload", () => {
         const result = await POST(await photoRequest());
         expect(result.status).toBe(mode === "unavailable" ? 503 : 422);
         expect(calls.some((url) => url.includes("/storage/v1/object/"))).toBe(false);
-        expect(calls.some((url) => url.endsWith("/v1/responses"))).toBe(mode === "visual-reject");
+        expect(calls.some((url) => url.endsWith("/v1/responses"))).toBe(false);
       } finally {
         global.fetch = originalFetch;
       }
@@ -130,43 +124,42 @@ test.describe("profile photo moderation and upload", () => {
     });
   }
 
-  test("allows visually approved non-graphic horror with a general violence flag", async () => {
-    const originalFetch = global.fetch;
-    let uploadedBytes: Uint8Array | undefined;
-    const calls: string[] = [];
-    global.fetch = async (input, init) => {
-      const url = String(input);
-      calls.push(url);
-      if (url.endsWith("/auth/v1/user")) return Response.json({ id: userId });
-      if (url.endsWith("/v1/moderations")) return Response.json({ results: [{ flagged: true, categories: { violence: true } }] });
-      if (url.endsWith("/v1/responses")) {
-        const body = JSON.parse(String(init?.body)) as { instructions: string };
-        expect(body.instructions).toContain("fictional, non-graphic horror movie art");
-        return Response.json({ output: [{ content: [{ type: "output_text", text: "ALLOW" }] }] });
+  for (const mode of ["clean", "general-violence"] as const) {
+    test(`uploads ${mode} images after free moderation only`, async () => {
+      const originalFetch = global.fetch;
+      let uploadedBytes: Uint8Array | undefined;
+      const calls: string[] = [];
+      global.fetch = async (input, init) => {
+        const url = String(input);
+        calls.push(url);
+        if (url.endsWith("/auth/v1/user")) return Response.json({ id: userId });
+        if (url.endsWith("/v1/moderations")) return Response.json({ results: [mode === "clean"
+          ? { flagged: false, categories: {} }
+          : { flagged: true, categories: { violence: true } }] });
+        if (url.includes("/rest/v1/profiles?") && init?.method === "PATCH") {
+          const body = JSON.parse(String(init.body)) as { avatar_key: string };
+          expect(body.avatar_key).toMatch(new RegExp(`^photo:${userId}/[a-f0-9-]+\\.webp$`));
+          return Response.json([{ id: "profile-1", user_id: userId, avatar_key: body.avatar_key }]);
+        }
+        if (url.includes("/rest/v1/profiles?")) return Response.json([{ id: "profile-1", avatar_key: "popcorn" }]);
+        if (url.includes("/storage/v1/object/profile-photos/") && init?.method === "POST") {
+          uploadedBytes = init.body as Uint8Array;
+          return Response.json({ Key: url });
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      };
+      try {
+        const result = await POST(await photoRequest());
+        expect(result.status).toBe(200);
+        const data = (await result.json()) as { profile: { avatar_key: string } };
+        expect(profilePhotoUrl(data.profile.avatar_key)).toContain("/storage/v1/object/public/profile-photos/");
+        expect(uploadedBytes).toBeDefined();
+        expect((await sharp(uploadedBytes).metadata()).format).toBe("webp");
+        expect(calls.some((url) => url.endsWith("/v1/moderations"))).toBe(true);
+        expect(calls.some((url) => url.endsWith("/v1/responses"))).toBe(false);
+      } finally {
+        global.fetch = originalFetch;
       }
-      if (url.includes("/rest/v1/profiles?") && init?.method === "PATCH") {
-        const body = JSON.parse(String(init.body)) as { avatar_key: string };
-        expect(body.avatar_key).toMatch(new RegExp(`^photo:${userId}/[a-f0-9-]+\\.webp$`));
-        return Response.json([{ id: "profile-1", user_id: userId, avatar_key: body.avatar_key }]);
-      }
-      if (url.includes("/rest/v1/profiles?")) return Response.json([{ id: "profile-1", avatar_key: "popcorn" }]);
-      if (url.includes("/storage/v1/object/profile-photos/") && init?.method === "POST") {
-        uploadedBytes = init.body as Uint8Array;
-        return Response.json({ Key: url });
-      }
-      throw new Error(`Unexpected request: ${url}`);
-    };
-    try {
-      const result = await POST(await photoRequest());
-      expect(result.status).toBe(200);
-      const data = (await result.json()) as { profile: { avatar_key: string } };
-      expect(profilePhotoUrl(data.profile.avatar_key)).toContain("/storage/v1/object/public/profile-photos/");
-      expect(uploadedBytes).toBeDefined();
-      expect((await sharp(uploadedBytes).metadata()).format).toBe("webp");
-      expect(calls.some((url) => url.endsWith("/v1/moderations"))).toBe(true);
-      expect(calls.some((url) => url.endsWith("/v1/responses"))).toBe(true);
-    } finally {
-      global.fetch = originalFetch;
-    }
-  });
+    });
+  }
 });
