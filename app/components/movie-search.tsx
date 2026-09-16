@@ -75,7 +75,9 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
 
       <div className="relative w-full">
         <input
-          type="search"
+          type="text"
+          inputMode="search"
+          enterKeyHint="search"
           name="query"
           value={query}
           onBlur={() => window.setTimeout(() => setIsFocused(false), 120)}
