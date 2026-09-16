@@ -17,6 +17,41 @@ test.describe("PopFile avatars", () => {
     expect(avatarForKey("photo:https://unsafe.example/test.webp").key).toBe("clapper");
   });
 
+  test("highlights the crown only while it is selected", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("popscore_supabase_session", JSON.stringify({
+        access_token: "test-access-token", expires_at: Math.floor(Date.now() / 1000) + 3600,
+      }));
+    });
+    await page.route("**/auth/v1/user", (route) => route.fulfill({
+      contentType: "application/json", json: { id: userId, email: "fan@example.com" },
+    }));
+    await page.route("**/rest/v1/**", (route) => route.fulfill({
+      contentType: "application/json",
+      json: route.request().url().includes("/movie_ratings?")
+        ? Array.from({ length: 150 }, (_, index) => ({
+            id: `rating-${index}`, user_id: userId, movie_id: String(index),
+            movie_title: `Movie ${index}`, genre: "horror", genre_names: ["Horror"],
+            ratings: { story: 5 }, weights: [{ key: "story", weight: 1 }],
+            popscore: 80, poster_path: null, quick_reaction: null,
+            release_date: null, review_comment: null,
+            created_at: "2026-09-16", updated_at: "2026-09-16",
+          }))
+        : route.request().url().includes("/profiles?")
+          ? [{ id: "profile-1", user_id: userId, username: "movie_fan", avatar_key: "projector", favorite_genre: "horror" }]
+          : [],
+    }));
+
+    await page.goto("/profile/edit");
+    const crown = page.getByRole("button", { name: /Crown Available/i });
+    await expect(crown).toHaveClass(/border-slate-800/);
+    await expect(crown).not.toHaveClass(/border-yellow-300\/80/);
+    await crown.click();
+    await expect(crown).toHaveClass(/border-yellow-300\/80/);
+    await page.getByRole("button", { name: /Film Projector Available/i }).click();
+    await expect(crown).toHaveClass(/border-slate-800/);
+  });
+
   test("offers emoji avatars without photo upload", async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("popscore_supabase_session", JSON.stringify({

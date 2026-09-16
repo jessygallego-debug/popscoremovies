@@ -57,7 +57,7 @@ export default function AvatarPicker({
                   ? "hover:-translate-y-1 hover:border-yellow-400/70 hover:bg-slate-900 hover:text-white hover:shadow-lg hover:shadow-yellow-400/10"
                   : "cursor-pointer opacity-45 grayscale hover:border-slate-600"
               } ${
-                isCrown && isUnlocked
+                isCrown && isSelected && isUnlocked
                   ? "border-yellow-300/80 bg-yellow-400/15 shadow-yellow-400/25"
                   : ""
               }`}
@@ -67,7 +67,7 @@ export default function AvatarPicker({
                   🔒
                 </span>
               ) : null}
-              {isCrown && isUnlocked ? (
+              {isCrown && isSelected && isUnlocked ? (
                 <span className="pointer-events-none absolute inset-x-4 top-4 h-10 rounded-full bg-yellow-300/20 blur-xl" />
               ) : null}
               <span
@@ -76,7 +76,7 @@ export default function AvatarPicker({
                     ? "border-yellow-400/35 bg-black/45 shadow-lg shadow-yellow-400/10"
                     : "border-slate-700 bg-slate-900 text-slate-500"
                 } ${
-                  isCrown && isUnlocked
+                  isCrown && isSelected && isUnlocked
                     ? "border-yellow-200 bg-yellow-400/20 shadow-yellow-400/30"
                     : ""
                 }`}
