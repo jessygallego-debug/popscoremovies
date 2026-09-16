@@ -97,7 +97,24 @@ export const QUICK_REACTIONS = {
 
 export type QuickReactionKey = keyof typeof QUICK_REACTIONS;
 
+const PROFILE_PHOTO_KEY = /^photo:([a-f0-9-]{36})\/([a-f0-9-]{36})\.webp$/i;
+
+export function profilePhotoUrl(key: string) {
+  const match = PROFILE_PHOTO_KEY.exec(key);
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+
+  return match && baseUrl
+    ? `${baseUrl}/storage/v1/object/public/profile-photos/${match[1]}/${match[2]}.webp`
+    : null;
+}
+
 export function avatarForKey(key: string) {
+  const photoUrl = profilePhotoUrl(key);
+
+  if (photoUrl) {
+    return { key, label: "Profile photo", icon: photoUrl, unlockAt: 0 };
+  }
+
   const normalizedKey = LEGACY_AVATAR_KEY_MAP[key] ?? key;
 
   return (

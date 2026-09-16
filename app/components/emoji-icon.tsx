@@ -22,7 +22,11 @@ export default function EmojiIcon({
   label?: string;
   size?: number;
 }) {
-  const src = `${APPLE_EMOJI_BASE_URL}/${emojiCodePoint(emoji)}.png`;
+  const isProfilePhoto = emoji.startsWith("https://") &&
+    emoji.includes("/storage/v1/object/public/profile-photos/");
+  const src = isProfilePhoto
+    ? emoji
+    : `${APPLE_EMOJI_BASE_URL}/${emojiCodePoint(emoji)}.png`;
 
   return (
     <Image
@@ -32,7 +36,7 @@ export default function EmojiIcon({
       width={size}
       height={size}
       unoptimized
-      className="inline-block shrink-0 object-contain"
+      className={`inline-block shrink-0 ${isProfilePhoto ? "rounded-full object-cover" : "object-contain"}`}
     />
   );
 }

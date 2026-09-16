@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { usePopFile } from "@/app/components/popfile-provider";
 import { avatarForKey } from "@/lib/profile-config";
+import EmojiIcon from "@/app/components/emoji-icon";
 
 const mobileNavItems = [
   { href: "/#trending", label: "Movies" },
@@ -104,7 +105,7 @@ export default function MobileSiteMenu() {
                 className="flex items-center justify-center gap-2 rounded-2xl border border-yellow-400/45 bg-yellow-400 px-4 py-3 text-sm font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300"
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-full border border-black/15 bg-black/10 text-base">
-                  {popFileAvatar}
+                  <EmojiIcon emoji={popFileAvatar} size={20} />
                 </span>
                 My PopFile
               </Link>

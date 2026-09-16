@@ -354,6 +354,10 @@ async function sendResendEmail(input: {
   const recipientHandle = `@${input.recipientName}`;
   const logoUrl = absoluteUrl(SITE_ICON_PATH);
   const safeFollowerAvatar = escapeHtml(input.followerAvatar);
+  const followerAvatarMarkup = input.followerAvatar.startsWith("https://") &&
+    input.followerAvatar.includes("/storage/v1/object/public/profile-photos/")
+    ? `<img src="${safeFollowerAvatar}" alt="" width="76" height="76" style="border:0;border-radius:999px;height:76px;object-fit:cover;width:76px" />`
+    : safeFollowerAvatar;
   const safeFollowerHandle = escapeHtml(followerHandle);
   const safeLogoAlt = escapeHtml(SITE_ICON_ALT);
   const safeLogoUrl = escapeHtml(logoUrl);
@@ -383,7 +387,7 @@ async function sendResendEmail(input: {
                 <p style="color:#334155;font-size:16px;line-height:1.55;margin:0 0 22px">Hey <strong>${safeRecipientHandle}</strong>,</p>
                 <h1 style="color:#0f172a;font-size:28px;line-height:1.15;margin:0 0 22px;text-align:center">You have a new follower!</h1>
                 <div style="text-align:center">
-                  <div style="background:#fff7cc;border:2px solid #facc15;border-radius:999px;color:#020617;display:inline-block;font-size:34px;height:76px;line-height:76px;text-align:center;width:76px">${safeFollowerAvatar}</div>
+                  <div style="background:#fff7cc;border:2px solid #facc15;border-radius:999px;color:#020617;display:inline-block;font-size:34px;height:76px;line-height:76px;text-align:center;width:76px">${followerAvatarMarkup}</div>
                   <p style="color:#0f172a;font-size:22px;font-weight:800;line-height:1.25;margin:14px 0 6px">${safeFollowerHandle}</p>
                   <p style="color:#475569;font-size:16px;line-height:1.55;margin:0 0 24px">is now following you on PopScore.</p>
                 </div>

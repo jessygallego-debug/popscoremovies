@@ -18,6 +18,7 @@ import {
   consumeAuthRedirect,
   getCurrentUser,
   getProfileByUserId,
+  getSupabaseAccessToken,
   getUserRatings,
   normalizeUsername,
   ProfileRecord,
@@ -94,6 +95,7 @@ export default function ProfileEditor() {
   const [isSendingRecovery, setIsSendingRecovery] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
@@ -338,6 +340,44 @@ export default function ProfileEditor() {
   const avatar = avatarForKey(avatarKey);
   const usernameLocked = Boolean(profile);
 
+  const uploadPhoto = async (file: File | undefined) => {
+    if (!file) return;
+    if (!profile) {
+      setMessage("Save your PopFile first, then add a profile photo.");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setMessage("Choose a JPEG, PNG, or WebP image under 2 MB.");
+      return;
+    }
+    setIsUploadingPhoto(true);
+    setMessage("Checking your photo for public profile safety…");
+    try {
+      const token = await getSupabaseAccessToken();
+      if (!token) throw new Error("Please sign in again before uploading.");
+      const form = new FormData();
+      form.set("photo", file);
+      const response = await fetch("/api/profile-photo", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const result = (await response.json()) as { error?: string; profile?: ProfileRecord };
+      if (!response.ok || !result.profile) {
+        throw new Error(result.error ?? "Could not upload the photo.");
+      }
+      setProfile(result.profile);
+      setCachedProfile(result.profile);
+      setAvatarKey(result.profile.avatar_key);
+      setMessage("Profile photo approved and saved.");
+      router.refresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not upload the photo.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   return (
     <section className="mx-auto max-w-3xl rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-black/30">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -365,7 +405,7 @@ export default function ProfileEditor() {
       <div className="mt-6 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
         <div className="flex items-center gap-4">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black text-3xl">
-            <EmojiIcon emoji={avatar.icon} label={avatar.label} size={36} />
+            <EmojiIcon emoji={avatar.icon} label={avatar.label} size={52} />
           </span>
           <div>
             <p className="font-black text-white">{username || "username"}</p>
@@ -446,8 +486,25 @@ export default function ProfileEditor() {
 
         <div>
           <h2 className="mb-3 text-sm font-black uppercase text-yellow-400">
-            Avatar
+            Profile Picture
           </h2>
+          <label className="mb-4 block rounded-2xl border border-slate-700 bg-black/40 p-4 text-sm font-semibold text-slate-300">
+            <span className="block font-black text-white">Upload your own photo</span>
+            <span className="mt-1 block text-xs text-slate-400">JPEG, PNG, or WebP up to 2 MB. Fictional horror movie art is welcome; graphic gore, sexual content, hateful imagery, and real-world harm are not. Photos are screened before appearing publicly.</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={isUploadingPhoto || !profile}
+              onChange={(event) => {
+                void uploadPhoto(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+              className="mt-3 block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-yellow-400 file:px-3 file:py-2 file:font-black file:text-black disabled:opacity-50"
+            />
+            {!profile ? <span className="mt-2 block text-xs text-yellow-300">Save your PopFile before uploading a photo.</span> : null}
+            {isUploadingPhoto ? <span role="status" className="mt-2 block text-xs text-yellow-300">Reviewing photo…</span> : null}
+          </label>
+          <p className="mb-2 text-xs font-bold text-slate-400">Or choose an emoji avatar:</p>
           <AvatarPicker
             ratedMovieCount={ratedMovieCount}
             value={avatarKey}
@@ -508,7 +565,7 @@ export default function ProfileEditor() {
         </div>
 
         <button
-          disabled={isSaving}
+          disabled={isSaving || isUploadingPhoto}
           className="min-h-12 rounded-xl bg-yellow-400 px-6 font-black text-black hover:bg-yellow-300"
         >
           {isSaving ? "Saving..." : "Save PopFile"}
