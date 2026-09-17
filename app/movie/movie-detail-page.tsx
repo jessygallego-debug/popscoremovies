@@ -130,7 +130,9 @@ function movieDescription(movie: MovieDetails) {
 function movieTitle(movie: MovieDetails) {
   const releaseYear = movie.release_date?.slice(0, 4);
 
-  return releaseYear ? `${movie.title} (${releaseYear})` : movie.title;
+  return releaseYear && !movie.title.endsWith(`(${releaseYear})`)
+    ? `${movie.title} (${releaseYear})`
+    : movie.title;
 }
 
 function movieCanonical(movie: MovieDetails) {

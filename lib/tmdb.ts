@@ -56,6 +56,18 @@ type TmdbListResponse = {
   status_message?: string;
 };
 
+type TmdbItMiniseries = {
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  original_language?: string;
+  popularity: number;
+  vote_average: number;
+  first_air_date: string;
+  videos?: MovieDetails["videos"];
+  credits?: MovieDetails["credits"];
+};
+
 type TmdbMovieImage = {
   file_path: string | null;
   iso_639_1: string | null;
@@ -106,6 +118,9 @@ const MAX_MOVIE_RESULTS = 300;
 const TMDB_PAGE_SIZE = 20;
 const TMDB_DEFAULT_CACHE_SECONDS = 3600;
 const TMDB_WATCH_PROVIDER_CACHE_SECONDS = 43200;
+// Keep the 1990 TV miniseries distinct from TMDB movie IDs in PopScore's numeric-ID routes.
+const IT_1990_POPSCORE_ID = 9000019614;
+const IT_1990_TMDB_TV_ID = 19614;
 const ACTION_GENRE_ID = 28;
 const ADVENTURE_GENRE_ID = 12;
 const ANIMATION_GENRE_ID = 16;
@@ -669,6 +684,41 @@ function compareSearchMatches(query: string) {
   };
 }
 
+function includesIt1990(query: string, genreId: string) {
+  return (
+    (!genreId || genreId === String(HORROR_GENRE_ID)) &&
+    /^(?:it|it 1990|stephen kings it|stephen kings it 1990)$/i.test(
+      query.trim().replace(/[’']/g, "").replace(/\s+/g, " ")
+    )
+  );
+}
+
+async function getIt1990(): Promise<MovieDetails | null> {
+  const tv = await tmdbFetch<TmdbItMiniseries>(
+    `/tv/${IT_1990_TMDB_TV_ID}?append_to_response=credits,videos`
+  );
+
+  if (!tv) return null;
+
+  return {
+    id: IT_1990_POPSCORE_ID,
+    title: "It (1990)",
+    overview: tv.overview,
+    poster_path: tv.poster_path,
+    backdrop_path: tv.backdrop_path,
+    original_language: tv.original_language,
+    popularity: tv.popularity,
+    vote_average: tv.vote_average,
+    release_date: tv.first_air_date,
+    genre_ids: [HORROR_GENRE_ID],
+    genres: [{ id: HORROR_GENRE_ID, name: "Horror" }],
+    runtime: null,
+    tagline: "The 1990 TV miniseries starring Tim Curry.",
+    videos: tv.videos,
+    credits: tv.credits,
+  };
+}
+
 async function getFuzzyMovieFallbacks(
   query: string,
   limit: number,
@@ -755,14 +805,29 @@ export async function getMovies(
   }
 
   if (resultSource === "search") {
+    const it1990 = includesIt1990(query, genreId) ? await getIt1990() : null;
     const fuzzyMatches =
       movies.length < requestedLimit
         ? await getFuzzyMovieFallbacks(query, requestedLimit, genreId, movies)
         : [];
 
-    return uniqueMovies([...movies, ...fuzzyMatches])
+    const movieMatches = uniqueMovies([...movies, ...fuzzyMatches])
       .sort(compareSearchMatches(query))
-      .slice(0, requestedLimit);
+      .slice(0, requestedLimit - (it1990 ? 1 : 0));
+
+    return it1990
+      ? [...movieMatches, it1990].sort(compareSearchMatches(query))
+      : movieMatches;
+  }
+
+  if (genreId === String(HORROR_GENRE_ID)) {
+    const it1990 = await getIt1990();
+    if (it1990) {
+      return [it1990, ...uniqueMovies(movies).sort(compareLatestPopular)].slice(
+        0,
+        requestedLimit
+      );
+    }
   }
 
   return uniqueMovies(movies).sort(compareLatestPopular).slice(0, requestedLimit);
@@ -817,6 +882,10 @@ export async function getRecommendationMovies(
 }
 
 export async function getMovie(id: string) {
+  if (id === String(IT_1990_POPSCORE_ID)) {
+    return getIt1990();
+  }
+
   return tmdbFetch<MovieDetails>(
     `/movie/${id}?append_to_response=credits,videos,keywords`
   );
@@ -834,7 +903,9 @@ export async function getMovieWatchProviders(
 
   const region = normalizeMovieRegion(preferredRegion) || "US";
   const data = await tmdbFetch<TmdbMovieWatchProvidersResponse>(
-    `/movie/${normalizedMovieId}/watch/providers`,
+    normalizedMovieId === String(IT_1990_POPSCORE_ID)
+      ? `/tv/${IT_1990_TMDB_TV_ID}/watch/providers`
+      : `/movie/${normalizedMovieId}/watch/providers`,
     { revalidate: TMDB_WATCH_PROVIDER_CACHE_SECONDS }
   );
   const regionData = data?.results?.[region];
@@ -922,7 +993,9 @@ export async function getMovieImageFallbacks(
   excludePaths: (string | null | undefined)[] = []
 ) {
   const images = await tmdbFetch<TmdbMovieImagesResponse>(
-    `/movie/${id}/images`
+    id === String(IT_1990_POPSCORE_ID)
+      ? `/tv/${IT_1990_TMDB_TV_ID}/images`
+      : `/movie/${id}/images`
   );
 
   return {
