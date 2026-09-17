@@ -56,8 +56,8 @@ export default async function DiscoverPage({
   searchParams: Promise<{ genre?: string; ratedMovie?: string }>;
 }) {
   const params = await searchParams;
-  const initialGenre =
-    normalizeMovieFilterGenreKey(params.genre) || MOVIE_FILTER_GENRES[0].key;
+  const requestedGenre = normalizeMovieFilterGenreKey(params.genre);
+  const initialGenre = requestedGenre || MOVIE_FILTER_GENRES[0].key;
   const ratedMovieId = Number(params.ratedMovie);
   const recentlyRatedMovieId =
     Number.isSafeInteger(ratedMovieId) && ratedMovieId > 0
@@ -110,6 +110,7 @@ export default async function DiscoverPage({
 
         <DiscoverClient
           initialGenre={initialGenre}
+          hasRequestedGenre={Boolean(requestedGenre)}
           recentlyRatedMovieId={recentlyRatedMovieId}
         />
       </section>

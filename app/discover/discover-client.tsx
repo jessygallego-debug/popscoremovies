@@ -14,7 +14,10 @@ import {
   normalizeMovieLanguage,
   normalizeMovieRegion,
 } from "@/lib/movie-locale";
-import { MOVIE_FILTER_GENRES } from "@/lib/profile-config";
+import {
+  MOVIE_FILTER_GENRES,
+  normalizeMovieFilterGenreKey,
+} from "@/lib/profile-config";
 import { updateProfileDiscoveryPreferences } from "@/lib/profile-store";
 import { MovieSummary, posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
@@ -91,6 +94,7 @@ function DiscoveryPoster({ movie }: { movie: DiscoveryRecommendation }) {
 }
 
 type DiscoverClientProps = {
+  hasRequestedGenre: boolean;
   initialGenre: string;
   recentlyRatedMovieId?: number;
 };
@@ -130,6 +134,7 @@ function normalizeCustomYear(value?: string | null) {
 }
 
 export default function DiscoverClient({
+  hasRequestedGenre,
   initialGenre,
   recentlyRatedMovieId,
 }: DiscoverClientProps) {
@@ -158,6 +163,7 @@ export default function DiscoverClient({
     useState<RecommendationResponse["mode"]>("fallback");
   const [status, setStatus] = useState("");
   const loadedPreferenceUserIdRef = useRef<string | null>(null);
+  const hasUserChangedGenreRef = useRef(false);
 
   const saveProfileDiscoveryPreferences = useCallback(
     (preferences: Parameters<typeof updateProfileDiscoveryPreferences>[0]) => {
@@ -218,6 +224,7 @@ export default function DiscoverClient({
     return movieEra;
   }, [customYear, movieEra]);
   const handleGenreChange = (nextGenreKey: string) => {
+    hasUserChangedGenreRef.current = true;
     if (genre === nextGenreKey) {
       return;
     }
@@ -355,6 +362,12 @@ export default function DiscoverClient({
           profile?.preferred_movie_custom_year
         );
 
+        if (!hasRequestedGenre && !hasUserChangedGenreRef.current) {
+          setGenre(
+            normalizeMovieFilterGenreKey(profile?.favorite_genre) ||
+              initialGenre
+          );
+        }
         setUserId(user?.id ?? null);
         setPreferredLanguage(
           profileLanguage ||
@@ -395,7 +408,7 @@ export default function DiscoverClient({
     return () => {
       isCurrent = false;
     };
-  }, [isProfileLoading, profile, user]);
+  }, [hasRequestedGenre, initialGenre, isProfileLoading, profile, user]);
 
   useEffect(() => {
     let isCurrent = true;

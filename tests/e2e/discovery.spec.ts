@@ -23,6 +23,53 @@ function hasAnyGenreId(movie: RecommendationMovie, genreIds: number[]) {
   return genreIds.some((genreId) => movie.genre_ids?.includes(genreId));
 }
 
+test("Movie Match starts on the PopFile favorite but keeps genre choices editable", async ({ page }) => {
+  test.skip(
+    !process.env.NEXT_PUBLIC_SUPABASE_URL,
+    "Supabase URL is required for the profile preference regression."
+  );
+
+  await page.addInitScript(() => {
+    localStorage.setItem("popscore_supabase_session", JSON.stringify({
+      access_token: "test-token",
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+    }));
+  });
+  await page.route("**/auth/v1/user", (route) => route.fulfill({
+    contentType: "application/json",
+    json: { id: "user-1", email: "fan@example.com" },
+  }));
+  await page.route(/\/rest\/v1\/profiles.*/, (route) => route.fulfill({
+    contentType: "application/json",
+    json: [{
+      id: "profile-1", user_id: "user-1", username: "fan",
+      favorite_genre: "sci_fi", avatar_key: "clapper",
+    }],
+  }));
+  const requestedGenres: string[] = [];
+  await page.route("**/api/recommendations?**", (route) => {
+    requestedGenres.push(new URL(route.request().url()).searchParams.get("genre") ?? "");
+    return route.fulfill({
+      contentType: "application/json",
+      json: { highRatedCount: 0, message: "", mode: "fallback", movies: [] },
+    });
+  });
+
+  await page.goto("/discover");
+  const sciFi = page.getByRole("button", { name: "Sci-Fi", exact: true });
+  await expect(sciFi).toHaveClass(/border-yellow-400\/60/);
+  await expect.poll(() => requestedGenres.at(-1)).toBe("scifi");
+
+  await page.getByRole("button", { name: "Horror", exact: true }).click();
+  await expect.poll(() => requestedGenres.at(-1)).toBe("horror");
+  await expect(sciFi).not.toHaveClass(/border-yellow-400\/60/);
+
+  await page.goto("/discover?genre=adventure");
+  await expect(page.getByRole("button", { name: "Adventure", exact: true }))
+    .toHaveClass(/border-yellow-400\/60/);
+  await expect.poll(() => requestedGenres.at(-1)).toBe("adventure");
+});
+
 test("Discovery defaults to recent, local-language recommendations", async ({
   page,
 }) => {
