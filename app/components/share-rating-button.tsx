@@ -345,7 +345,7 @@ export default function ShareRatingButton({
   const hasCommunityScore = visibleCommunityScore !== null;
   const shareText = `I rated ${movieTitle} ${popscore} ${finalRatingLabel} on PopScore.\nWhat would you score it?\n${shareUrl}`;
   const previewScoreSize =
-    popscore >= 100 ? "text-[3.35rem] sm:text-7xl" : "text-6xl sm:text-7xl";
+    popscore >= 100 ? "text-[2.25rem] sm:text-5xl" : "text-6xl sm:text-7xl";
   const fileSafeTitle = useMemo(
     () =>
       movieTitle
@@ -392,25 +392,6 @@ export default function ShareRatingButton({
       .catch(() => {
         setStatusMessage("Could not copy link.");
       });
-  };
-
-  const handleShare = async () => {
-    setStatusMessage("");
-
-    if (!navigator.share) {
-      handleCopy();
-      return;
-    }
-
-    try {
-      await navigator.share({
-        title: `${movieTitle} PopScore Rating`,
-        text: `I rated ${movieTitle} ${popscore} ${finalRatingLabel} on PopScore.`,
-        url: shareUrl,
-      });
-    } catch {
-      // Closing the native share sheet should not show an error.
-    }
   };
 
   const createStoryCanvas = async () => {
@@ -519,8 +500,10 @@ export default function ShareRatingButton({
     }
 
     context.fillStyle = "#ffffff";
-    context.font = "900 48px Arial, sans-serif";
-    context.fillText(finalRatingLabel, 492, 926);
+    context.font = "900 43px Arial, sans-serif";
+    context.textAlign = "center";
+    context.fillText(finalRatingLabel, 820, 926, 290);
+    context.textAlign = "start";
 
     context.fillStyle = "#cbd5e1";
     context.font = "800 35px Arial, sans-serif";
@@ -656,25 +639,27 @@ export default function ShareRatingButton({
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">
                         My Score
                       </p>
-                      <div className="mt-1 flex max-w-full items-center gap-1">
+                      <div className="mt-1 flex max-w-full items-start gap-1">
                         <p
-                          className={`${previewScoreSize} font-black leading-none text-yellow-300`}
+                          className={`${previewScoreSize} shrink-0 font-black leading-none text-yellow-300`}
                         >
                           {popscore}
                         </p>
-                        <span className="relative -ml-1 block h-10 w-10 shrink-0 overflow-hidden rounded-full border border-yellow-400/25 bg-yellow-400/10 sm:ml-0 sm:h-14 sm:w-14">
-                          <Image
-                            src={ratingIconSrc}
-                            alt=""
-                            fill
-                            sizes="(min-width: 640px) 56px, 40px"
-                            className="object-contain"
-                          />
-                        </span>
+                        <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                          <span className="relative block h-10 w-10 shrink-0 overflow-hidden rounded-full border border-yellow-400/25 bg-yellow-400/10 sm:h-14 sm:w-14">
+                            <Image
+                              src={ratingIconSrc}
+                              alt=""
+                              fill
+                              sizes="(min-width: 640px) 56px, 40px"
+                              className="object-contain"
+                            />
+                          </span>
+                          <p className="w-full text-center text-xs font-black leading-tight text-white sm:text-sm">
+                            {finalRatingLabel}
+                          </p>
+                        </div>
                       </div>
-                      <p className="mt-1 text-lg font-black leading-tight text-white sm:text-xl">
-                        {finalRatingLabel}
-                      </p>
                       <p className="mt-2 text-xs font-bold leading-5 text-slate-300 sm:text-sm">
                         {shareStatement}
                       </p>
@@ -711,21 +696,14 @@ export default function ShareRatingButton({
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2 sm:mt-5 sm:grid-cols-3 sm:gap-3">
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="min-h-12 rounded-2xl bg-yellow-400 px-4 font-black text-black transition hover:bg-yellow-300"
-                >
-                  Share
-                </button>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-5 sm:gap-3">
                 <button
                   type="button"
                   onClick={handleShareStory}
                   disabled={isSharingStory}
-                  className="min-h-12 rounded-2xl border border-yellow-400/35 bg-yellow-400/10 px-4 font-black text-yellow-300 transition hover:bg-yellow-400/15 disabled:cursor-wait disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500"
+                  className="min-h-12 rounded-2xl bg-yellow-400 px-4 font-black text-black transition hover:bg-yellow-300 disabled:cursor-wait disabled:opacity-60"
                 >
-                  Share to Story
+                  Share
                 </button>
                 <button
                   type="button"

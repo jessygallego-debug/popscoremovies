@@ -1,11 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-test("changing a rating's watched date opens options in the visible viewport", async ({ page }) => {
-  test.skip(
-    !process.env.NEXT_PUBLIC_SUPABASE_URL,
-    "Supabase URL is required to exercise the signed-in rating flow."
-  );
-
+async function submitMockRating(page: Page) {
   await page.addInitScript(() => {
     localStorage.setItem("popscore_supabase_session", JSON.stringify({
       access_token: "test-token",
@@ -48,6 +43,14 @@ test("changing a rating's watched date opens options in the visible viewport", a
   }
   await page.getByRole("button", { name: /Submit Rating/ }).click();
   await expect(page.getByText("Rating saved")).toBeVisible();
+}
+
+test("changing a rating's watched date opens options in the visible viewport", async ({ page }) => {
+  test.skip(
+    !process.env.NEXT_PUBLIC_SUPABASE_URL,
+    "Supabase URL is required to exercise the signed-in rating flow."
+  );
+  await submitMockRating(page);
 
   // Reproduce opening the date picker from near the bottom of a long rating page.
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -61,4 +64,49 @@ test("changing a rating's watched date opens options in the visible viewport", a
   expect(viewport).not.toBeNull();
   expect(bounds!.y).toBeGreaterThanOrEqual(0);
   expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport!.height);
+});
+
+test("rating share dialog uses the story action and places its label under the icon", async ({ page }) => {
+  test.skip(
+    !process.env.NEXT_PUBLIC_SUPABASE_URL,
+    "Supabase URL is required to exercise the signed-in rating flow."
+  );
+  await submitMockRating(page);
+
+  await page.getByRole("button", { name: "Share My Rating" }).click();
+  const dialog = page.getByRole("dialog", { name: /Share your .* rating/ });
+  await expect(dialog.getByRole("button", { name: "Share", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Share to Story" })).toHaveCount(0);
+  await expect(dialog.getByRole("button", { name: "Copy Link" })).toBeVisible();
+  const ratingLabel = dialog.getByText("Extra Buttery", { exact: true });
+  const icon = ratingLabel.locator("xpath=..").locator("img");
+  await expect(icon).toHaveCount(1);
+
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    const iconBounds = await icon.boundingBox();
+    const labelBounds = await ratingLabel.boundingBox();
+    const scoreBounds = await dialog.getByText("100", { exact: true }).boundingBox();
+    expect(iconBounds).not.toBeNull();
+    expect(labelBounds).not.toBeNull();
+    expect(scoreBounds).not.toBeNull();
+    expect(labelBounds!.y).toBeGreaterThanOrEqual(iconBounds!.y + iconBounds!.height - 1);
+    expect(labelBounds!.x).toBeGreaterThan(scoreBounds!.x);
+  }
+
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "canShare", {
+      configurable: true,
+      value: () => true,
+    });
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async (data: ShareData) => {
+        document.body.dataset.sharedFileName = data.files?.[0]?.name ?? "";
+      },
+    });
+  });
+  await dialog.getByRole("button", { name: "Share", exact: true }).click();
+  await expect.poll(() => page.locator("body").getAttribute("data-shared-file-name"))
+    .toBe("movie-123-popscore-story.png");
 });
