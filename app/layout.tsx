@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import AuthRedirectHandler from "@/app/components/auth-redirect-handler";
 import { PopFileProvider } from "@/app/components/popfile-provider";
+import { WatchlistMembershipProvider } from "@/app/components/watchlist-membership-provider";
 import {
   SITE_APPLE_ICON_PATH,
   SITE_DESCRIPTION,
@@ -89,8 +90,10 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <PopFileProvider>
-          <AuthRedirectHandler />
-          {children}
+          <WatchlistMembershipProvider>
+            <AuthRedirectHandler />
+            {children}
+          </WatchlistMembershipProvider>
         </PopFileProvider>
         <Analytics />
       </body>

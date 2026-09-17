@@ -23,6 +23,83 @@ function hasAnyGenreId(movie: RecommendationMovie, genreIds: number[]) {
   return genreIds.some((genreId) => movie.genre_ids?.includes(genreId));
 }
 
+test("saved movies show On Watchlist until removed from the watchlist page", async ({ page }) => {
+  test.skip(
+    !process.env.NEXT_PUBLIC_SUPABASE_URL,
+    "Supabase URL is required for the signed-in watchlist regression."
+  );
+
+  let isSaved = true;
+  let watchlistReads = 0;
+  await page.addInitScript(() => {
+    localStorage.setItem("popscore_supabase_session", JSON.stringify({
+      access_token: "test-token",
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+    }));
+  });
+  await page.route("**/auth/v1/user", (route) => route.fulfill({
+    contentType: "application/json",
+    json: { id: "user-1", email: "fan@example.com" },
+  }));
+  await page.route(/\/rest\/v1\/profiles.*/, (route) => route.fulfill({
+    contentType: "application/json",
+    json: [{ id: "profile-1", user_id: "user-1", username: "fan", favorite_genre: "horror" }],
+  }));
+  await page.route(/\/rest\/v1\/watchlist.*/, (route) => {
+    const request = route.request();
+    if (request.method() === "DELETE") {
+      isSaved = false;
+      return route.fulfill({ status: 204 });
+    }
+    if (request.method() === "POST") {
+      isSaved = true;
+      return route.fulfill({ status: 204 });
+    }
+    watchlistReads += 1;
+    const savedMovie = {
+      id: "saved-1", user_id: "user-1", movie_id: "157336",
+      movie_title: "Interstellar", poster_path: null, release_date: "2014-11-05",
+      genre: "scifi", genre_names: ["Science Fiction"], created_at: "2026-09-17",
+    };
+    return route.fulfill({
+      contentType: "application/json",
+      json: isSaved
+        ? [request.url().includes("select=movie_id") ? { movie_id: "157336" } : savedMovie]
+        : [],
+    });
+  });
+  await page.route("**/api/recommendations?**", (route) => route.fulfill({
+    contentType: "application/json",
+    json: {
+      highRatedCount: 0, message: "", mode: "fallback",
+      movies: [{
+        id: 157336, title: "Interstellar", poster_path: null,
+        release_date: "2014-11-05", vote_average: 8.4,
+        explanation: "Test pick", overallPopScore: 90,
+        recommendationMode: "fallback", tasteMatchScore: 90,
+        totalRatings: 0,
+      }],
+    },
+  }));
+
+  await page.goto("/discover");
+  const onWatchlist = page.getByRole("button", { name: "On Watchlist" });
+  await expect(onWatchlist).toBeVisible();
+  await expect(onWatchlist).toBeDisabled();
+  expect(watchlistReads).toBe(1);
+
+  await page.getByRole("link", { name: "Watchlist", exact: true }).first().click();
+  await expect(page.getByRole("button", { name: "Remove" })).toBeVisible();
+  await page.getByRole("button", { name: "Remove" }).click();
+  await expect(page.getByText("Your watchlist is empty")).toBeVisible();
+
+  await page.getByRole("link", { name: "Movie Match", exact: true }).first().click();
+  const addButton = page.getByRole("button", { name: "Add to Watchlist" });
+  await expect(addButton).toBeEnabled();
+  await addButton.click();
+  await expect(page.getByRole("button", { name: "On Watchlist" })).toBeDisabled();
+});
+
 test("Movie Match starts on the PopFile favorite but keeps genre choices editable", async ({ page }) => {
   test.skip(
     !process.env.NEXT_PUBLIC_SUPABASE_URL,

@@ -98,6 +98,23 @@ export type SavedUserMovieRating = {
 };
 
 export const POPSCORE_WATCHES_UPDATED_EVENT = "popscore:watches-updated";
+export const POPSCORE_WATCHLIST_UPDATED_EVENT = "popscore:watchlist-updated";
+
+export type WatchlistMembershipUpdate = {
+  isOnWatchlist: boolean;
+  movieId: string;
+  userId: string;
+};
+
+function notifyWatchlistMembership(update: WatchlistMembershipUpdate) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent<WatchlistMembershipUpdate>(POPSCORE_WATCHLIST_UPDATED_EVENT, {
+        detail: update,
+      })
+    );
+  }
+}
 
 export function watchTypeForRatingSource(
   ratingSource?: UserMovieRatingSource
@@ -1751,6 +1768,11 @@ export async function addToWatchlist(movie: MovieMeta & { genre?: string }) {
       }),
     }
   );
+  notifyWatchlistMembership({
+    isOnWatchlist: true,
+    movieId: movie.movieId,
+    userId: user.id,
+  });
 }
 
 function mapWatchlistRow(row: {
@@ -1787,6 +1809,14 @@ export async function getWatchlist(userId: string) {
   return rows.map(mapWatchlistRow);
 }
 
+export async function getWatchlistMovieIds(userId: string) {
+  const rows = await supabaseFetch<{ movie_id: string }[]>(
+    `/watchlist?user_id=eq.${encodeURIComponent(userId)}&select=movie_id`
+  );
+
+  return rows.map((row) => row.movie_id);
+}
+
 export async function removeFromWatchlist(movieId: string) {
   const user = await getCurrentUser();
 
@@ -1800,4 +1830,9 @@ export async function removeFromWatchlist(movieId: string) {
     )}&movie_id=eq.${encodeURIComponent(movieId)}`,
     { method: "DELETE" }
   );
+  notifyWatchlistMembership({
+    isOnWatchlist: false,
+    movieId,
+    userId: user.id,
+  });
 }
