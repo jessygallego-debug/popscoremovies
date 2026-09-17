@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   movieWatchDateKey,
   removeUserMovieWatch,
@@ -91,7 +92,7 @@ export default function WatchDateEditor({
         {triggerLabel}
       </button>
 
-      {isOpen ? (
+      {isOpen ? createPortal(
         <div
           role="presentation"
           onMouseDown={(event) => {
@@ -191,7 +192,8 @@ export default function WatchDateEditor({
             ) : null}
             {error ? <p className="mt-3 text-sm font-bold text-red-300">{error}</p> : null}
           </section>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );
