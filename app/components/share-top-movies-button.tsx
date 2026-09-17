@@ -97,18 +97,33 @@ function drawWrappedText(
       return;
     }
 
-    if (line) lines.push(line);
-    line = word;
+    if (line) {
+      lines.push(line);
+      line = "";
+    }
+
+    for (const character of word) {
+      if (context.measureText(line + character).width > maxWidth && line) {
+        lines.push(line);
+        line = "";
+      }
+      line += character;
+    }
   });
 
   if (line) lines.push(line);
-  lines.slice(0, maxLines).forEach((value, index) => {
-    const clipped = index === maxLines - 1 && lines.length > maxLines;
-    context.fillText(
-      `${value}${clipped ? "…" : ""}`,
-      x,
-      y + index * lineHeight
-    );
+  const visibleLines = lines.slice(0, maxLines);
+
+  if (lines.length > maxLines) {
+    let lastLine = visibleLines[maxLines - 1];
+    while (lastLine && context.measureText(`${lastLine}…`).width > maxWidth) {
+      lastLine = lastLine.slice(0, -1).trimEnd();
+    }
+    visibleLines[maxLines - 1] = `${lastLine}…`;
+  }
+
+  visibleLines.forEach((value, index) => {
+    context.fillText(value, x, y + index * lineHeight);
   });
 }
 
@@ -200,14 +215,6 @@ export default function ShareTopMoviesButton({
       const posterWidth = 240;
       const posterHeight = 350;
 
-      context.fillStyle = "rgba(15,23,42,0.9)";
-      context.beginPath();
-      context.roundRect(position.x, position.y, posterWidth, 430, 22);
-      context.fill();
-      context.strokeStyle = "rgba(148,163,184,0.3)";
-      context.lineWidth = 2;
-      context.stroke();
-
       if (movie && image) {
         drawPoster(
           context,
@@ -239,9 +246,15 @@ export default function ShareTopMoviesButton({
         context.textAlign = "start";
       }
 
+      context.strokeStyle = "rgba(148,163,184,0.3)";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.roundRect(position.x, position.y, posterWidth, posterHeight, 20);
+      context.stroke();
+
       context.fillStyle = "rgba(2,6,23,0.92)";
       context.beginPath();
-      context.arc(position.x + 34, position.y + 34, 25, 0, Math.PI * 2);
+      context.arc(position.x + 12, position.y + 12, 25, 0, Math.PI * 2);
       context.fill();
       context.strokeStyle = "#fde047";
       context.lineWidth = 3;
@@ -251,26 +264,32 @@ export default function ShareTopMoviesButton({
       context.textAlign = "center";
       context.fillText(
         String(index + 1),
-        position.x + 34,
-        position.y + 43
+        position.x + 12,
+        position.y + 21
       );
       context.textAlign = "start";
 
       context.fillStyle = movie ? "#ffffff" : "#94a3b8";
-      context.font = "900 21px Arial, sans-serif";
+      context.font = "700 19px Arial, sans-serif";
+      context.textAlign = "center";
       if (movie) {
         drawWrappedText(
           context,
           movie.movieTitle,
-          position.x + 14,
-          position.y + 382,
-          posterWidth - 28,
-          25,
+          position.x + posterWidth / 2,
+          position.y + posterHeight + 34,
+          posterWidth - 8,
+          26,
           2
         );
       } else {
-        context.fillText("Choose a movie", position.x + 14, position.y + 392);
+        context.fillText(
+          "Choose a movie",
+          position.x + posterWidth / 2,
+          position.y + posterHeight + 34
+        );
       }
+      context.textAlign = "start";
     });
 
     context.fillStyle = "#facc15";
