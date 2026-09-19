@@ -1,6 +1,5 @@
 export type AchievementRequirementType =
   | "ratings_count"
-  | "reactions_count"
   | "unique_genres_rated"
   | "single_genre_ratings_count"
   | "rating_streak_days"
@@ -49,7 +48,6 @@ export type AchievementProgressSummary = {
   maxRatingsInSingleGenre: number;
   movieMatchRating80PlusCount: number;
   movieMatchRatingsCount: number;
-  quickReactionCount: number;
   ratingStreakDays: number;
   ratings90Plus: number;
   ratingsThisWeek: number;
@@ -68,15 +66,6 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: "☝️",
     color: "gold",
     requirementType: "ratings_count",
-    requirementValue: 1,
-  },
-  {
-    id: "first_reaction",
-    name: "First Reaction",
-    description: "Shared your first movie reaction.",
-    icon: "😮",
-    color: "orange",
-    requirementType: "reactions_count",
     requirementValue: 1,
   },
   {
@@ -277,8 +266,6 @@ export function getAchievementValue(
   switch (achievement.requirementType) {
     case "ratings_count":
       return summary.totalMoviesRated;
-    case "reactions_count":
-      return summary.quickReactionCount;
     case "unique_genres_rated":
       return summary.uniqueGenresRated;
     case "single_genre_ratings_count":

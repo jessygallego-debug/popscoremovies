@@ -8,147 +8,17 @@ import {
   SITE_NAME,
 } from "@/lib/site-metadata";
 import { absoluteUrl } from "@/lib/site-url";
+import { faqSections, howPopScoreWorks } from "@/lib/faq-content";
 
 const faqTitle = "PopScore FAQ | How PopScore Movie Ratings Work";
 const faqDescription =
-  "Learn how PopScore movie ratings, genre-specific questions, PopFiles, watchlists, recommendations, and community discussions help fans find movies worth watching.";
+  "Learn how PopScore movie ratings, genre-specific questions, Movie DNA, watch dates, Top 5 picks, watchlists, and community discussions help fans find movies worth watching.";
 const faqImage = {
   url: absoluteUrl(SITE_ICON_PATH),
   width: 256,
   height: 256,
   alt: SITE_ICON_ALT,
 };
-
-const howPopScoreWorks = [
-  {
-    title: "Search for a movie",
-    description:
-      "Find the movie you watched or want to rate, even if you are still learning the exact title.",
-  },
-  {
-    title: "Answer genre-specific questions",
-    description:
-      "PopScore asks questions that fit the movie type, so horror, comedy, action, romance, and other genres are judged by what matters most.",
-  },
-  {
-    title: "Get a clearer PopScore",
-    description:
-      "Your answers are weighted into a final score that shows how strongly the movie worked for its genre.",
-  },
-  {
-    title: "Build your PopFile",
-    description:
-      "Your PopFile tracks your ratings, reviews, favorite genres, reactions, and watchlist activity in one place.",
-  },
-  {
-    title: "Discover what to watch next",
-    description:
-      "The more movies you rate, the better PopScore can help you find recommendations that match your taste.",
-  },
-];
-
-const faqSections = [
-  {
-    title: "Getting Started",
-    items: [
-      {
-        question: "What is PopScore?",
-        answer:
-          "PopScore is a movie rating and recommendation site built for real fans. It helps you rate movies by genre, track your taste, and discover movies worth watching.",
-      },
-      {
-        question: "What makes PopScore different from other movie rating sites?",
-        answer:
-          "PopScore does not treat every movie the same way. A horror movie, comedy, western, romance, and action movie each need different strengths, so PopScore uses genre-specific questions instead of one generic rating.",
-      },
-      {
-        question: "Do I need an account to use PopScore?",
-        answer:
-          "You can browse movies and explore PopScore recommendations without an account. Creating a PopFile lets you save ratings, reviews, watchlist picks, and community activity.",
-      },
-      {
-        question: "What is a PopFile?",
-        answer:
-          "Your PopFile is your movie profile. It keeps your ratings, reviews, favorite genres, reactions, watchlist, and movie taste organized.",
-      },
-    ],
-  },
-  {
-    title: "Ratings",
-    items: [
-      {
-        question: "How are PopScores calculated?",
-        answer:
-          "PopScores come from five rating questions. Storyline, character, and rewatch score are used across genres, then each genre adds two questions that fit that kind of movie. Those answers are weighted into the final PopScore.",
-      },
-      {
-        question: "Why does PopScore use genre-specific ratings?",
-        answer:
-          "Different movie types succeed for different reasons. PopScore rates movies by the standards fans actually use, so a scary horror movie is not judged by the same exact criteria as a funny comedy or a sweeping fantasy movie.",
-      },
-      {
-        question: "What is the Watchlist for?",
-        answer:
-          "Your Watchlist is where you save movies you want to see later, so good recommendations do not disappear when you are not ready to watch yet.",
-      },
-      {
-        question: "Why do some movies say not rated yet?",
-        answer:
-          "That means the movie does not have enough PopScore ratings yet. You can be one of the first fans to rate it and help shape its score.",
-      },
-    ],
-  },
-  {
-    title: "Movie Match",
-    items: [
-      {
-        question: "How does PopScore recommend movies?",
-        answer:
-          "PopScore uses your ratings, favorite genres, and watchlist activity to help surface movies that fit your taste. The more you rate, the more useful your recommendations become.",
-      },
-      {
-        question: "Why is it recommending movies I've seen before?",
-        answer:
-          "It will display movies you have not yet rated. Once you rate it, it will recommend a different movie.",
-      },
-      {
-        question: "Can I browse movies by genre?",
-        answer:
-          "Yes. You can explore movies by Action, Adventure, Animation, Comedy, Documentary, Drama, Family, Fantasy, Horror, Mystery, Musical, Romance, Rom-Com, Sci-Fi, Superhero, Thriller, War, Western, and more.",
-      },
-      {
-        question: "Can PopScore help if I do not know what to watch?",
-        answer:
-          "Yes. Use Movie Match to pick a genre, era, language, or region, then PopScore will show movie ideas that match the mood you are looking for.",
-      },
-    ],
-  },
-  {
-    title: "Community",
-    items: [
-      {
-        question: "What can I do in the PopScore community?",
-        answer:
-          "You can post reviews, start movie discussions, react to ratings, follow other fans, reply to comments, and see what the community is watching.",
-      },
-      {
-        question: "What are movie discussions for?",
-        answer:
-          "Discussions give fans a place to ask questions, debate endings, share theories, recommend movies, and keep conversations connected to specific titles.",
-      },
-      {
-        question: "How do reactions work?",
-        answer:
-          "Reactions let fans quickly say whether a movie was loved, worth watching, or not worth the time. They help show the community mood alongside the PopScore.",
-      },
-      {
-        question: "Who is PopScore for?",
-        answer:
-          "PopScore is for movie fans who want ratings that understand genre, recommendations that fit their taste, and a place to keep their movie opinions organized.",
-      },
-    ],
-  },
-];
 
 const faqItems = faqSections.flatMap((section) => section.items);
 const faqJsonLd = {

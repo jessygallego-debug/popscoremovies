@@ -89,14 +89,6 @@ const PROFILE_GENRE_DB_VALUES: Record<string, string> = {
   scifi: "sci_fi",
 };
 
-export const QUICK_REACTIONS = {
-  loved_it: { label: "Loved It", icon: "🔥" },
-  worth_watching: { label: "Worth Watching", icon: "🍿" },
-  trash: { label: "Trash", icon: "🗑️" },
-} as const;
-
-export type QuickReactionKey = keyof typeof QUICK_REACTIONS;
-
 const PROFILE_PHOTO_KEY = /^photo:([a-f0-9-]{36})\/([a-f0-9-]{36})\.webp$/i;
 
 export function profilePhotoUrl(key: string) {

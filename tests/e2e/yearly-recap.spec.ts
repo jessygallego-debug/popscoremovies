@@ -7,7 +7,7 @@ const activity: YearlyMovieActivity = {
   biggestMonth: { count: 5, month: 7 },
   estimatedMinutes: 1440,
   highestRatedMovie: {
-    created_at: "2026-07-01T00:00:00Z", genre: "Drama", genreNames: ["Drama"], id: "rating-1", movieId: "101", movieTitle: "The Great Movie", popscore: 96, posterPath: null, quick_reaction: "loved_it", ratingSource: null, ratings: {}, releaseDate: null, reviewComment: null, updated_at: "2026-07-01T00:00:00Z", user_id: "user-1", weights: [],
+    created_at: "2026-07-01T00:00:00Z", genre: "Drama", genreNames: ["Drama"], id: "rating-1", movieId: "101", movieTitle: "The Great Movie", popscore: 96, posterPath: null, ratingSource: null, ratings: {}, releaseDate: null, reviewComment: null, updated_at: "2026-07-01T00:00:00Z", user_id: "user-1", weights: [],
   },
   monthlyCounts: [0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0],
   mostRewatchedMovie: { count: 3, movieId: "101", title: "The Great Movie" },

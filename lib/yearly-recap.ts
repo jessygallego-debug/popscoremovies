@@ -10,7 +10,7 @@ type AuthUser = { email?: string; email_confirmed_at?: string; id: string };
 type ProfileRow = { user_id: string; username: string };
 type DeliveryRow = { attempts: number; email: string; id: string; status: string; user_id: string };
 type WatchRow = { created_at: string; id: string; movie_id: string; rating_id: string | null; runtime_minutes: number | null; updated_at: string; user_id: string; watched_date: string | null; watch_type: UserMovieWatchType };
-type RatingRow = { created_at: string; genre: string; genre_names: string[] | null; id: string; movie_id: string; movie_title: string; popscore: number; poster_path: string | null; quick_reaction: UserMovieRating["quick_reaction"]; rating_source: UserMovieRating["ratingSource"]; ratings: Record<string, number>; release_date: string | null; review_comment: string | null; updated_at: string; user_id: string; weights: { key: string; weight: number }[] };
+type RatingRow = { created_at: string; genre: string; genre_names: string[] | null; id: string; movie_id: string; movie_title: string; popscore: number; poster_path: string | null; rating_source: UserMovieRating["ratingSource"]; ratings: Record<string, number>; release_date: string | null; review_comment: string | null; updated_at: string; user_id: string; weights: { key: string; weight: number }[] };
 
 const RESEND_API_URL = "https://api.resend.com/emails";
 
@@ -96,7 +96,7 @@ function mapWatch(row: WatchRow): UserMovieWatch {
 }
 
 function mapRating(row: RatingRow): UserMovieRating {
-  return { created_at: row.created_at, genre: row.genre, genreNames: row.genre_names ?? [], id: row.id, movieId: row.movie_id, movieTitle: row.movie_title, popscore: Number(row.popscore), posterPath: row.poster_path, quick_reaction: row.quick_reaction, ratingSource: row.rating_source, ratings: row.ratings, releaseDate: row.release_date, reviewComment: row.review_comment, updated_at: row.updated_at, user_id: row.user_id, weights: row.weights };
+  return { created_at: row.created_at, genre: row.genre, genreNames: row.genre_names ?? [], id: row.id, movieId: row.movie_id, movieTitle: row.movie_title, popscore: Number(row.popscore), posterPath: row.poster_path, ratingSource: row.rating_source, ratings: row.ratings, releaseDate: row.release_date, reviewComment: row.review_comment, updated_at: row.updated_at, user_id: row.user_id, weights: row.weights };
 }
 
 async function sendEmail(input: { activity: ReturnType<typeof getYearlyMovieActivity>; delivery: DeliveryRow; username: string }) {

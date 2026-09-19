@@ -13,7 +13,6 @@ import MoviePosterImage from "@/app/components/movie-poster-image";
 import ProfileUsernameLink, {
   profileStatsHref,
 } from "@/app/components/profile-username-link";
-import QuickReactionBadge from "@/app/components/quick-reaction-badge";
 import ShareRatingButton from "@/app/components/share-rating-button";
 import YearlyMovieActivity from "@/app/components/yearly-movie-activity";
 import {
@@ -77,7 +76,6 @@ type ProfileStatSummary = AchievementProgressSummary & {
   highestGenre: string;
   lowestGenre: string;
   mostRatedGenre: string;
-  totalMovieReactions: number;
 };
 
 type ProfileCommunityAchievementStats = CommunityEngagementStats &
@@ -364,8 +362,6 @@ function getProfileStatSummary(
       (rating) => rating.popscore >= 80
     ).length,
     movieMatchRatingsCount: movieMatchRatings.length,
-    quickReactionCount: ratings.filter((rating) => Boolean(rating.quick_reaction))
-      .length,
     ratingStreakDays: getLongestRatingStreak(popScoreRatings),
     ratings90Plus: popScoreRatings.filter((rating) => rating.popscore >= 90).length,
     ratingsThisWeek: popScoreRatings.filter(
@@ -377,9 +373,6 @@ function getProfileStatSummary(
       reviewCommentCount +
       activityStats.communityCommentCount +
       activityStats.discussionReplyCount,
-    totalMovieReactions: ratings.filter(
-      (rating) => !hasPopScoreRating(rating) && Boolean(rating.quick_reaction)
-    ).length,
     totalMoviesRated: popScoreRatings.length,
     uniqueGenresRated: genreCounts.size,
   };
@@ -990,7 +983,8 @@ function RecentActivityCard({
   ratings: UserMovieRating[];
   showAll?: boolean;
 }) {
-  const items = showAll ? ratings : ratings.slice(0, limit);
+  const completedRatings = ratings.filter(hasPopScoreRating);
+  const items = showAll ? completedRatings : completedRatings.slice(0, limit);
 
   return (
     <section className={profilePanelClass("p-4 sm:p-5")}>
@@ -1010,8 +1004,6 @@ function RecentActivityCard({
       {items.length > 0 ? (
         <div className="mt-3 divide-y divide-slate-800/80 sm:mt-4">
           {items.map((rating) => {
-            const isFullRating = hasPopScoreRating(rating);
-
             return (
               <article
                 key={rating.id}
@@ -1025,15 +1017,12 @@ function RecentActivityCard({
                 />
                 <div className="min-w-0">
                   <p className="line-clamp-2 text-sm font-black leading-tight text-white">
-                    {isFullRating ? "Rated" : "Reacted to"} {rating.movieTitle}
+                    Rated {rating.movieTitle}
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     <span className="rounded-full bg-yellow-400/10 px-2 py-0.5 text-[11px] font-black text-yellow-300">
-                      {isFullRating ? `${rating.popscore}%` : "Reaction"}
+                      {rating.popscore}%
                     </span>
-                    {rating.quick_reaction ? (
-                      <QuickReactionBadge reaction={rating.quick_reaction} />
-                    ) : null}
                   </div>
                 </div>
                 <p className="pt-0.5 text-right text-[10px] font-medium text-slate-500">
@@ -1181,9 +1170,6 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
                   />
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                  {rating.quick_reaction ? (
-                    <QuickReactionBadge reaction={rating.quick_reaction} />
-                  ) : null}
                   <p className="text-xs font-bold text-slate-500">
                     Rated {formatDate(rating.created_at)}
                   </p>

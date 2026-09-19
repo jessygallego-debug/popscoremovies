@@ -313,7 +313,6 @@ async function mockPopFile(
         movie_title: item.movieTitle,
         popscore: item.popscore,
         poster_path: item.posterPath,
-        quick_reaction: null,
         rating_source: item.ratingSource,
         ratings: item.ratings,
         release_date: item.releaseDate,
@@ -715,15 +714,32 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
   expect(mobileLayout, JSON.stringify(mobileLayout.offenders)).toMatchObject({
     clientWidth: mobileLayout.scrollWidth,
   });
-  const collapsedPageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
-  expect(collapsedPageHeight).toBeLessThan(3550);
+  const collapsedDnaHeight = await section.evaluate((element) => element.getBoundingClientRect().height);
+  await expect(section.getByRole("heading", { name: "How You Rate Movies" })).toBeHidden();
   await page.screenshot({ fullPage: true, path: join(process.cwd(), "artifacts", "popfile-overview-mobile.png") });
   await page
     .locator("#movie-dna summary")
     .filter({ hasText: "Explore your full Movie DNA" })
     .click();
   await expect(page.getByRole("heading", { name: "How You Rate Movies" })).toBeVisible();
+  const expandedDnaHeight = await section.evaluate((element) => element.getBoundingClientRect().height);
+  expect(expandedDnaHeight).toBeGreaterThan(collapsedDnaHeight);
   await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-mobile.png") });
 });
 
+});
+
+
+test("profile activity omits retired reaction-only rows and keeps zero PopScores", async ({ page }) => {
+  await mockPopFile(page, [
+    { ...rating("1"), movieTitle: "Completed zero rating", popscore: 0 },
+    { ...rating("2"), movieTitle: "Retired reaction placeholder", ratings: {}, weights: [] },
+  ]);
+  await page.goto("/profile/movie_fan?tab=activity");
+  await expect(page.getByRole("heading", { name: "Recent Activity" })).toBeVisible();
+  const activity = page.locator("section").filter({ has: page.getByRole("heading", { name: "Recent Activity" }) }).last();
+  await expect(activity.getByText("Rated Completed zero rating")).toBeVisible();
+  await expect(activity.getByText("0%", { exact: true })).toBeVisible();
+  await expect(activity.getByText("Retired reaction placeholder")).toHaveCount(0);
+  await expect(page.getByText("First Reaction", { exact: true })).toHaveCount(0);
 });

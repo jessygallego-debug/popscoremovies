@@ -5,7 +5,6 @@ import { avatarForKey, genreLabelForKey } from "@/lib/profile-config";
 import type {
   CommunityRatingFeedItem,
   DiscoverableUserSummary,
-  ProfileQuickReaction,
   TopReviewerSummary,
   UserMovieRatingSource,
 } from "@/lib/profile-store";
@@ -30,7 +29,6 @@ type CommunityRatingRow = {
   movie_title: string;
   popscore: number;
   poster_path: string | null;
-  quick_reaction: ProfileQuickReaction | null;
   rating_source?: UserMovieRatingSource | null;
   ratings: Record<string, number> | null;
   release_date: string | null;
@@ -123,7 +121,6 @@ function toFeedRating(
     movieTitle: row.movie_title,
     popscore: Number(row.popscore),
     posterPath: row.poster_path,
-    quick_reaction: row.quick_reaction,
     ratingSource: row.rating_source ?? null,
     ratings: row.ratings ?? {},
     releaseDate: row.release_date,
@@ -147,7 +144,7 @@ async function loadCommunityOverview(
         accessToken
       ),
       fetchAllPages<CommunityRatingRow>(
-        "/movie_ratings?select=id,user_id,movie_id,movie_title,poster_path,release_date,genre,genre_names,ratings,weights,popscore,quick_reaction,rating_source,review_comment,created_at,updated_at&order=updated_at.desc",
+        "/movie_ratings?select=id,user_id,movie_id,movie_title,poster_path,release_date,genre,genre_names,ratings,weights,popscore,rating_source,review_comment,created_at,updated_at&order=updated_at.desc",
         accessToken
       ),
       fetchAllPages<FollowRow>(

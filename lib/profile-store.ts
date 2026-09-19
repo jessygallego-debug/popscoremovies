@@ -67,7 +67,6 @@ export type ProfileTopMovie = {
   releaseDate: string | null;
 };
 
-export type ProfileQuickReaction = "loved_it" | "worth_watching" | "trash";
 export type UserMovieRatingSource =
   | "movie_match"
   | "onboarding"
@@ -134,7 +133,6 @@ export type UserMovieRating = MovieMeta & {
   ratings: Record<string, number>;
   weights: { key: string; weight: number }[];
   popscore: number;
-  quick_reaction: ProfileQuickReaction | null;
   ratingSource: UserMovieRatingSource | null;
   reviewComment: string | null;
   created_at: string;
@@ -1021,7 +1019,6 @@ type MovieRatingRow = {
   ratings: Record<string, number>;
   weights: { key: string; weight: number }[];
   popscore: number;
-  quick_reaction: ProfileQuickReaction | null;
   rating_source?: UserMovieRatingSource | null;
   review_comment: string | null;
   created_at: string;
@@ -1038,7 +1035,6 @@ function mapRatingRow(row: MovieRatingRow): UserMovieRating {
     movieTitle: row.movie_title,
     popscore: Number(row.popscore),
     posterPath: row.poster_path,
-    quick_reaction: row.quick_reaction,
     ratingSource: row.rating_source ?? null,
     ratings: row.ratings,
     releaseDate: row.release_date,
@@ -1460,97 +1456,6 @@ export async function removeUserMovieWatch(id: string) {
     { headers: { Prefer: "return=minimal" }, method: "DELETE" }
   );
   notifyMovieWatchUpdates();
-}
-
-export async function saveUserQuickReaction({
-  movie,
-  quickReaction,
-}: {
-  movie: MovieMeta & { genre?: string };
-  quickReaction: ProfileQuickReaction;
-}) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return null;
-  }
-
-  const existingRows = await supabaseFetch<{ id: string }[]>(
-    `/movie_ratings?user_id=eq.${encodeURIComponent(
-      user.id
-    )}&movie_id=eq.${encodeURIComponent(movie.movieId)}&select=id`
-  );
-
-  if (existingRows[0]) {
-    const patchBody: {
-      genre?: string;
-      genre_names?: string[];
-      movie_title?: string;
-      poster_path?: string | null;
-      quick_reaction: ProfileQuickReaction;
-      release_date?: string | null;
-    } = {
-      quick_reaction: quickReaction,
-    };
-
-    if (movie.genre ?? movie.genreNames?.[0]) {
-      patchBody.genre = movie.genre ?? movie.genreNames?.[0];
-    }
-
-    if (movie.genreNames?.length) {
-      patchBody.genre_names = movie.genreNames;
-    }
-
-    if (movie.movieTitle) {
-      patchBody.movie_title = movie.movieTitle;
-    }
-
-    if (movie.posterPath) {
-      patchBody.poster_path = movie.posterPath;
-    }
-
-    if (movie.releaseDate) {
-      patchBody.release_date = movie.releaseDate;
-    }
-
-    await supabaseFetch(
-      `/movie_ratings?id=eq.${encodeURIComponent(existingRows[0].id)}`,
-      {
-        method: "PATCH",
-        headers: {
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify(patchBody),
-      }
-    );
-
-    return existingRows[0];
-  }
-
-  const rows = await supabaseFetch<unknown[]>(
-    "/movie_ratings?on_conflict=user_id,movie_id",
-    {
-      method: "POST",
-      headers: {
-        Prefer: "resolution=merge-duplicates,return=representation",
-      },
-      body: JSON.stringify({
-        genre: movie.genre ?? movie.genreNames?.[0] ?? "unknown",
-        genre_names: movie.genreNames ?? [],
-        movie_id: movie.movieId,
-        movie_title: movie.movieTitle,
-        popscore: 0,
-        poster_path: movie.posterPath ?? null,
-        quick_reaction: quickReaction,
-        ratings: {},
-        release_date: movie.releaseDate ?? null,
-        user_id: user.id,
-        weights: [],
-      }),
-    }
-  );
-
-  return rows[0] ?? null;
 }
 
 export async function getUserRatings(userId: string) {

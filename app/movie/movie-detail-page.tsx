@@ -5,7 +5,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import BrandHomeLink from "@/app/components/brand-home-link";
-import CoStarReactions from "@/app/components/co-star-reactions";
 import EmojiIcon from "@/app/components/emoji-icon";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
@@ -152,7 +151,7 @@ export async function generateMovieMetadata(id: string): Promise<Metadata> {
     };
   }
 
-  const title = `${movieTitle(movie)} PopScore Rating, Reviews, and Fan Reactions`;
+  const title = `${movieTitle(movie)} PopScore Rating and Fan Reviews`;
   const description = movieDescription(movie);
   const image = posterUrl(movie.poster_path) ?? backdropUrl(movie.backdrop_path);
   const canonical = movieCanonical(movie);
@@ -554,36 +553,6 @@ export async function MovieDetailPage({
                   />
                 </div>
 
-                <section className="rounded-xl border border-slate-800 bg-black/45 p-2.5 shadow-lg shadow-black/20 backdrop-blur sm:p-2">
-                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[120px_minmax(0,280px)_120px] sm:justify-between md:grid-cols-[120px_minmax(0,300px)_120px]">
-                    <div>
-                      <p className="whitespace-nowrap text-[9px] font-black uppercase tracking-[0.12em] text-yellow-300 sm:text-[10px] sm:tracking-[0.16em]">
-                        Quick Reaction
-                      </p>
-                      <p className="mt-0.5 text-[11px] font-semibold text-slate-400">
-                        How did you feel?
-                      </p>
-                    </div>
-                    <div className="w-full max-w-[280px] [&_img]:h-3.5 [&_img]:w-3.5 sm:translate-x-16 sm:translate-y-1 sm:[&_img]:h-[22px] sm:[&_img]:w-[22px] md:max-w-[300px] md:translate-x-40 md:translate-y-2 md:[&_button]:min-h-[68px] md:[&_button]:grid-rows-[1.5rem_1.25rem_1rem] md:[&_button]:content-center">
-                      <CoStarReactions
-                        movie={{
-                          genre: movie.genres[0]?.name,
-                          genreNames: filterGenreNames,
-                          movieId: String(movie.id),
-                          movieTitle: movie.title,
-                          posterPath: movie.poster_path,
-                          releaseDate: movie.release_date,
-                        }}
-                        movieId={String(movie.id)}
-                        showTotal={false}
-                        variant="mini"
-                      />
-                    </div>
-                  </div>
-                  <p className="mt-1.5 text-[10px] font-semibold text-slate-600 sm:mt-1">
-                    Quick reactions don&apos;t affect the PopScore.
-                  </p>
-                </section>
               </div>
 
               <p className="mt-8 max-w-3xl text-lg leading-8 text-gray-200">

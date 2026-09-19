@@ -21,7 +21,7 @@ type NotificationTab =
   | "Follows"
   | "Replies"
   | "Discussions"
-  | "Reactions"
+  | "Likes"
   | "Mentions";
 
 const notificationTabs: NotificationTab[] = [
@@ -29,7 +29,7 @@ const notificationTabs: NotificationTab[] = [
   "Follows",
   "Replies",
   "Discussions",
-  "Reactions",
+  "Likes",
   "Mentions",
 ];
 
@@ -37,7 +37,7 @@ const tabTypes: Record<Exclude<NotificationTab, "All">, NotificationType[]> = {
   Discussions: ["discussion_comment"],
   Follows: ["follow", "new_follower"],
   Mentions: ["mention"],
-  Reactions: ["comment_reaction"],
+  Likes: ["comment_reaction"],
   Replies: ["comment_reply"],
 };
 
@@ -147,7 +147,7 @@ export default function NotificationsClient() {
                 Notifications
               </h1>
               <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-300 sm:text-base">
-                Keep up with follows, replies, reactions, mentions, and movie
+                Keep up with follows, replies, likes, mentions, and movie
                 discussions.
               </p>
             </div>

@@ -31,7 +31,6 @@ function rating({
     movieTitle: title,
     popscore,
     posterPath: null,
-    quick_reaction: null,
     ratingSource: null,
     ratings: { story: 4 },
     releaseDate: null,

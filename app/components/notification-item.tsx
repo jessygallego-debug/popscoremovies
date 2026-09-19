@@ -35,7 +35,7 @@ function formatNotificationTime(value: string) {
 
 function notificationTypeLabel(type: PopScoreNotification["type"]) {
   const labels: Record<PopScoreNotification["type"], string> = {
-    comment_reaction: "Reaction",
+    comment_reaction: "Like",
     comment_reply: "Reply",
     discussion_comment: "Discussion",
     follow: "Follow",

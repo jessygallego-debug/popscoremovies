@@ -3,7 +3,6 @@ import Link from "next/link";
 import EmojiIcon from "@/app/components/emoji-icon";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import HomeGenreFilter from "@/app/components/home-genre-filter";
-import LovedItBadge from "@/app/components/loved-it-badge";
 import MovieSearch from "@/app/components/movie-search";
 import MoviePosterImage from "@/app/components/movie-poster-image";
 import PopScoreDisplay from "@/app/components/popscore-display";
@@ -467,10 +466,6 @@ export default async function Home({
                             compactOnDesktop
                           />
                         </Link>
-                        <LovedItBadge
-                          movieId={String(movie.id)}
-                          compactOnDesktop
-                        />
                       </div>
 
                       <AddToWatchlistButton

@@ -1,9 +1,7 @@
 type SiteStatsRow = {
   id?: string | null;
   movie_id?: string | null;
-  quick_reaction?: string | null;
   ratings?: Record<string, unknown> | null;
-  reaction?: string | null;
   user_id?: string | null;
   weights?: unknown[] | null;
 };
@@ -11,13 +9,11 @@ type SiteStatsRow = {
 type SiteEngagementTotals = {
   totalMoviesRated: number;
   totalRatings: number;
-  totalReactions: number;
 };
 
 const EMPTY_SITE_ENGAGEMENT_TOTALS: SiteEngagementTotals = {
   totalMoviesRated: 0,
   totalRatings: 0,
-  totalReactions: 0,
 };
 const SITE_STATS_TIMEOUT_MS = 2500;
 
@@ -101,18 +97,6 @@ function hasCompletedRating(row: SiteStatsRow) {
   );
 }
 
-function hasReaction(row: SiteStatsRow) {
-  const reaction = row.quick_reaction ?? row.reaction;
-
-  return (
-    reaction === "loved" ||
-    reaction === "loved_it" ||
-    reaction === "worth" ||
-    reaction === "worth_watching" ||
-    reaction === "trash"
-  );
-}
-
 function uniqueInteractionKey(row: SiteStatsRow, fallbackKey: string) {
   if (row.user_id && row.movie_id) {
     return `${row.user_id}:${row.movie_id}`;
@@ -124,10 +108,10 @@ function uniqueInteractionKey(row: SiteStatsRow, fallbackKey: string) {
 async function loadSiteEngagementTotals(
   signal?: AbortSignal
 ): Promise<SiteEngagementTotals> {
-  const [profileRatings, legacyRatings, legacyReactions] = await Promise.all([
+  const [profileRatings, legacyRatings] = await Promise.all([
     fetchAllRows(
       "movie_ratings",
-      ["id,user_id,movie_id,ratings,weights,quick_reaction"],
+      ["id,user_id,movie_id,ratings,weights"],
       signal
     ),
     fetchAllRows(
@@ -138,18 +122,9 @@ async function loadSiteEngagementTotals(
       ],
       signal
     ),
-    fetchAllRows(
-      "co_star_reactions",
-      [
-        "id,user_id,movie_id,quick_reaction,reaction",
-        "id,movie_id,quick_reaction,reaction",
-      ],
-      signal
-    ),
   ]);
   const ratingKeys = new Set<string>();
   const ratedMovieIds = new Set<string>();
-  const reactionKeys = new Set<string>();
 
   [...profileRatings, ...legacyRatings].forEach((row, index) => {
     if (!hasCompletedRating(row)) {
@@ -163,30 +138,9 @@ async function loadSiteEngagementTotals(
     }
   });
 
-  profileRatings.forEach((row, index) => {
-    if (!hasReaction(row)) {
-      return;
-    }
-
-    reactionKeys.add(
-      uniqueInteractionKey(row, `profile-reaction:${row.id ?? index}`)
-    );
-  });
-
-  legacyReactions.forEach((row, index) => {
-    if (!hasReaction(row)) {
-      return;
-    }
-
-    reactionKeys.add(
-      uniqueInteractionKey(row, `legacy-reaction:${row.id ?? index}`)
-    );
-  });
-
   return {
     totalMoviesRated: ratedMovieIds.size,
     totalRatings: ratingKeys.size,
-    totalReactions: reactionKeys.size,
   };
 }
 

@@ -33,7 +33,7 @@ test.describe("PopFile avatars", () => {
             id: `rating-${index}`, user_id: userId, movie_id: String(index),
             movie_title: `Movie ${index}`, genre: "horror", genre_names: ["Horror"],
             ratings: { story: 5 }, weights: [{ key: "story", weight: 1 }],
-            popscore: 80, poster_path: null, quick_reaction: null,
+            popscore: 80, poster_path: null,
             release_date: null, review_comment: null,
             created_at: "2026-09-16", updated_at: "2026-09-16",
           }))

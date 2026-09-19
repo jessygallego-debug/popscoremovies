@@ -125,3 +125,13 @@ Users choose from the available emoji avatars in PopFile settings. Custom photo
 uploads are disabled. Existing stored profile photos remain visible until their
 owners choose a different avatar; do not remove the historical storage bucket
 or its objects solely because uploads are disabled.
+
+## Retiring movie quick reactions
+
+Deploy the application changes first, then apply
+`supabase/remove_quick_reactions_20260919.sql` in the Supabase SQL editor.
+The migration requires the profiles and user movie watches schemas. It removes
+the retired reaction column, legacy reaction table, First Reaction achievement
+records, and empty reaction-only rating placeholders. Ratings, reviews, viewing
+records, and community likes are preserved. The migration is transactional and
+can be run again. No live database migration is run by the application build.

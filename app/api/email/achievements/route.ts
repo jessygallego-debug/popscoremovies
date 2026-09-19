@@ -40,7 +40,6 @@ type RatingRow = {
   genre_names: string[] | null;
   id: string;
   popscore: number;
-  quick_reaction: string | null;
   rating_source?: string | null;
   ratings: Record<string, number> | null;
   review_comment: string | null;
@@ -567,7 +566,7 @@ async function getUserRatings(userId: string) {
   return supabaseServiceFetch<RatingRow[]>(
     `/movie_ratings?user_id=eq.${encodeURIComponent(
       userId
-    )}&select=id,genre,genre_names,ratings,weights,popscore,quick_reaction,rating_source,review_comment,created_at&order=updated_at.desc&limit=1000`
+    )}&select=id,genre,genre_names,ratings,weights,popscore,rating_source,review_comment,created_at&order=updated_at.desc&limit=1000`
   ).catch(() => []);
 }
 
@@ -697,8 +696,6 @@ async function getAchievementSummary(
       (rating) => Number(rating.popscore) >= 80
     ).length,
     movieMatchRatingsCount: movieMatchRatings.length,
-    quickReactionCount: ratings.filter((rating) => Boolean(rating.quick_reaction))
-      .length,
     ratingStreakDays: getLongestStreak(popScoreRatings),
     ratings90Plus: popScoreRatings.filter(
       (rating) => Number(rating.popscore) >= 90

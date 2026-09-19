@@ -124,7 +124,7 @@ export default async function GenrePage({
           </h1>
           <p className="mt-4 max-w-3xl text-base font-semibold leading-7 text-slate-300 sm:text-lg sm:leading-8">
             Browse {genre.name.toLowerCase()} movie recommendations, fan
-            ratings, PopScore reactions, and reviews from the PopScore
+            ratings and reviews from the PopScore
             community.
           </p>
         </header>

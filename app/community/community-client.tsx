@@ -73,7 +73,7 @@ type CommunityUser = {
   username: string;
 };
 
-type PopScoreReaction = {
+type PopScoreTier = {
   accentClass: string;
   iconSrc: string;
   label: string;
@@ -100,7 +100,7 @@ type CommunityFeedPost = {
   popscore?: number;
   recentCommentCount?: number;
   recentLikeCount?: number;
-  reaction?: PopScoreReaction;
+  scoreTier?: PopScoreTier;
   replyLink?: string;
   sortCommentCount?: number;
   sortLikeCount?: number;
@@ -117,8 +117,6 @@ type DiscussionAuthor = {
   username: string;
 };
 
-type FollowingReaction = "loved_it" | "worth_watching" | "trash";
-
 type FollowingActivity =
   | {
       avatar: string;
@@ -130,20 +128,7 @@ type FollowingActivity =
       moviePoster: string | null;
       movieTitle: string;
       popScore: number;
-      reaction?: FollowingReaction;
       type: "rating";
-      userId: string;
-      username: string;
-    }
-  | {
-      avatar: string;
-      createdAt: string;
-      id: string;
-      movieId: string;
-      moviePoster: string | null;
-      movieTitle: string;
-      reaction: FollowingReaction;
-      type: "reaction";
       userId: string;
       username: string;
     }
@@ -419,7 +404,7 @@ function formatRelativePostTime(value: string) {
   return `${Math.floor(hoursAgo / 24)}d ago`;
 }
 
-function reactionForScore(score: number): PopScoreReaction {
+function tierForScore(score: number): PopScoreTier {
   if (score >= 90) {
     return {
       accentClass: "text-yellow-200",
@@ -505,7 +490,7 @@ function mapCommunityRatingToPost(
       title: rating.movieTitle,
     },
     popscore: rating.popscore,
-    reaction: reactionForScore(rating.popscore),
+    scoreTier: tierForScore(rating.popscore),
     timestamp: formatRelativePostTime(createdAt),
     user: {
       avatar: rating.avatar,
@@ -538,16 +523,6 @@ function applyFeedActivitySummaries(
   });
 }
 
-function quickReactionLabel(reaction: FollowingReaction) {
-  const labels: Record<FollowingReaction, string> = {
-    loved_it: "Loved It",
-    trash: "Trash",
-    worth_watching: "Worth Watching",
-  };
-
-  return labels[reaction];
-}
-
 function buildFollowingActivities({
   discussions,
   followingIds,
@@ -578,7 +553,6 @@ function buildFollowingActivities({
         moviePoster: rating.posterPath ?? null,
         movieTitle: rating.movieTitle,
         popScore: rating.popscore,
-        reaction: rating.quick_reaction ?? undefined,
         type: "rating",
         userId: rating.user_id,
         username: rating.username,
@@ -1516,11 +1490,11 @@ function CommunityFeedCard({
               wide
             />
             <div className="flex min-w-0 flex-col justify-center">
-              {post.reaction ? (
+              {post.scoreTier ? (
                 <div className="flex items-center gap-2">
                   <span className="relative block h-6 w-6 overflow-hidden rounded-full border border-yellow-400/25 bg-black/30 shadow-lg shadow-yellow-400/10 sm:h-7 sm:w-7">
                     <Image
-                      src={post.reaction.iconSrc}
+                      src={post.scoreTier.iconSrc}
                       alt=""
                       fill
                       sizes="28px"
@@ -1529,9 +1503,9 @@ function CommunityFeedCard({
                     />
                   </span>
                   <p
-                    className={`text-sm font-black sm:text-base ${post.reaction.accentClass}`}
+                    className={`text-sm font-black sm:text-base ${post.scoreTier.accentClass}`}
                   >
-                    {post.reaction.label}
+                    {post.scoreTier.label}
                   </p>
                 </div>
               ) : null}
@@ -2291,7 +2265,7 @@ function FollowingActivityCard({
                 >
                   @{activity.username}
                 </ProfileUsernameLink>{" "}
-                {activity.type === "rating" ? "rated" : "reacted to"}{" "}
+                rated{" "}
                 {activity.movieTitle}
               </p>
               <p className="mt-1 text-xs font-bold text-slate-500">
@@ -2300,36 +2274,25 @@ function FollowingActivityCard({
             </div>
           </div>
 
-          {activity.type === "rating" ? (
-            <div className="mt-2">
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span className="rounded-xl border border-yellow-400/35 bg-yellow-400/15 px-2 py-0.5 text-xs font-black text-yellow-200 sm:px-3 sm:py-1 sm:text-sm">
-                  PopScore: {activity.popScore}
-                </span>
-                <span className="rounded-xl border border-slate-700 bg-slate-900/70 px-2 py-0.5 text-xs font-black text-slate-300 sm:px-3 sm:py-1">
-                  {activity.genre}
-                </span>
-                {activity.reaction ? (
-                  <span className="rounded-xl border border-yellow-400/35 bg-yellow-400/10 px-2 py-0.5 text-xs font-black text-yellow-200 sm:px-3 sm:py-1">
-                    {quickReactionLabel(activity.reaction)}
-                  </span>
-                ) : null}
-              </div>
-              {activity.comment ? (
-                <div className="mt-2 rounded-xl border border-slate-800 bg-black/25 p-2.5">
-                  <CompactTextPreview
-                    lines="three"
-                    text={activity.comment}
-                    className="text-sm font-semibold leading-5 text-slate-300"
-                  />
-                </div>
-              ) : null}
+          <div className="mt-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <span className="rounded-xl border border-yellow-400/35 bg-yellow-400/15 px-2 py-0.5 text-xs font-black text-yellow-200 sm:px-3 sm:py-1 sm:text-sm">
+                PopScore: {activity.popScore}
+              </span>
+              <span className="rounded-xl border border-slate-700 bg-slate-900/70 px-2 py-0.5 text-xs font-black text-slate-300 sm:px-3 sm:py-1">
+                {activity.genre}
+              </span>
             </div>
-          ) : (
-            <p className="mt-2 inline-flex rounded-xl border border-yellow-400/35 bg-yellow-400/15 px-2.5 py-1.5 text-xs font-black text-yellow-200 sm:px-3 sm:py-2 sm:text-sm">
-              {quickReactionLabel(activity.reaction)}
-            </p>
-          )}
+            {activity.comment ? (
+              <div className="mt-2 rounded-xl border border-slate-800 bg-black/25 p-2.5">
+                <CompactTextPreview
+                  lines="three"
+                  text={activity.comment}
+                  className="text-sm font-semibold leading-5 text-slate-300"
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </article>

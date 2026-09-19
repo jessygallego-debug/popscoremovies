@@ -391,7 +391,7 @@ async function sendResendEmail(input: {
                   <p style="color:#0f172a;font-size:22px;font-weight:800;line-height:1.25;margin:14px 0 6px">${safeFollowerHandle}</p>
                   <p style="color:#475569;font-size:16px;line-height:1.55;margin:0 0 24px">is now following you on PopScore.</p>
                 </div>
-                <p style="color:#334155;font-size:16px;line-height:1.65;margin:0 0 26px">They'll be able to keep up with your latest movie ratings, reactions, and discussions.</p>
+                <p style="color:#334155;font-size:16px;line-height:1.65;margin:0 0 26px">They'll be able to keep up with your latest movie ratings, reviews, and discussions.</p>
                 <div style="text-align:center">
                   <a href="${safeProfileUrl}" style="background:#facc15;border-radius:999px;color:#020617;display:inline-block;font-size:16px;font-weight:800;line-height:1;padding:16px 28px;text-decoration:none">View Their Profile</a>
                 </div>
@@ -406,7 +406,7 @@ async function sendResendEmail(input: {
         </div>
       `,
       subject: `🎬 @${input.followerName} is now following you on PopScore`,
-      text: `Hey @${input.recipientName},\n\nYou have a new follower!\n\n@${input.followerName} is now following you on PopScore.\n\nThey'll be able to keep up with your latest movie ratings, reactions, and discussions.\n\nView Their Profile: ${input.profileUrl}\n\nSee what they're watching and find out if your movie tastes match.\n\n-- PopScore\nRate movies. Discover what's next. Join the conversation.`,
+      text: `Hey @${input.recipientName},\n\nYou have a new follower!\n\n@${input.followerName} is now following you on PopScore.\n\nThey'll be able to keep up with your latest movie ratings, reviews, and discussions.\n\nView Their Profile: ${input.profileUrl}\n\nSee what they're watching and find out if your movie tastes match.\n\n-- PopScore\nRate movies. Discover what's next. Join the conversation.`,
       to: input.to,
     }),
   });
