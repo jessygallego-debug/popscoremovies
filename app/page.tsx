@@ -202,7 +202,7 @@ export async function generateMetadata({
   );
   const pageTitle = activeGenre
     ? `${activeGenre.name} Movies: Fan Ratings & PopScore Reviews`
-    : "PopScore | Rate Movies and Discover What to Watch Next";
+    : "PopScore | Rate Movies Differently";
   const metadataTitle = activeGenre ? pageTitle : { absolute: pageTitle };
   const description = activeGenre
     ? `Browse ${activeGenre.name.toLowerCase()} movies with PopScore fan ratings, recommendations, and community reviews.`
@@ -341,9 +341,8 @@ export default async function Home({
             <h1 className="text-5xl font-black leading-[0.94] text-white sm:text-6xl xl:text-7xl">
               Rate Movies
               <br />
-              and Discover What to{" "}
               <span className="relative inline-block text-yellow-400">
-                Watch Next
+                Differently
                 <span className="absolute -bottom-2 left-0 h-3 w-full rounded-[50%] border-b-4 border-yellow-400/75 shadow-[0_12px_24px_rgba(250,204,21,0.42)]" />
               </span>
             </h1>
