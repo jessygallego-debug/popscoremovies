@@ -49,7 +49,7 @@ export function getShareRatingLabel(score: number) {
   }
 
   if (score >= 60) {
-    return "Fresh Popcorn";
+    return "Fresh";
   }
 
   if (score >= 40) {

@@ -49,7 +49,7 @@ const scoreOptions = [
   {
     value: 3,
     iconSrc: "/rating-icons/fresh-popcorn.png",
-    label: "Fresh Popcorn",
+    label: "Fresh",
     description: "Good",
   },
   {
@@ -105,7 +105,7 @@ function getPopRating(score: number) {
   if (score >= 60) {
     return {
       iconSrc: "/rating-icons/fresh-popcorn.png",
-      label: "Fresh Popcorn",
+      label: "Fresh",
       description: "Good",
     };
   }

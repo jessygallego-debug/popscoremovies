@@ -425,7 +425,7 @@ function tierForScore(score: number): PopScoreTier {
     return {
       accentClass: "text-yellow-100",
       iconSrc: "/rating-icons/fresh-popcorn.png",
-      label: "Fresh Popcorn",
+      label: "Fresh",
     };
   }
 
