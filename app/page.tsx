@@ -110,13 +110,12 @@ function HeroVisual({
             ];
 
             return (
-              <Link
+              <div
                 key={movie.id}
-                data-remember-scroll
-                href={seoMovieHref(movie)}
                 className={`absolute block w-[42%] overflow-hidden rounded-[1.35rem] border border-white/15 bg-slate-950 shadow-2xl shadow-black/60 transition duration-500 motion-safe:animate-[popFloat_8s_ease-in-out_infinite] hover:z-30 hover:-translate-y-2 hover:rotate-0 hover:border-yellow-400/70 md:w-[48%] ${offsets[index]}`}
                 style={{ animationDelay: `${index * 0.8}s` }}
               >
+                <Link data-remember-scroll href={seoMovieHref(movie)} className="block">
                 <div className="relative aspect-[2/3]">
                   <MoviePosterImage
                     src={posterUrl(movie.poster_path)}
@@ -134,7 +133,9 @@ function HeroVisual({
                     />
                   </div>
                 </div>
-              </Link>
+                </Link>
+                <AddToWatchlistButton variant="poster" movie={{ movieId: String(movie.id), movieTitle: movie.title, posterPath: movie.poster_path, releaseDate: movie.release_date }} />
+              </div>
             );
           })}
 
@@ -421,24 +422,37 @@ export default async function Home({
                     key={movie.id}
                     className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/85 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10 sm:rounded-[1.5rem]"
                   >
-                    <Link data-remember-scroll href={detailsHref} className="block">
-                      <div className="relative aspect-[2/3] overflow-hidden bg-slate-950">
-                        <MoviePosterImage
-                          src={poster}
-                          alt={`${movie.title} movie poster`}
-                          sizes="(min-width: 1536px) 20vw, (min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 50vw"
-                          className="object-contain"
-                          fallbackMovieId={String(movie.id)}
-                        />
-                        <div className="absolute left-2 top-2 sm:left-4 sm:top-4">
-                          <PopScoreDisplay
-                            movieId={String(movie.id)}
-                            variant="posterBadge"
-                            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-[15px] font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl lg:h-11 lg:w-11 lg:text-base"
+                    <div className="relative">
+                      <Link data-remember-scroll href={detailsHref} className="block">
+                        <div className="relative aspect-[2/3] overflow-hidden bg-slate-950">
+                          <MoviePosterImage
+                            src={poster}
+                            alt={`${movie.title} movie poster`}
+                            sizes="(min-width: 1536px) 20vw, (min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 50vw"
+                            className="object-contain"
+                            fallbackMovieId={String(movie.id)}
                           />
+                          <div className="absolute left-2 top-2 sm:left-4 sm:top-4">
+                            <PopScoreDisplay
+                              movieId={String(movie.id)}
+                              variant="posterBadge"
+                              className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-[15px] font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl lg:h-11 lg:w-11 lg:text-base"
+                            />
+                          </div>
                         </div>
-                      </div>
-                    </Link>
+                      </Link>
+                      <AddToWatchlistButton
+                        movie={{
+                          genre: genreLabels[0],
+                          genreNames: genreLabels,
+                          movieId: String(movie.id),
+                          movieTitle: movie.title,
+                          posterPath: movie.poster_path,
+                          releaseDate: movie.release_date,
+                        }}
+                        variant="poster"
+                      />
+                    </div>
 
                     <div className="flex flex-1 flex-col space-y-2 p-3 sm:space-y-2.5 sm:p-4 lg:p-3">
                       <Link
@@ -468,18 +482,6 @@ export default async function Home({
                           />
                         </Link>
                       </div>
-
-                      <AddToWatchlistButton
-                        movie={{
-                          genre: genreLabels[0],
-                          genreNames: genreLabels,
-                          movieId: String(movie.id),
-                          movieTitle: movie.title,
-                          posterPath: movie.poster_path,
-                          releaseDate: movie.release_date,
-                        }}
-                        className="mt-auto w-full rounded-2xl border border-slate-700 bg-slate-950 px-2 py-2.5 text-[11px] font-black text-slate-300 transition hover:border-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300 sm:px-3 sm:py-3 sm:text-xs lg:rounded-xl lg:px-2 lg:py-2 lg:text-[11px]"
-                      />
                     </div>
                   </article>
                 );

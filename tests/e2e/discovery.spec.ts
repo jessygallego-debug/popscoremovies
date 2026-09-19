@@ -23,13 +23,16 @@ function hasAnyGenreId(movie: RecommendationMovie, genreIds: number[]) {
   return genreIds.some((genreId) => movie.genre_ids?.includes(genreId));
 }
 
-test("saved movies show On Watchlist until removed from the watchlist page", async ({ page }) => {
+for (const width of [390, 1280]) {
+test(`poster watchlist toggle works at ${width}px and stays synced across pages`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
   test.skip(
     !process.env.NEXT_PUBLIC_SUPABASE_URL,
     "Supabase URL is required for the signed-in watchlist regression."
   );
 
   let isSaved = true;
+  let failNextAdd = true;
   let watchlistReads = 0;
   await page.addInitScript(() => {
     localStorage.setItem("popscore_supabase_session", JSON.stringify({
@@ -41,6 +44,7 @@ test("saved movies show On Watchlist until removed from the watchlist page", asy
     contentType: "application/json",
     json: { id: "user-1", email: "fan@example.com" },
   }));
+  await page.route("**/rest/v1/**", (route) => route.fulfill({ json: [] }));
   await page.route(/\/rest\/v1\/profiles.*/, (route) => route.fulfill({
     contentType: "application/json",
     json: [{ id: "profile-1", user_id: "user-1", username: "fan", favorite_genre: "horror" }],
@@ -52,6 +56,10 @@ test("saved movies show On Watchlist until removed from the watchlist page", asy
       return route.fulfill({ status: 204 });
     }
     if (request.method() === "POST") {
+      if (failNextAdd) {
+        failNextAdd = false;
+        return route.fulfill({ status: 500, json: { message: "Please try again." } });
+      }
       isSaved = true;
       return route.fulfill({ status: 204 });
     }
@@ -83,22 +91,43 @@ test("saved movies show On Watchlist until removed from the watchlist page", asy
   }));
 
   await page.goto("/discover");
-  const onWatchlist = page.getByRole("button", { name: "On Watchlist" });
+  const onWatchlist = page.getByRole("button", { name: "Remove from Watchlist" });
   await expect(onWatchlist).toBeVisible();
-  await expect(onWatchlist).toBeDisabled();
+  await expect(onWatchlist).toBeEnabled();
+  await expect(onWatchlist).toHaveAttribute("aria-pressed", "true");
+  expect(await onWatchlist.evaluate((element) => element.closest("a"))).toBeNull();
+  await onWatchlist.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText("Removed from Watchlist");
+  await expect(page).toHaveURL(/discover/);
+  await page.getByRole("button", { name: "Add to Watchlist" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add to Watchlist" })).toHaveAttribute("aria-pressed", "false");
+  await page.getByRole("button", { name: "Add to Watchlist" }).click();
+  await expect(page.getByRole("status")).toHaveText("Added to Watchlist");
+  await expect(page.getByRole("status")).toHaveCount(0, { timeout: 3000 });
   expect(watchlistReads).toBe(1);
+  const toggle = page.getByRole("button", { name: "Remove from Watchlist" });
+  const box = await toggle.boundingBox();
+  expect(box?.width).toBe(40);
+  expect(box?.height).toBe(40);
+  await page.screenshot({ path: `artifacts/watchlist-poster-${width}.png`, fullPage: true });
 
-  await page.getByRole("link", { name: "Watchlist", exact: true }).first().click();
+  if (width === 390) await page.getByRole("button", { name: "Open navigation menu" }).click();
+  await page.getByRole("link", { name: "Watchlist", exact: true }).filter({ visible: true }).first().click();
   await expect(page.getByRole("button", { name: "Remove" })).toBeVisible();
   await page.getByRole("button", { name: "Remove" }).click();
   await expect(page.getByText("Your watchlist is empty")).toBeVisible();
 
-  await page.getByRole("link", { name: "Movie Match", exact: true }).first().click();
+  if (width === 390) await page.getByRole("button", { name: "Open navigation menu" }).click();
+  await page.getByRole("link", { name: "Movie Match", exact: true }).filter({ visible: true }).first().click();
   const addButton = page.getByRole("button", { name: "Add to Watchlist" });
   await expect(addButton).toBeEnabled();
   await addButton.click();
-  await expect(page.getByRole("button", { name: "On Watchlist" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Remove from Watchlist" })).toHaveAttribute("aria-pressed", "true");
 });
+
+}
 
 test("Movie Match starts on the PopFile favorite but keeps genre choices editable", async ({ page }) => {
   test.skip(

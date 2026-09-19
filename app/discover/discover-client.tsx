@@ -319,7 +319,6 @@ export default function DiscoverClient({
       return;
     }
 
-    loadedPreferenceUserIdRef.current = preferenceUserKey;
     let isCurrent = true;
 
     Promise.resolve().then(() => {
@@ -327,6 +326,7 @@ export default function DiscoverClient({
         return;
       }
 
+      loadedPreferenceUserIdRef.current = preferenceUserKey;
       try {
         const browserPreference = browserMovieLocalePreference();
         const storedLanguage = normalizeMovieLanguage(
@@ -659,28 +659,41 @@ export default function DiscoverClient({
               key={movie.id}
               className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/85 p-3 shadow-xl shadow-black/30 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/50 hover:shadow-yellow-400/10 sm:rounded-[1.5rem] sm:p-4"
             >
-              <Link href={detailsHref} className="block">
-                <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl shadow-black/30 sm:rounded-[1.35rem]">
-                  <DiscoveryPoster movie={movie} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                  <div className="absolute left-2 top-2 rounded-full border border-yellow-300/60 bg-black/75 px-2 py-1 text-[10px] font-black text-yellow-200 shadow-lg shadow-yellow-400/15 sm:left-4 sm:top-4 sm:px-3 sm:py-1.5 sm:text-sm">
-                    {movie.tasteMatchScore}% Match
-                  </div>
-                  <div className="absolute bottom-3 left-3 flex items-center gap-2 sm:bottom-4 sm:left-4 sm:gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/70 text-sm font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl">
-                      {movie.totalRatings > 0 ? movie.overallPopScore : "NR"}
-                    </span>
-                    <span className="text-[10px] font-black text-white sm:text-xs">
-                      PopScore
-                      <span className="block text-[9px] font-bold text-slate-300 sm:text-[11px]">
-                        {movie.totalRatings > 0
-                          ? `${movie.totalRatings} ratings`
-                          : "Trending pick"}
+              <div className="relative">
+                <Link href={detailsHref} className="block">
+                  <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl shadow-black/30 sm:rounded-[1.35rem]">
+                    <DiscoveryPoster movie={movie} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                    <div className="absolute left-2 top-2 rounded-full border border-yellow-300/60 bg-black/75 px-2 py-1 text-[10px] font-black text-yellow-200 shadow-lg shadow-yellow-400/15 sm:left-4 sm:top-4 sm:px-3 sm:py-1.5 sm:text-sm">
+                      {movie.tasteMatchScore}% Match
+                    </div>
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2 sm:bottom-4 sm:left-4 sm:gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/70 text-sm font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl">
+                        {movie.totalRatings > 0 ? movie.overallPopScore : "NR"}
                       </span>
-                    </span>
+                      <span className="text-[10px] font-black text-white sm:text-xs">
+                        PopScore
+                        <span className="block text-[9px] font-bold text-slate-300 sm:text-[11px]">
+                          {movie.totalRatings > 0
+                            ? `${movie.totalRatings} ratings`
+                            : "Trending pick"}
+                        </span>
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+                <AddToWatchlistButton
+                  movie={{
+                    genre: selectedGenre?.key,
+                    genreNames: selectedGenre ? [selectedGenre.label] : [],
+                    movieId: String(movie.id),
+                    movieTitle: movie.title,
+                    posterPath: movie.poster_path,
+                    releaseDate: movie.release_date,
+                  }}
+                  variant="poster"
+                />
+              </div>
               <div className="flex flex-1 flex-col pt-3 sm:pt-4">
                 <h2 className="line-clamp-2 text-sm font-black leading-tight text-white sm:text-xl">
                   {movie.title}
@@ -697,17 +710,6 @@ export default function DiscoverClient({
                   >
                     Rate Now
                   </Link>
-                  <AddToWatchlistButton
-                    movie={{
-                      genre: selectedGenre?.key,
-                      genreNames: selectedGenre ? [selectedGenre.label] : [],
-                      movieId: String(movie.id),
-                      movieTitle: movie.title,
-                      posterPath: movie.poster_path,
-                      releaseDate: movie.release_date,
-                    }}
-                    className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-slate-700 px-3 text-xs font-black text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300 sm:min-h-11 sm:px-4 sm:text-sm"
-                  />
                 </div>
               </div>
             </article>

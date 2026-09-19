@@ -1,3 +1,4 @@
+import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -159,24 +160,27 @@ export default async function GenrePage({
                 key={movie.id}
                 className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/85 shadow-xl shadow-black/30 transition hover:-translate-y-1 hover:border-yellow-400/50"
               >
-                <Link href={movieHref(movie)} className="block">
-                  <div className="relative aspect-[2/3] bg-slate-900">
-                    <MoviePosterImage
-                      src={posterUrl(movie.poster_path)}
-                      alt={`${movie.title} ${genre.name.toLowerCase()} movie poster`}
-                      sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
-                      className="object-cover"
-                      fallbackMovieId={String(movie.id)}
-                    />
-                    <div className="absolute left-3 top-3">
-                      <PopScoreDisplay
-                        movieId={String(movie.id)}
-                        variant="posterBadge"
-                        className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-base font-black text-white shadow-lg shadow-yellow-400/20"
+                <div className="relative">
+                  <Link href={movieHref(movie)} className="block">
+                    <div className="relative aspect-[2/3] bg-slate-900">
+                      <MoviePosterImage
+                        src={posterUrl(movie.poster_path)}
+                        alt={`${movie.title} ${genre.name.toLowerCase()} movie poster`}
+                        sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+                        className="object-cover"
+                        fallbackMovieId={String(movie.id)}
                       />
+                      <div className="absolute left-3 top-3">
+                        <PopScoreDisplay
+                          movieId={String(movie.id)}
+                          variant="posterBadge"
+                          className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-base font-black text-white shadow-lg shadow-yellow-400/20"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                  <AddToWatchlistButton variant="poster" movie={{ movieId: String(movie.id), movieTitle: movie.title, posterPath: movie.poster_path, releaseDate: movie.release_date, genre: genre.name, genreNames: [genre.name] }} />
+                </div>
                 <div className="p-4">
                   <h2 className="line-clamp-2 text-lg font-black text-white">
                     <Link href={movieHref(movie)}>{movie.title}</Link>

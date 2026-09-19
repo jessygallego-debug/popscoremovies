@@ -33,7 +33,7 @@ export const faqSections = [
   {
     title: "Watchlist and Movie Match",
     items: [
-      { question: "How do I use my Watchlist?", answer: "Save movies you want to watch from movie cards, movie pages, or Movie Match. Your Watchlist supports genre filtering and shows Rate Now and Remove below each poster. Rate Now opens the rating form; Remove takes the movie off your list." },
+      { question: "How do I use my Watchlist?", answer: "Tap the plus in the top-right corner of a movie poster to save it. A yellow bookmark means it is saved; tap it again to remove it. A brief message confirms each change. You can also manage saved movies from movie pages. Your Watchlist supports genre filtering and shows Rate Now and Remove below each poster. Rate Now opens the rating form; Remove takes the movie off your list." },
       { question: "What happens after I rate a Watchlist movie?", answer: "After a successful rating, PopScore removes the movie from your Watchlist. The rating remains in your PopFile." },
       { question: "How does Movie Match choose recommendations?", answer: "Movie Match uses your selected genre, release-year range, language, and region preferences. For supported rating genres, personalized matching starts when you have at least three ratings of 75 or higher in that genre and uses those ratings to understand your taste. Until then, it shows general recommendations." },
       { question: "Why do I see movies I have already watched?", answer: "Movie Match excludes movies you have completed a PopScore rating for when you are signed in. It cannot know every movie you have seen, so watched but unrated movies can still appear." },
