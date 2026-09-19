@@ -347,10 +347,8 @@ export default async function Home({
               </span>
             </h1>
             <p className="mt-6 max-w-[620px] text-base font-semibold leading-7 text-slate-300 sm:text-lg">
-              PopScore helps movie fans rate movies, track their taste, and
-              discover personalized movie recommendations. Build your PopFile,
-              explore movies by genre, and find something you actually want to
-              watch.
+              Rate movies by genre, discover your next favorite, track your movies,
+              and see what your friends are watching.
             </p>
             <div className="mt-8 max-w-[640px]">
               <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
