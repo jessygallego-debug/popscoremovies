@@ -87,6 +87,38 @@ export default function PopScoreDisplay({
     );
   }
 
+  if (variant === "card" && !showNumericScore) {
+    const title = score ? getPopScoreTitle(score.score) : null;
+
+    return (
+      <div className="flex items-center gap-2">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-400/10">
+          {title ? (
+            <Image
+              src={title.iconSrc}
+              alt=""
+              width={24}
+              height={24}
+              className="object-contain"
+            />
+          ) : (
+            <EmojiIcon emoji="🍿" label="Not rated yet" size={24} />
+          )}
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs font-bold leading-tight text-white">
+            {title?.label ?? "Not rated yet"}
+          </p>
+          <p className="mt-0.5 text-[10px] font-medium leading-tight text-slate-400">
+            {score
+              ? `${score.count} ${score.count === 1 ? "rating" : "ratings"}`
+              : "Be the first!"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!score && variant === "card") {
     return (
       <div

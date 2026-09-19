@@ -440,7 +440,7 @@ export default async function Home({
                       </div>
                     </Link>
 
-                    <div className="flex flex-1 flex-col space-y-3 p-3 sm:space-y-4 sm:p-4 lg:space-y-2.5 lg:p-3">
+                    <div className="flex flex-1 flex-col space-y-2 p-3 sm:space-y-2.5 sm:p-4 lg:p-3">
                       <Link
                         data-remember-scroll
                         href={detailsHref}
@@ -457,12 +457,13 @@ export default async function Home({
                         <Link
                           data-remember-scroll
                           href={rateHref}
-                          className="rounded-2xl border border-yellow-400/15 bg-yellow-400/10 p-2 transition hover:border-yellow-400/50 hover:bg-yellow-400/15 sm:p-3 lg:rounded-xl lg:p-2"
+                          className="rounded-xl border border-yellow-400/15 bg-yellow-400/10 px-2 py-1.5 transition hover:border-yellow-400/50 hover:bg-yellow-400/15"
                           aria-label={`Rate ${movie.title}`}
                         >
                           <PopScoreDisplay
                             movieId={String(movie.id)}
                             variant="card"
+                            showNumericScore={false}
                             compactOnDesktop
                           />
                         </Link>
