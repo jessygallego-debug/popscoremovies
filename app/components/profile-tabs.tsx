@@ -1044,7 +1044,7 @@ function RecentActivityCard({
   );
 }
 
-function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
+function RatingsHistory({ ratings, isOwnProfile }: { ratings: UserMovieRating[]; isOwnProfile: boolean }) {
   const [genreFilter, setGenreFilter] = useState("all");
   const [sortBy, setSortBy] = useState<
     "newest" | "oldest" | "highest" | "lowest" | "title"
@@ -1160,14 +1160,14 @@ function RatingsHistory({ ratings }: { ratings: UserMovieRating[] }) {
                   <p className="shrink-0 text-xl font-black text-yellow-400 sm:text-2xl">
                     {rating.popscore}%
                   </p>
-                  <ShareRatingButton
+                  {isOwnProfile ? <ShareRatingButton
                     className="ml-auto !min-h-9 shrink-0 whitespace-nowrap !px-3 text-xs sm:!px-4 sm:text-sm"
                     movieId={rating.movieId}
                     movieTitle={rating.movieTitle}
                     popscore={rating.popscore}
                     posterPath={rating.posterPath}
                     variant="compact"
-                  />
+                  /> : null}
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <p className="text-xs font-bold text-slate-500">
@@ -1817,7 +1817,7 @@ export default function ProfileTabs({ username }: { username: string }) {
           <>
             <MovieDnaSection
               key={profile.user_id}
-              isOwnProfile={followSummary?.isOwnProfile ?? false}
+              isOwnProfile={Boolean(profile && followSummary?.currentUserId === profile.user_id)}
               percentile={percentile.topPercentile}
               ratings={ratings}
               topMovies={profile.top_movies ?? []}
@@ -1825,7 +1825,7 @@ export default function ProfileTabs({ username }: { username: string }) {
               username={profile.username}
             />
             <YearlyMovieActivity
-              isOwnProfile={followSummary?.isOwnProfile ?? false}
+              isOwnProfile={Boolean(profile && followSummary?.currentUserId === profile.user_id)}
               ratings={fullRatings}
               username={profile.username}
               watches={watches}
@@ -1841,7 +1841,7 @@ export default function ProfileTabs({ username }: { username: string }) {
         ) : null}
         {activeTab === "ratings" ? (
           <SectionCard title="Ratings History">
-            <RatingsHistory ratings={fullRatings} />
+            <RatingsHistory ratings={fullRatings} isOwnProfile={Boolean(profile && followSummary?.currentUserId === profile.user_id)} />
           </SectionCard>
         ) : null}
         {activeTab === "reviews" ? (

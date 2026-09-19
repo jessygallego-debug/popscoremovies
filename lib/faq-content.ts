@@ -27,7 +27,7 @@ export const faqSections = [
       { question: "Why does a movie show NR or Not rated yet?", answer: "No usable PopScore ratings are available for that movie yet. NR is not a zero score. Submit a full five-question rating to contribute." },
       { question: "How is the rating genre chosen?", answer: "PopScore uses the movie's details to choose suitable rating criteria. When the movie needs a genre choice, the rating page offers the supported options. Community genre choices can establish a shared choice when one genre has at least three votes and at least 67% of the votes." },
       { question: "Can I update my rating or add a review?", answer: "Yes. Rating the same movie again updates your existing rating rather than adding a second rating from your account. You can include an optional review of up to 300 characters. Keep it clean; reviews are checked before they are saved." },
-      { question: "Can I share my rating?", answer: "Use Share after rating a movie or from your rating history to create a graphic with the movie and your personal PopScore. Sharing does not submit another rating." },
+      { question: "Can I share my rating?", answer: "Use Share after rating a movie or from your rating history to create a graphic with the movie and your personal PopScore. Sharing does not submit another rating. Share controls are only available for your own ratings." },
     ],
   },
   {
@@ -46,7 +46,7 @@ export const faqSections = [
     items: [
       { question: "What is Movie DNA?", answer: "Movie DNA summarizes patterns in your completed PopScore ratings: your genre preferences, average score, and how you rate Storyline, performance, and Rewatch Score. It unlocks after five eligible full ratings and changes as you rate more movies." },
       { question: "Which ratings count toward Movie DNA?", answer: "Movie DNA needs all five question answers. It uses your latest rating for each movie and excludes incomplete, deleted, and imported-only Letterboxd ratings. Acting, Voice Acting, and Character are compared as the shared performance measure." },
-      { question: "What does my Movie DNA personality mean?", answer: "Story Seeker, Performance Fan, Rewatch Enthusiast, and Balanced Movie Fan describe patterns in your question scores. They are a summary of your movie ratings, not a personality test. You can explore the genre breakdown and share your Movie DNA graphic." },
+      { question: "What does my Movie DNA personality mean?", answer: "Story Seeker, Performance Fan, Rewatch Enthusiast, and Balanced Movie Fan describe patterns in your question scores. They are a summary of your movie ratings, not a personality test. You can explore the genre breakdown and share your own Movie DNA graphic. Movie DNA, Top 5, and activity sharing are only available to the profile owner." },
       { question: "How do my Top 5 movies work?", answer: "Choose up to five unique movies for your PopFile and arrange them in your preferred order. These are your personal picks rather than an automatic list of your highest scores. Use the share option to create a Top 5 graphic." },
       { question: "How do achievements and rating streaks work?", answer: "Achievements recognize rating milestones, genre exploration, rating streaks, Movie Match ratings, and community participation. Your PopFile shows progress toward each achievement. Rating streaks track consecutive days of rating activity; changing a watched date does not create a rating streak." },
     ],

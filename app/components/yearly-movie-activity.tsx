@@ -126,11 +126,11 @@ export default function YearlyMovieActivity({
               </select>
             </label>
           ) : null}
-          <ShareMovieActivityButton
+          {isOwnProfile ? <ShareMovieActivityButton
             activity={activity}
             isOwnProfile={isOwnProfile}
             username={username}
-          />
+          /> : null}
         </div>
         <p className="col-span-2 text-xs font-medium text-slate-400">
           Every rating can quietly build your year in movies.

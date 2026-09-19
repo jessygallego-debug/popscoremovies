@@ -429,7 +429,7 @@ export default function MovieDnaSection({
           <span aria-hidden="true" className="text-2xl text-purple-400 sm:text-3xl">🧬</span>
           <h2 id="movie-dna-heading" className="min-w-0 text-xl font-black text-white sm:text-3xl">Your Movie DNA</h2>
         </div>
-        {count >= 5 ? (
+        {isOwnProfile && count >= 5 ? (
           <ShareMovieDnaButton
             dna={dna}
             percentile={percentile}

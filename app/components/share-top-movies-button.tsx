@@ -360,6 +360,8 @@ export default function ShareTopMoviesButton({
     }
   };
 
+  if (!isOwnProfile) return null;
+
   return (
     <div className="flex flex-col items-end gap-1">
       <button

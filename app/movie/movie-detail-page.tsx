@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import MovieReviewComment from "@/app/components/movie-review-comment";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import BrandHomeLink from "@/app/components/brand-home-link";
 import EmojiIcon from "@/app/components/emoji-icon";
@@ -526,13 +527,13 @@ export async function MovieDetailPage({
                 />
 
                 <div
-                  className={`grid gap-3 ${trailer ? "sm:grid-cols-2" : ""}`}
+                  className={`grid gap-2 sm:gap-3 ${trailer ? "grid-cols-2" : ""}`}
                 >
                   {trailer ? (
                     <div className="[&>button]:w-full">
                       <TrailerModalButton
                         autoOpen={queryParams.trailer === "1"}
-                        className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-4 text-sm font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
+                        className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-2 py-2 text-xs font-bold sm:min-h-11 sm:px-4 sm:text-sm text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
                         moviePath={moviePath}
                         movieTitle={movie.title}
                         trailerKey={trailer.key}
@@ -549,7 +550,7 @@ export async function MovieDetailPage({
                       posterPath: movie.poster_path,
                       releaseDate: movie.release_date,
                     }}
-                    className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-4 text-sm font-bold text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
+                    className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-2 py-2 text-xs font-bold sm:min-h-11 sm:px-4 sm:text-sm text-yellow-300 transition hover:border-yellow-300 hover:bg-yellow-400/10"
                   />
                 </div>
 
@@ -634,9 +635,7 @@ export async function MovieDetailPage({
                             </p>
                           </div>
                         </div>
-                        <p className="mt-4 text-sm font-semibold leading-6 text-gray-200 sm:text-base">
-                          {review.reviewComment}
-                        </p>
+                        <MovieReviewComment text={review.reviewComment} />
                       </div>
                     </div>
                   </article>

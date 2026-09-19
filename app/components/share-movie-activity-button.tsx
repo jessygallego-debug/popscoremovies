@@ -143,6 +143,8 @@ export default function ShareMovieActivityButton({
     setStatus("Recap image downloaded and profile link copied.");
   };
 
+  if (!isOwnProfile) return null;
+
   return (
     <div className="flex flex-col items-end gap-1">
       <button

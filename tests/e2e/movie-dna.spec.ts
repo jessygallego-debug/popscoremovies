@@ -299,8 +299,8 @@ async function mockPopFile(
           id: "profile-1",
           top_movies: topMovies,
           updated_at: "2026-01-01T00:00:00Z",
-          user_id: profileUserId,
-          username: "movie_fan",
+          user_id: url.searchParams.get("user_id") === "eq.user-1" ? "user-1" : profileUserId,
+          username: profileUserId !== "user-1" && url.searchParams.get("user_id") === "eq.user-1" ? "viewer" : "movie_fan",
         },
       ];
     } else if (table === "movie_ratings") {
@@ -743,3 +743,16 @@ test("profile activity omits retired reaction-only rows and keeps zero PopScores
   await expect(activity.getByText("Retired reaction placeholder")).toHaveCount(0);
   await expect(page.getByText("First Reaction", { exact: true })).toHaveCount(0);
 });
+
+for (const width of [390, 1280]) {
+  test(`other profiles cannot share personal stats at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockPopFile(page, browserRatings, { profileUserId: "user-2" });
+    await page.goto("/profile/movie_fan");
+    await expect(page.getByRole("button", { exact: true, name: "Follow" })).toBeVisible();
+    await expect(page.locator("#movie-dna")).toBeVisible();
+    await expect(page.getByRole("button", { name: /share/i })).toHaveCount(0);
+    await page.getByRole("button", { exact: true, name: "Ratings" }).click();
+    await expect(page.getByRole("button", { name: /share/i })).toHaveCount(0);
+  });
+}

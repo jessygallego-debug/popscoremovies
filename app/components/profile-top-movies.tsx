@@ -274,7 +274,7 @@ export default function ProfileTopMovies({
           <h3 id="top-five-heading" className="mt-1 text-lg font-black text-white sm:text-xl">My Top 5 Movies of All Time</h3>
         </div>
         <div className="flex shrink-0 items-start gap-2">
-          {movies.length ? (
+          {isOwnProfile && movies.length ? (
             <ShareTopMoviesButton
               isOwnProfile={isOwnProfile}
               movies={movies}
