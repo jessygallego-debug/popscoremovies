@@ -109,8 +109,8 @@ test(`poster watchlist toggle works at ${width}px and stays synced across pages`
   expect(watchlistReads).toBe(1);
   const toggle = page.getByRole("button", { name: "Remove from Watchlist" });
   const box = await toggle.boundingBox();
-  expect(box?.width).toBe(40);
-  expect(box?.height).toBe(40);
+  expect(box?.width).toBe(36);
+  expect(box?.height).toBe(36);
   await page.screenshot({ path: `artifacts/watchlist-poster-${width}.png`, fullPage: true });
 
   if (width === 390) await page.getByRole("button", { name: "Open navigation menu" }).click();

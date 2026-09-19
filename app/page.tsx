@@ -455,18 +455,9 @@ export default async function Home({
                     </div>
 
                     <div className="flex flex-1 flex-col space-y-2 p-3 sm:space-y-2.5 sm:p-4 lg:p-3">
-                      <Link
-                        data-remember-scroll
-                        href={detailsHref}
-                        className="group/title block min-h-[4.25rem] lg:min-h-[3.5rem]"
-                      >
-                        <h3 className="line-clamp-2 text-lg font-black leading-tight text-white transition group-hover/title:text-yellow-300 sm:text-2xl lg:text-lg">
-                          {movie.title}
-                        </h3>
-                        <p className="mt-1 text-xs font-bold text-slate-300 sm:text-sm lg:text-xs">
-                          {releaseDate || "TBA"}
-                        </p>
-                      </Link>
+                      <p className="text-xs font-bold text-slate-300 sm:text-sm lg:text-xs">
+                        {releaseDate || "TBA"}
+                      </p>
                       <div className="grid gap-2 sm:gap-3">
                         <Link
                           data-remember-scroll

@@ -56,14 +56,14 @@ export default function AddToWatchlistButton({ movie, className, variant = "text
         disabled={!isLoaded || hasLoadError || isSaving}
         onClick={(event) => { event.preventDefault(); event.stopPropagation(); void toggle(); }}
         className={variant === "poster"
-          ? `absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border shadow-lg transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300 disabled:cursor-wait disabled:opacity-60 sm:right-4 sm:top-4 ${isOnWatchlist ? "border-yellow-400 bg-yellow-400 text-black hover:bg-yellow-300" : "border-white/20 bg-black/60 text-white hover:bg-black/80"}`
+          ? `absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border shadow-lg transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300 disabled:cursor-wait disabled:opacity-60 sm:right-4 sm:top-4 ${isOnWatchlist ? "border-yellow-400 bg-yellow-400 text-black hover:bg-yellow-300" : "border-white/20 bg-black/60 text-white hover:bg-black/80"}`
           : `${className ?? "inline-flex min-h-12 items-center justify-center rounded-lg border border-yellow-400/50 bg-black/40 px-6 font-bold text-yellow-300"} disabled:opacity-60`}
       >
         {variant === "poster" ? (
           isOnWatchlist ? (
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor"><path d="M6 3a1 1 0 0 0-1 1v17l7-4 7 4V4a1 1 0 0 0-1-1H6Z" /></svg>
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M6 3a1 1 0 0 0-1 1v17l7-4 7 4V4a1 1 0 0 0-1-1H6Z" /></svg>
           ) : (
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           )
         ) : isSaving ? "Saving..." : label}
       </button>

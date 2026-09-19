@@ -182,10 +182,7 @@ export default async function GenrePage({
                   <AddToWatchlistButton variant="poster" movie={{ movieId: String(movie.id), movieTitle: movie.title, posterPath: movie.poster_path, releaseDate: movie.release_date, genre: genre.name, genreNames: [genre.name] }} />
                 </div>
                 <div className="p-4">
-                  <h2 className="line-clamp-2 text-lg font-black text-white">
-                    <Link href={movieHref(movie)}>{movie.title}</Link>
-                  </h2>
-                  <p className="mt-2 text-sm font-bold text-slate-400">
+                  <p className="text-sm font-bold text-slate-400">
                     {releaseDate}
                   </p>
                   {movie.overview ? (

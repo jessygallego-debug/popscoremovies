@@ -695,10 +695,7 @@ export default function DiscoverClient({
                 />
               </div>
               <div className="flex flex-1 flex-col pt-3 sm:pt-4">
-                <h2 className="line-clamp-2 text-sm font-black leading-tight text-white sm:text-xl">
-                  {movie.title}
-                </h2>
-                <p className="mt-1 text-[11px] font-bold text-slate-400 sm:mt-2 sm:text-sm">
+                <p className="text-[11px] font-bold text-slate-400 sm:text-sm">
                   {selectedGenre?.label ?? "Movie"} ·{" "}
                   {yearFromDate(movie.release_date)}
                 </p>
