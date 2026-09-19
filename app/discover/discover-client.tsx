@@ -664,22 +664,12 @@ export default function DiscoverClient({
                   <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl shadow-black/30 sm:rounded-[1.35rem]">
                     <DiscoveryPoster movie={movie} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                    <div className="absolute left-2 top-2 rounded-full border border-yellow-300/60 bg-black/75 px-2 py-1 text-[10px] font-black text-yellow-200 shadow-lg shadow-yellow-400/15 sm:left-4 sm:top-4 sm:px-3 sm:py-1.5 sm:text-sm">
-                      {movie.tasteMatchScore}% Match
-                    </div>
-                    <div className="absolute bottom-3 left-3 flex items-center gap-2 sm:bottom-4 sm:left-4 sm:gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/70 text-sm font-black text-white shadow-lg shadow-yellow-400/20 sm:h-14 sm:w-14 sm:text-xl">
-                        {movie.totalRatings > 0 ? movie.overallPopScore : "NR"}
-                      </span>
-                      <span className="text-[10px] font-black text-white sm:text-xs">
-                        PopScore
-                        <span className="block text-[9px] font-bold text-slate-300 sm:text-[11px]">
-                          {movie.totalRatings > 0
-                            ? `${movie.totalRatings} ratings`
-                            : "Trending pick"}
-                        </span>
-                      </span>
-                    </div>
+                    <span
+                      aria-label={movie.totalRatings > 0 ? `PopScore: ${movie.overallPopScore}%` : "Not rated yet"}
+                      className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/70 text-sm font-black text-white shadow-lg shadow-yellow-400/20 sm:left-4 sm:top-4"
+                    >
+                      {movie.totalRatings > 0 ? movie.overallPopScore : "NR"}
+                    </span>
                   </div>
                 </Link>
                 <AddToWatchlistButton
@@ -695,10 +685,15 @@ export default function DiscoverClient({
                 />
               </div>
               <div className="flex flex-1 flex-col pt-3 sm:pt-4">
-                <p className="text-[11px] font-bold text-slate-400 sm:text-sm">
-                  {selectedGenre?.label ?? "Movie"} ·{" "}
-                  {yearFromDate(movie.release_date)}
-                </p>
+                <div className="flex min-w-0 items-center justify-between gap-1 sm:gap-2">
+                  <p className="min-w-0 truncate text-[10px] font-bold text-slate-400 sm:text-sm">
+                    {selectedGenre?.label ?? "Movie"} ·{" "}
+                    {yearFromDate(movie.release_date)}
+                  </p>
+                  <span className="shrink-0 whitespace-nowrap rounded-full border border-yellow-300/60 bg-black/75 px-1.5 text-[9px] font-black leading-4 text-yellow-200 sm:px-2 sm:text-[11px] sm:leading-5">
+                    {movie.tasteMatchScore}% Match
+                  </span>
+                </div>
 
                 <div className="mt-auto grid gap-2 pt-3 sm:pt-4">
                   <Link
