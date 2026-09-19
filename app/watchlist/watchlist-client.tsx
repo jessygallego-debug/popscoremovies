@@ -14,10 +14,6 @@ import {
 import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
 
-function yearFromDate(releaseDate?: string | null) {
-  return releaseDate?.slice(0, 4) || "TBA";
-}
-
 function primaryGenreForMovie(movie: WatchlistMovie) {
   return movie.genreNames[0] ?? movie.genre ?? "Movie";
 }
@@ -288,23 +284,7 @@ export default function WatchlistClient() {
                 <Link href={detailsHref} className="block">
                   <WatchlistPoster movie={movie} />
                 </Link>
-                <div className="flex flex-1 flex-col pt-3 sm:pt-4">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="min-w-0">
-                      <h2 className="line-clamp-2 text-sm font-black leading-tight text-white sm:text-xl">
-                        {movie.movieTitle}
-                      </h2>
-                      <p className="mt-1 text-[11px] font-bold text-slate-400 sm:mt-2 sm:text-sm">
-                        {primaryGenreForMovie(movie)} ·{" "}
-                        {yearFromDate(movie.releaseDate)}
-                      </p>
-                    </div>
-                    <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-2 py-1 text-[10px] font-black text-yellow-300 sm:px-3 sm:text-xs">
-                      Saved
-                    </span>
-                  </div>
-
-                  <div className="mt-auto grid grid-cols-1 gap-2 pt-3 sm:grid-cols-[1fr_auto] sm:pt-4">
+                <div className="grid grid-cols-1 gap-2 pt-3 sm:grid-cols-[1fr_auto] sm:pt-4">
                     <Link
                       href={rateHref}
                       className="inline-flex min-h-10 items-center justify-center rounded-2xl bg-yellow-400 px-3 text-xs font-black text-black shadow-lg shadow-yellow-400/20 transition hover:bg-yellow-300 sm:min-h-11 sm:px-4 sm:text-sm"
@@ -332,7 +312,6 @@ export default function WatchlistClient() {
                     >
                       {removingMovieId === movie.movieId ? "..." : "Remove"}
                     </button>
-                  </div>
                 </div>
               </article>
             );
