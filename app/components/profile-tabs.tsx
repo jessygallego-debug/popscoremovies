@@ -1213,7 +1213,7 @@ function CinematicBanner({ className = "" }: { className?: string }) {
     <section className={`${styles.panel} ${styles.brandBanner} flex min-h-24 items-center justify-between gap-5 px-5 py-4 sm:px-7 ${className}`} aria-label="PopScore Movies">
       <p className="text-lg font-medium leading-7 text-purple-100 sm:text-2xl">
         <span aria-hidden="true" className="mr-2 text-3xl font-black text-purple-400">“</span>
-        Rate Different.<br />Watch Better<span aria-hidden="true" className="ml-1 text-3xl font-black text-purple-400">”</span>
+        Rate. Discover. Watch<span aria-hidden="true" className="ml-1 text-3xl font-black text-purple-400">”</span>
       </p>
       <div className="shrink-0 text-right">
         <p className="text-xl font-black tracking-tight text-white sm:text-3xl">POP<span className="text-yellow-400">SCORE</span></p>

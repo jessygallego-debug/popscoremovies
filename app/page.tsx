@@ -134,15 +134,14 @@ function HeroVisual({
                   </div>
                 </div>
                 </Link>
-                <AddToWatchlistButton variant="poster" movie={{ movieId: String(movie.id), movieTitle: movie.title, posterPath: movie.poster_path, releaseDate: movie.release_date }} />
               </div>
             );
           })}
 
           <div className="absolute bottom-2 left-1/2 z-30 w-[86%] -translate-x-1/2 rounded-2xl border border-white/10 bg-black/50 p-2 text-center shadow-2xl shadow-black/50 backdrop-blur md:w-[82%] md:p-3">
             <p className="text-[11px] font-bold leading-4 text-slate-200 md:text-sm md:leading-5">
-              Join fans rating movies by what they{" "}
-              <span className="text-yellow-300">actually love.</span>
+              Join fans rating movies by{" "}
+              <span className="text-yellow-300">genre.</span>
             </p>
           </div>
         </div>

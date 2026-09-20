@@ -98,7 +98,7 @@ export default function ShareMovieActivityButton({
     context.fillStyle = "#facc15";
     context.font = "900 29px Arial, sans-serif";
     context.textAlign = "center";
-    context.fillText("Rate Different. Watch Better.", 540, 1242);
+    context.fillText("Rate. Discover. Watch", 540, 1242);
     context.textAlign = "start";
 
     return canvasToBlob(canvas);

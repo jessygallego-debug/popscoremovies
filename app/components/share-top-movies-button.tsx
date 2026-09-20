@@ -295,7 +295,7 @@ export default function ShareTopMoviesButton({
     context.fillStyle = "#facc15";
     context.font = "900 29px Arial, sans-serif";
     context.textAlign = "center";
-    context.fillText("Rate Different. Watch Better.", 540, 1245);
+    context.fillText("Rate. Discover. Watch", 540, 1245);
     context.fillStyle = "#94a3b8";
     context.font = "800 21px Arial, sans-serif";
     context.fillText("popscoremovies.com", 540, 1278);
