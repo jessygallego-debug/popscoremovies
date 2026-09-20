@@ -5,13 +5,13 @@ import AnimatedLogoReel from "@/app/components/animated-logo-reel";
 import MobileSiteMenu from "@/app/components/mobile-site-menu";
 import NotificationBell from "@/app/components/notification-bell";
 import ProfileMenu from "@/app/components/profile-menu";
+import DesktopStatsLink from "@/app/components/desktop-stats-link";
 
 const navItems = [
   { href: "/#trending", label: "Movies" },
   { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/discover", label: "Movie Match" },
-  { href: "/faq", label: "FAQ" },
 ];
 
 function SiteLogo() {
@@ -66,6 +66,8 @@ export default function SiteHeader({ showSearch = false }: { showSearch?: boolea
             {item.label}
           </Link>
         ))}
+        <DesktopStatsLink />
+        <Link href="/faq" className="transition hover:text-yellow-300">FAQ</Link>
       </nav>
       {showSearch ? (
         <form action="/" role="search" className="hidden min-w-0 max-w-md flex-1 items-center gap-2 rounded-full border border-slate-700/70 bg-[#131d2e]/85 px-4 shadow-inner shadow-black/20 xl:flex">
