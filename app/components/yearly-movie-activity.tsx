@@ -111,6 +111,7 @@ export default function YearlyMovieActivity({
           {activityYears.length > 0 ? (
             <label className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
               <span className="sr-only sm:not-sr-only">Year</span>
+              <span className="relative inline-flex sm:ml-2">
               <select
                 aria-label="Select movie activity year"
                 value={visibleYear}
@@ -118,12 +119,16 @@ export default function YearlyMovieActivity({
                   setSelectedYear(Number(event.target.value));
                   setShowAll(false);
                 }}
-                className="min-h-9 rounded-xl border border-yellow-400/35 bg-slate-950 px-2 text-xs font-black normal-case tracking-normal text-yellow-300 outline-none focus:border-yellow-300 sm:ml-2 sm:min-h-10 sm:px-3 sm:text-sm"
+                className="min-h-9 appearance-none rounded-xl border border-yellow-400/35 bg-slate-950 pl-2 pr-7 text-xs font-black normal-case tracking-normal text-yellow-300 outline-none focus:border-yellow-300 sm:min-h-10 sm:pl-3 sm:pr-8 sm:text-sm"
               >
                 {activityYears.map((year) => (
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
+                <svg aria-hidden="true" viewBox="0 0 10 6" className="pointer-events-none absolute right-2.5 top-1/2 h-1.5 w-2.5 -translate-y-1/2 fill-yellow-300">
+                  <path d="M0 0h10L5 6z" />
+                </svg>
+              </span>
             </label>
           ) : null}
           {isOwnProfile ? <ShareMovieActivityButton
