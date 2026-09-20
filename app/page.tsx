@@ -158,10 +158,7 @@ function WhyPopScore() {
     >
       <div className="grid gap-3 sm:gap-5 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-stretch">
         <div className="flex flex-col items-center justify-center xl:items-start">
-          <h2 className="text-2xl font-black leading-tight text-white sm:text-4xl xl:text-3xl">
-            Find Movies You&apos;ll Actually Love
-          </h2>
-          <p className="mt-2 max-w-xl text-sm font-semibold leading-5 text-slate-300 sm:mt-3 sm:text-base sm:leading-6 xl:max-w-none">
+          <p className="max-w-xl text-base font-semibold leading-6 text-white sm:text-lg sm:leading-7 xl:max-w-none">
             Discover better recommendations, connect with movie fans, and
             uncover hidden gems based on your personal taste.
           </p>
