@@ -295,7 +295,13 @@ export default function ProfileTopMovies({
             const rating = ratingsByMovieId.get(movie.movieId);
             return (
               <li key={movie.movieId} className="min-w-0">
-                <Link href={movieHref({ id: movie.movieId, title: movie.movieTitle })} className="group block min-w-0">
+                <Link
+                  href={{
+                    pathname: movieHref({ id: movie.movieId, title: movie.movieTitle }),
+                    query: { returnTo: `/profile/${encodeURIComponent(username)}?tab=stats#top-five-movies` },
+                  }}
+                  className="group block min-w-0"
+                >
                   <span className="relative block aspect-[2/3] overflow-hidden rounded-lg border border-slate-700 bg-slate-900 transition group-hover:border-yellow-300 sm:rounded-xl">
                     <MoviePosterImage src={posterUrl(movie.posterPath, "w342")} fallbackMovieId={movie.movieId} alt={`${movie.movieTitle} movie poster`} sizes="(max-width: 640px) 18vw, 120px" />
                     <span className="absolute left-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full border border-yellow-300/60 bg-black/85 px-1 text-xs font-black text-yellow-300 sm:left-2 sm:top-2 sm:h-8 sm:min-w-8 sm:text-sm">{index + 1}</span>

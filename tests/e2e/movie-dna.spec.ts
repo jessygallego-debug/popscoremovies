@@ -751,6 +751,9 @@ for (const width of [390, 1280]) {
     await page.goto("/profile/movie_fan");
     await expect(page.getByRole("button", { exact: true, name: "Follow" })).toBeVisible();
     await expect(page.locator("#movie-dna")).toBeVisible();
+    const movieLink = page.locator("#top-five-movies a").first();
+    const movieUrl = new URL((await movieLink.getAttribute("href"))!, "http://localhost");
+    expect(movieUrl.searchParams.get("returnTo")).toBe("/profile/movie_fan?tab=stats#top-five-movies");
     await expect(page.getByRole("button", { name: /share/i })).toHaveCount(0);
     await page.getByRole("button", { exact: true, name: "Ratings" }).click();
     await expect(page.getByRole("button", { name: /share/i })).toHaveCount(0);
