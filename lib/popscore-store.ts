@@ -100,6 +100,7 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
   }
 
   const response = await fetch(`${config.restUrl}${path}`, {
+    signal: AbortSignal.timeout(8000),
     ...options,
     headers: {
       apikey: config.key,
@@ -118,22 +119,51 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
 
 async function fetchRatingRows(
   tableName: "movie_ratings" | "ratings",
-  movieId: string
+  movieIds: string[]
 ) {
+  const rows: RatingRow[] = [];
+  const filter = movieIds.map(id => encodeURIComponent(JSON.stringify(id))).join(",");
   try {
-    const response = await supabaseFetch(
-      `/${tableName}?movie_id=eq.${encodeURIComponent(
-        movieId
-      )}&select=id,genre,ratings,weights,created_at,movie_id`
-    );
-
-    return ((await response.json()) as RatingRow[]).filter(hasCompletedRating);
+    // Page the result so popular movies cannot truncate other movies' ratings.
+    for (let offset = 0; ; offset += 1000) {
+      const response = await supabaseFetch(
+        `/${tableName}?movie_id=in.(${filter})&select=id,genre,ratings,weights,created_at,movie_id&order=id&limit=1000&offset=${offset}`
+      );
+      const page = await response.json() as RatingRow[];
+      rows.push(...page.filter(hasCompletedRating));
+      if (page.length < 1000) return rows;
+    }
   } catch {
     return [];
   }
 }
 
+const pendingScores = new Map<string, Promise<PopScoreAggregate | null>>();
+let queuedScores = new Map<string, Array<(score: PopScoreAggregate | null) => void>>();
+let batchScheduled = false;
+
+function flushScoreBatch() {
+  const batch = queuedScores;
+  queuedScores = new Map();
+  batchScheduled = false;
+  const ids = [...batch.keys()];
+  for (let index = 0; index < ids.length; index += 40) {
+    const chunk = ids.slice(index, index + 40);
+    void Promise.all([fetchRatingRows("movie_ratings", chunk), fetchRatingRows("ratings", chunk)])
+      .then(([profileRows, legacyRows]) => {
+        for (const id of chunk) {
+          const score = calculatePopScore(mergeRatingSources(
+            profileRows.filter(row => String(row.movie_id) === id),
+            legacyRows.filter(row => String(row.movie_id) === id)
+          ));
+          batch.get(id)?.forEach(resolve => resolve(score));
+        }
+      });
+  }
+}
+
 export function notifyPopScoreUpdates() {
+  pendingScores.clear();
   window.dispatchEvent(new Event(POPSCORE_RATINGS_UPDATED_EVENT));
 }
 
@@ -179,14 +209,21 @@ function mergeRatingSources(
   return [...profileRows, ...legacyRows.slice(profileRows.length)];
 }
 
-export async function getPopScore(movieId: string) {
-  const [profileRows, legacyRows] = await Promise.all([
-    fetchRatingRows("movie_ratings", movieId),
-    fetchRatingRows("ratings", movieId),
-  ]);
-  const submissions = mergeRatingSources(profileRows, legacyRows);
-
-  return calculatePopScore(submissions);
+export function getPopScore(movieId: string): Promise<PopScoreAggregate | null> {
+  const pending = pendingScores.get(movieId);
+  if (pending) return pending;
+  const request = new Promise<PopScoreAggregate | null>(resolve => {
+    queuedScores.set(movieId, [...(queuedScores.get(movieId) ?? []), resolve]);
+  });
+  pendingScores.set(movieId, request);
+  void request.then(() => {
+    if (pendingScores.get(movieId) === request) pendingScores.delete(movieId);
+  });
+  if (!batchScheduled) {
+    batchScheduled = true;
+    setTimeout(flushScoreBatch, 0);
+  }
+  return request;
 }
 
 export function subscribeToPopScoreUpdates(callback: () => void) {

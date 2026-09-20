@@ -1,5 +1,5 @@
 "use client";
-
+import { createInFlightReadPool } from "@/lib/in-flight-read";
 import {
   avatarForKey,
   genreLabelForKey,
@@ -24,6 +24,8 @@ type SupabaseAuthResponse = SupabaseSession & {
   expires_in?: number;
   user?: SupabaseUser;
 };
+
+const readInFlight = createInFlightReadPool();
 
 export type SupabaseUser = {
   id: string;
@@ -277,7 +279,7 @@ export async function getSupabaseAccessToken() {
   const shouldRefresh =
     session.expires_at && session.expires_at - now <= SESSION_REFRESH_BUFFER_SECONDS;
   const activeSession = shouldRefresh
-    ? await refreshAuthSession(session)
+    ? await readInFlight(`refresh:${session.refresh_token}`, () => refreshAuthSession(session))
     : session;
 
   if (!activeSession?.access_token) {
@@ -387,34 +389,45 @@ async function supabaseFetch<T>(
     throw new Error("Supabase is not configured.");
   }
 
-  const response = await fetchWithReadRetry(`${config.restUrl}${path}`, {
-    ...options,
-    headers: {
-      ...(await authHeaders(accessToken)),
-      ...options.headers,
-    },
-  });
+  const headers = await authHeaders(accessToken);
+  const load = async (): Promise<T> => {
+    const response = await fetchWithReadRetry(`${config.restUrl}${path}`, {
+      ...options,
+      headers: {
+        ...headers,
+        ...options.headers,
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(
-      await readSupabaseRestError(
-        response,
-        `Supabase request failed with ${response.status}.`
-      )
-    );
+    if (!response.ok) {
+      throw new Error(
+        await readSupabaseRestError(
+          response,
+          `Supabase request failed with ${response.status}.`
+        )
+      );
+    }
+
+    if (options.method && options.method.toUpperCase() !== "GET") readInFlight.clear();
+
+    if (response.status === 204) {
+      return null as T;
+    }
+
+    const responseText = await response.text();
+
+    if (!responseText) {
+      return null as T;
+    }
+
+    return JSON.parse(responseText) as T;
+  };
+  // Only plain GETs may share work, scoped to the exact authentication headers.
+  // Mutations, custom headers, and independently abortable requests stay separate.
+  if (Object.keys(options).length === 0) {
+    return readInFlight(`rest:${config.restUrl}${path}:${JSON.stringify(headers)}`, load);
   }
-
-  if (response.status === 204) {
-    return null as T;
-  }
-
-  const responseText = await response.text();
-
-  if (!responseText) {
-    return null as T;
-  }
-
-  return JSON.parse(responseText) as T;
+  return load();
 }
 
 async function readSupabaseRestError(response: Response, fallback: string) {
@@ -695,18 +708,16 @@ export async function getCurrentUser() {
     return null;
   }
 
-  const response = await fetchWithReadRetry(`${config.authUrl}/user`, {
-    headers: {
-      apikey: config.key,
-      Authorization: `Bearer ${accessToken}`,
-    },
+  return readInFlight(`user:${accessToken}`, async () => {
+    const response = await fetchWithReadRetry(`${config.authUrl}/user`, {
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    if (!response.ok) return null;
+    return response.json() as Promise<SupabaseUser>;
   });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  return response.json() as Promise<SupabaseUser>;
 }
 
 export function signOut() {

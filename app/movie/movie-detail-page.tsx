@@ -332,10 +332,13 @@ export async function MovieDetailPage({
   id: string;
   searchParams: Promise<MovieDetailSearchParams>;
 }) {
-  const [queryParams, requestHeaders, movie] = await Promise.all([
+  const [queryParams, requestHeaders, movie, fanReviews, aggregateRating, relatedDiscussions] = await Promise.all([
     searchParams,
     headers(),
     getMovie(id),
+    getMovieFanReviews(id),
+    getMovieAggregateRatingForSeo(id),
+    getPublicCommunityDiscussionsForMovie(id, 3),
   ]);
 
   if (!movie && isTmdbConfigured()) {
@@ -387,20 +390,14 @@ export async function MovieDetailPage({
   const trailer = getTrailer(movie);
   const watchRegion = getMovieWatchRegion(queryParams, requestHeaders);
   const [
-    fanReviews,
-    aggregateRating,
     similarMovies,
     watchProviders,
-    relatedDiscussions,
   ] =
     await Promise.all([
-      getMovieFanReviews(String(movie.id)),
-      getMovieAggregateRatingForSeo(String(movie.id)),
       getRecommendationMovies(String(movie.genres[0]?.id ?? ""), 8).catch(
         () => []
       ),
       getMovieWatchProviders(String(movie.id), watchRegion).catch(() => null),
-      getPublicCommunityDiscussionsForMovie(String(movie.id), 3),
     ]);
   const canonical = movieCanonical(movie);
   const schema = movieJsonLd({
@@ -472,6 +469,7 @@ export async function MovieDetailPage({
             <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-gray-900">
               {poster ? (
                 <MoviePosterImage
+                  eager
                   src={poster}
                   alt={`${movie.title} movie poster`}
                   sizes="280px"

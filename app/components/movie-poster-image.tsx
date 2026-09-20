@@ -6,6 +6,7 @@ import { backdropUrl, posterUrl } from "@/lib/tmdb";
 
 type MoviePosterImageProps = {
   alt: string;
+  eager?: boolean;
   className?: string;
   fallbackMovieId?: string;
   onLoadError?: () => void;
@@ -15,6 +16,7 @@ type MoviePosterImageProps = {
 
 export default function MoviePosterImage({
   alt,
+  eager = false,
   className = "object-cover",
   fallbackMovieId,
   onLoadError,
@@ -115,7 +117,8 @@ export default function MoviePosterImage({
       alt={alt}
       fill
       sizes={sizes}
-      loading="lazy"
+      loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "high" : "auto"}
       decoding="async"
       quality={75}
       className={className}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import EmojiIcon from "@/app/components/emoji-icon";
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import HomeGenreFilter from "@/app/components/home-genre-filter";
@@ -76,18 +77,9 @@ function movieArtworkUrl(movie: MovieSummary) {
   );
 }
 
-function HeroVisual({
-  movies,
-  stats,
-}: {
-  movies: MovieSummary[];
-  stats: Awaited<ReturnType<typeof getSiteEngagementTotals>>;
-}) {
-  const heroMovies = movies.filter((movie) => movie.poster_path).slice(0, 3);
-
-  return (
-    <div className="relative min-h-[250px] w-full overflow-hidden rounded-[1.5rem] border border-slate-800/80 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.24),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-black/40 sm:min-h-[340px] sm:rounded-[2rem] sm:p-6 lg:min-h-[420px] lg:max-w-[720px] lg:justify-self-end">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(250,204,21,0.18),transparent_28%),radial-gradient(circle_at_15%_80%,rgba(59,130,246,0.16),transparent_30%)]" />
+async function HeroStats({ stats: pendingStats }: { stats: ReturnType<typeof getSiteEngagementTotals> }) {
+  const stats = await pendingStats;
+  return <>
       <div
         aria-label={`${stats.totalRatings.toLocaleString()} ratings submitted`}
         className="absolute left-3 top-3 z-30 rounded-2xl border border-yellow-400/25 bg-black/55 px-2.5 py-1.5 text-xs font-black text-yellow-300 shadow-lg shadow-yellow-400/10 backdrop-blur md:left-5 md:top-5 md:px-4 md:py-2.5 md:text-sm"
@@ -100,6 +92,22 @@ function HeroVisual({
       >
         <EmojiIcon emoji="🎬" size={16} /> {stats.totalMoviesRated.toLocaleString()}
       </div>
+  </>;
+}
+
+function HeroVisual({
+  movies,
+  stats,
+}: {
+  movies: MovieSummary[];
+  stats: ReturnType<typeof getSiteEngagementTotals>;
+}) {
+  const heroMovies = movies.filter((movie) => movie.poster_path).slice(0, 3);
+
+  return (
+    <div className="relative min-h-[250px] w-full overflow-hidden rounded-[1.5rem] border border-slate-800/80 bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.24),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.82),rgba(2,6,23,0.96))] p-4 shadow-2xl shadow-black/40 sm:min-h-[340px] sm:rounded-[2rem] sm:p-6 lg:min-h-[420px] lg:max-w-[720px] lg:justify-self-end">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(250,204,21,0.18),transparent_28%),radial-gradient(circle_at_15%_80%,rgba(59,130,246,0.16),transparent_30%)]" />
+      <Suspense fallback={null}><HeroStats stats={stats} /></Suspense>
       <div className="relative z-10 flex h-full items-center justify-center">
         <div className="relative h-[210px] w-full max-w-[320px] sm:h-[280px] sm:max-w-[420px] lg:h-[340px] lg:max-w-[440px]">
           {heroMovies.map((movie, index) => {
@@ -118,6 +126,7 @@ function HeroVisual({
                 <Link data-remember-scroll href={seoMovieHref(movie)} className="block">
                 <div className="relative aspect-[2/3]">
                   <MoviePosterImage
+                    eager
                     src={posterUrl(movie.poster_path)}
                     alt={`${movie.title} movie poster on PopScore`}
                     sizes="(min-width: 1024px) 19vw, 34vw"
@@ -254,10 +263,8 @@ export default async function Home({
     (genre) => genre.id === params.genre
   );
   const homeMovieLimit = query || activeGenre ? 160 : 100;
-  const [movies, siteStats] = await Promise.all([
-    getMovies(query, homeMovieLimit, activeGenre?.id),
-    getSiteEngagementTotals(),
-  ]);
+  const siteStats = getSiteEngagementTotals();
+  const movies = await getMovies(query, homeMovieLimit, activeGenre?.id);
   const displayMovies = movies.filter(hasMovieArtwork);
   const hasMissingToken = !isTmdbConfigured();
   const currentPageParams = new URLSearchParams();

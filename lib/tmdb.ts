@@ -759,6 +759,25 @@ async function getFuzzyMovieFallbacks(
     .slice(0, Math.max(limit - existingMovies.length, 0));
 }
 
+// Read the first page to discover the limit, then overlap at most three pages.
+// Yield in page order so filtering, ranking, and early termination stay stable.
+async function* moviePages(pathForPage: (page: number) => string, requestedPages: number) {
+  const first = await tmdbFetch<TmdbListResponse>(pathForPage(1));
+  if (!first?.results?.length) return;
+  yield { ...first, results: first.results };
+  const lastPage = Math.min(requestedPages, first.total_pages ?? requestedPages);
+  for (let start = 2; start <= lastPage; start += 3) {
+    const pages = await Promise.all(Array.from(
+      { length: Math.min(3, lastPage - start + 1) },
+      (_, index) => tmdbFetch<TmdbListResponse>(pathForPage(start + index))
+    ));
+    for (const page of pages) {
+      if (!page?.results?.length) return;
+      yield { ...page, results: page.results };
+    }
+  }
+}
+
 export async function getMovies(
   query = "",
   limit = MAX_MOVIE_RESULTS,
@@ -772,25 +791,15 @@ export async function getMovies(
     resultSource === "search" ? getMovieSearchQueries(query) : [query];
 
   for (const searchQuery of searchQueries) {
+    if (uniqueMovies(movies).length >= requestedLimit) break;
     const isOriginalQuery = searchQuery === query;
-    let pageLimit =
+    const pageLimit =
       resultSource === "search" && !isOriginalQuery
         ? Math.min(requestedPages, 3)
         : requestedPages;
 
-    for (
-      let page = 1;
-      page <= pageLimit && uniqueMovies(movies).length < requestedLimit;
-      page++
-    ) {
-      const data = await tmdbFetch<TmdbListResponse>(
-        moviesPath(searchQuery, page, genreId)
-      );
-
-      if (!data?.results?.length) {
-        break;
-      }
-
+    for await (const data of moviePages(page => moviesPath(searchQuery, page, genreId), pageLimit)) {
+      if (uniqueMovies(movies).length >= requestedLimit) break;
       const nextMovies = data.results.filter(
         (movie) =>
           movieMatchesGenreFilter(movie, genreId, resultSource) &&
@@ -800,7 +809,6 @@ export async function getMovies(
       );
 
       movies.push(...nextMovies);
-      pageLimit = Math.min(pageLimit, data.total_pages ?? pageLimit);
     }
   }
 
@@ -854,28 +862,14 @@ export async function getRecommendationMovies(
   const requestedLimit = Math.min(Math.max(limit, 10), MAX_MOVIE_RESULTS);
   const requestedPages = Math.ceil(requestedLimit / TMDB_PAGE_SIZE);
   const movies: MovieSummary[] = [];
-  let pageLimit = requestedPages;
-
-  for (
-    let page = 1;
-    page <= pageLimit && movies.length < requestedLimit;
-    page++
-  ) {
-    const data = await tmdbFetch<TmdbListResponse>(
-      recommendationMoviesPath(page, genreId, options)
-    );
-
-    if (!data?.results?.length) {
-      break;
-    }
-
+  for await (const data of moviePages(page => recommendationMoviesPath(page, genreId, options), requestedPages)) {
+    if (movies.length >= requestedLimit) break;
     const nextMovies = data.results.filter(
       (movie) =>
         movieMatchesGenreFilter(movie, genreId) && movieHasBrowseArtwork(movie)
     );
 
     movies.push(...nextMovies);
-    pageLimit = Math.min(requestedPages, data.total_pages ?? requestedPages);
   }
 
   return movies.sort(compareLatestPopular).slice(0, requestedLimit);

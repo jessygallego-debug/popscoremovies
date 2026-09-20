@@ -56,6 +56,7 @@ async function supabaseFetch<T>(path: string): Promise<T> {
 
   const response = await fetch(`${config.restUrl}${path}`, {
     cache: "no-store",
+    signal: AbortSignal.timeout(8000),
     headers: {
       apikey: config.key,
       Authorization: `Bearer ${config.key}`,

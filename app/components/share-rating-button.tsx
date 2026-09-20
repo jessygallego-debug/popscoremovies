@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import RatingSharePreview from "@/app/components/rating-share-preview";
-import { createRatingShareCanvas, canvasToBlob } from "@/lib/rating-share-image";
+import dynamic from "next/dynamic";
+const RatingSharePreview = dynamic(() => import("@/app/components/rating-share-preview"), { loading: () => <div role="status" className="mx-auto mt-5 aspect-[9/16] w-full max-w-[360px] rounded-2xl bg-[#090b0f] p-5 text-sm text-slate-400">Preparing preview…</div> });
 import { getPopScoreTitle } from "@/lib/popscore-presentation";
 import WatchDateEditor from "@/app/components/watch-date-editor";
 import {
@@ -264,6 +264,7 @@ export default function ShareRatingButton({
     setStatusMessage("Preparing your story...");
 
     try {
+      const { createRatingShareCanvas, canvasToBlob } = await import("@/lib/rating-share-image");
       const canvas = await createRatingShareCanvas(imageData);
 
       if (!canvas) {
