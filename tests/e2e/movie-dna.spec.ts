@@ -759,3 +759,32 @@ for (const width of [390, 1280]) {
     await expect(page.getByRole("button", { name: /share/i })).toHaveCount(0);
   });
 }
+
+test("cinematic rating shares preserve actual scores, tiers, metadata and story files", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const [score, label] of [[0, "Burnt"], [40, "Salty"], [60, "Fresh"], [84, "Buttery"], [100, "Extra Buttery"]] as const) {
+    await page.unrouteAll({ behavior: "wait" });
+    await mockPopFile(page, [{ ...rating("1"), popscore: score, movieTitle: score === 100 ? "A Very Long Movie Title That Must Wrap Gracefully Without Overlapping the Poster or the Score" : "12 Angry Men", genreNames: ["Drama"], releaseDate: "1957-04-10" }]);
+    await page.goto("/profile/movie_fan?tab=ratings");
+    await page.getByRole("button", { name: "Share My Rating" }).click();
+    const dialog = page.getByRole("dialog");
+    const canvas = dialog.locator("canvas");
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.evaluate((node: HTMLCanvasElement) => node.getContext("2d")!.getImageData(0, 0, 1, 1).data[3])).toBe(255);
+    await expect(dialog.getByText(new RegExp(`${score} ${label} on PopScore`))).toBeVisible();
+    mkdirSync(join(process.cwd(), "artifacts"), { recursive: true });
+    await canvas.screenshot({ path: join(process.cwd(), "artifacts", `rating-share-${score}.png`) });
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, "canShare", { configurable: true, value: () => true });
+      Object.defineProperty(navigator, "share", { configurable: true, value: async ({ files }: { files: File[] }) => {
+        const bitmap = await createImageBitmap(files[0]);
+        (window as unknown as { sharedImage: unknown }).sharedImage = { width: bitmap.width, height: bitmap.height, type: files[0].type };
+        bitmap.close();
+      }});
+    });
+    await dialog.getByRole("button", { exact: true, name: "Share" }).click();
+    await expect(dialog.getByText("Story image ready to post.")).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { sharedImage: unknown }).sharedImage)).toEqual({ width: 1080, height: 1920, type: "image/png" });
+    await dialog.getByRole("button", { name: "Close share dialog" }).click();
+  }
+});

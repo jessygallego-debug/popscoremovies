@@ -584,6 +584,8 @@ export default function RateClient({
                     movieTitle={movieTitle ?? `Movie ${movieId}`}
                     popscore={submittedScore}
                     posterPath={moviePosterPath}
+                    releaseDate={movieReleaseDate}
+                    genreNames={movieGenreNames}
                     ratingLabel={popRating.label}
                   />
                   <Link

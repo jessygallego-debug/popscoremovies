@@ -1158,6 +1158,8 @@ function RatingsHistory({ ratings, isOwnProfile }: { ratings: UserMovieRating[];
                     movieId={rating.movieId}
                     movieTitle={rating.movieTitle}
                     popscore={rating.popscore}
+                    releaseDate={rating.releaseDate}
+                    genreNames={rating.genreNames?.length ? rating.genreNames : [getPrimaryRatingGenre(rating)]}
                     posterPath={rating.posterPath}
                     variant="compact"
                   /> : null}

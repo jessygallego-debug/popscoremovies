@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { LOGO_REEL_CIRCLES } from "@/lib/logo-reel";
 import styles from "@/app/components/animated-logo-reel.module.css";
 
 const REEL_ANIMATION_KEY = "popscore-logo-reel-animation-date-v1";
@@ -70,13 +71,9 @@ export default function AnimatedLogoReel() {
       </span>
       <span className={styles.reel}>
         <svg viewBox="0 0 100 100" className={styles.artwork}>
-          <circle cx="50" cy="50" r="47" fill="currentColor" />
-          <circle cx="50" cy="50" r="9" fill="#111827" />
-          <circle cx="50" cy="24" r="12" fill="#111827" />
-          <circle cx="74.7" cy="42" r="12" fill="#111827" />
-          <circle cx="65.3" cy="71" r="12" fill="#111827" />
-          <circle cx="34.7" cy="71" r="12" fill="#111827" />
-          <circle cx="25.3" cy="42" r="12" fill="#111827" />
+          {LOGO_REEL_CIRCLES.map((circle, index) => (
+            <circle key={index} cx={circle.cx} cy={circle.cy} r={circle.r} fill={circle.cutout ? "#111827" : "currentColor"} />
+          ))}
         </svg>
       </span>
     </span>
