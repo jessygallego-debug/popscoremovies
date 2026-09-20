@@ -19,6 +19,7 @@ import {
 } from "@/lib/fan-reviews-store";
 import { getPublicCommunityDiscussionsForMovie } from "@/lib/community-discussions-public";
 import { SITE_KEYWORDS } from "@/lib/site-metadata";
+import { getPopScoreTitle } from "@/lib/popscore-presentation";
 import { absoluteUrl, truncateDescription } from "@/lib/site-url";
 import {
   backdropUrl,
@@ -626,13 +627,22 @@ export async function MovieDetailPage({
                               {formatFanReviewDate(review.createdAt)}
                             </p>
                           </div>
-                          <div className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-right">
+                          <div className="flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-right">
+                            <Image
+                              src={getPopScoreTitle(review.popscore).iconSrc}
+                              alt=""
+                              width={32}
+                              height={32}
+                              className="h-8 w-8 shrink-0 object-contain"
+                            />
+                            <div>
                             <p className="text-sm font-black text-yellow-300">
                               {review.popscore}%
                             </p>
                             <p className="text-[10px] font-black uppercase tracking-[0.12em] text-yellow-100">
                               {review.ratingLabel}
                             </p>
+                            </div>
                           </div>
                         </div>
                         <MovieReviewComment text={review.reviewComment} />
