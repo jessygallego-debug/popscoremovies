@@ -331,9 +331,6 @@ export default async function Home({
 
         <section className="grid gap-8 py-10 lg:grid-cols-[minmax(390px,0.82fr)_minmax(520px,1fr)] lg:items-center lg:gap-12 lg:py-14">
           <div className="max-w-[680px]">
-            <div className="mb-4 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-yellow-300 sm:mb-5 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.18em]">
-              Ratings that actually understand genre
-            </div>
             <h1 className="text-5xl font-black leading-[0.94] text-white sm:text-6xl xl:text-7xl">
               Rate Movies
               <br />
