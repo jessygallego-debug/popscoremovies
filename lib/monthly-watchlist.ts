@@ -143,11 +143,10 @@ async function supabaseRest<T>(path: string, init: RequestInit = {}) {
     throw new Error(`Supabase request failed (${response.status}): ${details}`);
   }
 
-  if (response.status === 204) {
-    return null as T;
-  }
-
-  return response.json() as Promise<T>;
+  // PostgREST can return an empty 201 for inserts using return=minimal.
+  // Successful writes do not always include a JSON representation.
+  const body = await response.text();
+  return body ? (JSON.parse(body) as T) : (null as T);
 }
 
 function isDate(value: string) {
