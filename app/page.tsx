@@ -135,13 +135,6 @@ function HeroVisual({
                     fallbackMovieId={String(movie.id)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3 hidden md:block">
-                    <PopScoreDisplay
-                      movieId={String(movie.id)}
-                      variant="posterBadge"
-                      className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-yellow-400 bg-black/75 text-center text-lg font-black text-white shadow-lg shadow-yellow-400/20"
-                    />
-                  </div>
                 </div>
                 </Link>
               </div>
