@@ -5,6 +5,7 @@ import {
 import { normalizeMovieRegion } from "@/lib/movie-locale";
 
 export type MovieSummary = {
+  adult?: boolean;
   id: number;
   title: string;
   overview: string;
@@ -553,6 +554,7 @@ function movieMatchesGenreFilter(
   genreId = "",
   source: "discover" | "search" = "discover"
 ) {
+  if (movie.adult === true) return false;
   const filter = genreFilterForId(genreId);
 
   if (!filter) {
@@ -880,9 +882,11 @@ export async function getMovie(id: string) {
     return getIt1990();
   }
 
-  return tmdbFetch<MovieDetails>(
+  if (!/^[1-9]\d*$/.test(id)) return null;
+  const movie = await tmdbFetch<MovieDetails>(
     `/movie/${id}?append_to_response=credits,videos,keywords`
   );
+  return movie?.adult === true ? null : movie;
 }
 
 export async function getMovieWatchProviders(
@@ -1003,25 +1007,49 @@ export function isTmdbConfigured() {
 }
 
 export type MovieCollectionSummary = {
+  adult?: boolean;
   id: number;
   name: string;
   poster_path: string | null;
 };
 
+// Confirmed explicit collection reported on PopScore. Block even if the
+// provider's classification is missing or incorrect.
+const BLOCKED_COLLECTION_IDS = new Set([1400726]);
+
 export async function searchMovieCollections(query: string): Promise<MovieCollectionSummary[]> {
   if (query.trim().length < 2) return [];
   const params = new URLSearchParams({ query: query.trim(), include_adult: "false", language: "en-US" });
   const data = await tmdbFetch<{ results?: MovieCollectionSummary[] }>(`/search/collection?${params}`);
-  return (data?.results ?? []).filter(item => Number.isSafeInteger(item.id) && item.id > 0 && item.name).slice(0, 4);
+  const candidates = (data?.results ?? []).filter(item => item.adult !== true && !BLOCKED_COLLECTION_IDS.has(item.id) && Number.isSafeInteger(item.id) && item.id > 0 && item.name).slice(0, 4);
+  const verified = await Promise.all(candidates.map(async item => {
+    const collection = await getMovieCollection(String(item.id)).catch(() => null);
+    return collection?.parts.length ? item : null;
+  }));
+  return verified.filter((item): item is MovieCollectionSummary => item !== null);
 }
 
 export async function getMovieCollection(id: string) {
   if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) return null;
+  if (BLOCKED_COLLECTION_IDS.has(Number(id))) return null;
   const data = await tmdbFetch<MovieCollectionSummary & { parts?: MovieSummary[] }>(`/collection/${id}?language=en-US`);
-  if (!data?.name || !Array.isArray(data.parts)) return null;
+  if (!data?.name || data.adult === true || !Array.isArray(data.parts)) return null;
+  const safeParts: MovieSummary[] = [];
+  const parts = uniqueMovies(data.parts);
+  for (let index = 0; index < parts.length; index += 4) {
+    const verified = await Promise.all(parts.slice(index, index + 4).map(async movie => {
+      if (movie.adult === true) return null;
+      if (movie.adult === false) return movie;
+      const details = await getMovie(String(movie.id)).catch(() => null);
+      return details?.adult === false ? movie : null;
+    }));
+    safeParts.push(...verified.filter((movie): movie is MovieSummary => movie !== null));
+  }
+  // Do not expose the title or artwork of collections with no eligible movies.
+  if (!safeParts.length) return null;
   return {
     ...data,
-    parts: uniqueMovies(data.parts).sort((a, b) =>
+    parts: safeParts.sort((a, b) =>
       (a.release_date || "9999").localeCompare(b.release_date || "9999") || a.id - b.id
     ),
   };

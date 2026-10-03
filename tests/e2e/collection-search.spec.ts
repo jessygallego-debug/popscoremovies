@@ -12,10 +12,10 @@ test("collection API combines suggestions and keeps all collection movies in rel
     requests.push(url.pathname);
     if (url.pathname.endsWith("/search/collection")) return Response.json({ results: [{ id: 656, name: "Saw Collection", poster_path: null }] });
     if (url.pathname.endsWith("/collection/656")) return Response.json({ id: 656, name: "Saw Collection", parts: [
-      { id: 3, title: "Future installment", release_date: "", poster_path: null },
-      { id: 2, title: "Saw II", release_date: "2005-10-28", poster_path: null },
-      { id: 1, title: "Saw", release_date: "2004-10-29", poster_path: "/saw.jpg" },
-      { id: 1, title: "Saw", release_date: "2004-10-29", poster_path: "/saw.jpg" },
+      { adult: false, id: 3, title: "Future installment", release_date: "", poster_path: null },
+      { adult: false, id: 2, title: "Saw II", release_date: "2005-10-28", poster_path: null },
+      { adult: false, id: 1, title: "Saw", release_date: "2004-10-29", poster_path: "/saw.jpg" },
+      { adult: false, id: 1, title: "Saw", release_date: "2004-10-29", poster_path: "/saw.jpg" },
     ] });
     return Response.json({ results: [{ id: 1, title: "Saw", release_date: "2004-10-29", popularity: 100 }], total_pages: 1 });
   };
@@ -51,6 +51,8 @@ for (const width of [390, 1280]) {
     await expect(collection).toHaveAttribute("href", "/?collection=656#trending");
     await expect(page.getByRole("link", { name: "Saw October 2004" })).toHaveAttribute("href", "/movies/saw-176");
     await search.press("Tab");
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("link", { name: "Saw October 2004" })).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(collection).toBeFocused();
     await page.keyboard.press("Enter");

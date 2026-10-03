@@ -117,17 +117,6 @@ export default function MovieSearch({ compact = false, genreId, initialQuery }: 
 
         {showSuggestions ? (
           <div className="absolute left-0 right-0 top-full z-[1300] mt-2 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black">
-            {collections.map(collection => (
-              <Link
-                key={`collection-${collection.id}`}
-                href={`/?collection=${collection.id}#trending`}
-                onClick={() => setIsFocused(false)}
-                className="flex items-center justify-between gap-3 border-b border-gray-900 px-5 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-400 hover:text-black focus:bg-yellow-400 focus:text-black"
-              >
-                <span>{collection.name}</span>
-                <span aria-hidden="true" className="shrink-0 text-xs font-normal">Collection</span>
-              </Link>
-            ))}
             {suggestions.map((movie) => {
               const releaseDate = movie.releaseDate
                 ? formatReleaseMonthYear(movie.releaseDate)
@@ -149,6 +138,17 @@ export default function MovieSearch({ compact = false, genreId, initialQuery }: 
                 </Link>
               );
             })}
+            {collections.map(collection => (
+              <Link
+                key={`collection-${collection.id}`}
+                href={`/?collection=${collection.id}#trending`}
+                onClick={() => setIsFocused(false)}
+                className="flex items-center justify-between gap-3 border-b border-gray-900 px-5 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-400 hover:text-black focus:bg-yellow-400 focus:text-black"
+              >
+                <span>{collection.name}</span>
+                <span aria-hidden="true" className="shrink-0 text-xs font-normal">Collection</span>
+              </Link>
+            ))}
           </div>
         ) : null}
       </div>

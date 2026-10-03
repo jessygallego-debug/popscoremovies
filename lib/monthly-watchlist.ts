@@ -71,6 +71,7 @@ type ReleaseFeedItem = {
 };
 
 type TmdbCampaignMovie = {
+  adult?: boolean;
   id: number;
   popularity?: number;
   poster_path?: string | null;
@@ -338,7 +339,8 @@ async function getTmdbMovie(movieId: string) {
   );
 
   if (!response.ok) return null;
-  return response.json() as Promise<TmdbCampaignMovie>;
+  const movie = await response.json() as TmdbCampaignMovie;
+  return movie.adult === false ? movie : null;
 }
 
 async function selectMovies(monthKey: string) {
