@@ -43,7 +43,9 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Monthly Watchlist campaign
 
-Apply `supabase/monthly_watchlist.sql`, then configure these server-side Vercel
+Apply `supabase/migrations/20261003233522_monthly_watchlist_production_setup.sql`,
+which includes explicit backend grants and restricts campaign tables to server
+access. It supports both clean setups and an existing suppression table. Then configure these server-side Vercel
 environment variables. For an existing installation created before monthly
 emails defaulted on, apply
 `supabase/monthly_watchlist_default_opt_in_20260909.sql` once as well. That
@@ -118,6 +120,12 @@ MONTHLY_WATCHLIST_ENABLED=true
 Configure Resend to send bounce, complaint, and suppression webhooks to
 `/api/email/resend-webhook`, and store its signing secret as
 `RESEND_WEBHOOK_SECRET`.
+
+Production uses `https://www.popscoremovies.com/api/email/resend-webhook`.
+Redeploy after changing server environment variables. Verify unsigned requests
+are rejected and signed events succeed before enabling the monthly campaign.
+The release feed must be configured and a test email verified first; setting
+the cron secret alone does not enable monthly sending or backfill a missed month.
 
 ## Profile avatars
 
