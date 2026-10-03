@@ -66,7 +66,7 @@ export default function ProfileMenu() {
         className="inline-flex shrink-0 cursor-wait items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 opacity-80 shadow-lg shadow-yellow-400/10"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
-          ★
+          <EmojiIcon emoji="🍿" size={22} />
         </span>
         My PopFile
       </button>
@@ -80,7 +80,7 @@ export default function ProfileMenu() {
         className="inline-flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black hover:shadow-yellow-400/30"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
-          ★
+          <EmojiIcon emoji="🍿" size={22} />
         </span>
         My PopFile
       </Link>

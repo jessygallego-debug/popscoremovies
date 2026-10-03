@@ -35,7 +35,7 @@ export default function MobileSiteMenu() {
       ? [item, { href: statsHref, label: "Stats" }]
       : [item]
   );
-  const popFileAvatar = profile ? avatarForKey(profile.avatar_key).icon : "★";
+  const popFileAvatar = profile ? avatarForKey(profile.avatar_key).icon : "🍿";
 
   function handleSignOut() {
     signOut();
@@ -94,7 +94,7 @@ export default function MobileSiteMenu() {
                 className="flex w-full cursor-wait items-center justify-center gap-2 rounded-2xl border border-yellow-400/45 bg-yellow-400 px-4 py-3 text-sm font-black text-black opacity-80 shadow-lg shadow-yellow-400/20"
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-full border border-black/15 bg-black/10 text-base">
-                  ★
+                  <EmojiIcon emoji="🍿" size={20} />
                 </span>
                 My PopFile
               </button>

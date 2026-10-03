@@ -1,3 +1,4 @@
+import EmojiIcon from "@/app/components/emoji-icon";
 import MovieSearch from "@/app/components/movie-search";
 import Image from "next/image";
 import Link from "next/link";
@@ -85,7 +86,7 @@ export default function SiteHeader({ showSearch = false }: { showSearch?: boolea
           fallback={
             <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10">
               <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
-                ★
+                <EmojiIcon emoji="🍿" size={22} />
               </span>
               My PopFile
             </div>
