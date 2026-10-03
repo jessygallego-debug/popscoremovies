@@ -2581,7 +2581,7 @@ export default function CommunityClient({
   const { profile: currentProfile, user: currentUser } = usePopFile();
   const [selectedTab, setSelectedTab] = useState<CommunityTab>("Feed");
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
-  const [selectedTrend, setSelectedTrend] = useState("Trending");
+  const [selectedTrend, setSelectedTrend] = useState("Newest");
   const [feedSearchQuery, setFeedSearchQuery] = useState("");
   const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = useState(false);
   const [createdDiscussions, setCreatedDiscussions] = useState<
