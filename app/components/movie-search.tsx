@@ -12,22 +12,25 @@ type MovieSuggestion = {
 };
 
 type MovieSearchProps = {
+  compact?: boolean;
   genreId?: string;
   initialQuery: string;
 };
 
-export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps) {
+export default function MovieSearch({ compact = false, genreId, initialQuery }: MovieSearchProps) {
   const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<MovieSuggestion[]>([]);
+  const [collections, setCollections] = useState<Array<{ id: number; name: string }>>([]);
   const [isFocused, setIsFocused] = useState(false);
 
   const showSuggestions =
-    isFocused && query.trim().length >= 2 && suggestions.length > 0;
+    isFocused && query.trim().length >= 2 && (suggestions.length > 0 || collections.length > 0);
   const hasQuery = query.length > 0;
 
   const clearSearch = () => {
     setQuery("");
     setSuggestions([]);
+    setCollections([]);
     setIsFocused(true);
   };
 
@@ -50,12 +53,15 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
         signal: controller.signal,
       })
         .then((response) => response.json())
-        .then((data: { suggestions?: MovieSuggestion[] }) => {
+        .then((data: { suggestions?: MovieSuggestion[]; collections?: Array<{ id: number; name: string }> }) => {
+          if (controller.signal.aborted) return;
           setSuggestions(data.suggestions ?? []);
+          setCollections(data.collections ?? []);
         })
         .catch(() => {
           if (!controller.signal.aborted) {
             setSuggestions([]);
+            setCollections([]);
           }
         });
     }, 180);
@@ -68,8 +74,18 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
 
   return (
     <form
-      className="relative z-[1200] flex max-w-4xl flex-col gap-2 sm:flex-row sm:gap-3"
+      className={compact ? "relative z-[1200] hidden min-w-0 max-w-md flex-1 xl:block" : "relative z-[1200] flex max-w-4xl flex-col gap-2 sm:flex-row sm:gap-3"}
       action="/"
+      role="search"
+      onFocus={() => setIsFocused(true)}
+      onBlur={(event) => {
+        const form = event.currentTarget;
+        if (form.contains(event.relatedTarget as Node | null)) return;
+        // Allow touch selection before hiding; keyboard focus inside the form keeps it open.
+        window.setTimeout(() => {
+          if (!form.contains(document.activeElement)) setIsFocused(false);
+        }, 120);
+      }}
     >
       {genreId ? <input type="hidden" name="genre" value={genreId} /> : null}
 
@@ -80,11 +96,11 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
           enterKeyHint="search"
           name="query"
           value={query}
-          onBlur={() => window.setTimeout(() => setIsFocused(false), 120)}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => { setQuery(event.target.value); setSuggestions([]); setCollections([]); }}
           onFocus={() => setIsFocused(true)}
           placeholder="Search for a movie..."
-          className="min-h-12 w-full rounded-2xl border border-slate-700/90 bg-slate-950/80 px-4 pr-12 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_45px_rgba(0,0,0,0.35)] outline-none backdrop-blur transition placeholder:text-slate-500 focus:border-yellow-400/80 focus:bg-slate-950 focus:shadow-yellow-400/15 sm:min-h-16 sm:px-5 sm:pr-12 sm:text-base"
+          aria-label="Search movies and collections"
+          className={`${compact ? "!min-h-11 !rounded-full !text-sm" : ""} min-h-12 w-full rounded-2xl border border-slate-700/90 bg-slate-950/80 px-4 pr-12 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_45px_rgba(0,0,0,0.35)] outline-none backdrop-blur transition placeholder:text-slate-500 focus:border-yellow-400/80 focus:bg-slate-950 focus:shadow-yellow-400/15 sm:min-h-16 sm:px-5 sm:pr-12 sm:text-base`}
         />
 
         {hasQuery ? (
@@ -101,6 +117,17 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
 
         {showSuggestions ? (
           <div className="absolute left-0 right-0 top-full z-[1300] mt-2 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-black">
+            {collections.map(collection => (
+              <Link
+                key={`collection-${collection.id}`}
+                href={`/?collection=${collection.id}#trending`}
+                onClick={() => setIsFocused(false)}
+                className="flex items-center justify-between gap-3 border-b border-gray-900 px-5 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-400 hover:text-black focus:bg-yellow-400 focus:text-black"
+              >
+                <span>{collection.name}</span>
+                <span aria-hidden="true" className="shrink-0 text-xs font-normal">Collection</span>
+              </Link>
+            ))}
             {suggestions.map((movie) => {
               const releaseDate = movie.releaseDate
                 ? formatReleaseMonthYear(movie.releaseDate)
@@ -113,7 +140,7 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
                   href={movieHref(movie)}
                   className="block border-b border-gray-900 px-5 py-3 text-sm font-bold text-white last:border-b-0 hover:bg-yellow-400 hover:text-black"
                 >
-                  {movie.title}
+                  {movie.title}{" "}
                   {releaseDate ? (
                     <span className="ml-2 font-normal text-gray-400">
                       {releaseDate}
@@ -126,12 +153,12 @@ export default function MovieSearch({ genreId, initialQuery }: MovieSearchProps)
         ) : null}
       </div>
 
-      <button
+      {!compact ? <button
         type="submit"
         className="min-h-12 rounded-2xl bg-yellow-400 px-7 text-sm font-black text-black shadow-[0_16px_34px_rgba(250,204,21,0.25)] transition hover:bg-yellow-300 hover:shadow-yellow-400/40 active:scale-[0.98] sm:min-h-16 sm:px-9 sm:text-base"
       >
         Search
-      </button>
+      </button> : null}
     </form>
   );
 }

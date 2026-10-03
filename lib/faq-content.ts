@@ -33,6 +33,7 @@ export const faqSections = [
   {
     title: "Watchlist and Movie Match",
     items: [
+      { question: "Can I search for a movie series?", answer: "Yes. Type a movie or series name in the movie search and choose a Collection suggestion, such as Saw Collection. Its movies appear in the existing results grid in release order. Collection membership comes from the movie catalog; individual movie suggestions still open the movie page." },
       { question: "How do I use my Watchlist?", answer: "Tap the plus in the top-right corner of a movie poster to save it. A yellow bookmark means it is saved; tap it again to remove it. A brief message confirms each change. You can also manage saved movies from movie pages. Your Watchlist supports genre filtering and shows Rate Now and Remove below each poster. Rate Now opens the rating form; Remove takes the movie off your list." },
       { question: "What happens after I rate a Watchlist movie?", answer: "After a successful rating, PopScore removes the movie from your Watchlist. The rating remains in your PopFile." },
       { question: "How does Movie Match choose recommendations?", answer: "Movie Match uses your selected genre, release-year range, language, and region preferences. For supported rating genres, personalized matching starts when you have at least three ratings of 75 or higher in that genre and uses those ratings to understand your taste. Until then, it shows general recommendations." },

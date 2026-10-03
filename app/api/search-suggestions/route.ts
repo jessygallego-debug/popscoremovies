@@ -3,7 +3,7 @@ import {
   movieTitleSearchScore,
   normalizeMovieSearchText,
 } from "@/lib/movie-search";
-import { getMovies, type MovieSummary } from "@/lib/tmdb";
+import { getMovies, searchMovieCollections, type MovieSummary } from "@/lib/tmdb";
 
 const tmdbGenresById: Record<number, string> = {
   12: "Adventure",
@@ -39,7 +39,10 @@ export async function GET(request: Request) {
   }
 
   const normalizedQuery = normalizeMovieSearchText(query);
-  const movies = await getMovies(query, 140, genre);
+  const [movies, collections] = await Promise.all([
+    getMovies(query, 140, genre),
+    searchMovieCollections(query).catch(() => []),
+  ]);
   const suggestions = movies
     .map((movie) => ({
       movie,
@@ -63,5 +66,5 @@ export async function GET(request: Request) {
       title: movie.title,
     }));
 
-  return NextResponse.json({ suggestions });
+  return NextResponse.json({ suggestions, collections });
 }

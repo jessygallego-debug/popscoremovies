@@ -1001,3 +1001,28 @@ export async function getMovieImageFallbacks(
 export function isTmdbConfigured() {
   return Boolean(getToken());
 }
+
+export type MovieCollectionSummary = {
+  id: number;
+  name: string;
+  poster_path: string | null;
+};
+
+export async function searchMovieCollections(query: string): Promise<MovieCollectionSummary[]> {
+  if (query.trim().length < 2) return [];
+  const params = new URLSearchParams({ query: query.trim(), include_adult: "false", language: "en-US" });
+  const data = await tmdbFetch<{ results?: MovieCollectionSummary[] }>(`/search/collection?${params}`);
+  return (data?.results ?? []).filter(item => Number.isSafeInteger(item.id) && item.id > 0 && item.name).slice(0, 4);
+}
+
+export async function getMovieCollection(id: string) {
+  if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) return null;
+  const data = await tmdbFetch<MovieCollectionSummary & { parts?: MovieSummary[] }>(`/collection/${id}?language=en-US`);
+  if (!data?.name || !Array.isArray(data.parts)) return null;
+  return {
+    ...data,
+    parts: uniqueMovies(data.parts).sort((a, b) =>
+      (a.release_date || "9999").localeCompare(b.release_date || "9999") || a.id - b.id
+    ),
+  };
+}

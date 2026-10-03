@@ -22,6 +22,7 @@ import {
   backdropUrl,
   formatReleaseMonthYear,
   getMovies,
+  getMovieCollection,
   isTmdbConfigured,
   MOVIE_GENRE_FILTERS,
   MovieSummary,
@@ -199,7 +200,7 @@ function WhyPopScore() {
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ genre?: string; query?: string }>;
+  searchParams: Promise<{ genre?: string; query?: string; collection?: string }>;
 }): Promise<Metadata> {
   const params = await searchParams;
   const activeGenre = MOVIE_GENRE_FILTERS.find(
@@ -255,7 +256,7 @@ export async function generateMetadata({
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ genre?: string; query?: string }>;
+  searchParams: Promise<{ genre?: string; query?: string; collection?: string }>;
 }) {
   const params = await searchParams;
   const query = params.query?.trim() ?? "";
@@ -264,10 +265,13 @@ export default async function Home({
   );
   const homeMovieLimit = query || activeGenre ? 160 : 100;
   const siteStats = getSiteEngagementTotals();
-  const movies = await getMovies(query, homeMovieLimit, activeGenre?.id);
-  const displayMovies = movies.filter(hasMovieArtwork);
+  const collectionId = params.collection?.trim() ?? "";
+  const collection = collectionId ? await getMovieCollection(collectionId).catch(() => null) : null;
+  const movies = collectionId ? collection?.parts ?? [] : await getMovies(query, homeMovieLimit, activeGenre?.id);
+  const displayMovies = collectionId ? movies : movies.filter(hasMovieArtwork);
   const hasMissingToken = !isTmdbConfigured();
   const currentPageParams = new URLSearchParams();
+  if (collectionId) currentPageParams.set("collection", collectionId);
 
   if (query) {
     currentPageParams.set("query", query);
@@ -296,7 +300,7 @@ export default async function Home({
       isActive: activeGenre?.id === genre.id,
     })),
   ];
-  const sectionTitle = query
+  const sectionTitle = collectionId ? collection?.name ?? "Collection unavailable" : query
     ? `${activeGenre ? `${activeGenre.name} ` : ""}Search Results for "${query}"`
     : activeGenre
       ? `${activeGenre.name} Movies`
@@ -351,14 +355,14 @@ export default async function Home({
               and see what your friends are watching.
             </p>
             <div className="mt-8 max-w-[640px]">
-              <MovieSearch genreId={activeGenre?.id} initialQuery={query} />
+              <MovieSearch key={collectionId || query} genreId={activeGenre?.id} initialQuery={collection?.name ?? query} />
             </div>
           </div>
 
           <HeroVisual movies={displayMovies} stats={siteStats} />
         </section>
 
-        {!query ? (
+        {!query && !collectionId ? (
           <>
             <div className="border-t border-white/10 pt-7">
               <WhyPopScore />
@@ -399,6 +403,7 @@ export default async function Home({
             <h2 className="text-3xl font-black text-white sm:text-4xl">
               {sectionTitle}
             </h2>
+            {collection ? <p className="mt-2 text-sm text-slate-400">{displayMovies.length} movies · Release order</p> : null}
           </div>
 
           {displayMovies.length > 0 ? (
@@ -409,7 +414,7 @@ export default async function Home({
                   ? formatReleaseMonthYear(movie.release_date)
                   : "";
                 const genreLabels = genreLabelsForMovie(movie);
-                const detailsHref = seoMovieHref(movie);
+                const detailsHref = collectionId ? `${seoMovieHref(movie)}?returnTo=${encodeURIComponent(currentPagePath + "#trending")}` : seoMovieHref(movie);
                 const rateHref = `/rate?movie=${
                   movie.id
                 }&returnTo=${encodeURIComponent(currentPagePath)}&from=home`;
@@ -477,7 +482,7 @@ export default async function Home({
             </div>
           ) : (
             <div className="rounded-2xl border border-slate-800 bg-slate-950/90 p-8 text-slate-300">
-              {query
+              {collectionId ? (collection ? "This collection has no movies listed yet." : "This collection could not be loaded. Please search again or try later.") : query
                 ? `No movies found for "${query}".`
                 : "No movies are available right now."}
             </div>
