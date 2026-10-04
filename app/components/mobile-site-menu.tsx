@@ -45,7 +45,7 @@ export default function MobileSiteMenu() {
   }
 
   return (
-    <div className="relative md:hidden">
+    <div className="relative xl:hidden">
       <button
         type="button"
         aria-label="Open navigation menu"
