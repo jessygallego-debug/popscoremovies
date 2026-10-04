@@ -63,13 +63,12 @@ export default function ProfileMenu() {
       <button
         type="button"
         aria-busy="true"
-        className="inline-flex shrink-0 cursor-wait items-center gap-2 rounded-full border border-yellow-400/40 bg-slate-950 px-3 py-2 text-sm font-semibold text-yellow-400 opacity-80"
+        className="inline-flex shrink-0 cursor-wait items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 opacity-80 shadow-lg shadow-yellow-400/10"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
           <EmojiIcon emoji="🍿" size={22} />
         </span>
         My PopFile
-        <span aria-hidden="true" className="text-yellow-400">›</span>
       </button>
     );
   }
@@ -78,13 +77,12 @@ export default function ProfileMenu() {
     return (
       <Link
         href={signInHref}
-        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-slate-950 px-3 py-2 text-sm font-semibold text-yellow-400 transition hover:border-yellow-400 hover:bg-slate-900"
+        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black hover:shadow-yellow-400/30"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
           <EmojiIcon emoji="🍿" size={22} />
         </span>
         My PopFile
-        <span aria-hidden="true" className="text-yellow-400">›</span>
       </Link>
     );
   }
@@ -94,12 +92,12 @@ export default function ProfileMenu() {
 
   return (
     <details ref={menuRef} className="group relative z-[200] shrink-0">
-      <summary className="inline-flex list-none items-center gap-2 rounded-full border border-yellow-400/45 bg-slate-950 px-3 py-2 text-sm font-semibold text-yellow-400 transition hover:cursor-pointer hover:border-yellow-400 hover:bg-slate-900">
+      <summary className="inline-flex list-none items-center gap-2 rounded-full border border-yellow-400/45 bg-yellow-400/10 px-3 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:cursor-pointer hover:border-yellow-300 hover:bg-yellow-400 hover:text-black hover:shadow-yellow-400/30">
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/45 bg-black/40 text-lg">
           <EmojiIcon emoji={avatar.icon} label={avatar.label} size={22} />
         </span>
         <span>My PopFile</span>
-        <span aria-hidden="true" className="text-yellow-400">
+        <span aria-hidden="true" className="text-yellow-300 group-hover:text-black">
           ›
         </span>
       </summary>
