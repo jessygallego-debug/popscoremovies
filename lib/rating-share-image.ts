@@ -2,14 +2,10 @@ import { posterUrl } from "@/lib/tmdb";
 import { getPopScoreTitle, getShareRatingStatement } from "@/lib/popscore-presentation";
 import { LOGO_REEL_CIRCLES } from "@/lib/logo-reel";
 
-function wrapCanvasText(
+function canvasTextLines(
   context: CanvasRenderingContext2D,
   text: string,
-  x: number,
-  y: number,
-  maxWidth: number,
-  lineHeight: number,
-  maxLines: number
+  maxWidth: number
 ) {
   const lines: string[] = [];
   let line = "";
@@ -24,6 +20,14 @@ function wrapCanvasText(
     }
   }
   if (line) lines.push(line);
+  return lines;
+}
+
+function wrapCanvasText(
+  context: CanvasRenderingContext2D, text: string, x: number, y: number,
+  maxWidth: number, lineHeight: number, maxLines: number
+) {
+  const lines = canvasTextLines(context, text, maxWidth);
   lines.slice(0, maxLines).forEach((value, index) => {
     let visible = value;
     if (index === maxLines - 1 && lines.length > maxLines) {
@@ -32,6 +36,7 @@ function wrapCanvasText(
     }
     context.fillText(visible, x, y + index * lineHeight);
   });
+  return Math.min(lines.length, maxLines);
 }
 
 function loadImage(src: string) {
@@ -139,75 +144,86 @@ export async function createRatingShareCanvas(data: RatingShareImageData) {
   let titleSize = 78;
   while (titleSize > 42) {
     ctx.font = `800 ${titleSize}px Arial, sans-serif`;
-    if (ctx.measureText(data.movieTitle).width <= 1720) break;
+    if (canvasTextLines(ctx, data.movieTitle, 920).length <= 4) break;
     titleSize -= 2;
   }
   ctx.font = `800 ${titleSize}px Arial, sans-serif`;
   ctx.fillStyle = "#ffffff";
-  wrapCanvasText(ctx, data.movieTitle, 80, 416, 920, titleSize * 1.15, 3);
+  const titleLines = wrapCanvasText(ctx, data.movieTitle, 80, 416, 920, titleSize * 1.1, 4);
+  const metadataY = 416 + Math.max(0, titleLines - 1) * titleSize * 1.1 + 58;
   const year = data.releaseDate?.match(/^\d{4}/)?.[0];
   const metadata = [year, data.genreNames?.join(" / ")].filter(Boolean).join(" • ").toUpperCase();
   ctx.fillStyle = "#a1a1aa";
   ctx.font = "600 25px Arial, sans-serif";
   ctx.letterSpacing = "3px";
-  ctx.fillText(metadata, 80, 625, 920);
+  const metadataLines = wrapCanvasText(ctx, metadata, 80, metadataY, 920, 38, 3);
   ctx.letterSpacing = "0px";
+  const contentY = Math.max(620, metadataY + Math.max(0, metadataLines - 1) * 38 + 72);
+  const posterWidth = 430;
+  const posterHeight = 645;
+  // Every element in the rating group shares this column's center, including
+  // the combined number + /100 width. It never depends on the score's digits.
+  const ratingLeft = 560;
+  const ratingWidth = 440;
+  const ratingCenter = ratingLeft + ratingWidth / 2;
   ctx.save();
   ctx.shadowColor = "rgba(250,204,21,0.09)";
   ctx.shadowBlur = 35;
   ctx.fillStyle = "#0d1015";
   ctx.beginPath();
-  ctx.roundRect(80, 700, 430, 645, 24);
+  ctx.roundRect(80, contentY, posterWidth, posterHeight, 24);
   ctx.fill();
   ctx.shadowBlur = 0;
   ctx.clip();
-  if (poster) drawImageContain(ctx, poster, 80, 700, 430, 645);
+  if (poster) drawImageContain(ctx, poster, 80, contentY, posterWidth, posterHeight);
   else {
     ctx.fillStyle = "#71717a";
     ctx.font = "500 26px Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Poster unavailable", 295, 1025);
+    ctx.fillText("Poster unavailable", 295, contentY + posterHeight / 2);
   }
   ctx.restore();
-  ctx.strokeStyle = "rgba(255,255,255,0.16)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.roundRect(80, 700, 430, 645, 24);
-  ctx.stroke();
-  ctx.textAlign = "left";
+  ctx.textAlign = "center";
   ctx.fillStyle = "#d4d4d8";
   ctx.font = "600 26px Arial, sans-serif";
   ctx.letterSpacing = "3px";
-  ctx.fillText("MY POPSCORE", 570, 758);
+  ctx.fillText("MY POPSCORE", ratingCenter, contentY + 58);
   ctx.letterSpacing = "0px";
-  ctx.fillStyle = "#facc15";
-  ctx.font = `900 ${data.popscore >= 100 ? 150 : 178}px Arial, sans-serif`;
-  ctx.fillText(String(data.popscore), 560, 944);
+  const scoreFont = "900 178px Arial, sans-serif";
+  ctx.font = scoreFont;
   const scoreWidth = ctx.measureText(String(data.popscore)).width;
+  ctx.font = "500 32px Arial, sans-serif";
+  const suffixWidth = ctx.measureText("/100").width;
+  const scoreLeft = ratingCenter - (scoreWidth + 12 + suffixWidth) / 2;
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#facc15";
+  ctx.font = scoreFont;
+  ctx.fillText(String(data.popscore), scoreLeft, contentY + 244);
   ctx.fillStyle = "#8b8e98";
   ctx.font = "500 32px Arial, sans-serif";
-  ctx.fillText("/100", 570 + scoreWidth, 942);
-  drawImageContain(ctx, bucket, 658, 984, 230, 222);
+  ctx.fillText("/100", scoreLeft + scoreWidth + 12, contentY + 244);
+  drawImageContain(ctx, bucket, ratingCenter - 115, contentY + 284, 230, 222);
   ctx.textAlign = "center";
   ctx.fillStyle = "#facc15";
   ctx.font = "800 29px Arial, sans-serif";
   ctx.letterSpacing = "2px";
-  ctx.fillText(tier.label.toUpperCase(), 785, 1255, 430);
+  ctx.fillText(tier.label.toUpperCase(), ratingCenter, contentY + 555, ratingWidth);
   ctx.letterSpacing = "0px";
   ctx.fillStyle = "#b4b5bc";
   ctx.font = "500 27px Arial, sans-serif";
-  wrapCanvasText(ctx, getShareRatingStatement(data.popscore), 785, 1303, 415, 37, 2);
+  wrapCanvasText(ctx, getShareRatingStatement(data.popscore), ratingCenter, contentY + 603, ratingWidth - 25, 37, 2);
+  const footerY = Math.max(1460, contentY + posterHeight + 100);
   ctx.strokeStyle = "rgba(255,255,255,0.12)";
   ctx.beginPath();
-  ctx.moveTo(80, 1460);
-  ctx.lineTo(1000, 1460);
+  ctx.moveTo(80, footerY);
+  ctx.lineTo(1000, footerY);
   ctx.stroke();
   ctx.fillStyle = "#ffffff";
   ctx.font = "700 48px Arial, sans-serif";
-  ctx.fillText("What would you score it?", 540, 1585);
+  ctx.fillText("What would you score it?", 540, footerY + 125);
   ctx.fillStyle = "#facc15";
   ctx.font = "600 27px Arial, sans-serif";
   ctx.letterSpacing = "5px";
-  ctx.fillText("POPSCOREMOVIES.COM", 540, 1655);
+  ctx.fillText("POPSCOREMOVIES.COM", 540, footerY + 195);
   return canvas;
 }
