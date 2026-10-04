@@ -25,27 +25,27 @@ function SiteLogo() {
     >
       <div className="flex items-center gap-3">
         <span
-          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/25 bg-yellow-400/10 shadow-lg shadow-yellow-400/10 sm:h-12 sm:w-12 md:h-14 md:w-14"
+          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/25 bg-yellow-400/10 shadow-lg shadow-yellow-400/10 sm:h-12 sm:w-12 md:h-11 md:w-11"
         >
-          <span className="relative block h-8 w-8 sm:h-10 sm:w-10 md:h-11 md:w-11">
+          <span className="relative block h-8 w-8 sm:h-10 sm:w-10 md:h-9 md:w-9">
             <Image
               src="/rating-icons/extra-buttery-v2.png"
               alt="PopScore movie rating and recommendation site"
               fill
-              sizes="(min-width: 640px) 44px, 40px"
+              sizes="(min-width: 768px) 36px, (min-width: 640px) 40px, 32px"
               className="object-contain transition group-hover:scale-105"
               priority
             />
           </span>
         </span>
         <span>
-          <span className="flex items-center text-2xl font-black leading-none tracking-wide sm:text-3xl md:text-4xl">
+          <span className="flex items-center text-2xl font-black leading-none tracking-wide sm:text-3xl md:text-[28px]">
             <span className="text-white">P</span>
             <AnimatedLogoReel />
             <span className="text-white">P</span>
             <span className="text-yellow-400">SCORE</span>
           </span>
-          <span className="mt-1 block text-[8px] font-black uppercase tracking-[0.16em] text-slate-400 sm:text-[10px] sm:tracking-[0.22em] md:text-xs">
+          <span className="mt-1 block text-[8px] font-black uppercase tracking-[0.16em] text-slate-400 sm:text-[10px] sm:tracking-[0.22em] md:hidden">
             Movie Ratings for Movie Lovers
           </span>
         </span>
