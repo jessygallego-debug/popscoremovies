@@ -9,6 +9,7 @@ import { notifyMentionedUsers, type MentionableUser } from "@/lib/mentions";
 import {
   getCurrentProfile,
   getCurrentUser,
+  getProfileByUserId,
   getSupabaseAccessToken,
 } from "@/lib/profile-store";
 
@@ -406,7 +407,7 @@ export async function getCommunityComments(
   const currentUser = await getCurrentUser().catch(() => null);
   const currentProfile =
     currentProfileOverride ??
-    (currentUser ? await getCurrentProfile().catch(() => null) : null);
+    (currentUser ? await getProfileByUserId(currentUser.id).catch(() => null) : null);
   const comments = await supabaseFetch<CommunityCommentRow[]>(
     `/community_comments?post_id=eq.${encodeURIComponent(
       postId

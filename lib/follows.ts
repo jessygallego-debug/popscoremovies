@@ -1,10 +1,11 @@
 "use client";
 
 import {
-  getCurrentProfile,
   getCurrentUser,
+  getProfileByUserId,
   getSupabaseAccessToken,
 } from "@/lib/profile-store";
+import { createInFlightReadPool } from "@/lib/in-flight-read";
 import { avatarForKey, genreLabelForKey } from "@/lib/profile-config";
 import { createNotification } from "@/lib/notifications";
 import { checkAchievementEmails } from "@/lib/achievement-email-notifications";
@@ -13,6 +14,7 @@ export const FOLLOWS_UPDATED_EVENT = "popscore-follows-updated";
 
 const LOCAL_FOLLOWS_KEY = "popscore-user-follows";
 const FOLLOW_SUMMARY_RETRY_DELAY_MS = 350;
+const followReads = createInFlightReadPool();
 
 type FollowRow = {
   created_at: string;
@@ -87,23 +89,32 @@ async function supabaseFetch<T>(path: string, options: RequestInit = {}) {
     throw new Error("Supabase is not configured.");
   }
 
-  const response = await fetch(`${config.restUrl}${path}`, {
-    ...options,
-    headers: {
-      ...(await authHeaders()),
-      ...options.headers,
-    },
-  });
+  const headers = await authHeaders();
+  const load = async () => {
+    const response = await fetch(`${config.restUrl}${path}`, {
+      ...options,
+      headers: {
+        ...headers,
+        ...options.headers,
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Follow request failed with ${response.status}.`);
-  }
+    if (!response.ok) {
+      throw new Error(`Follow request failed with ${response.status}.`);
+    }
 
-  if (response.status === 204) {
-    return null as T;
-  }
+    if (options.method && options.method !== "GET") followReads.clear();
+    if (response.status === 204) {
+      return null as T;
+    }
 
-  return response.json() as Promise<T>;
+    const body = await response.text();
+    return (body ? JSON.parse(body) : null) as T;
+  };
+  // Only concurrent identical reads share work, scoped to the current session.
+  return Object.keys(options).length === 0
+    ? followReads(`${config.restUrl}${path}:${headers.Authorization}`, load)
+    : load();
 }
 
 function canUseLocalStorage() {
@@ -219,7 +230,7 @@ function targetIsCurrentUser(
 async function getCurrentFollowContext() {
   const currentUser = await getCurrentUser().catch(() => null);
   const currentProfile = currentUser
-    ? await getCurrentProfile().catch(() => null)
+    ? await getProfileByUserId(currentUser.id).catch(() => null)
     : null;
 
   return { currentProfile, currentUser };
@@ -331,6 +342,19 @@ export async function getFollowSummary(
   return localSummary(target, currentUserId, isOwnProfile);
 }
 
+export async function getFollowButtonState(target: FollowTarget) {
+  const { currentProfile, currentUser } = await getCurrentFollowContext();
+  const currentUserId = currentUser?.id ?? null;
+  const followingIds = currentUserId
+    ? await getFollowingUserIds(currentUserId)
+    : [];
+  return {
+    currentUserId,
+    isFollowing: followingIds.includes(target.userId),
+    isOwnProfile: targetIsCurrentUser(target, currentUserId, currentProfile?.username),
+  };
+}
+
 export async function getFollowingUserIdsForCurrentUser() {
   const currentUser = await getCurrentUser().catch(() => null);
 
@@ -338,17 +362,27 @@ export async function getFollowingUserIdsForCurrentUser() {
     return [];
   }
 
+  return getFollowingUserIds(currentUser.id);
+}
+
+async function getFollowingUserIds(userId: string) {
+
   try {
-    const rows = await supabaseFetch<Pick<FollowRow, "following_id">[]>(
-      `/user_follows?follower_id=eq.${encodeURIComponent(
-        currentUser.id
-      )}&select=following_id`
-    );
+    const rows: Pick<FollowRow, "following_id">[] = [];
+    for (let offset = 0; ; offset += 1000) {
+      const page = await supabaseFetch<Pick<FollowRow, "following_id">[]>(
+        `/user_follows?follower_id=eq.${encodeURIComponent(
+          userId
+        )}&select=following_id&order=following_id&limit=1000&offset=${offset}`
+      );
+      rows.push(...page);
+      if (page.length < 1000) break;
+    }
 
     return rows.map((row) => row.following_id);
   } catch {
     return readLocalFollows()
-      .filter((row) => row.follower_id === currentUser.id)
+      .filter((row) => row.follower_id === userId)
       .map((row) => row.following_id);
   }
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   FOLLOWS_UPDATED_EVENT,
   getFollowSummary,
+  getFollowButtonState,
   toggleFollow,
   type FollowSummary,
   type FollowTarget,
@@ -33,7 +34,7 @@ export default function FollowButton({
   const targetDisplayName = target.displayName;
   const targetUserId = target.userId;
   const targetUsername = target.username;
-  const [summary, setSummary] = useState<FollowSummary>(defaultSummary);
+  const [summary, setSummary] = useState<Awaited<ReturnType<typeof getFollowButtonState>>>(defaultSummary);
   const [isHovering, setIsHovering] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -48,14 +49,19 @@ export default function FollowButton({
     };
 
     const loadSummary = () => {
-      getFollowSummary(currentTarget)
+      const pending = onFollowChange
+        ? getFollowSummary(currentTarget)
+        : getFollowButtonState(currentTarget);
+      pending
         .then((nextSummary) => {
           if (!isCurrent) {
             return;
           }
 
           setSummary(nextSummary);
-          onFollowChange?.(nextSummary);
+          if (onFollowChange && "followersCount" in nextSummary) {
+            onFollowChange(nextSummary as FollowSummary);
+          }
           setMessage("");
         })
         .catch(() => {

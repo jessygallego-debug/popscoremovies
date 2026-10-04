@@ -226,7 +226,8 @@ export default function CommunityPostComments({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const handledNotificationTargetRef = useRef<string | null>(null);
 
-  const totalCommentCount = initialCommentCount + comments.length;
+  // The feed summary already includes these comments; do not count them twice.
+  const totalCommentCount = Math.max(initialCommentCount, comments.length);
   const visibleComments = showAllComments
     ? comments
     : comments.slice(-2);
@@ -241,9 +242,13 @@ export default function CommunityPostComments({
     draft.trim() && validation.error ? validation.error : "";
 
   useEffect(() => {
+    if (!areCommentsOpen && !isComposerOpen) return;
     let isCurrent = true;
 
-    getCommunityComments(postId)
+    Promise.resolve().then(() => {
+      if (isCurrent) setIsLoading(true);
+      return getCommunityComments(postId);
+    })
       .then((nextComments) => {
         if (isCurrent) {
           setComments(nextComments);
@@ -265,7 +270,7 @@ export default function CommunityPostComments({
     return () => {
       isCurrent = false;
     };
-  }, [postId]);
+  }, [postId, areCommentsOpen, isComposerOpen]);
 
   useEffect(() => {
     if (isComposerOpen) {
@@ -492,7 +497,7 @@ export default function CommunityPostComments({
         >
           Comment
         </button>
-        {isLoading ? <span>Loading...</span> : null}
+        {isLoading && (areCommentsOpen || isComposerOpen) ? <span>Loading...</span> : null}
       </div>
 
       {areCommentsOpen || isComposerOpen || message || validationMessage ? (

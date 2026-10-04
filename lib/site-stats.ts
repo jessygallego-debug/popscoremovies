@@ -1,3 +1,6 @@
+import "server-only";
+import { unstable_cache } from "next/cache";
+
 type SiteStatsRow = {
   id?: string | null;
   movie_id?: string | null;
@@ -44,7 +47,7 @@ async function supabaseFetch<T>(path: string, signal?: AbortSignal) {
       Authorization: `Bearer ${config.key}`,
       "Content-Type": "application/json",
     },
-    next: { revalidate: 60 },
+    cache: "no-store",
     signal,
   });
 
@@ -57,36 +60,18 @@ async function supabaseFetch<T>(path: string, signal?: AbortSignal) {
 
 async function fetchAllRows(
   tableName: string,
-  selectOptions: string[],
+  select: string,
   signal?: AbortSignal
 ) {
-  const pageSize = 1000;
-
-  for (const select of selectOptions) {
-    const rows: SiteStatsRow[] = [];
-    let offset = 0;
-
-    try {
-      for (;;) {
-        const page = await supabaseFetch<SiteStatsRow[]>(
-          `/${tableName}?select=${select}&limit=${pageSize}&offset=${offset}`,
-          signal
-        );
-
-        rows.push(...page);
-
-        if (page.length < pageSize) {
-          return rows;
-        }
-
-        offset += pageSize;
-      }
-    } catch {
-      rows.length = 0;
-    }
+  const rows: SiteStatsRow[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const page = await supabaseFetch<SiteStatsRow[]>(
+      `/${tableName}?select=${select}&order=id&limit=1000&offset=${offset}`,
+      signal
+    );
+    rows.push(...page);
+    if (page.length < 1000) return rows;
   }
-
-  return [];
 }
 
 function hasCompletedRating(row: SiteStatsRow) {
@@ -111,15 +96,12 @@ async function loadSiteEngagementTotals(
   const [profileRatings, legacyRatings] = await Promise.all([
     fetchAllRows(
       "movie_ratings",
-      ["id,user_id,movie_id,ratings,weights"],
+      "id,user_id,movie_id,ratings,weights",
       signal
     ),
     fetchAllRows(
       "ratings",
-      [
-        "id,user_id,movie_id,ratings,weights",
-        "id,movie_id,ratings,weights",
-      ],
+      "id,movie_id,ratings,weights",
       signal
     ),
   ]);
@@ -144,7 +126,7 @@ async function loadSiteEngagementTotals(
   };
 }
 
-export async function getSiteEngagementTotals(): Promise<SiteEngagementTotals> {
+async function loadTimedSiteEngagementTotals(): Promise<SiteEngagementTotals> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
     controller.abort();
@@ -152,9 +134,23 @@ export async function getSiteEngagementTotals(): Promise<SiteEngagementTotals> {
 
   try {
     return await loadSiteEngagementTotals(controller.signal);
-  } catch {
-    return EMPTY_SITE_ENGAGEMENT_TOTALS;
   } finally {
     clearTimeout(timeoutId);
+  }
+}
+
+// Cache only complete, successful totals. Failed refreshes must not replace good data.
+const getCachedSiteEngagementTotals = unstable_cache(
+  loadTimedSiteEngagementTotals,
+  ["site-engagement-totals-v2"],
+  { revalidate: 60, tags: ["site-engagement-totals"] }
+);
+
+export async function getSiteEngagementTotals(): Promise<SiteEngagementTotals> {
+  try {
+    return await getCachedSiteEngagementTotals();
+  } catch (error) {
+    console.error("Site engagement totals failed", error instanceof Error ? error.message : String(error));
+    return EMPTY_SITE_ENGAGEMENT_TOTALS;
   }
 }
