@@ -1,5 +1,8 @@
 "use client";
 
+import { ratingToPercent } from "./rating-score";
+export { ratingToPercent } from "./rating-score";
+
 export const POPSCORE_RATINGS_UPDATED_EVENT = "popscore-ratings-updated";
 
 type RatingQuestion = {
@@ -28,32 +31,6 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-export function ratingToPercent(rating: number) {
-  const anchors = [
-    { rating: 1, percent: 0 },
-    { rating: 2, percent: 0.4 },
-    { rating: 3, percent: 0.6 },
-    { rating: 4, percent: 0.8 },
-    { rating: 5, percent: 1 },
-  ];
-
-  if (rating <= anchors[0].rating) {
-    return anchors[0].percent;
-  }
-
-  if (rating >= anchors[anchors.length - 1].rating) {
-    return anchors[anchors.length - 1].percent;
-  }
-
-  const upperIndex = anchors.findIndex((anchor) => rating <= anchor.rating);
-  const lower = anchors[upperIndex - 1];
-  const upper = anchors[upperIndex];
-  const rangeProgress =
-    (rating - lower.rating) / (upper.rating - lower.rating);
-
-  return lower.percent + (upper.percent - lower.percent) * rangeProgress;
-}
-
 function calculateSubmissionScore(submission: RatingRow) {
   const score = submission.weights.reduce(
     (total, question) => {
@@ -64,7 +41,7 @@ function calculateSubmissionScore(submission: RatingRow) {
       }
 
       return {
-        percent: total.percent + question.weight * ratingToPercent(rating),
+        percent: total.percent + question.weight * ratingToPercent(rating, submission.genre, submission.weights),
         weight: total.weight + question.weight,
       };
     },

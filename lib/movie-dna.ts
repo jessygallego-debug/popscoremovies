@@ -6,6 +6,7 @@ import {
   GENRE_RATING_CONFIGS,
   type GenreKey,
 } from "@/lib/genre-rating-config";
+import { isDocumentaryQuestionnaire, ratingToPercent } from "./rating-score";
 
 export type MovieDnaRating = {
   created_at: string;
@@ -63,6 +64,7 @@ export type MovieDnaQuestionAverage = {
   average: number | null;
   key: string;
   label: string;
+  percent?: number | null;
 };
 
 const PERSONALITY_DESCRIPTIONS: Record<MovieDnaPersonality, string> = {
@@ -91,6 +93,7 @@ function coreScore(
   key: "story" | "acting" | "rewatch"
 ) {
   if (key === "acting") {
+    if (isDocumentaryQuestionnaire(rating.genre, rating.weights)) return null;
     // Fantasy and Western currently call the shared performance question
     // "Character". Keep those complete ratings comparable with Acting and
     // Voice Acting without mixing in genre-specific questions.
@@ -116,13 +119,13 @@ function isEligibleRating(rating: MovieDnaRating) {
   );
 
   return (
-    questionKeys.length === 5 &&
+    (isDocumentaryQuestionnaire(rating.genre, rating.weights) || questionKeys.length === 5) &&
     questionKeys.every((key) => {
       const value = rating.ratings[key];
       return Number.isFinite(value) && value >= 1 && value <= 5;
     }) &&
     coreScore(rating, "story") !== null &&
-    coreScore(rating, "acting") !== null &&
+    (isDocumentaryQuestionnaire(rating.genre, rating.weights) || coreScore(rating, "acting") !== null) &&
     coreScore(rating, "rewatch") !== null
   );
 }
@@ -174,12 +177,21 @@ export function getMovieDnaGenreQuestionAverages(
       average: values.length > 0 ? average(values) : null,
       key: question.key,
       label: question.name,
+      ...(genre === "documentary"
+        ? {
+            percent: values.length
+              ? Math.round(average(genreRatings
+                  .filter(rating => Number.isFinite(rating.ratings[question.key]))
+                  .map(rating => ratingToPercent(rating.ratings[question.key], rating.genre, rating.weights))) * 100)
+              : null,
+          }
+        : {}),
     };
   });
 }
 
 function average(values: number[]) {
-  return values.reduce((total, value) => total + value, 0) / values.length;
+  return values.length ? values.reduce((total, value) => total + value, 0) / values.length : 0;
 }
 
 function movieHighScore(a: MovieDnaRating, b: MovieDnaRating) {
@@ -195,7 +207,7 @@ export function getMovieDnaRatingsForGenre(
     .sort(movieHighScore);
 }
 
-function getPersonality(story: number, acting: number, rewatch: number) {
+function getPersonality(story: number, acting: number | null, rewatch: number) {
   const traits = [
     { label: "Storyline" as const, personality: "Story Seeker" as const, value: story },
     { label: "Acting" as const, personality: "Performance Fan" as const, value: acting },
@@ -204,7 +216,7 @@ function getPersonality(story: number, acting: number, rewatch: number) {
       personality: "Rewatch Enthusiast" as const,
       value: rewatch,
     },
-  ];
+  ].filter((trait): trait is typeof trait & { value: number } => trait.value !== null);
   const values = traits.map((trait) => trait.value);
 
   if (Math.max(...values) - Math.min(...values) <= 0.35) {
@@ -245,11 +257,12 @@ export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
     eligibleRatings.map((rating) => coreScore(rating, "story")!)
   );
   const actingAverage = average(
-    eligibleRatings.map((rating) => coreScore(rating, "acting")!)
+    eligibleRatings.map((rating) => coreScore(rating, "acting")).filter((value): value is number => value !== null)
   );
   const rewatchAverage = average(
     eligibleRatings.map((rating) => coreScore(rating, "rewatch")!)
   );
+  const hasPerformanceRatings = eligibleRatings.some(rating => coreScore(rating, "acting") !== null);
   const genreGroups = new Map<string, MovieDnaRating[]>();
 
   eligibleRatings.forEach((rating) => {
@@ -280,7 +293,7 @@ export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
     )[0] ?? null;
   const { personality, strongestTrait } = getPersonality(
     storyAverage,
-    actingAverage,
+    hasPerformanceRatings ? actingAverage : null,
     rewatchAverage
   );
 
@@ -295,7 +308,11 @@ export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
     mostRatedGenre,
     personality: eligibleRatings.length >= 5 ? personality : null,
     personalityDescription:
-      eligibleRatings.length >= 5 ? PERSONALITY_DESCRIPTIONS[personality] : "",
+      eligibleRatings.length >= 5
+        ? personality === "Balanced Movie Fan" && !hasPerformanceRatings
+          ? "You value storytelling and rewatchability almost equally."
+          : PERSONALITY_DESCRIPTIONS[personality]
+        : "",
     rewatchAverage,
     storyAverage,
     strongestTrait: eligibleRatings.length >= 5 ? strongestTrait : null,

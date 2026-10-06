@@ -94,7 +94,7 @@ function getLoveTags(dna: MovieDnaResult) {
   ].sort((first, second) => second.value - first.value);
   const favorite = insightGenre(dna);
   return [
-    ...traits.slice(0, 2).map((trait) => trait.label),
+    ...traits.filter(trait => trait.value > 0).slice(0, 2).map((trait) => trait.label),
     ...(favorite ? [`${favorite.genre} Movies`] : []),
     ...(dna.averagePopScore >= 85 ? ["Standout Favorites"] : []),
   ];
@@ -181,7 +181,7 @@ function CoreBreakdown({ dna }: { dna: MovieDnaResult }) {
           dna.eligibleRatings,
           selectedGenreDetails.key
         )
-      : overallTraits.map(([label, average]) => ({ average, key: label, label }));
+      : overallTraits.map(([label, average]) => ({ average: average || null, key: label, label }));
 
   return (
     <div className={panelClass("p-5 sm:p-6")}>
@@ -217,7 +217,7 @@ function CoreBreakdown({ dna }: { dna: MovieDnaResult }) {
       <div className="mt-5 space-y-4">
         {traits.map((trait) => {
           const percent =
-            trait.average === null ? null : averageToPercent(trait.average);
+            "percent" in trait && trait.percent !== undefined ? trait.percent : trait.average === null ? null : averageToPercent(trait.average);
           return (
             <div key={trait.key}>
               <div className="flex items-center justify-between gap-3 text-sm font-black">

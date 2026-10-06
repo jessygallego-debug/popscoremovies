@@ -4,6 +4,10 @@ export type RatingInfoCopy = {
 };
 
 export const ratingInfoCopy: Record<string, RatingInfoCopy> = {
+  presentation: {
+    title: "Presentation / Filmmaking",
+    description: "How effectively was the documentary presented? Consider cinematography, editing, sound, interviews, archival footage, and how those choices support the subject.",
+  },
   actionSequences: {
     title: "Action Sequences",
     description:

@@ -132,11 +132,10 @@ export const GENRE_RATING_CONFIGS = {
   documentary: {
     title: "Documentary",
     questions: [
-      { key: "story", name: "Storyline", weight: 0.3 },
-      { key: "acting", name: "Acting", weight: 0.2 },
+      { key: "story", name: "Storytelling / Structure", weight: 0.35 },
+      { key: "informativeValue", name: "Insight / Informative Value", weight: 0.35 },
+      { key: "presentation", name: "Presentation / Filmmaking", weight: 0.2 },
       { key: "rewatchability", name: "Rewatch Score", weight: 0.1 },
-      { key: "informativeValue", name: "Informative Value", weight: 0.25 },
-      { key: "impact", name: "Impact", weight: 0.15 },
     ],
   },
   war: {

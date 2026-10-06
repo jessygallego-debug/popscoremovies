@@ -184,7 +184,7 @@ export default function RateClient({
   const popScore = Math.round(
     currentGenre.questions.reduce((total, question) => {
       const rating = ratings[question.key] || 0;
-      return total + question.weight * ratingToPercent(rating);
+      return total + question.weight * ratingToPercent(rating, selectedGenre, currentGenre.questions);
     }, 0) * 100
   );
 
@@ -398,7 +398,9 @@ export default function RateClient({
 
         <div className="space-y-3 sm:space-y-5">
           {currentGenre.questions.map((question) => {
-            const ratingInfo = ratingInfoForKey(question.key, question.name);
+            const ratingInfo = selectedGenre === "documentary" && question.key === "story"
+              ? { title: question.name, description: "How clearly and engagingly did the documentary tell its story? Consider structure, pacing, context, and how well its ideas connect." }
+              : ratingInfoForKey(question.key, question.name);
 
             return (
               <div
