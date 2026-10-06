@@ -88,7 +88,7 @@ test.describe("Documentary form", () => {
     await page.goto("/rate?genre=documentary");
     // Wait for React to attach handlers to the server-rendered form.
     await page.waitForFunction(() => Array.from(document.querySelectorAll("button")).some(button => Object.keys(button).some(key => key.startsWith("__reactProps"))));
-    for (const question of questions) await expect(page.getByText(question.name, { exact: true })).toBeVisible();
+    for (const question of questions) await expect(page.getByRole("heading", { name: question.name, exact: true })).toBeVisible();
     await expect(page.getByText("Acting", { exact: true })).toHaveCount(0);
     for (const [answer, expected] of [[1, 0], [2, 25], [3, 50], [4, 75], [5, 100]]) {
       const buttons = page.getByRole("button").filter({ has: page.locator("span", { hasText: new RegExp(`^${answer}$`) }) });
@@ -101,7 +101,7 @@ test.describe("Documentary form", () => {
     }
     await page.screenshot({ path: "artifacts/documentary-rating-desktop.png", fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByText("Presentation / Filmmaking", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Presentation / Filmmaking", exact: true })).toBeVisible();
     await page.screenshot({ path: "artifacts/documentary-rating-mobile.png", fullPage: true });
     expect(errors).toEqual([]);
   });
@@ -118,4 +118,3 @@ test.describe("Documentary form", () => {
     await expect(page.getByRole("heading", { name: "40%", exact: true })).toBeVisible();
   });
 });
-
