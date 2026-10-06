@@ -89,7 +89,7 @@ test.describe("Documentary form", () => {
     // Wait for React to attach handlers to the server-rendered form.
     await page.waitForFunction(() => Array.from(document.querySelectorAll("button")).some(button => Object.keys(button).some(key => key.startsWith("__reactProps"))));
     for (const question of questions) await expect(page.getByRole("heading", { name: question.name, exact: true })).toBeVisible();
-    await expect(page.getByText("Acting", { exact: true })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Acting", exact: true })).toHaveCount(0);
     for (const [answer, expected] of [[1, 0], [2, 25], [3, 50], [4, 75], [5, 100]]) {
       const buttons = page.getByRole("button").filter({ has: page.locator("span", { hasText: new RegExp(`^${answer}$`) }) });
       await expect(buttons).toHaveCount(4);
@@ -108,7 +108,7 @@ test.describe("Documentary form", () => {
   test("Horror retains five questions and the existing 40% score for all 2s", async ({ page }) => {
     await page.goto("/rate?genre=horror");
     await page.waitForFunction(() => Array.from(document.querySelectorAll("button")).some(button => Object.keys(button).some(key => key.startsWith("__reactProps"))));
-    await expect(page.getByText("Acting", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Acting", exact: true })).toBeVisible();
     const buttons = page.getByRole("button").filter({ has: page.locator("span", { hasText: /^2$/ }) });
     await expect(buttons).toHaveCount(5);
     for (let index = 0; index < 5; index++) {
