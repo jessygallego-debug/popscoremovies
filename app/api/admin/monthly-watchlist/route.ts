@@ -5,6 +5,11 @@ import {
   monthKeyWithOffset,
   sendMonthlyWatchlistTestForMonth,
 } from "@/lib/monthly-watchlist";
+import {
+  releaseCandidateReport,
+  setReleaseOverride,
+} from "@/lib/releases/candidates";
+import { collectMovieReleases } from "@/lib/releases/collector";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -38,11 +43,15 @@ export async function GET(request: Request) {
     return Response.json({
       monthKey,
       snapshot: await getMonthlyWatchlistSnapshot(monthKey),
+      releases:
+        process.env.MONTHLY_RELEASE_COLLECTOR_ENABLED === "true"
+          ? await releaseCandidateReport(monthKey)
+          : null,
     });
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : String(error) },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
@@ -55,13 +64,62 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => null)) as {
-    action?: "finalize" | "generate" | "send_test";
+    action?:
+      | "finalize"
+      | "generate"
+      | "send_test"
+      | "collect"
+      | "approve"
+      | "exclude"
+      | "replace";
     monthKey?: string;
+    eventId?: string;
+    replacementEventId?: string;
   } | null;
   const monthKey = body?.monthKey ?? monthKeyWithOffset(new Date(), 1);
 
   try {
-    if (body?.action === "generate" || body?.action === "finalize") {
+    if (body?.action === "collect") {
+      await collectMovieReleases();
+    } else if (
+      body?.action === "approve" ||
+      body?.action === "exclude" ||
+      body?.action === "replace"
+    ) {
+      const existing = await getMonthlyWatchlistSnapshot(monthKey);
+      if (
+        existing?.campaign.status === "sent" ||
+        existing?.campaign.status === "sending"
+      )
+        throw new Error("This campaign is locked for delivery.");
+      if (!body.eventId) throw new Error("A candidate is required.");
+      if (body.action === "replace") {
+        if (!body.replacementEventId)
+          throw new Error("Choose a replacement candidate.");
+        const report = await releaseCandidateReport(monthKey);
+        const original = report.candidates.find(
+          (c) => c.eventId === body.eventId,
+        );
+        const replacement = report.candidates.find(
+          (c) => c.eventId === body.replacementEventId,
+        );
+        if (
+          !original ||
+          !replacement?.eligible ||
+          original.category !== replacement.category
+        )
+          throw new Error(
+            "Replacement must be an eligible candidate in the same section.",
+          );
+        await setReleaseOverride(monthKey, body.replacementEventId, "approve");
+      }
+      await setReleaseOverride(
+        monthKey,
+        body.eventId,
+        body.action === "approve" ? "approve" : "exclude",
+      );
+      await generateMonthlyWatchlist(monthKey, { finalize: false });
+    } else if (body?.action === "generate" || body?.action === "finalize") {
       await generateMonthlyWatchlist(monthKey, {
         finalize: body.action === "finalize",
       });
@@ -74,6 +132,10 @@ export async function POST(request: Request) {
     return Response.json({
       monthKey,
       snapshot: await getMonthlyWatchlistSnapshot(monthKey),
+      releases:
+        process.env.MONTHLY_RELEASE_COLLECTOR_ENABLED === "true"
+          ? await releaseCandidateReport(monthKey)
+          : null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

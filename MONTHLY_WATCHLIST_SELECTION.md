@@ -1,5 +1,11 @@
 # Monthly Watchlist selection
 
+The October 6 automated release policy supersedes the four-slot/manual-feed rules
+below. See [AUTOMATED_RELEASES.md](AUTOMATED_RELEASES.md): up to five per section,
+engagement-based relevance, audited source evidence, optional admin oversight,
+and a four-pick safety gate for automatic delivery. The older broadcast history
+below remains useful for understanding the original problem.
+
 Applies to website campaigns and separately prepared Resend broadcasts.
 
 Each subscriber email must contain four digital rent/buy releases and four subscription streaming arrivals for the target calendar month in the US. Research the complete month's release calendar, including upcoming dates, before selecting movies. Do not restrict research to Netflix or the first few results from a source.

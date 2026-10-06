@@ -18,19 +18,19 @@ test("popular streaming picks include alternatives to a dominant provider", () =
     movie("n3", 80, "Netflix"), movie("n4", 70, "Netflix"),
     movie("disclosure", 60, "Peacock"), movie("apple", 50, "Apple TV+"),
   ]);
-  assert.deepEqual(selected.map(m => m.movieId), ["n1", "n2", "disclosure", "apple"]);
+  assert.deepEqual(selected.map(m => m.movieId), ["n1", "n2", "n3", "disclosure", "apple"]);
 });
 
-test("fills four streaming slots when alternatives cannot satisfy the provider cap", () => {
+test("fills up to five streaming slots when alternatives cannot satisfy the provider cap", () => {
   const selected = selectMonthlyPicks([movie("1", 100, "Netflix"), movie("2", 90, "Netflix"),
     movie("3", 80, "Netflix"), movie("4", 70, "Netflix"), movie("5", 60, "Peacock")]);
-  assert.deepEqual(selected.map(m => m.movieId), ["1", "2", "3", "5"]);
+  assert.deepEqual(selected.map(m => m.movieId), ["1", "2", "3", "4", "5"]);
 });
 
-test("four digital picks are ranked by popularity and late feed entries remain eligible", () => {
+test("five digital picks are ranked by popularity and late feed entries remain eligible", () => {
   const candidates = Array.from({ length: 45 }, (_, i) => movie(String(i), i));
   candidates.push(movie("spider-man", 1000));
-  assert.deepEqual(selectMonthlyPicks(candidates).map(m => m.movieId), ["spider-man", "44", "43", "42"]);
+  assert.deepEqual(selectMonthlyPicks(candidates).map(m => m.movieId), ["spider-man", "44", "43", "42", "41"]);
 });
 
 test("separate digital and subscription arrivals can feature the same movie", () => {
@@ -38,12 +38,12 @@ test("separate digital and subscription arrivals can feature the same movie", ()
   assert.equal(selected.length, 2);
 });
 
-test("incomplete or duplicate sections cannot be finalized", () => {
+test("quality permits fewer than five; empty sections cannot be finalized", () => {
   const digital = [1,2,3,4].map(i => movie(`d${i}`, i));
   const streaming = [1,2,3,4].map(i => movie(`s${i}`, i, "Peacock"));
   assert.doesNotThrow(() => assertCompleteMonthlyPicks([...digital, ...streaming]));
-  assert.throws(() => assertCompleteMonthlyPicks([...digital.slice(0,2), ...streaming]), /four verified digital.*found 2/);
-  assert.throws(() => assertCompleteMonthlyPicks([...digital, ...streaming.slice(0,3), streaming[0]]), /four verified streaming.*found 3/);
+  assert.doesNotThrow(() => assertCompleteMonthlyPicks([...digital.slice(0,2), ...streaming]));
+  assert.throws(() => assertCompleteMonthlyPicks(streaming), /digital.*found 0/);
 });
 
 test("invalid popularity cannot distort rankings", () => {

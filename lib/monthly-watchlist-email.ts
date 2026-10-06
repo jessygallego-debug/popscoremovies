@@ -2,9 +2,7 @@ import { absoluteUrl } from "@/lib/site-url";
 import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
 
-export type MonthlyWatchlistCategory =
-  | "digital"
-  | "subscription_streaming";
+export type MonthlyWatchlistCategory = "digital" | "subscription_streaming";
 
 export type MonthlyWatchlistMovie = {
   availabilityType: "rent_buy" | "subscription";
@@ -61,30 +59,22 @@ function displayDate(date: string) {
   }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
-function availabilityLine(movie: MonthlyWatchlistMovie, sendDate: string) {
-  const isAvailable = movie.releaseDate <= sendDate;
-
-  if (movie.category === "digital") {
-    return isAvailable
-      ? "Available Now"
-      : `Available ${displayDate(movie.releaseDate)}`;
-  }
-
-  return isAvailable
-    ? "Streaming Now"
-    : `Streaming ${displayDate(movie.releaseDate)}`;
+function availabilityLine(movie: MonthlyWatchlistMovie) {
+  return movie.category === "digital"
+    ? `Digital ${displayDate(movie.releaseDate)}`
+    : `${movie.provider ?? "Streaming"} • ${displayDate(movie.releaseDate)}`;
 }
 
-function movieCard(movie: MonthlyWatchlistMovie, sendDate: string) {
+function movieCard(movie: MonthlyWatchlistMovie, width: number) {
   const image = posterUrl(movie.posterPath, "w342");
   const movieUrl = absoluteUrl(
-    movieHref({ id: movie.movieId, title: movie.movieTitle })
+    movieHref({ id: movie.movieId, title: movie.movieTitle }),
   );
-  const availability = availabilityLine(movie, sendDate);
+  const availability = availabilityLine(movie);
   const service = movie.category === "digital" ? "Rent / Buy" : movie.provider;
 
   return `
-    <div class="movie-card" style="box-sizing:border-box;display:inline-block;padding:0 .5% 16px;vertical-align:top;width:25%">
+    <div class="movie-card" style="box-sizing:border-box;display:inline-block;padding:0 .5% 16px;vertical-align:top;width:${width}%">
       <div class="movie-card-shell" style="background:#0f172a;border:1px solid #263249;border-radius:14px;overflow:hidden;text-align:left">
         <div class="movie-poster-wrap">
           <img class="movie-poster" src="${escapeHtml(image ?? "")}" width="160" alt="${escapeHtml(movie.movieTitle)} poster" style="border:0;display:block;height:auto;width:100%;aspect-ratio:2/3;object-fit:cover" />
@@ -116,7 +106,9 @@ function movieSection(input: {
         <p style="color:#f8fafc;font-size:14px;font-weight:700;line-height:1.45;margin:6px 0 0">${escapeHtml(input.subtitle)}</p>
       </div>
       <div style="font-size:0;margin:0 -.5%">${input.movies
-        .map((movie) => movieCard(movie, input.sendDate))
+        .map((movie) =>
+          movieCard(movie, 100 / Math.max(1, Math.min(5, input.movies.length))),
+        )
         .join("")}</div>
     </div>`;
 }
@@ -149,9 +141,9 @@ export function renderMonthlyWatchlistEmail(input: {
       ? `COMING TO DIGITAL\nMovies arriving to Rent or Buy this month\n\n${digitalMovies
           .map(
             (movie) =>
-              `${movie.movieTitle}\n${availabilityLine(movie, input.sendDate)}\nRent / Buy\n${absoluteUrl(
-                movieHref({ id: movie.movieId, title: movie.movieTitle })
-              )}`
+              `${movie.movieTitle}\n${availabilityLine(movie)}\nRent / Buy\n${absoluteUrl(
+                movieHref({ id: movie.movieId, title: movie.movieTitle }),
+              )}`,
           )
           .join("\n\n")}`
       : "",
@@ -159,9 +151,9 @@ export function renderMonthlyWatchlistEmail(input: {
       ? `COMING TO STREAMING\nMovies arriving on subscription streaming this month\n\n${streamingMovies
           .map(
             (movie) =>
-              `${movie.movieTitle}\n${availabilityLine(movie, input.sendDate)}\n${movie.provider}\n${absoluteUrl(
-                movieHref({ id: movie.movieId, title: movie.movieTitle })
-              )}`
+              `${movie.movieTitle}\n${availabilityLine(movie)}\n${movie.provider}\n${absoluteUrl(
+                movieHref({ id: movie.movieId, title: movie.movieTitle }),
+              )}`,
           )
           .join("\n\n")}`
       : "",
@@ -171,7 +163,7 @@ export function renderMonthlyWatchlistEmail(input: {
     subject,
     previewText,
     text: `🍿 The PopScore Monthly Watchlist\nHere's what's coming home this month.\n\n${monthName.toUpperCase()} ${input.year}\n\n${textSections.join(
-      "\n\n"
+      "\n\n",
     )}\n\nDon't know what to watch?\nLet PopScore find your next movie based on what you actually like.\nFind My Movie: ${movieMatchUrl}\nRate more movies. Get better recommendations.\n\nUnsubscribe: ${input.unsubscribeUrl}`,
     html: `<!doctype html>
       <html>
@@ -199,7 +191,8 @@ export function renderMonthlyWatchlistEmail(input: {
                 heading: "📺 Coming to Streaming",
                 movies: streamingMovies,
                 sendDate: input.sendDate,
-                subtitle: "Movies arriving on subscription streaming this month",
+                subtitle:
+                  "Movies arriving on subscription streaming this month",
               })}
               <div style="background:#111827;border-top:1px solid #263249;padding:30px 22px;text-align:center">
                 <h2 style="color:#f8fafc;font-size:24px;line-height:1.2;margin:0 0 10px">Don't know what to watch?</h2>

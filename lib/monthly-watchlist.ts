@@ -8,7 +8,12 @@ import {
 import { absoluteUrl } from "@/lib/site-url";
 import { tmdbImagePath } from "@/lib/tmdb";
 import { filterEligibleMonthlyWatchlistRecipients } from "@/lib/monthly-watchlist-preference";
-import { assertCompleteMonthlyPicks, monthlyPopularityScore, selectMonthlyPicks } from "@/lib/monthly-watchlist-selection";
+import {
+  assertCompleteMonthlyPicks,
+  monthlyPopularityScore,
+  selectMonthlyPicks,
+} from "@/lib/monthly-watchlist-selection";
+import { automatedMonthlyPicks } from "@/lib/releases/candidates";
 
 type SupabaseConfig = {
   authUrl: string;
@@ -152,7 +157,10 @@ async function supabaseRest<T>(path: string, init: RequestInit = {}) {
 function isDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T00:00:00.000Z`);
-  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+  return (
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value
+  );
 }
 
 function monthParts(monthKey: string) {
@@ -172,14 +180,15 @@ export function monthKeyWithOffset(date: Date, offset: number) {
     year: "numeric",
   });
   const parts = Object.fromEntries(
-    formatter.formatToParts(date).map((part) => [part.type, part.value])
+    formatter.formatToParts(date).map((part) => [part.type, part.value]),
   );
-  const target = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1 + offset, 1));
+  const target = new Date(
+    Date.UTC(Number(parts.year), Number(parts.month) - 1 + offset, 1),
+  );
 
-  return `${target.getUTCFullYear()}-${String(target.getUTCMonth() + 1).padStart(
-    2,
-    "0"
-  )}-01`;
+  return `${target.getUTCFullYear()}-${String(
+    target.getUTCMonth() + 1,
+  ).padStart(2, "0")}-01`;
 }
 
 export function easternCalendarParts(date: Date) {
@@ -191,7 +200,7 @@ export function easternCalendarParts(date: Date) {
       year: "numeric",
     })
       .formatToParts(date)
-      .map((part) => [part.type, part.value])
+      .map((part) => [part.type, part.value]),
   );
 
   return {
@@ -204,14 +213,14 @@ export function easternCalendarParts(date: Date) {
 function easternDateKey(date: Date) {
   const parts = easternCalendarParts(date);
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(
-    parts.day
+    parts.day,
   ).padStart(2, "0")}`;
 }
 
 function normalizedFeedItem(
   item: ReleaseFeedItem,
   monthKey: string,
-  now: Date
+  now: Date,
 ): ReleaseFeedItem | null {
   const movieId = String(item.movieId ?? "").trim();
   const category = item.category;
@@ -251,11 +260,20 @@ function normalizedFeedItem(
     )
       .split(",")
       .map((value) => value.trim().toLowerCase())
-      .filter(Boolean)
+      .filter(Boolean),
   );
 
   if (category === "digital" && availabilityType === "rent_buy" && !provider) {
-    return { ...item, availabilityType, category, movieId, provider, releaseDate, sourceUrl, verifiedAt };
+    return {
+      ...item,
+      availabilityType,
+      category,
+      movieId,
+      provider,
+      releaseDate,
+      sourceUrl,
+      verifiedAt,
+    };
   }
 
   if (
@@ -264,7 +282,16 @@ function normalizedFeedItem(
     provider &&
     allowedStreamingProviders.has(provider.toLowerCase())
   ) {
-    return { ...item, availabilityType, category, movieId, provider, releaseDate, sourceUrl, verifiedAt };
+    return {
+      ...item,
+      availabilityType,
+      category,
+      movieId,
+      provider,
+      releaseDate,
+      sourceUrl,
+      verifiedAt,
+    };
   }
 
   return null;
@@ -275,7 +302,7 @@ async function getReleaseFeed(monthKey: string) {
 
   if (!feedUrl) {
     throw new Error(
-      "MONTHLY_WATCHLIST_RELEASE_FEED_URL is required; campaign selection will not guess availability dates."
+      "MONTHLY_WATCHLIST_RELEASE_FEED_URL is required; campaign selection will not guess availability dates.",
     );
   }
 
@@ -294,21 +321,27 @@ async function getReleaseFeed(monthKey: string) {
 
   const data = (await response.json()) as { items?: ReleaseFeedItem[] };
   if ((data.items?.length ?? 0) > MAX_FEED_ITEMS) {
-    throw new Error(`Release feed exceeds ${MAX_FEED_ITEMS} entries; supply a complete month-specific feed rather than truncating candidates.`);
+    throw new Error(
+      `Release feed exceeds ${MAX_FEED_ITEMS} entries; supply a complete month-specific feed rather than truncating candidates.`,
+    );
   }
   const now = new Date();
   const seen = new Set<string>();
   const items = (data.items ?? [])
     .map((item) => normalizedFeedItem(item, monthKey, now))
-    .filter((item): item is ReleaseFeedItem & {
-      availabilityType: "rent_buy" | "subscription";
-      category: MonthlyWatchlistCategory;
-      movieId: string;
-      provider: string | null;
-      releaseDate: string;
-      sourceUrl: string;
-      verifiedAt: string;
-    } => Boolean(item))
+    .filter(
+      (
+        item,
+      ): item is ReleaseFeedItem & {
+        availabilityType: "rent_buy" | "subscription";
+        category: MonthlyWatchlistCategory;
+        movieId: string;
+        provider: string | null;
+        releaseDate: string;
+        sourceUrl: string;
+        verifiedAt: string;
+      } => Boolean(item),
+    )
     .filter((item) => {
       const key = `${item.category}:${item.movieId}`;
 
@@ -336,15 +369,17 @@ async function getTmdbMovie(movieId: string) {
     {
       headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       cache: "no-store",
-    }
+    },
   );
 
   if (!response.ok) return null;
-  const movie = await response.json() as TmdbCampaignMovie;
+  const movie = (await response.json()) as TmdbCampaignMovie;
   return movie.adult === false ? movie : null;
 }
 
 async function selectMovies(monthKey: string) {
+  if (process.env.MONTHLY_RELEASE_COLLECTOR_ENABLED === "true")
+    return automatedMonthlyPicks(monthKey);
   const feedItems = await getReleaseFeed(monthKey);
   const enriched = await Promise.all(
     feedItems.map(async (item) => {
@@ -370,7 +405,7 @@ async function selectMovies(monthKey: string) {
         sourceUrl: item.sourceUrl,
         verifiedAt: item.verifiedAt,
       } satisfies MonthlyWatchlistMovie;
-    })
+    }),
   );
   const candidates = enriched
     .filter((movie): movie is MonthlyWatchlistMovie => Boolean(movie))
@@ -396,14 +431,14 @@ function mapMovie(row: CampaignMovieRow): MonthlyWatchlistMovie {
 
 async function campaignByMonth(monthKey: string) {
   const rows = await supabaseRest<CampaignRow[]>(
-    `/monthly_watchlists?month_key=eq.${monthKey}&select=*&limit=1`
+    `/monthly_watchlists?month_key=eq.${monthKey}&select=*&limit=1`,
   );
   return rows[0] ?? null;
 }
 
 async function campaignMovies(watchlistId: string) {
   const rows = await supabaseRest<CampaignMovieRow[]>(
-    `/monthly_watchlist_movies?watchlist_id=eq.${watchlistId}&select=*&order=category.asc,display_order.asc`
+    `/monthly_watchlist_movies?watchlist_id=eq.${watchlistId}&select=*&order=category.asc,display_order.asc`,
   );
   return rows.map(mapMovie);
 }
@@ -426,13 +461,13 @@ async function saveCampaignFailure(monthKey: string, error: unknown) {
       }),
       headers: { Prefer: "resolution=merge-duplicates,return=representation" },
       method: "POST",
-    }
+    },
   );
 }
 
 export async function generateMonthlyWatchlist(
   monthKey: string,
-  options: { finalize: boolean }
+  options: { finalize: boolean },
 ) {
   const { month, year } = monthParts(monthKey);
   const existing = await campaignByMonth(monthKey);
@@ -446,7 +481,26 @@ export async function generateMonthlyWatchlist(
     if (options.finalize) assertCompleteMonthlyPicks(movies);
 
     if (movies.length === 0) {
-      throw new Error("No verified campaign movies remained after TMDB validation.");
+      throw new Error(
+        "No verified campaign movies remained after TMDB validation.",
+      );
+    }
+
+    if (process.env.MONTHLY_RELEASE_COLLECTOR_ENABLED === "true") {
+      const campaign = await supabaseRest<CampaignRow>(
+        "/rpc/save_release_campaign",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            p_month: monthKey,
+            p_movies: movies,
+            p_finalize: options.finalize,
+            p_subject: monthlyWatchlistSubject(month),
+            p_preview: PREVIEW_TEXT,
+          }),
+        },
+      );
+      return { campaign, movies };
     }
 
     const campaigns = await supabaseRest<CampaignRow[]>(
@@ -463,9 +517,11 @@ export async function generateMonthlyWatchlist(
           subject: monthlyWatchlistSubject(month),
           year,
         }),
-        headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+        headers: {
+          Prefer: "resolution=merge-duplicates,return=representation",
+        },
         method: "POST",
-      }
+      },
     );
     const campaign = campaigns[0];
 
@@ -473,7 +529,7 @@ export async function generateMonthlyWatchlist(
 
     await supabaseRest<unknown>(
       `/monthly_watchlist_movies?watchlist_id=eq.${campaign.id}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
     await supabaseRest<CampaignMovieRow[]>("/monthly_watchlist_movies", {
       body: JSON.stringify(
@@ -490,7 +546,7 @@ export async function generateMonthlyWatchlist(
           source_url: movie.sourceUrl,
           verified_at: movie.verifiedAt,
           watchlist_id: campaign.id,
-        }))
+        })),
       ),
       headers: { Prefer: "return=representation" },
       method: "POST",
@@ -498,7 +554,8 @@ export async function generateMonthlyWatchlist(
 
     return { campaign, movies };
   } catch (error) {
-    await saveCampaignFailure(monthKey, error).catch(() => undefined);
+    if (process.env.MONTHLY_RELEASE_COLLECTOR_ENABLED !== "true")
+      await saveCampaignFailure(monthKey, error).catch(() => undefined);
     throw error;
   }
 }
@@ -507,7 +564,9 @@ function unsubscribeSecret() {
   const secret = process.env.EMAIL_UNSUBSCRIBE_SECRET;
 
   if (!secret || secret.length < 32) {
-    throw new Error("EMAIL_UNSUBSCRIBE_SECRET must contain at least 32 characters.");
+    throw new Error(
+      "EMAIL_UNSUBSCRIBE_SECRET must contain at least 32 characters.",
+    );
   }
 
   return secret;
@@ -538,7 +597,8 @@ export function verifyMonthlyUnsubscribeToken(token: string) {
     return null;
   }
 
-  return supplied.length === expected.length && timingSafeEqual(supplied, expected)
+  return supplied.length === expected.length &&
+    timingSafeEqual(supplied, expected)
     ? userId
     : null;
 }
@@ -556,7 +616,7 @@ async function authUsers() {
           Authorization: `Bearer ${config.serviceRoleKey}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) throw new Error("Could not load eligible email users.");
@@ -572,22 +632,24 @@ async function authUsers() {
 async function prepareRecipients(watchlistId: string) {
   const [profiles, users, suppressions] = await Promise.all([
     supabaseRest<{ user_id: string }[]>(
-      "/profiles?email_monthly_watchlist=eq.true&select=user_id"
+      "/profiles?email_monthly_watchlist=eq.true&select=user_id",
     ),
     authUsers(),
     supabaseRest<{ email: string }[]>(
-      "/monthly_watchlist_suppressions?select=email"
+      "/monthly_watchlist_suppressions?select=email",
     ),
   ]);
   const eligibleIds = new Set(profiles.map((profile) => profile.user_id));
-  const suppressed = new Set(suppressions.map((row) => row.email.toLowerCase()));
+  const suppressed = new Set(
+    suppressions.map((row) => row.email.toLowerCase()),
+  );
   const recipients = users
     .filter(
       (user) =>
         eligibleIds.has(user.id) &&
         user.email_confirmed_at &&
         user.email &&
-        !suppressed.has(user.email.toLowerCase())
+        !suppressed.has(user.email.toLowerCase()),
     )
     .map((user) => ({
       email: user.email,
@@ -601,20 +663,22 @@ async function prepareRecipients(watchlistId: string) {
       "/monthly_watchlist_recipients?on_conflict=watchlist_id,user_id",
       {
         body: JSON.stringify(recipients),
-        headers: { Prefer: "resolution=ignore-duplicates,return=representation" },
+        headers: {
+          Prefer: "resolution=ignore-duplicates,return=representation",
+        },
         method: "POST",
-      }
+      },
     );
   }
 
   const pendingRecipients = await supabaseRest<RecipientRow[]>(
-    `/monthly_watchlist_recipients?watchlist_id=eq.${watchlistId}&status=eq.pending&select=*`
+    `/monthly_watchlist_recipients?watchlist_id=eq.${watchlistId}&status=eq.pending&select=*`,
   );
 
   return filterEligibleMonthlyWatchlistRecipients(
     pendingRecipients,
     eligibleIds,
-    suppressed
+    suppressed,
   );
 }
 
@@ -625,7 +689,7 @@ async function claimRecipient(recipientId: string) {
       body: JSON.stringify({ status: "sending", attempts: 1 }),
       headers: { Prefer: "return=representation" },
       method: "PATCH",
-    }
+    },
   );
   return rows[0] ?? null;
 }
@@ -656,10 +720,10 @@ async function sendEmail(input: {
 
   const token = createMonthlyUnsubscribeToken(input.recipient.user_id);
   const unsubscribeUrl = absoluteUrl(
-    `/unsubscribe/monthly-watchlist?token=${encodeURIComponent(token)}`
+    `/unsubscribe/monthly-watchlist?token=${encodeURIComponent(token)}`,
   );
   const oneClickUnsubscribeUrl = absoluteUrl(
-    `/api/email/monthly-watchlist/unsubscribe?token=${encodeURIComponent(token)}`
+    `/api/email/monthly-watchlist/unsubscribe?token=${encodeURIComponent(token)}`,
   );
   const email = renderMonthlyWatchlistEmail({
     month: input.campaign.month,
@@ -693,7 +757,9 @@ async function sendEmail(input: {
   };
 
   if (!response.ok || !body.id) {
-    throw new Error(body.message ?? `Resend request failed (${response.status}).`);
+    throw new Error(
+      body.message ?? `Resend request failed (${response.status}).`,
+    );
   }
 
   return body.id;
@@ -713,7 +779,7 @@ export async function sendMonthlyWatchlist(monthKey: string) {
       body: JSON.stringify({ status: "sending" }),
       headers: { Prefer: "return=representation" },
       method: "PATCH",
-    }
+    },
   );
 
   if (!claimedCampaigns[0]) {
@@ -730,7 +796,10 @@ export async function sendMonthlyWatchlist(monthKey: string) {
   }
 
   if (!movies.length) {
-    await markCampaignSendFailure(campaign.id, "Campaign has no verified movies.");
+    await markCampaignSendFailure(
+      campaign.id,
+      "Campaign has no verified movies.",
+    );
     throw new Error("Campaign has no verified movies.");
   }
 
@@ -746,7 +815,7 @@ export async function sendMonthlyWatchlist(monthKey: string) {
   if (!recipients.length) {
     await markCampaignSendFailure(
       campaign.id,
-      "Campaign has no eligible unsuppressed recipients."
+      "Campaign has no eligible unsuppressed recipients.",
     );
     throw new Error("Campaign has no eligible unsuppressed recipients.");
   }
@@ -759,7 +828,11 @@ export async function sendMonthlyWatchlist(monthKey: string) {
     if (!claimed) continue;
 
     try {
-      const providerEmailId = await sendEmail({ campaign, movies, recipient: claimed });
+      const providerEmailId = await sendEmail({
+        campaign,
+        movies,
+        recipient: claimed,
+      });
       successfulSends += 1;
       await supabaseRest<unknown>(
         `/monthly_watchlist_recipients?id=eq.${claimed.id}`,
@@ -770,7 +843,7 @@ export async function sendMonthlyWatchlist(monthKey: string) {
             status: "sent",
           }),
           method: "PATCH",
-        }
+        },
       );
     } catch (error) {
       failedSends += 1;
@@ -778,11 +851,14 @@ export async function sendMonthlyWatchlist(monthKey: string) {
         `/monthly_watchlist_recipients?id=eq.${claimed.id}`,
         {
           body: JSON.stringify({
-            last_error: (error instanceof Error ? error.message : String(error)).slice(0, 1000),
+            last_error: (error instanceof Error
+              ? error.message
+              : String(error)
+            ).slice(0, 1000),
             status: "failed",
           }),
           method: "PATCH",
-        }
+        },
       );
     }
   }
@@ -851,16 +927,20 @@ export async function getAuthorizedAdmin(accessToken: string) {
   if (!response.ok) return null;
   const user = (await response.json()) as AuthUser;
   const ids = new Set(
-    (process.env.POPSCORE_ADMIN_USER_IDS ?? "").split(",").map((value) => value.trim()).filter(Boolean)
+    (process.env.POPSCORE_ADMIN_USER_IDS ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
   );
   const emails = new Set(
     (process.env.POPSCORE_ADMIN_EMAILS ?? "")
       .split(",")
       .map((value) => value.trim().toLowerCase())
-      .filter(Boolean)
+      .filter(Boolean),
   );
 
-  return ids.has(user.id) || (user.email && emails.has(user.email.toLowerCase()))
+  return ids.has(user.id) ||
+    (user.email && emails.has(user.email.toLowerCase()))
     ? user
     : null;
 }
@@ -868,7 +948,7 @@ export async function getAuthorizedAdmin(accessToken: string) {
 async function sendMonthlyWatchlistTest(
   campaign: CampaignRow,
   movies: MonthlyWatchlistMovie[],
-  admin: AuthUser
+  admin: AuthUser,
 ) {
   const testEmail = process.env.MONTHLY_WATCHLIST_TEST_EMAIL ?? admin.email;
   const apiKey = process.env.RESEND_API_KEY;
@@ -910,18 +990,22 @@ async function sendMonthlyWatchlistTest(
 
 export async function sendMonthlyWatchlistTestForMonth(
   monthKey: string,
-  admin: AuthUser
+  admin: AuthUser,
 ) {
   const campaign = await campaignByMonth(monthKey);
 
-  if (!campaign) throw new Error("Generate the campaign before sending a test.");
+  if (!campaign)
+    throw new Error("Generate the campaign before sending a test.");
   const movies = await campaignMovies(campaign.id);
   if (!movies.length) throw new Error("Campaign has no movies to preview.");
 
   return sendMonthlyWatchlistTest(campaign, movies, admin);
 }
 
-export async function suppressMonthlyWatchlistEmail(email: string, reason: string) {
+export async function suppressMonthlyWatchlistEmail(
+  email: string,
+  reason: string,
+) {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return;
 
@@ -931,7 +1015,7 @@ export async function suppressMonthlyWatchlistEmail(email: string, reason: strin
       body: JSON.stringify({ email: normalizedEmail, reason }),
       headers: { Prefer: "resolution=merge-duplicates" },
       method: "POST",
-    }
+    },
   );
 }
 

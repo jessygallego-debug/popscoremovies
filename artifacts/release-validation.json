@@ -1,0 +1,225 @@
+{
+  "verifiedAt": "2026-10-06T09:00:06.8414078Z",
+  "collection": {
+    "start": "2026-10-01",
+    "end": "2026-11-30",
+    "counts": {
+      "digital": 175,
+      "streaming": 74,
+      "detections": 0,
+      "snapshots": 310,
+      "movies": 310
+    },
+    "errors": [],
+    "notes": [],
+    "sources": [
+      "TMDB US release dates",
+      "TMDB US subscription availability"
+    ],
+    "futureStreamingCoverage": "No independently verified free future-streaming feed is enabled. Provider detections cannot fill future dates."
+  },
+  "drafts": [
+    {
+      "monthKey": "2026-10-01",
+      "picks": 10
+    },
+    {
+      "monthKey": "2026-11-01",
+      "picks": 2
+    }
+  ],
+  "months": [
+    {
+      "month": "2026-10-01",
+      "discovered": {
+        "digital": 145,
+        "streaming": 61
+      },
+      "highMediumPercent": 47,
+      "eligibleDigital": 13,
+      "eligibleStreaming": 43,
+      "selected": [
+        {
+          "movieTitle": "Spider-Man: Brand New Day",
+          "movieId": "969681",
+          "category": "digital",
+          "provider": null,
+          "releaseDate": "2026-10-06",
+          "confidence": "MEDIUM",
+          "rankingScore": 406.38,
+          "sourceUrl": "https://www.themoviedb.org/movie/969681/release-dates"
+        },
+        {
+          "movieTitle": "Runner",
+          "movieId": "1377237",
+          "category": "digital",
+          "provider": null,
+          "releaseDate": "2026-10-13",
+          "confidence": "MEDIUM",
+          "rankingScore": 312.16,
+          "sourceUrl": "https://www.themoviedb.org/movie/1377237/release-dates"
+        },
+        {
+          "movieTitle": "Insidious: Out of the Further",
+          "movieId": "1291595",
+          "category": "digital",
+          "provider": null,
+          "releaseDate": "2026-10-06",
+          "confidence": "MEDIUM",
+          "rankingScore": 299.92,
+          "sourceUrl": "https://www.themoviedb.org/movie/1291595/release-dates"
+        },
+        {
+          "movieTitle": "Verity",
+          "movieId": "1283515",
+          "category": "digital",
+          "provider": null,
+          "releaseDate": "2026-10-27",
+          "confidence": "MEDIUM",
+          "rankingScore": 271.87,
+          "sourceUrl": "https://www.themoviedb.org/movie/1283515/release-dates"
+        },
+        {
+          "movieTitle": "Practical Magic 2",
+          "movieId": "1302904",
+          "category": "digital",
+          "provider": null,
+          "releaseDate": "2026-10-13",
+          "confidence": "MEDIUM",
+          "rankingScore": 255.62,
+          "sourceUrl": "https://www.themoviedb.org/movie/1302904/release-dates"
+        },
+        {
+          "movieTitle": "Disclosure Day",
+          "movieId": "1275779",
+          "category": "subscription_streaming",
+          "provider": "Peacock",
+          "releaseDate": "2026-10-09",
+          "confidence": "MEDIUM",
+          "rankingScore": 333.48,
+          "sourceUrl": "https://www.themoviedb.org/movie/1275779/release-dates"
+        },
+        {
+          "movieTitle": "Minions & Monsters",
+          "movieId": "1315772",
+          "category": "subscription_streaming",
+          "provider": "Peacock",
+          "releaseDate": "2026-10-28",
+          "confidence": "MEDIUM",
+          "rankingScore": 331.37,
+          "sourceUrl": "https://www.themoviedb.org/movie/1315772/release-dates"
+        },
+        {
+          "movieTitle": "John Wick: Chapter 4",
+          "movieId": "603692",
+          "category": "subscription_streaming",
+          "provider": "Prime Video",
+          "releaseDate": "2026-10-01",
+          "confidence": "MEDIUM",
+          "rankingScore": 326.23,
+          "sourceUrl": "https://www.themoviedb.org/movie/603692/release-dates"
+        },
+        {
+          "movieTitle": "The Substance",
+          "movieId": "933260",
+          "category": "subscription_streaming",
+          "provider": "Hulu",
+          "releaseDate": "2026-10-01",
+          "confidence": "MEDIUM",
+          "rankingScore": 309.37,
+          "sourceUrl": "https://www.themoviedb.org/movie/933260/release-dates"
+        },
+        {
+          "movieTitle": "Gladiator II",
+          "movieId": "558449",
+          "category": "subscription_streaming",
+          "provider": "Netflix",
+          "releaseDate": "2026-10-21",
+          "confidence": "MEDIUM",
+          "rankingScore": 306.55,
+          "sourceUrl": "https://www.themoviedb.org/movie/558449/release-dates"
+        }
+      ],
+      "conflicts": [],
+      "poorProviders": [
+        "Apple TV+"
+      ],
+      "benchmarks": [
+        {
+          "title": "Disclosure Day",
+          "matches": [
+            {
+              "category": "subscription_streaming",
+              "date": "2026-10-09",
+              "confidence": "MEDIUM"
+            }
+          ]
+        },
+        {
+          "title": "Spider-Man: Brand New Day",
+          "matches": [
+            {
+              "category": "digital",
+              "date": "2026-10-06",
+              "confidence": "MEDIUM"
+            }
+          ]
+        }
+      ],
+      "unmappedTitles": []
+    },
+    {
+      "month": "2026-11-01",
+      "discovered": {
+        "digital": 30,
+        "streaming": 13
+      },
+      "highMediumPercent": 47,
+      "eligibleDigital": 1,
+      "eligibleStreaming": 1,
+      "selected": [
+        {
+          "movieTitle": "The Odyssey",
+          "movieId": "1368337",
+          "category": "digital",
+          "provider": null,
+          "releaseDate": "2026-11-17",
+          "confidence": "MEDIUM",
+          "rankingScore": 371.34,
+          "sourceUrl": "https://www.themoviedb.org/movie/1368337/release-dates"
+        },
+        {
+          "movieTitle": "Possible Love",
+          "movieId": "1483525",
+          "category": "subscription_streaming",
+          "provider": "Netflix",
+          "releaseDate": "2026-11-06",
+          "confidence": "MEDIUM",
+          "rankingScore": 118.01,
+          "sourceUrl": "https://www.themoviedb.org/movie/1483525/release-dates"
+        }
+      ],
+      "conflicts": [],
+      "poorProviders": [
+        "Disney+",
+        "Hulu",
+        "HBO Max",
+        "Peacock",
+        "Paramount+",
+        "Prime Video",
+        "Apple TV+"
+      ],
+      "benchmarks": [
+        {
+          "title": "Disclosure Day",
+          "matches": []
+        },
+        {
+          "title": "Spider-Man: Brand New Day",
+          "matches": []
+        }
+      ],
+      "unmappedTitles": []
+    }
+  ]
+}

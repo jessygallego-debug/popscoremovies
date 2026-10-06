@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/movie-releases",
+      "schedule": "0 12 * * *"
+    },
+    {
       "path": "/api/cron/monthly-watchlist",
       "schedule": "0 14 * * *"
     },

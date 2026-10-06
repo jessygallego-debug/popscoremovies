@@ -104,16 +104,19 @@ The release feed is queried with `month=YYYY-MM&region=US` and must return:
 
 Unknown, stale, malformed, or incorrectly categorized entries are excluded. The
 campaign does not infer future subscription dates from TMDB watch-provider data.
-TMDB is used to verify movie identity and poster data. Current TMDB popularity
-determines the ranking; feed-assigned scores do not override popularity. Each
-section requires four verified movies before finalizing or sending. Streaming
+TMDB is used to verify movie identity and poster data. With the automated collector,
+popularity, vote count, theatrical prominence and franchise information determine
+ranking. Each section selects up to five trustworthy notable movies. Automatic delivery
+requires at least four per section by default; insufficient coverage skips delivery. Streaming
 picks prefer a maximum of two per service, filling from the most popular
 remaining movies when there are too few alternatives. The same movie may appear
 in both sections for separate verified digital and subscription arrivals.
 See `MONTHLY_WATCHLIST_SELECTION.md` for the matching Resend broadcast workflow.
 
-The Vercel cron runs daily at 14:00 UTC. It creates the next month's draft on the
-26th (Eastern calendar date), then refreshes, finalizes, and sends on the 1st.
+The release collector runs daily at 12:00 UTC, independently of email sending.
+It refreshes drafts and finalizes during the last three Eastern calendar days.
+The monthly cron runs daily at 14:00 UTC, rechecks releases and sends on the 1st
+only after the start-month and coverage gates pass.
 Keep `MONTHLY_WATCHLIST_ENABLED` unset while testing. Use
 `/admin/monthly-watchlist` to generate, preview, finalize, and send a test email.
 After the SQL migration, feed, Resend webhook, desktop preview, and mobile inbox
@@ -121,6 +124,9 @@ test are verified, set:
 
 ```text
 MONTHLY_WATCHLIST_ENABLED=true
+MONTHLY_RELEASE_COLLECTOR_ENABLED=true
+MONTHLY_WATCHLIST_START_MONTH=2026-11-01
+MONTHLY_WATCHLIST_MIN_AUTOMATIC_PICKS=4
 ```
 
 Configure Resend to send bounce, complaint, and suppression webhooks to
@@ -130,8 +136,11 @@ Configure Resend to send bounce, complaint, and suppression webhooks to
 Production uses `https://www.popscoremovies.com/api/email/resend-webhook`.
 Redeploy after changing server environment variables. Verify unsigned requests
 are rejected and signed events succeed before enabling the monthly campaign.
-The release feed must be configured and a test email verified first; setting
+For the legacy mode, the release feed must be configured first; setting
 the cron secret alone does not enable monthly sending or backfill a missed month.
+For automatic collection, apply the three October 6 release migrations instead.
+See [AUTOMATED_RELEASES.md](AUTOMATED_RELEASES.md) for source policy, validation
+results, known coverage gaps, and operational controls. No paid release API is required.
 
 ## Profile avatars
 
