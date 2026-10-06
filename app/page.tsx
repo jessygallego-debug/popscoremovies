@@ -117,11 +117,14 @@ function HeroVisual({
               "left-[32%] top-[4%] z-20 rotate-[2deg] scale-100 md:left-[27%] md:top-[1%]",
               "right-[1%] top-[24%] z-10 rotate-[8deg] scale-[0.88] md:right-[0%] md:top-[20%]",
             ];
+            const position = heroMovies.length === 1
+              ? "left-[29%] top-[4%] z-20 rotate-[2deg] scale-100 md:left-[26%] md:top-[1%]"
+              : offsets[index];
 
             return (
               <div
                 key={movie.id}
-                className={`absolute block w-[42%] overflow-hidden rounded-[1.35rem] border border-white/15 bg-slate-950 shadow-2xl shadow-black/60 transition duration-500 motion-safe:animate-[popFloat_8s_ease-in-out_infinite] hover:z-30 hover:-translate-y-2 hover:rotate-0 hover:border-yellow-400/70 md:w-[48%] ${offsets[index]}`}
+                className={`absolute block w-[42%] overflow-hidden rounded-[1.35rem] border border-white/15 bg-slate-950 shadow-2xl shadow-black/60 transition duration-500 motion-safe:animate-[popFloat_8s_ease-in-out_infinite] hover:z-30 hover:-translate-y-2 hover:rotate-0 hover:border-yellow-400/70 md:w-[48%] ${position}`}
                 style={{ animationDelay: `${index * 0.8}s` }}
               >
                 <Link data-remember-scroll href={seoMovieHref(movie)} className="block">
