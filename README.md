@@ -104,7 +104,13 @@ The release feed is queried with `month=YYYY-MM&region=US` and must return:
 
 Unknown, stale, malformed, or incorrectly categorized entries are excluded. The
 campaign does not infer future subscription dates from TMDB watch-provider data.
-TMDB is used to verify movie identity and poster data and as a ranking signal.
+TMDB is used to verify movie identity and poster data. Current TMDB popularity
+determines the ranking; feed-assigned scores do not override popularity. Each
+section requires four verified movies before finalizing or sending. Streaming
+picks prefer a maximum of two per service, filling from the most popular
+remaining movies when there are too few alternatives. The same movie may appear
+in both sections for separate verified digital and subscription arrivals.
+See `MONTHLY_WATCHLIST_SELECTION.md` for the matching Resend broadcast workflow.
 
 The Vercel cron runs daily at 14:00 UTC. It creates the next month's draft on the
 26th (Eastern calendar date), then refreshes, finalizes, and sends on the 1st.

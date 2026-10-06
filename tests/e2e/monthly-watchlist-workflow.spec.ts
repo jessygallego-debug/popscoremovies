@@ -92,16 +92,19 @@ test("Monthly Watchlist workflow is persisted and sends each recipient once", as
             sourceUrl: "https://release-source.example/movie/202",
             verifiedAt,
           },
-        ],
+        ].flatMap((item) => Array.from({ length: 4 }, (_, index) => ({
+          ...item,
+          movieId: Number(item.movieId) + index,
+          provider: item.category === "subscription_streaming"
+            ? ["Netflix", "Netflix", "Peacock", "Apple TV+"][index]
+            : null,
+        }))),
       });
     }
 
-    if (url.includes("api.themoviedb.org/3/movie/101")) {
-      return json({ id: 101, popularity: 100, poster_path: "/101.jpg", title: "Digital Movie", vote_count: 500 });
-    }
-
-    if (url.includes("api.themoviedb.org/3/movie/202")) {
-      return json({ id: 202, popularity: 80, poster_path: "/202.jpg", title: "Streaming Movie", vote_count: 400 });
+    if (url.includes("api.themoviedb.org/3/movie/")) {
+      const id = Number(new URL(url).pathname.split("/").at(-1));
+      return json({ adult: false, id, popularity: 100, poster_path: `/${id}.jpg`, title: id < 200 ? "Digital Movie" : "Streaming Movie", vote_count: 500 });
     }
 
     if (url.includes("/auth/v1/admin/users")) {
@@ -203,7 +206,7 @@ test("Monthly Watchlist workflow is persisted and sends each recipient once", as
 
   try {
     const generated = await generateMonthlyWatchlist(monthKey, { finalize: true });
-    expect(generated.movies).toHaveLength(2);
+    expect(generated.movies).toHaveLength(8);
 
     const sent = await sendMonthlyWatchlist(monthKey);
     expect(sent).toEqual({ failedSends: 0, recipientCount: 1, successfulSends: 1 });

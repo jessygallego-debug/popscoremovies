@@ -8,6 +8,7 @@ import {
 import { absoluteUrl } from "@/lib/site-url";
 import { tmdbImagePath } from "@/lib/tmdb";
 import { filterEligibleMonthlyWatchlistRecipients } from "@/lib/monthly-watchlist-preference";
+import { assertCompleteMonthlyPicks, monthlyPopularityScore, selectMonthlyPicks } from "@/lib/monthly-watchlist-selection";
 
 type SupabaseConfig = {
   authUrl: string;
@@ -102,8 +103,7 @@ export type MonthlyWatchlistSnapshot = {
 };
 
 const RESEND_API_URL = "https://api.resend.com/emails";
-const MAX_FEED_ITEMS = 40;
-const MAX_ITEMS_PER_SECTION = 4;
+const MAX_FEED_ITEMS = 400;
 const FEED_VERIFICATION_MAX_AGE_MS = 21 * 24 * 60 * 60 * 1000;
 const PREVIEW_TEXT =
   "New digital releases, new streaming arrivals, and your next movie night.";
@@ -293,10 +293,12 @@ async function getReleaseFeed(monthKey: string) {
   }
 
   const data = (await response.json()) as { items?: ReleaseFeedItem[] };
+  if ((data.items?.length ?? 0) > MAX_FEED_ITEMS) {
+    throw new Error(`Release feed exceeds ${MAX_FEED_ITEMS} entries; supply a complete month-specific feed rather than truncating candidates.`);
+  }
   const now = new Date();
   const seen = new Set<string>();
   const items = (data.items ?? [])
-    .slice(0, MAX_FEED_ITEMS)
     .map((item) => normalizedFeedItem(item, monthKey, now))
     .filter((item): item is ReleaseFeedItem & {
       availabilityType: "rent_buy" | "subscription";
@@ -353,13 +355,7 @@ async function selectMovies(monthKey: string) {
         return null;
       }
 
-      const feedScore = Number.isFinite(item.rankingScore)
-        ? Math.min(Math.max(Number(item.rankingScore), 0), 100)
-        : 0;
-      const rankingScore =
-        feedScore * 1000 +
-        Math.max(movie.popularity ?? 0, 0) +
-        Math.log10(Math.max(movie.vote_count ?? 0, 1)) * 10;
+      const rankingScore = monthlyPopularityScore(movie.popularity);
 
       return {
         availabilityType: item.availabilityType,
@@ -379,17 +375,7 @@ async function selectMovies(monthKey: string) {
   const candidates = enriched
     .filter((movie): movie is MonthlyWatchlistMovie => Boolean(movie))
     .sort((a, b) => b.rankingScore - a.rankingScore);
-  const selectedIds = new Set<string>();
-
-  return (["digital", "subscription_streaming"] as const).flatMap((category) =>
-    candidates
-      .filter((movie) => movie.category === category && !selectedIds.has(movie.movieId))
-      .slice(0, MAX_ITEMS_PER_SECTION)
-      .map((movie, index) => {
-        selectedIds.add(movie.movieId);
-        return { ...movie, displayOrder: index + 1 };
-      })
-  );
+  return selectMonthlyPicks(candidates);
 }
 
 function mapMovie(row: CampaignMovieRow): MonthlyWatchlistMovie {
@@ -457,6 +443,7 @@ export async function generateMonthlyWatchlist(
 
   try {
     const movies = await selectMovies(monthKey);
+    if (options.finalize) assertCompleteMonthlyPicks(movies);
 
     if (movies.length === 0) {
       throw new Error("No verified campaign movies remained after TMDB validation.");
@@ -718,6 +705,7 @@ export async function sendMonthlyWatchlist(monthKey: string) {
   if (!campaign || campaign.status !== "ready") {
     throw new Error("Campaign must be finalized and ready before sending.");
   }
+  assertCompleteMonthlyPicks(await campaignMovies(campaign.id));
 
   const claimedCampaigns = await supabaseRest<CampaignRow[]>(
     `/monthly_watchlists?id=eq.${campaign.id}&status=eq.ready`,
