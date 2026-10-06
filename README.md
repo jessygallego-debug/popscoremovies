@@ -107,15 +107,16 @@ campaign does not infer future subscription dates from TMDB watch-provider data.
 TMDB is used to verify movie identity and poster data. With the automated collector,
 popularity, vote count, theatrical prominence and franchise information determine
 ranking. Each section selects up to five trustworthy notable movies. Automatic delivery
-requires at least four per section by default; insufficient coverage skips delivery. Streaming
+requires at least two per section by default; insufficient coverage skips delivery. Streaming
 picks prefer a maximum of two per service, filling from the most popular
 remaining movies when there are too few alternatives. The same movie may appear
 in both sections for separate verified digital and subscription arrivals.
 See `MONTHLY_WATCHLIST_SELECTION.md` for the matching Resend broadcast workflow.
 
-The release collector runs daily at 12:00 UTC, independently of email sending.
-It refreshes drafts and finalizes during the last three Eastern calendar days.
-The monthly cron runs daily at 14:00 UTC, rechecks releases and sends on the 1st
+The release collector runs at 12:00 UTC on the last Eastern calendar day of each
+month and finalizes the next month's picks. Its cron invokes on days 28–31 and
+skips days that are not the actual month-end, including in leap years.
+The monthly cron runs at 14:00 UTC on the 1st, rechecks releases and sends
 only after the start-month and coverage gates pass.
 Keep `MONTHLY_WATCHLIST_ENABLED` unset while testing. Use
 `/admin/monthly-watchlist` to generate, preview, finalize, and send a test email.
@@ -126,7 +127,7 @@ test are verified, set:
 MONTHLY_WATCHLIST_ENABLED=true
 MONTHLY_RELEASE_COLLECTOR_ENABLED=true
 MONTHLY_WATCHLIST_START_MONTH=2026-11-01
-MONTHLY_WATCHLIST_MIN_AUTOMATIC_PICKS=4
+MONTHLY_WATCHLIST_MIN_AUTOMATIC_PICKS=2
 ```
 
 Configure Resend to send bounce, complaint, and suppression webhooks to

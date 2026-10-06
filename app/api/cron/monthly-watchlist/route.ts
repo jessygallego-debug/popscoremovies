@@ -31,22 +31,6 @@ export async function GET(request: Request) {
   const easternDate = easternCalendarParts(now);
 
   try {
-    const daysInMonth = new Date(
-      Date.UTC(easternDate.year, easternDate.month, 0),
-    ).getUTCDate();
-    if (easternDate.day >= daysInMonth - 2) {
-      const monthKey = monthKeyWithOffset(now, 1);
-      const result = await generateMonthlyWatchlist(monthKey, {
-        finalize: true,
-      });
-
-      return Response.json({
-        generated: result.movies.length,
-        monthKey,
-        status: "ready",
-      });
-    }
-
     if (easternDate.day === 1) {
       const monthKey = monthKeyWithOffset(now, 0);
       if (
@@ -78,7 +62,7 @@ export async function GET(request: Request) {
         finalize: true,
       });
       const minimum = Number(
-        process.env.MONTHLY_WATCHLIST_MIN_AUTOMATIC_PICKS ?? "4",
+        process.env.MONTHLY_WATCHLIST_MIN_AUTOMATIC_PICKS ?? "2",
       );
       if (!Number.isInteger(minimum) || minimum < 1 || minimum > 5)
         throw new Error("Invalid automatic campaign minimum.");

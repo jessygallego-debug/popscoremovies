@@ -1,6 +1,6 @@
 # Automated PopScore releases
 
-Daily collection uses existing TMDB and Supabase infrastructure. No paid API is
+Month-end collection and a send-day recheck use existing TMDB and Supabase infrastructure. No paid API is
 added. The external monthly feed remains available as a legacy mode when
 `MONTHLY_RELEASE_COLLECTOR_ENABLED` is not `true`.
 
@@ -73,15 +73,17 @@ implement the same contract after cost approval.
 ## Schedule and controls
 
 `/api/cron/movie-releases` uses `CRON_SECRET` and collects today through +60 days
-at 12:00 UTC daily. A database lease prevents overlapping collectors. Requests
+at 12:00 UTC on the last Eastern calendar day of each month. The cron invokes on
+days 28–31; the endpoint skips non-month-end days before making source requests.
+Explicitly requested admin/validation refreshes remain available. A database lease prevents overlapping collectors. Requests
 are bounded, use timeouts and isolate failures. Evidence is retained on source
 failure; date changes supersede previous evidence without deleting its audit.
 
-The last three days refresh/finalize the next month. The send-day job rechecks
+The month-end job refreshes/finalizes the next month. The send-day job rechecks
 releases, rebuilds selection, and sends through the existing monthly workflow.
 Email copy always states dated Digital/service releases without assuming they
 are available now. `MONTHLY_WATCHLIST_START_MONTH=2026-11-01` prevents earlier
-sending. `MONTHLY_WATCHLIST_MIN_AUTOMATIC_PICKS=4` skips a sparse month rather
+sending. `MONTHLY_WATCHLIST_MIN_AUTOMATIC_PICKS=2` skips a sparse month rather
 than emailing a misleadingly incomplete selection. A sparse campaign stays
 available in admin; automatic delivery does not fabricate replacements.
 
@@ -98,12 +100,13 @@ See [release-validation.json](artifacts/release-validation.json) for counts,
 confidence percentages, selected movies, benchmark coverage and provider gaps.
 October reaches five eligible picks per section and includes both requested
 benchmarks. November is still sparse as of October 6 and would be skipped by the
-automatic send guard unless later daily refreshes provide enough eligible picks.
+automatic send guard unless later refreshes provide enough eligible picks.
 
 Unit tests cover country/type filtering, baseline snapshots, availability-only
 dates, conflicts, stale evidence, provider-note ambiguity and engagement ranking.
 PGlite tests apply existing campaign and new release migrations, preserve data,
 verify backend allow/deny and client denial, ensure collector exclusivity, and
-check atomic rollback and locked-campaign behavior. No Supabase preview branch
+check atomic rollback and locked-campaign behavior. Schedule tests cover every
+day in ordinary/leap years and Eastern timezone boundaries. No Supabase preview branch
 exists; no paid branch was created. The same migration is applied to production
 for protected live collection. Subscriber and test emails were not sent.

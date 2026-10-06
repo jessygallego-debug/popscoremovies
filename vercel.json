@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/movie-releases",
-      "schedule": "0 12 * * *"
+      "schedule": "0 12 28-31 * *"
     },
     {
       "path": "/api/cron/monthly-watchlist",
-      "schedule": "0 14 * * *"
+      "schedule": "0 14 1 * *"
     },
     {
       "path": "/api/cron/yearly-recap",

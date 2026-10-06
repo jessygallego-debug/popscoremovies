@@ -3,7 +3,7 @@
 The October 6 automated release policy supersedes the four-slot/manual-feed rules
 below. See [AUTOMATED_RELEASES.md](AUTOMATED_RELEASES.md): up to five per section,
 engagement-based relevance, audited source evidence, optional admin oversight,
-and a four-pick safety gate for automatic delivery. The older broadcast history
+and a two-pick safety gate for automatic delivery. The older broadcast history
 below remains useful for understanding the original problem.
 
 Applies to website campaigns and separately prepared Resend broadcasts.
