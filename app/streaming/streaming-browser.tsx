@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import MovieGrid from "@/app/components/movie-grid";
+import MobileFilterMenu from "@/app/components/mobile-filter-menu";
 import { MOVIE_GENRE_FILTERS, type MovieSummary } from "@/lib/tmdb";
 import { MOVIE_REGION_OPTIONS } from "@/lib/movie-locale";
 
@@ -99,25 +100,28 @@ export default function StreamingBrowser() {
 
   return <div>
     <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
-      <div className="grid gap-5 sm:grid-cols-3">
-        <label className="text-sm font-bold">Country
-          <select aria-label="Country" className={selectClass} value={country} disabled={!ready} onChange={event => { setCountry(event.target.value); setServices([]); setPage(1); setSearch(""); }}>
-            {MOVIE_REGION_OPTIONS.filter(option => option.value).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-        </label>
-        <label className="text-sm font-bold">Genre
-          <select aria-label="Genre" className={selectClass} value={genre} onChange={event => { setGenre(event.target.value); setPage(1); }}>
-            <option value="">All genres</option>{genres.map(option => <option key={option.id} value={option.id}>{option.name}</option>)}
-          </select>
-        </label>
-        <form onSubmit={event => { event.preventDefault(); setQuery(movieSearch.trim()); setPage(1); }} className="text-sm font-bold">
-          <label htmlFor="streaming-movie-search">Search movies</label>
-          <div className="flex items-center gap-2">
-            <input id="streaming-movie-search" type="search" maxLength={100} minLength={2} className={selectClass} value={movieSearch} placeholder="Search your services’ catalogs"
-              onChange={event => { setMovieSearch(event.target.value); if (!event.target.value) { setQuery(""); setPage(1); } }} />
-            <button type="submit" className="mt-2 rounded-xl border border-yellow-400/50 px-3 py-3 text-yellow-300">Search</button>
-          </div>
-        </form>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <MobileFilterMenu
+          className="relative block"
+          ariaLabel="Country"
+          label="Country"
+          labelClassName="mb-2 block text-sm font-bold"
+          summaryClassName="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-yellow-400/55 bg-slate-950/85 px-4 text-sm font-black text-yellow-300 shadow-inner outline-none transition hover:border-yellow-300 hover:bg-yellow-400/10 [&::-webkit-details-marker]:hidden"
+          selectedValue={country}
+          options={MOVIE_REGION_OPTIONS.filter(option => option.value).map(option => ({ label: option.label, value: option.value }))}
+          onSelect={value => { if (!ready) return; setCountry(value); setServices([]); setPage(1); setSearch(""); }}
+        />
+        <MobileFilterMenu
+          className="relative block"
+          ariaLabel="Genre"
+          label="Genre"
+          labelClassName="mb-2 block text-sm font-bold"
+          summaryClassName="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-yellow-400/55 bg-slate-950/85 px-4 text-sm font-black text-yellow-300 shadow-inner outline-none transition hover:border-yellow-300 hover:bg-yellow-400/10 [&::-webkit-details-marker]:hidden"
+          selectedValue={genre}
+          options={[{ label: "All genres", value: "" }, ...genres.map(option => ({ label: option.name, value: option.id }))]}
+          onSelect={value => { setGenre(value); setPage(1); }}
+        />
+
       </div>
       <p className="mt-3 text-xs text-slate-400">Your country and services are saved in this browser.</p>
       <fieldset className="mt-6">
@@ -147,6 +151,14 @@ export default function StreamingBrowser() {
           {services.length > 0 && <button type="button" onClick={() => { setServices([]); setPage(1); }} className="mt-4 text-sm font-bold text-yellow-300">Clear Service Selection ({services.length})</button>}
         </>}
       </fieldset>
+        <form onSubmit={event => { event.preventDefault(); setQuery(movieSearch.trim()); setPage(1); }} className="mt-6 max-w-xl text-sm font-bold">
+          <label htmlFor="streaming-movie-search">Search movies</label>
+          <div className="flex items-center gap-2">
+            <input id="streaming-movie-search" type="search" maxLength={100} minLength={2} className={selectClass} value={movieSearch} placeholder="Search your services’ catalogs"
+              onChange={event => { setMovieSearch(event.target.value); if (!event.target.value) { setQuery(""); setPage(1); } }} />
+            <button type="submit" className="mt-2 rounded-xl border border-yellow-400/50 px-3 py-3 text-yellow-300">Search</button>
+          </div>
+        </form>
     </div>
     <div className="mt-8" aria-busy={loading}>
       <h2 className="mb-4 text-2xl font-black">Movies on Your Services</h2>
