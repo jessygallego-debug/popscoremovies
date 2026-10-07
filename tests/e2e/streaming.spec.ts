@@ -15,10 +15,12 @@ test("streaming remembers selections and combines services with filters", async 
   await expect(page.getByRole("button", { name: "Netflix", exact: true })).toHaveAttribute("aria-pressed", "true");
   const request = page.waitForRequest(req => {
     const params = new URL(req.url()).searchParams;
-    return req.url().includes("/api/streaming?") && params.get("services") === "8,9" && params.get("genre") === "28" && params.get("year") === "2020";
+    return req.url().includes("/api/streaming?") && params.get("services") === "8,9" && params.get("genre") === "28" && params.get("query") === "Batman";
   });
   await page.getByLabel("Genre", { exact: true }).selectOption("28");
-  await page.getByLabel("Year", { exact: true }).selectOption("2020");
+  await expect(page.getByLabel("Year", { exact: true })).toHaveCount(0);
+  await page.getByLabel("Search movies", { exact: true }).fill("Batman");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
   await request;
   await expect(page.getByText(/No subscription movies match/)).toBeVisible();
   await page.reload();
@@ -60,4 +62,20 @@ test("streaming renders movie cards and paginates on mobile", async ({ page }) =
   await expect(page.getByRole("button", { name: "Next", exact: true })).toBeDisabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: "artifacts/streaming-mobile.png", fullPage: true });
+});
+
+test("streaming groups channel versions and restores an old channel selection", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("popscore.streaming.v1", JSON.stringify({ country: "US", services: ["3"] })));
+  await page.route("**/api/streaming?*", route => {
+    const params = new URL(route.request().url()).searchParams;
+    return route.fulfill({ json: params.get("mode") === "providers" ? { providers: [
+      { provider_id: 2, provider_name: "Paramount+ Amazon Channel" },
+      { provider_id: 1, provider_name: "Paramount+" },
+      { provider_id: 3, provider_name: "Paramount+ Apple TV Channel" },
+    ] } : { movies: [], totalPages: 1 } });
+  });
+  await page.goto("/streaming");
+  await expect(page.getByRole("button", { name: "Paramount+", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: /Amazon Channel|Apple TV Channel/ })).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("popscore.streaming.v1")!).services)).toEqual(["1"]);
 });

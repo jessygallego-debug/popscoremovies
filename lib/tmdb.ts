@@ -1078,3 +1078,15 @@ export async function getMovieCollection(id: string) {
     ),
   };
 }
+export async function getStreamingSearchPage(query: string, page: number) {
+  const params = new URLSearchParams({ query, page: String(page), include_adult: "false", language: "en-US" });
+  const result = await tmdbFetch<TmdbListResponse>(`/search/movie?${params}`, { strict: true, signal: AbortSignal.timeout(15000) });
+  if (!result) throw new Error("Streaming search unavailable.");
+  return result;
+}
+
+export async function getStreamingSubscriptionIds(movieId: number, region: string) {
+  const result = await tmdbFetch<TmdbMovieWatchProvidersResponse>(`/movie/${movieId}/watch/providers`, { strict: true, signal: AbortSignal.timeout(15000), revalidate: 43200 });
+  if (!result) throw new Error("Streaming availability unavailable.");
+  return (result.results?.[region]?.flatrate ?? []).map(provider => provider.provider_id);
+}

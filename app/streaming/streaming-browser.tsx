@@ -5,7 +5,7 @@ import MovieGrid from "@/app/components/movie-grid";
 import { MOVIE_GENRE_FILTERS, type MovieSummary } from "@/lib/tmdb";
 import { MOVIE_REGION_OPTIONS } from "@/lib/movie-locale";
 
-type Provider = { provider_id: number; provider_name: string };
+import { groupStreamingProviders, type StreamingProvider as Provider } from "@/lib/streaming-providers";
 const storageKey = "popscore.streaming.v1";
 const selectClass = "mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-white";
 const genres = MOVIE_GENRE_FILTERS.filter(genre => /^\d+$/.test(genre.id));
@@ -18,7 +18,8 @@ export default function StreamingBrowser() {
   const [providerCountry, setProviderCountry] = useState("");
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("");
-  const [year, setYear] = useState("");
+  const [movieSearch, setMovieSearch] = useState("");
+  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [movies, setMovies] = useState<MovieSummary[]>([]);
   const [totalPages, setTotalPages] = useState(0);
@@ -58,8 +59,12 @@ export default function StreamingBrowser() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
         if (controller.signal.aborted) return;
-        setProviders(data.providers);
-        setServices(current => current.filter(id => data.providers.some((provider: Provider) => String(provider.provider_id) === id)));
+        const groupedProviders = groupStreamingProviders(data.providers);
+        setProviders(groupedProviders);
+        setServices(current => [...new Set(current.flatMap(id => {
+          const provider = groupedProviders.find(provider => provider.provider_ids?.includes(Number(id)));
+          return provider ? [String(provider.provider_id)] : [];
+        }))]);
         setProviderCountry(country);
       }).catch(err => { if (!controller.signal.aborted) setProviderError(err.message); });
     return () => controller.abort();
@@ -74,7 +79,7 @@ export default function StreamingBrowser() {
     if (!ready || providerCountry !== country || !serviceKey) { setLoading(false); return; }
     const controller = new AbortController();
     setLoading(true);
-    const params = new URLSearchParams({ country, services: serviceKey, genre, year, page: String(page) });
+    const params = new URLSearchParams({ country, services: serviceKey, genre, query, page: String(page) });
     fetch(`/api/streaming?${params}`, { signal: controller.signal })
       .then(async response => {
         const data = await response.json();
@@ -85,7 +90,7 @@ export default function StreamingBrowser() {
       }).catch(err => { if (!controller.signal.aborted) setError(err.message); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [country, serviceKey, genre, year, page, ready, providerCountry, retry]);
+  }, [country, serviceKey, genre, query, page, ready, providerCountry, retry]);
 
   function toggleService(id: string) {
     setServices(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id]);
@@ -105,11 +110,14 @@ export default function StreamingBrowser() {
             <option value="">All genres</option>{genres.map(option => <option key={option.id} value={option.id}>{option.name}</option>)}
           </select>
         </label>
-        <label className="text-sm font-bold">Year
-          <select aria-label="Year" className={selectClass} value={year} onChange={event => { setYear(event.target.value); setPage(1); }}>
-            <option value="">All years</option>{Array.from({ length: new Date().getFullYear() - 1899 }, (_, index) => String(new Date().getFullYear() - index)).map(value => <option key={value}>{value}</option>)}
-          </select>
-        </label>
+        <form onSubmit={event => { event.preventDefault(); setQuery(movieSearch.trim()); setPage(1); }} className="text-sm font-bold">
+          <label htmlFor="streaming-movie-search">Search movies</label>
+          <div className="flex items-center gap-2">
+            <input id="streaming-movie-search" type="search" maxLength={100} minLength={2} className={selectClass} value={movieSearch} placeholder="Search your services’ catalogs"
+              onChange={event => { setMovieSearch(event.target.value); if (!event.target.value) { setQuery(""); setPage(1); } }} />
+            <button type="submit" className="mt-2 rounded-xl border border-yellow-400/50 px-3 py-3 text-yellow-300">Search</button>
+          </div>
+        </form>
       </div>
       <p className="mt-3 text-xs text-slate-400">Your country and services are saved in this browser.</p>
       <fieldset className="mt-6">
@@ -136,7 +144,7 @@ export default function StreamingBrowser() {
       {providerError || error ? <div>{error && <p role="alert" className="text-amber-300">{error}</p>}<button type="button" onClick={() => setRetry(value => value + 1)} className="mt-3 rounded-xl border border-yellow-400 px-4 py-2 font-bold text-yellow-300">Try again</button></div>
         : loading ? <p role="status" className="text-slate-300">Finding streaming movies…</p>
         : !services.length ? <p role="status" className="text-slate-300">Choose your services to see what’s streaming.</p>
-        : providerCountry === country && !movies.length ? <p role="status" className="text-slate-300">No subscription movies match these selections. Try another service, genre, or year.</p>
+        : providerCountry === country && !movies.length ? <p role="status" className="text-slate-300">No subscription movies match these selections. Try another service, genre, or movie title.</p>
         : <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"><MovieGrid movies={movies} returnTo="/streaming" /></div>}
       {!loading && !error && totalPages > 1 && <nav aria-label="Streaming movie pages" className="mt-6 flex items-center justify-center gap-4">
         <button type="button" disabled={page === 1} onClick={() => setPage(value => value - 1)} className="rounded-xl border border-slate-700 px-4 py-3 disabled:opacity-40">Previous</button>

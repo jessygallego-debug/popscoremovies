@@ -1,4 +1,6 @@
-import { getStreamingMovies, getStreamingProviders, MOVIE_GENRE_FILTERS } from "@/lib/tmdb";
+import { searchStreamingCatalog } from "@/lib/streaming-search";
+import { groupStreamingProviders } from "@/lib/streaming-providers";
+import { getStreamingMovies, getStreamingProviders, getStreamingSearchPage, getStreamingSubscriptionIds, MOVIE_GENRE_FILTERS } from "@/lib/tmdb";
 import { MOVIE_REGION_OPTIONS } from "@/lib/movie-locale";
 
 export async function GET(request: Request) {
@@ -9,23 +11,33 @@ export async function GET(request: Request) {
   }
   try {
     const providers = await getStreamingProviders(region);
-    if (input.get("mode") === "providers") return Response.json({ providers });
+    if (input.get("mode") === "providers") return Response.json({ providers: groupStreamingProviders(providers) });
     const ids = [...new Set((input.get("services") ?? "").split(",").filter(Boolean))];
     if (!ids.length || ids.length > 50 || ids.some(id => !providers.some(p => String(p.provider_id) === id))) {
       return Response.json({ error: "Choose valid streaming services for this country." }, { status: 400 });
     }
     const genre = input.get("genre") ?? "";
-    const year = input.get("year") ?? "";
+    const query = (input.get("query") ?? "").trim();
     const page = input.get("page") ?? "1";
     if ((genre && !MOVIE_GENRE_FILTERS.some(g => g.id === genre && /^\d+$/.test(g.id))) ||
-      (year && (!/^\d{4}$/.test(year) || Number(year) < 1900 || Number(year) > new Date().getFullYear())) ||
+      (query && (query.length < 2 || query.length > 100)) ||
       !/^\d+$/.test(page) || Number(page) < 1 || Number(page) > 500) {
       return Response.json({ error: "Invalid movie filters." }, { status: 400 });
     }
-    const params = new URLSearchParams({ watch_region: region, with_watch_providers: ids.join("|"),
+    const groups = groupStreamingProviders(providers);
+    const expandedIds = [...new Set(groups.filter(group => group.provider_ids?.some(id => ids.includes(String(id)))).flatMap(group => group.provider_ids ?? [group.provider_id]))];
+    if (query) {
+      try {
+        return Response.json(await searchStreamingCatalog(query, expandedIds, genre, Number(page), getStreamingSearchPage, id => getStreamingSubscriptionIds(id, region)));
+      } catch (error) {
+        if (error instanceof Error && error.message === "Please use a more specific movie title.") return Response.json({ error: error.message }, { status: 422 });
+        throw error;
+      }
+    }
+    const params = new URLSearchParams({ watch_region: region, with_watch_providers: expandedIds.join("|"),
       with_watch_monetization_types: "flatrate", include_adult: "false", sort_by: "popularity.desc", language: "en-US", page });
     if (genre) params.set("with_genres", genre);
-    if (year) params.set("primary_release_year", year);
+
     return Response.json(await getStreamingMovies(params));
   } catch {
     return Response.json({ error: "Streaming availability is temporarily unavailable. Please try again." }, { status: 503 });
