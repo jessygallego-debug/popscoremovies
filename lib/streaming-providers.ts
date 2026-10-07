@@ -25,7 +25,7 @@ function serviceName(name: string) {
     paramountplus: "Paramount+", paramountplusessential: "Paramount+",
     paramountpluspremium: "Paramount+",
     broadwayhd: "BroadwayHD", curiositystream: "Curiosity Stream",
-    discoveryplus: "Discovery+", mgmplus: "MGM+",
+    discoveryplus: "Discovery+", disneyplus: "Disney+", mgmplus: "MGM+",
     peacock: "Peacock", peacockpremium: "Peacock", peacockpremiumplus: "Peacock",
     netflix: "Netflix", netflixkids: "Netflix",
     plex: "Plex", plexchannel: "Plex", mhzchoice: "MHz Choice", mzchoice: "MHz Choice",

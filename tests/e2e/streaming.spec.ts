@@ -110,3 +110,24 @@ test("clearing dropdown selections remains cleared after reload", async ({ page 
   await expect(page.getByText("Streaming availability provided by JustWatch via TMDB.")).toHaveCount(0);
   await expect(page.getByText(/Catalogs vary by country/)).toBeVisible();
 });
+
+
+
+
+test("featured services stay compact while all providers remain searchable", async ({ page }) => {
+ await page.route("**/api/streaming?*", route => route.fulfill({ json:
+  new URL(route.request().url()).searchParams.get("mode") === "providers"
+   ? { providers: [{ provider_id: 8, provider_name: "Netflix" }, { provider_id: 9, provider_name: "Prime Video" }, { provider_id: 87, provider_name: "Acorn TV" }] }
+   : { movies: [], totalPages: 1 }
+ }));
+ await page.goto("/streaming");
+ await page.locator("summary").filter({ hasText: "Streaming platforms" }).click();
+ await expect(page.getByRole("checkbox", { name: "Acorn TV", exact: true })).toHaveCount(0);
+ await page.getByRole("button", { name: "+ More services", exact: true }).click();
+ await expect(page.getByRole("checkbox", { name: "Acorn TV", exact: true })).toBeVisible();
+ await page.getByRole("button", { name: "− Fewer services", exact: true }).click();
+ await page.getByPlaceholder("Search streaming services").fill("Acorn");
+ await page.getByRole("checkbox", { name: "Acorn TV", exact: true }).check();
+ await page.getByPlaceholder("Search streaming services").fill("");
+ await expect(page.getByRole("checkbox", { name: "Acorn TV", exact: true })).toBeChecked();
+});

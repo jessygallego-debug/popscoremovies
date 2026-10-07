@@ -7,6 +7,7 @@ import { MOVIE_GENRE_FILTERS, type MovieSummary } from "@/lib/tmdb";
 import { MOVIE_REGION_OPTIONS } from "@/lib/movie-locale";
 
 import { groupStreamingProviders, type StreamingProvider as Provider } from "@/lib/streaming-providers";
+const featuredServices = new Set(["Netflix", "Crunchyroll", "Shudder", "Prime Video", "Disney+", "Hulu", "HBO Max", "Peacock", "Paramount+", "Apple TV"]);
 const storageKey = "popscore.streaming.v1";
 const selectClass = "mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-white";
 const genres = MOVIE_GENRE_FILTERS.filter(genre => /^\d+$/.test(genre.id));
@@ -18,6 +19,7 @@ export default function StreamingBrowser() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [providerCountry, setProviderCountry] = useState("");
   const [search, setSearch] = useState("");
+  const [showMoreServices, setShowMoreServices] = useState(false);
   const [genre, setGenre] = useState("");
   const [movieSearch, setMovieSearch] = useState("");
   const [query, setQuery] = useState("");
@@ -31,6 +33,9 @@ export default function StreamingBrowser() {
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const serviceKey = services.join(",");
+  const visibleProviders = providers.filter(provider => search.trim()
+    ? provider.provider_name.toLowerCase().includes(search.trim().toLowerCase())
+    : showMoreServices || featuredServices.has(provider.provider_name) || services.includes(String(provider.provider_id)));
 
   useEffect(() => {
     try {
@@ -143,15 +148,16 @@ export default function StreamingBrowser() {
                 <input type="search" className={selectClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Search streaming services" />
               </label>
               <div className="mt-3 max-h-64 overflow-y-auto">
-                {providers.filter(provider => provider.provider_name.toLowerCase().includes(search.toLowerCase())).map(provider => {
+                {visibleProviders.map(provider => {
                   const id = String(provider.provider_id);
                   return <label key={id} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-bold text-slate-200 hover:bg-slate-800">
                     <input type="checkbox" checked={services.includes(id)} onChange={() => toggleService(id)} className="h-4 w-4 accent-yellow-400" />
                     {provider.provider_name}
                   </label>;
                 })}
-                {!providers.some(provider => provider.provider_name.toLowerCase().includes(search.toLowerCase())) && <p className="px-3 py-3 text-sm text-slate-400">No services found.</p>}
+                {!visibleProviders.length && <p className="px-3 py-3 text-sm text-slate-400">No services found.</p>}
               </div>
+              {!search.trim() && providers.some(provider => !featuredServices.has(provider.provider_name)) && <button type="button" aria-expanded={showMoreServices} onClick={() => setShowMoreServices(value => !value)} className="mt-3 rounded-lg px-3 py-2 text-sm font-bold text-yellow-300 hover:bg-slate-800">{showMoreServices ? "− Fewer services" : "+ More services"}</button>}
             </div>
           </details>
           {services.length > 0 && <button type="button" onClick={() => { setServices([]); setPage(1); }} className="mt-4 text-sm font-bold text-yellow-300">Clear Service Selection ({services.length})</button>}
