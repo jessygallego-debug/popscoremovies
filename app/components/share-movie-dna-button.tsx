@@ -61,18 +61,7 @@ function drawWrappedText(
 }
 
 function getLoveTags(dna: MovieDnaResult) {
-  const traits = [
-    { label: "Strong Stories", value: dna.storyAverage },
-    { label: "Great Performances", value: dna.actingAverage },
-    { label: "High Rewatch Value", value: dna.rewatchAverage },
-  ].sort((first, second) => second.value - first.value);
-  const favorite = dna.favoriteGenre ?? dna.mostRatedGenre;
-
-  return [
-    ...traits.slice(0, 2).map((trait) => trait.label),
-    ...(favorite ? [`${favorite.genre} Movies`] : []),
-    ...(dna.averagePopScore >= 85 ? ["Standout Favorites"] : []),
-  ];
+  return dna.loveTraits.map(trait => trait.label);
 }
 
 export default function ShareMovieDnaButton({
@@ -192,7 +181,7 @@ export default function ShareMovieDnaButton({
     label("You Love", 126, loveY + 40, "#fb7185");
     context.fillStyle = "#ffffff";
     context.font = "800 27px Arial, sans-serif";
-    drawWrappedText(context, loveTags.join("   •   "), 126, loveY + 91, 825, 34, 2);
+    drawWrappedText(context, (loveTags.length ? loveTags.join("   •   ") : "Your favorite-movie patterns are still forming."), 126, loveY + 91, 825, 34, 2);
 
     const personalityY = loveY + 178;
     card(96, personalityY, 888, 220, "rgba(59,7,100,0.42)");
@@ -330,7 +319,7 @@ export default function ShareMovieDnaButton({
                 </div>
                 <div className="mt-2 rounded-xl bg-black/35 p-3">
                   <p className="text-[9px] font-black uppercase text-rose-300">You Love</p>
-                  <p className="mt-1 text-xs font-black text-white">{loveTags.join(" · ")}</p>
+                  <p className="mt-1 text-xs font-black text-white">{(loveTags.length ? loveTags.join(" · ") : "Your favorite-movie patterns are still forming.")}</p>
                 </div>
                 <div className="mt-2 rounded-xl border border-purple-400/20 bg-purple-900/20 p-3">
                   <p className="text-[9px] font-black uppercase text-purple-300">Your Movie Personality</p>

@@ -882,6 +882,35 @@ export async function getCurrentProfile() {
   return getProfileByUserId(user.id);
 }
 
+// Private history for a future "DNA evolved" feature. Ownership is derived from
+// the active session and enforced again by RLS. No privileged browser key.
+export async function saveMovieDnaSnapshot(snapshot: {
+  personality: string | null; confidence: number; ratingCount: number;
+  inputFingerprint: string; algorithmVersion: number;
+}, expectedUserId: string) {
+  const user = await getCurrentUser();
+  if (!user || user.id !== expectedUserId) return;
+  const existing = await supabaseFetch<{ input_fingerprint: string }[]>(
+    `/movie_dna_snapshots?user_id=eq.${encodeURIComponent(user.id)}&select=input_fingerprint`
+  );
+  if (existing[0]?.input_fingerprint === snapshot.inputFingerprint) return;
+  const body = {
+    personality: snapshot.personality, confidence: snapshot.confidence,
+    rating_count: snapshot.ratingCount, input_fingerprint: snapshot.inputFingerprint,
+    algorithm_version: snapshot.algorithmVersion,
+  };
+  // Compare-and-swap prevents a stale open tab from overwriting a newer snapshot.
+  if (existing[0]) {
+    await supabaseFetch(`/movie_dna_snapshots?user_id=eq.${encodeURIComponent(user.id)}&input_fingerprint=eq.${existing[0].input_fingerprint}`,
+      { method: "PATCH", body: JSON.stringify(body) });
+  } else {
+    await supabaseFetch("/movie_dna_snapshots", {
+      method: "POST", body: JSON.stringify({ user_id: user.id, ...body }),
+      headers: { Prefer: "resolution=ignore-duplicates" },
+    });
+  }
+}
+
 export async function updateProfileDiscoveryPreferences(preferences: {
   includeInternationalMovies?: boolean;
   preferredMovieCustomYear?: string | null;

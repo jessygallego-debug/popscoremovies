@@ -53,7 +53,7 @@ test.describe("Documentary scoring", () => {
     const docs = [1, 2, 3, 4, 5].map(id => documentary(String(id)));
     const dna = calculateMovieDna(docs);
     expect(dna.eligibleRatings).toHaveLength(5);
-    expect(dna.personality).toBe("Balanced Movie Fan");
+    expect(dna.personality).toBeNull();
     expect(dna.personalityDescription).not.toContain("performance");
     expect(dna.actingAverage).toBe(0);
     expect(getMovieDnaGenreQuestionAverages(docs, "documentary").map(trait => trait.percent)).toEqual([50, 50, 50, 50]);

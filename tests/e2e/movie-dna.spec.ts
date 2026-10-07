@@ -65,18 +65,13 @@ function dnaFor(story: number, acting: number, rewatch: number) {
 }
 
 test.describe("Movie DNA calculations", () => {
-  test("assigns all four deterministic personalities", () => {
-    expect(dnaFor(5, 3, 2).personality).toBe("Story Seeker");
-    expect(dnaFor(3, 5, 2).personality).toBe("Performance Fan");
-    expect(dnaFor(3, 2, 5).personality).toBe("Rewatch Enthusiast");
-    expect(dnaFor(4, 4, 4).personality).toBe("Balanced Movie Fan");
-  });
-
-  test("includes the 0.35 balanced threshold and uses stable order for exact ties", () => {
-    expect(dnaFor(4.35, 4, 4).personality).toBe("Balanced Movie Fan");
-    const tied = dnaFor(5, 5, 2);
-    expect(tied.personality).toBe("Story Seeker");
-    expect(tied.strongestTrait).toBe("Storyline");
+  test("does not infer personality from raw averages without favorite contrasts", () => {
+    for (const scores of [[5,3,2],[3,5,2],[3,2,5],[4,4,4],[4.35,4,4],[5,5,2]]) {
+      const dna = dnaFor(...scores as [number, number, number]);
+      expect(dna.personality).toBeNull();
+      expect(dna.strongestTrait).toBeNull();
+      expect(dna.loveTraits).toEqual([]);
+    }
   });
 
   test("normalizes Acting and Voice Acting", () => {
@@ -364,13 +359,13 @@ test.describe("Movie DNA PopFile UI", () => {
 test("shows the zero and progress unlock states", async ({ page }) => {
   await mockPopFile(page, []);
   await page.goto("/profile/movie_fan#movie-dna");
-  await expect(page.getByText("Your Movie DNA is waiting.")).toBeVisible();
+  await expect(page.getByText("Your Movie DNA is still forming.")).toBeVisible();
 
   await page.unrouteAll({ behavior: "wait" });
   await mockPopFile(page, browserRatings.slice(0, 3));
   await page.reload();
-  await expect(page.getByText("Your Movie DNA is forming.")).toBeVisible();
-  await expect(page.getByText("3 of 5 ratings completed")).toBeVisible();
+  await expect(page.getByText("Your Movie DNA is still forming.")).toBeVisible();
+  await expect(page.getByText("3 movies fully rated")).toBeVisible();
 });
 
 test("Stats labels the overview and rating streaks", async ({ page }) => {
@@ -441,7 +436,7 @@ test("Ratings tab hides overview panels and filters rating history", async ({ pa
 
   await expect(historyHeading).toBeVisible();
   await expect(page.getByRole("heading", { name: "PopFile Stats" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Your Movie DNA" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Your Movie DNA", exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Your Movie Rankings" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Achievements" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Recent Activity" })).toHaveCount(0);
@@ -519,8 +514,8 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
     topMoviesMissingPosterPaths: true,
   });
   await page.goto("/profile/movie_fan#movie-dna");
-  await expect(page.getByRole("heading", { name: "Your Movie DNA" })).toBeVisible();
-  await expect(page.getByText("Story Seeker", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Movie DNA", exact: true })).toBeVisible();
+  await expect(page.getByText("Your Movie DNA is still forming", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Most Rated Genres" })).toBeVisible();
   await page
     .locator("#movie-dna summary")
@@ -629,8 +624,8 @@ test("renders the full Movie DNA, links, filters, and share/download controls", 
   await page.evaluate(() =>
     window.dispatchEvent(new Event("popscore-ratings-updated"))
   );
-  await expect(page.getByText("Your Movie DNA is forming.")).toBeVisible();
-  await expect(page.getByText("4 of 5 ratings completed")).toBeVisible();
+  await expect(page.getByText("Your Movie DNA is still forming.")).toBeVisible();
+  await expect(page.getByText("4 movies fully rated")).toBeVisible();
 });
 
 test("mobile Stats genre filter uses the PopScore filter colors", async ({
@@ -692,7 +687,7 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
-  const titleBox = await page.getByRole("heading", { name: "Your Movie DNA" }).boundingBox();
+  const titleBox = await page.getByRole("heading", { name: "Your Movie DNA", exact: true }).boundingBox();
   const shareBox = await page.getByRole("button", { name: "Share DNA" }).boundingBox();
   expect(titleBox).not.toBeNull();
   expect(shareBox).not.toBeNull();
@@ -730,6 +725,51 @@ test("Movie DNA is responsive and produces desktop and mobile screenshots", asyn
 });
 
 
+test("distinctive DNA persists only its owner's history and keeps sharing consistent", async ({ page }) => {
+  const history = Array.from({ length: 40 }, (_, i) => rating(String(i + 1), {
+    genre: i < 12 || i >= 32 ? "horror" : i < 22 ? "comedy" : "drama",
+    popscore: i < 32 ? 75 : 96, story: i < 32 ? 4.7 : 4.8, acting: 4, rewatch: i < 32 ? 2 : 5,
+    updated: new Date(Date.UTC(2025, 0, i + 1)).toISOString(),
+  }));
+  await mockPopFile(page, history);
+  const writes: Record<string, unknown>[] = [];
+  let saved: Record<string, unknown> | null = null;
+  await page.route("**/rest/v1/movie_dna_snapshots**", route => {
+    if (route.request().method() === "GET") return route.fulfill({ json: saved ? [saved] : [] });
+    saved = route.request().postDataJSON();
+    writes.push(saved!);
+    return route.fulfill({ status: 204, body: "" });
+  });
+  await page.goto("/profile/movie_fan#movie-dna");
+  const section = page.locator("#movie-dna");
+  await expect(section.getByRole("heading", { name: "The Comfort Watcher", exact: true })).toBeVisible();
+  await expect(section.getByText("Horror Movies", { exact: true })).toBeVisible();
+  await expect.poll(() => writes.length).toBe(1);
+  expect(writes[0]).toMatchObject({ user_id: "user-1", personality: "The Comfort Watcher", rating_count: 40, algorithm_version: 2 });
+  expect(writes[0].input_fingerprint).toMatch(/^[a-f0-9]{64}$/);
+  await page.reload();
+  await expect(section.getByRole("heading", { name: "The Comfort Watcher", exact: true })).toBeVisible();
+  await expect.poll(() => writes.length).toBe(1);
+  await page.getByRole("button", { name: "Share My Movie DNA" }).click();
+  const share = page.getByRole("dialog", { name: "Share Movie DNA" });
+  await expect(share.getByText("The Comfort Watcher", { exact: true })).toBeVisible();
+  await expect(share.getByText("Horror Movies", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Close share dialog" }).click();
+  mkdirSync(join(process.cwd(), "artifacts"), { recursive: true });
+  await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-redesign-desktop.png") });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await section.screenshot({ path: join(process.cwd(), "artifacts", "movie-dna-redesign-mobile.png") });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  const pageErrors: string[] = [], historyWarnings: string[] = [];
+  page.on("pageerror", error => pageErrors.push(error.message));
+  page.on("console", message => { if (message.text().includes("Movie DNA history could not be saved")) historyWarnings.push(message.text()); });
+  await page.route("**/rest/v1/movie_dna_snapshots**", route => route.fulfill({ status: 503, json: { message: "History temporarily unavailable" } }));
+  await page.reload();
+  await expect(section.getByRole("heading", { name: "The Comfort Watcher", exact: true })).toBeVisible();
+  await expect.poll(() => historyWarnings.length).toBeGreaterThan(0);
+  expect(pageErrors).toEqual([]);
+});
+
 test("profile activity omits retired reaction-only rows and keeps zero PopScores", async ({ page }) => {
   await mockPopFile(page, [
     { ...rating("1"), movieTitle: "Completed zero rating", popscore: 0 },
@@ -746,6 +786,8 @@ test("profile activity omits retired reaction-only rows and keeps zero PopScores
 
 for (const width of [390, 1280]) {
   test(`other profiles cannot share personal stats at ${width}px`, async ({ page }) => {
+    const snapshotRequests: string[] = [];
+    page.on("request", request => { if (request.url().includes("/movie_dna_snapshots")) snapshotRequests.push(request.url()); });
     await page.setViewportSize({ width, height: 900 });
     await mockPopFile(page, browserRatings, { profileUserId: "user-2" });
     await page.goto("/profile/movie_fan");
@@ -757,6 +799,7 @@ for (const width of [390, 1280]) {
     await expect(page.getByRole("button", { name: /share/i })).toHaveCount(0);
     await page.getByRole("button", { exact: true, name: "Ratings" }).click();
     await expect(page.getByRole("button", { name: /share/i })).toHaveCount(0);
+    expect(snapshotRequests).toEqual([]);
   });
 }
 

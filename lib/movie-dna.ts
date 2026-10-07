@@ -7,6 +7,7 @@ import {
   type GenreKey,
 } from "@/lib/genre-rating-config";
 import { isDocumentaryQuestionnaire, ratingToPercent } from "./rating-score";
+import { inferMovieDna, type MovieDnaInsights } from "./movie-dna-insights";
 
 export type MovieDnaRating = {
   created_at: string;
@@ -30,7 +31,10 @@ export type MovieDnaPersonality =
   | "Story Seeker"
   | "Performance Fan"
   | "Rewatch Enthusiast"
-  | "Balanced Movie Fan";
+  | "Balanced Movie Fan"
+  | "The Character Loyalist" | "The Comfort Watcher" | "The Rewatcher"
+  | "The Thrill Chaser" | "The Escapist" | "The Laugh Seeker"
+  | "The Horror Devotee" | "The Genre Explorer" | "The Movie Adventurer";
 
 export type MovieDnaGenreStat = {
   average: number;
@@ -39,7 +43,7 @@ export type MovieDnaGenreStat = {
   highestRatedMovie: MovieDnaRating;
 };
 
-export type MovieDnaResult = {
+export type MovieDnaResult = Omit<MovieDnaInsights, "personality"> & {
   actingAverage: number;
   averagePopScore: number;
   eligibleRatings: MovieDnaRating[];
@@ -67,14 +71,6 @@ export type MovieDnaQuestionAverage = {
   percent?: number | null;
 };
 
-const PERSONALITY_DESCRIPTIONS: Record<MovieDnaPersonality, string> = {
-  "Story Seeker": "A strong story is what makes a movie work for you.",
-  "Performance Fan": "Great performances are what pull you into a movie.",
-  "Rewatch Enthusiast":
-    "Your favorites are the movies you want to experience again.",
-  "Balanced Movie Fan":
-    "You value story, performance, and rewatchability almost equally.",
-};
 
 const asTime = (value: string) => {
   const time = new Date(value).getTime();
@@ -112,6 +108,7 @@ function coreScore(
 
 function isEligibleRating(rating: MovieDnaRating) {
   if (rating.deleted_at || rating.is_deleted) return false;
+  if (!Number.isFinite(rating.popscore) || rating.popscore < 0 || rating.popscore > 100) return false;
   if (rating.ratingSource?.toLowerCase().includes("letterboxd")) return false;
 
   const questionKeys = Array.from(
@@ -207,37 +204,13 @@ export function getMovieDnaRatingsForGenre(
     .sort(movieHighScore);
 }
 
-function getPersonality(story: number, acting: number | null, rewatch: number) {
-  const traits = [
-    { label: "Storyline" as const, personality: "Story Seeker" as const, value: story },
-    { label: "Acting" as const, personality: "Performance Fan" as const, value: acting },
-    {
-      label: "Rewatch Score" as const,
-      personality: "Rewatch Enthusiast" as const,
-      value: rewatch,
-    },
-  ].filter((trait): trait is typeof trait & { value: number } => trait.value !== null);
-  const values = traits.map((trait) => trait.value);
-
-  if (Math.max(...values) - Math.min(...values) <= 0.35) {
-    return {
-      personality: "Balanced Movie Fan" as const,
-      strongestTrait: traits.find((trait) => trait.value === Math.max(...values))!
-        .label,
-    };
-  }
-
-  const strongest = traits.find(
-    (trait) => trait.value === Math.max(...values)
-  )!;
-  return { personality: strongest.personality, strongestTrait: strongest.label };
-}
-
 export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
   const eligibleRatings = getEligibleMovieDnaRatings(ratings);
+  const insights = inferMovieDna(eligibleRatings);
 
   if (eligibleRatings.length === 0) {
     return {
+      ...insights,
       actingAverage: 0,
       averagePopScore: 0,
       eligibleRatings,
@@ -245,7 +218,7 @@ export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
       genreStats: [],
       mostRatedGenre: null,
       personality: null,
-      personalityDescription: "",
+      personalityDescription: insights.personalityDescription,
       rewatchAverage: 0,
       storyAverage: 0,
       strongestTrait: null,
@@ -253,16 +226,16 @@ export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
     };
   }
 
+  const nativeRatings = eligibleRatings.filter(rating => rating.ratingSource !== "letterboxd_import");
   const storyAverage = average(
-    eligibleRatings.map((rating) => coreScore(rating, "story")!)
+    nativeRatings.map((rating) => coreScore(rating, "story")!)
   );
   const actingAverage = average(
-    eligibleRatings.map((rating) => coreScore(rating, "acting")).filter((value): value is number => value !== null)
+    nativeRatings.map((rating) => coreScore(rating, "acting")).filter((value): value is number => value !== null)
   );
   const rewatchAverage = average(
-    eligibleRatings.map((rating) => coreScore(rating, "rewatch")!)
+    nativeRatings.map((rating) => coreScore(rating, "rewatch")!)
   );
-  const hasPerformanceRatings = eligibleRatings.some(rating => coreScore(rating, "acting") !== null);
   const genreGroups = new Map<string, MovieDnaRating[]>();
 
   eligibleRatings.forEach((rating) => {
@@ -291,13 +264,9 @@ export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
         b.highestRatedMovie.popscore - a.highestRatedMovie.popscore ||
         a.genre.localeCompare(b.genre)
     )[0] ?? null;
-  const { personality, strongestTrait } = getPersonality(
-    storyAverage,
-    hasPerformanceRatings ? actingAverage : null,
-    rewatchAverage
-  );
 
   return {
+    ...insights,
     actingAverage,
     averagePopScore: average(
       eligibleRatings.map((rating) => rating.popscore)
@@ -306,16 +275,11 @@ export function calculateMovieDna(ratings: MovieDnaRating[]): MovieDnaResult {
     favoriteGenre,
     genreStats,
     mostRatedGenre,
-    personality: eligibleRatings.length >= 5 ? personality : null,
-    personalityDescription:
-      eligibleRatings.length >= 5
-        ? personality === "Balanced Movie Fan" && !hasPerformanceRatings
-          ? "You value storytelling and rewatchability almost equally."
-          : PERSONALITY_DESCRIPTIONS[personality]
-        : "",
+    personality: insights.personality as MovieDnaPersonality | null,
+    personalityDescription: insights.personalityDescription,
     rewatchAverage,
     storyAverage,
-    strongestTrait: eligibleRatings.length >= 5 ? strongestTrait : null,
+    strongestTrait: insights.strongestTrait,
     topGenres: [...genreStats]
       .filter((genre) => genre.count >= 2)
       .sort(

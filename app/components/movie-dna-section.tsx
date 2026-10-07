@@ -18,12 +18,13 @@ import {
 } from "@/lib/movie-dna";
 import type { GenreKey } from "@/lib/genre-rating-config";
 import { ratingToPercent } from "@/lib/popscore-store";
-import type { ProfileTopMovie, UserMovieRating } from "@/lib/profile-store";
+import { saveMovieDnaSnapshot, type ProfileTopMovie, type UserMovieRating } from "@/lib/profile-store";
 import { posterUrl } from "@/lib/tmdb";
 import { movieHref } from "@/lib/urls";
 import styles from "@/app/components/profile-tabs.module.css";
 
 type MovieDnaSectionProps = {
+  ownerUserId: string;
   isOwnProfile: boolean;
   percentile: number;
   ratings: UserMovieRating[];
@@ -45,59 +46,12 @@ function insightGenre(dna: MovieDnaResult) {
 }
 
 function UnlockCard({ count }: { count: number }) {
-  const isWaiting = count === 0;
-  return (
-    <div className={panelClass("p-5 text-center sm:p-7")}>
-      <h3 className="text-xl font-black text-white">
-        Your Movie DNA is {isWaiting ? "waiting" : "forming"}.
-      </h3>
-      {isWaiting ? (
-        <p className="mx-auto mt-2 max-w-xl text-sm font-bold leading-6 text-slate-400">
-          Rate 5 movies to reveal what genres, qualities, and movie experiences
-          matter most to you.
-        </p>
-      ) : (
-        <>
-          <p className="mt-2 text-sm font-black text-yellow-200">
-            {count} of 5 ratings completed
-          </p>
-          <div
-            className="mx-auto mt-4 h-2 max-w-md overflow-hidden rounded-full bg-slate-800"
-            role="progressbar"
-            aria-label="Movie DNA unlock progress"
-            aria-valuemin={0}
-            aria-valuemax={5}
-            aria-valuenow={count}
-          >
-            <div
-              className="h-full rounded-full bg-yellow-400 transition-[width] motion-reduce:transition-none"
-              style={{ width: `${(count / 5) * 100}%` }}
-            />
-          </div>
-        </>
-      )}
-      <Link
-        href="/rate"
-        className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-400 px-5 text-sm font-black text-black transition hover:bg-yellow-300"
-      >
-        {isWaiting ? "Rate a Movie" : "Rate Another Movie"}
-      </Link>
-    </div>
-  );
-}
-
-function getLoveTags(dna: MovieDnaResult) {
-  const traits = [
-    { label: "Strong Stories", value: dna.storyAverage },
-    { label: "Great Performances", value: dna.actingAverage },
-    { label: "High Rewatch Value", value: dna.rewatchAverage },
-  ].sort((first, second) => second.value - first.value);
-  const favorite = insightGenre(dna);
-  return [
-    ...traits.filter(trait => trait.value > 0).slice(0, 2).map((trait) => trait.label),
-    ...(favorite ? [`${favorite.genre} Movies`] : []),
-    ...(dna.averagePopScore >= 85 ? ["Standout Favorites"] : []),
-  ];
+  return <div className={panelClass("p-5 text-center sm:p-7")}>
+    <h3 className="text-xl font-black text-white">Your Movie DNA is still forming.</h3>
+    <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-400">Keep rating movies and PopScore will learn what separates the movies you like from the movies you love.</p>
+    <p className="mt-3 text-sm font-bold text-yellow-200">{count} movies fully rated</p>
+    <Link href="/rate" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-400 px-5 text-sm font-black text-black">Rate a Movie</Link>
+  </div>;
 }
 
 function SummaryCard({
@@ -106,7 +60,6 @@ function SummaryCard({
   dna: MovieDnaResult;
 }) {
   const favorite = insightGenre(dna);
-  const loveTags = getLoveTags(dna);
   return (
     <div className="space-y-3">
       <div className={styles.summaryGrid}>
@@ -128,12 +81,14 @@ function SummaryCard({
         <GenreDna className={styles.genreDnaSummary} dna={dna} />
       </div>
 
+      <p className="text-xs text-slate-400">{dna.stage === "established" ? "Established patterns" : dna.stage === "forming" ? "Your DNA is still forming" : dna.stage === "early" ? "Early patterns" : "Your DNA is developing"} · Learned from your favorites compared with your own usual ratings.</p>
       <div className="grid gap-3 md:grid-cols-[1.2fr_.9fr]">
         <article className="rounded-2xl border border-slate-700/70 bg-[#0b1424]/75 p-4">
           <p className="flex items-center gap-2 text-sm font-black text-white"><span aria-hidden="true">❤️</span> You Love</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {loveTags.map((tag) => (
-              <span key={tag} className="rounded-full border border-slate-600/60 bg-slate-800/65 px-3 py-1.5 text-xs font-medium text-slate-100">{tag}</span>
+            {!dna.loveTraits.length ? <p className="text-xs leading-5 text-slate-400">Your favorite-movie patterns are still forming. Keep rating to reveal what stands out.</p> : null}
+            {dna.loveTraits.map((trait) => (
+              <span key={trait.key} title={trait.explanation} className="rounded-full border border-slate-600/60 bg-slate-800/65 px-3 py-1.5 text-xs font-medium text-slate-100">{trait.label}</span>
             ))}
           </div>
         </article>
@@ -142,7 +97,7 @@ function SummaryCard({
           <div className="mt-3 flex items-start gap-3">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-purple-400/40 bg-purple-500/15 text-2xl shadow-[0_0_20px_rgba(168,85,247,0.18)]" aria-hidden="true">🧠</span>
             <div className="min-w-0">
-              <h3 className="text-lg font-black text-yellow-300">{dna.personality}</h3>
+              <h3 className="text-lg font-black text-yellow-300">{dna.personality ?? "Your Movie DNA is still forming"}</h3>
               <p className="mt-1 text-xs font-medium leading-5 text-slate-300">{dna.personalityDescription}</p>
             </div>
           </div>
@@ -408,6 +363,7 @@ export function MovieDnaSkeleton() {
 }
 
 export default function MovieDnaSection({
+  ownerUserId,
   isOwnProfile,
   percentile,
   ratings,
@@ -417,6 +373,23 @@ export default function MovieDnaSection({
 }: MovieDnaSectionProps) {
   const dna = useMemo(() => calculateMovieDna(ratings), [ratings]);
   const count = dna.eligibleRatings.length;
+  useEffect(() => {
+    if (!isOwnProfile || count < 5) return;
+    let cancelled = false;
+    const input = JSON.stringify({ version: dna.algorithmVersion, year: new Date().getUTCFullYear(),
+      ratings: [...dna.eligibleRatings].sort((a, b) => a.movieId.localeCompare(b.movieId)).map(r =>
+        [r.movieId, r.popscore, r.genre, r.genreNames, r.ratings, r.weights, r.releaseDate, r.ratingSource, r.updated_at]) });
+    async function persist() {
+      const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+      const inputFingerprint = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, "0")).join("");
+      if (!cancelled) await saveMovieDnaSnapshot({ personality: dna.personality, confidence: dna.confidence,
+        ratingCount: dna.dimensionSignals.find(signal => signal.key === "story")?.count ?? 0,
+        inputFingerprint, algorithmVersion: dna.algorithmVersion }, ownerUserId);
+    }
+    // A history failure must not prevent people from viewing or rating movies.
+    void persist().catch(() => console.warn("Movie DNA history could not be saved."));
+    return () => { cancelled = true; };
+  }, [dna, isOwnProfile, count, ownerUserId]);
 
   return (
     <section

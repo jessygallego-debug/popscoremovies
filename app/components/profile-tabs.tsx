@@ -1812,6 +1812,7 @@ export default function ProfileTabs({ username }: { username: string }) {
           <>
             <MovieDnaSection
               key={profile.user_id}
+              ownerUserId={profile.user_id}
               isOwnProfile={Boolean(profile && followSummary?.currentUserId === profile.user_id)}
               percentile={percentile.topPercentile}
               ratings={ratings}
