@@ -86,7 +86,7 @@ function SummaryCard({
         <article className="rounded-2xl border border-slate-700/70 bg-[#0b1424]/75 p-4">
           <p className="flex items-center gap-2 text-sm font-black text-white"><span aria-hidden="true">❤️</span> You Love</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {!dna.loveTraits.length ? <p className="text-xs leading-5 text-slate-400">Your favorite-movie patterns are still forming. Keep rating to reveal what stands out.</p> : null}
+            {!dna.loveTraits.length ? <p className="text-xs leading-5 text-slate-400">{dna.eligibleRatings.length >= 30 ? "No single trait consistently separates your favorites from your usual ratings." : "Your favorite-movie patterns are still forming. Keep rating to reveal what stands out."}</p> : null}
             {dna.loveTraits.map((trait) => (
               <span key={trait.key} title={trait.explanation} className="rounded-full border border-slate-600/60 bg-slate-800/65 px-3 py-1.5 text-xs font-medium text-slate-100">{trait.label}</span>
             ))}
@@ -97,7 +97,7 @@ function SummaryCard({
           <div className="mt-3 flex items-start gap-3">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-purple-400/40 bg-purple-500/15 text-2xl shadow-[0_0_20px_rgba(168,85,247,0.18)]" aria-hidden="true">🧠</span>
             <div className="min-w-0">
-              <h3 className="text-lg font-black text-yellow-300">{dna.personality ?? "Your Movie DNA is still forming"}</h3>
+              <h3 className="text-lg font-black text-yellow-300">{dna.personalityLabel}</h3>
               <p className="mt-1 text-xs font-medium leading-5 text-slate-300">{dna.personalityDescription}</p>
             </div>
           </div>

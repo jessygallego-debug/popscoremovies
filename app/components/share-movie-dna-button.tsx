@@ -181,14 +181,14 @@ export default function ShareMovieDnaButton({
     label("You Love", 126, loveY + 40, "#fb7185");
     context.fillStyle = "#ffffff";
     context.font = "800 27px Arial, sans-serif";
-    drawWrappedText(context, (loveTags.length ? loveTags.join("   •   ") : "Your favorite-movie patterns are still forming."), 126, loveY + 91, 825, 34, 2);
+    drawWrappedText(context, (loveTags.length ? loveTags.join("   •   ") : dna.eligibleRatings.length >= 30 ? "No single defining trait stands out." : "Your favorite-movie patterns are still forming."), 126, loveY + 91, 825, 34, 2);
 
     const personalityY = loveY + 178;
     card(96, personalityY, 888, 220, "rgba(59,7,100,0.42)");
     label("Your Movie Personality", 126, personalityY + 42, "#f0abfc");
     context.fillStyle = "#facc15";
-    context.font = "900 39px Arial, sans-serif";
-    context.fillText(dna.personality ?? "Still forming", 126, personalityY + 98);
+    context.font = "900 30px Arial, sans-serif";
+    drawWrappedText(context, dna.personalityLabel, 126, personalityY + 85, 810, 34, 2);
     context.fillStyle = "#cbd5e1";
     context.font = "700 24px Arial, sans-serif";
     drawWrappedText(context, dna.personalityDescription, 126, personalityY + 145, 810, 34, 2);
@@ -242,7 +242,7 @@ export default function ShareMovieDnaButton({
     const file = new File([blob], fileName, { type: "image/png" });
     const data: ShareData = {
       files: [file],
-      text: `My PopScore Movie DNA is ${dna.personality ?? "taking shape"}.`,
+      text: `My PopScore Movie DNA: ${dna.personalityLabel}.`,
       ...(publicUrl ? { url: publicUrl } : {}),
     };
 
@@ -319,11 +319,11 @@ export default function ShareMovieDnaButton({
                 </div>
                 <div className="mt-2 rounded-xl bg-black/35 p-3">
                   <p className="text-[9px] font-black uppercase text-rose-300">You Love</p>
-                  <p className="mt-1 text-xs font-black text-white">{(loveTags.length ? loveTags.join(" · ") : "Your favorite-movie patterns are still forming.")}</p>
+                  <p className="mt-1 text-xs font-black text-white">{(loveTags.length ? loveTags.join(" · ") : dna.eligibleRatings.length >= 30 ? "No single defining trait stands out." : "Your favorite-movie patterns are still forming.")}</p>
                 </div>
                 <div className="mt-2 rounded-xl border border-purple-400/20 bg-purple-900/20 p-3">
                   <p className="text-[9px] font-black uppercase text-purple-300">Your Movie Personality</p>
-                  <p className="mt-1 text-lg font-black text-yellow-300">{dna.personality ?? "Still forming"}</p>
+                  <p className="mt-1 text-lg font-black text-yellow-300">{dna.personalityLabel}</p>
                   <p className="mt-1 text-xs font-medium leading-5 text-slate-300">{dna.personalityDescription}</p>
                 </div>
                 {topMovies.length ? (

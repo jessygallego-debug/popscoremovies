@@ -36,7 +36,24 @@ test("uniform high scores and uniformly high Storyline do not force personalitie
   const dna = calculateMovieDna(Array.from({ length: 40 }, (_, i) => movie(i + 1, "drama", 96, { story: 5 })));
   expect(dna.personality).toBeNull();
   expect(dna.loveTraits).toEqual([]);
-  expect(dna.personalityDescription).toContain("Keep rating");
+  expect(dna.personalityLabel).toBe("Your Taste Has Many Sides");
+  expect(dna.personalityDescription).toContain("established rating history");
+});
+test("strong close personalities become a stable blend instead of forming", () => {
+  const genres: GenreKey[] = ["drama", "action", "comedy", "animated", "scifi", "horror"];
+  const histories = Array.from({ length: 100 }, (_, step) => Array.from({ length: 230 }, (_, i) => ({
+    ...movie(i + 1, genres[i % genres.length], i < 115 ? 75 : 96,
+      { story: 4.5, acting: 4.5, voiceActing: 4.5, rewatchability: i < 115 ? 2 + step / 50 : 5 }),
+    releaseDate: `${1960 + (i % 6) * 10}-01-01`,
+  })));
+  const history = histories.find(ratings => calculateMovieDna(ratings).personality?.includes(" + "));
+  expect(history).toBeDefined();
+  const dna = calculateMovieDna(history!);
+  expect(dna.personalityLabel).toContain("Rewatcher");
+  expect(dna.personalityLabel).toContain("Movie Adventurer");
+  expect(dna.personalityDescription).toContain("blends");
+  expect(dna.loveTraits.map(t => t.key)).not.toContain("rewatchability");
+  expect(calculateMovieDna([...history!].reverse()).personalityLabel).toBe(dna.personalityLabel);
 });
 test("small samples stay forming even with impressive scores", () => {
   for (const count of [0, 4, 6, 9]) {

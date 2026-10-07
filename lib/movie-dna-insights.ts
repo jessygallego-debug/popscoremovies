@@ -3,7 +3,7 @@ import { GENRE_RATING_CONFIGS, type GenreKey } from "./genre-rating-config";
 import { normalizeProfileGenreKey } from "./profile-config";
 import { isDocumentaryQuestionnaire, ratingToPercent } from "./rating-score";
 
-export const MOVIE_DNA_VERSION = 2;
+export const MOVIE_DNA_VERSION = 3;
 export type DnaStage = "forming" | "early" | "developing" | "established";
 export type DnaSignal = {
   key: string; label: string; count: number; favoriteCount: number;
@@ -17,7 +17,7 @@ export type MovieDnaInsights = {
   favoriteMovieIds: string[]; favoriteMethod: "90-plus" | "personal-top";
   dimensionSignals: DnaSignal[]; genreSignals: DnaSignal[]; eraSignals: DnaSignal[];
   candidates: DnaCandidate[]; loveTraits: DnaTrait[];
-  personality: string | null; personalityDescription: string;
+  personality: string | null; personalityLabel: string; personalityDescription: string;
   strongestTrait: "Storyline" | "Acting" | "Rewatch Score" | null;
 };
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
@@ -28,7 +28,8 @@ function movieGenres(r: MovieDnaRating) {
     .filter(key => key && key in GENRE_RATING_CONFIGS));
 }
 const core = new Set(["story", "acting", "rewatchability"]);
-function repeatsPersonality(key: string, family: string) {
+function repeatsPersonality(key: string, family: string): boolean {
+  if (family.includes("+")) return family.split("+").some(part => repeatsPersonality(key, part));
   const pattern = key.startsWith("genre:") ? key.slice(6) : key.split(":")[0];
   const groups: Record<string, string[]> = {
     horror: ["horror"], comedy: ["comedy", "romcom"], thrills: ["horror", "action", "thriller"],
@@ -169,9 +170,16 @@ function analyze(ratings: MovieDnaRating[], now: Date) {
   const thrills = candidates.find(c => c.family === "thrills");
   if (specialist && thrills && specialist.confidence >= thrills.confidence * 0.85) thrills.confidence *= 0.8;
   candidates.sort((a, b) => b.confidence - a.confidence || a.name.localeCompare(b.name));
-  const winner = usable && ratings.length >= 10 && candidates[0]?.confidence >= 0.35
+  let winner = usable && ratings.length >= 10 && candidates[0]?.confidence >= 0.35
     && (!candidates[1] || candidates[0].confidence - candidates[1].confidence >= 0.035
       || candidates[0].family === candidates[1].family) ? candidates[0] : null;
+  if (!winner && usable && ratings.length >= 10 && candidates[0]?.confidence >= 0.35
+    && candidates[1]?.confidence >= 0.35 && candidates[0].confidence - candidates[1].confidence < 0.035) {
+    const pair = candidates.slice(0, 2).sort((a, b) => a.family.localeCompare(b.family));
+    winner = { name: pair.map(c => c.name.replace(/^The /, "")).join(" + "),
+      family: pair.map(c => c.family).join("+"), confidence: Math.min(...pair.map(c => c.confidence)),
+      description: `Your personality blends ${pair.map(c => c.name.replace(/^The /, "")).join(" and ")}. ${pair.map(c => c.description).join(" ")}` };
+  }
   const traits: DnaTrait[] = [];
   for (const g of genreSignals.filter(g => g.confidence >= 0.3)) {
     const duplicate = winner && ((winner.family === "horror" && g.key === "genre:horror")
@@ -227,7 +235,9 @@ export function inferMovieDna(ratings: MovieDnaRating[], now = new Date()): Movi
     dimensionSignals: result.dimensions, genreSignals: result.genreSignals, eraSignals: result.eraSignals,
     candidates: result.candidates, loveTraits: result.loveTraits.filter(t => !winner || !repeatsPersonality(t.key, winner.family)),
     personality: winner?.name ?? null,
+    personalityLabel: winner?.name ?? (native.length >= 30 ? "Your Taste Has Many Sides" : native.length >= 10 ? "Your Movie Taste Is Taking Shape" : "Still forming"),
     personalityDescription: winner ? `${stage === "established" ? "" : "An emerging pattern: "}${winner.description}`
+      : native.length >= 30 ? "You have an established rating history, but no single personality stands out clearly. Your preferences can span several styles without fitting one label."
       : "Keep rating movies and PopScore will learn what separates the movies you like from the movies you love.",
     strongestTrait: winner?.family === "story" ? "Storyline" : winner?.family === "acting" ? "Acting" : winner?.family === "rewatchability" ? "Rewatch Score" : null,
   };

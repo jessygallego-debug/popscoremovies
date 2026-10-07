@@ -28,6 +28,7 @@ export type MovieDnaRating = {
 };
 
 export type MovieDnaPersonality =
+  | `${string} + ${string}`
   | "Story Seeker"
   | "Performance Fan"
   | "Rewatch Enthusiast"
