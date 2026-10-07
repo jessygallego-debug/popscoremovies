@@ -600,8 +600,9 @@ function discoverMoviesPath({
   if (includeRecentDates) {
     const { recentCutoffDate, today } = recentReleaseDates();
 
-    params.set("primary_release_date.gte", recentCutoffDate);
-    params.set("primary_release_date.lte", today);
+    params.set(preferredRegion ? "release_date.gte" : "primary_release_date.gte", recentCutoffDate);
+    params.set(preferredRegion ? "release_date.lte" : "primary_release_date.lte", today);
+    if (preferredRegion) params.set("with_release_type", "2|3|4|5|6");
   }
 
   addDiscoverGenreFilter(params, genreFilterForId(genreId));
@@ -626,7 +627,7 @@ function discoverMoviesPath({
   return `/discover/movie?${params.toString()}`;
 }
 
-function moviesPath(query: string, page: number, genreId = "") {
+function moviesPath(query: string, page: number, genreId = "", preferredRegion = "") {
   const trimmedQuery = query.trim();
 
   if (trimmedQuery) {
@@ -640,7 +641,7 @@ function moviesPath(query: string, page: number, genreId = "") {
     return `/search/movie?${params.toString()}`;
   }
 
-  return discoverMoviesPath({ genreId, includeRecentDates: true, page });
+  return discoverMoviesPath({ genreId, includeRecentDates: true, page, preferredRegion });
 }
 
 function releaseTime(movie: MovieSummary) {
@@ -783,7 +784,8 @@ async function* moviePages(pathForPage: (page: number) => string, requestedPages
 export async function getMovies(
   query = "",
   limit = MAX_MOVIE_RESULTS,
-  genreId = ""
+  genreId = "",
+  preferredRegion = ""
 ) {
   const requestedLimit = Math.min(Math.max(limit, 1), MAX_MOVIE_RESULTS);
   const requestedPages = Math.ceil(requestedLimit / TMDB_PAGE_SIZE);
@@ -800,7 +802,7 @@ export async function getMovies(
         ? Math.min(requestedPages, 3)
         : requestedPages;
 
-    for await (const data of moviePages(page => moviesPath(searchQuery, page, genreId), pageLimit)) {
+    for await (const data of moviePages(page => moviesPath(searchQuery, page, genreId, preferredRegion), pageLimit)) {
       if (uniqueMovies(movies).length >= requestedLimit) break;
       const nextMovies = data.results.filter(
         (movie) =>

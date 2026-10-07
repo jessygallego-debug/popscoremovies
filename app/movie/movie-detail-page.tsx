@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { MOVIE_REGION_COOKIE, resolveMovieRegion } from "@/lib/movie-region";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -33,9 +34,7 @@ import {
   posterUrl,
 } from "@/lib/tmdb";
 import {
-  movieLocalePartsFromTag,
   movieRegionLabel,
-  normalizeMovieRegion,
 } from "@/lib/movie-locale";
 import { discussionHref, genreHref, movieHref } from "@/lib/urls";
 
@@ -48,62 +47,12 @@ type MovieDetailSearchParams = {
   returnTo?: string;
   trailer?: string;
 };
-type RequestHeaderList = {
-  get(name: string): string | null;
-};
-
-const MOVIE_WATCH_REGION_HEADER_NAMES = [
-  "x-vercel-ip-country",
-  "x-country-code",
-  "cf-ipcountry",
-  "cloudfront-viewer-country",
-] as const;
-
 function getSafeReturnPath(returnTo?: string) {
   if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
     return "/";
   }
 
   return returnTo;
-}
-
-function firstAcceptLanguageRegion(acceptLanguage: string) {
-  for (const languagePart of acceptLanguage.split(",")) {
-    const locale = languagePart.split(";")[0]?.trim();
-    const region = movieLocalePartsFromTag(locale).region;
-
-    if (region) {
-      return region;
-    }
-  }
-
-  return "";
-}
-
-function getMovieWatchRegion(
-  queryParams: MovieDetailSearchParams,
-  requestHeaders: RequestHeaderList
-) {
-  const requestedRegion = normalizeMovieRegion(
-    queryParams.region ?? queryParams.preferredRegion
-  );
-
-  if (requestedRegion) {
-    return requestedRegion;
-  }
-
-  for (const headerName of MOVIE_WATCH_REGION_HEADER_NAMES) {
-    const headerRegion = normalizeMovieRegion(requestHeaders.get(headerName));
-
-    if (headerRegion && headerRegion !== "XX") {
-      return headerRegion;
-    }
-  }
-
-  return (
-    firstAcceptLanguageRegion(requestHeaders.get("accept-language") ?? "") ||
-    "US"
-  );
 }
 
 function getTrailer(movie: NonNullable<Awaited<ReturnType<typeof getMovie>>>) {
@@ -332,13 +281,14 @@ export async function MovieDetailPage({
   id: string;
   searchParams: Promise<MovieDetailSearchParams>;
 }) {
-  const [queryParams, requestHeaders, movie, fanReviews, aggregateRating, relatedDiscussions] = await Promise.all([
+  const [queryParams, requestHeaders, movie, fanReviews, aggregateRating, relatedDiscussions, cookieStore] = await Promise.all([
     searchParams,
     headers(),
     getMovie(id),
     getMovieFanReviews(id),
     getMovieAggregateRatingForSeo(id),
     getPublicCommunityDiscussionsForMovie(id, 3),
+    cookies(),
   ]);
 
   if (!movie && isTmdbConfigured()) {
@@ -388,7 +338,7 @@ export async function MovieDetailPage({
     closeHref
   )}`;
   const trailer = getTrailer(movie);
-  const watchRegion = getMovieWatchRegion(queryParams, requestHeaders);
+  const watchRegion = resolveMovieRegion(requestHeaders, cookieStore.get(MOVIE_REGION_COOKIE)?.value || queryParams.region || queryParams.preferredRegion);
   const [
     similarMovies,
     watchProviders,

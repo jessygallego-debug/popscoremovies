@@ -16,6 +16,8 @@ import {
   signOut as clearPopFileSession,
   SupabaseUser,
 } from "@/lib/profile-store";
+import { useRouter } from "next/navigation";
+import { syncMovieRegionCookie } from "@/lib/movie-region";
 
 const PROFILE_LOAD_RETRY_DELAYS_MS = [350, 900];
 
@@ -66,9 +68,14 @@ async function loadPopFileSnapshotWithRetry() {
 }
 
 export function PopFileProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isLoading && syncMovieRegionCookie(profile?.preferred_movie_region)) router.refresh();
+  }, [isLoading, profile?.preferred_movie_region, router]);
 
   const refreshProfile = useCallback(async () => {
     setIsLoading(true);

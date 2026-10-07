@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import AvatarPicker from "@/app/components/avatar-picker";
 import EmojiIcon from "@/app/components/emoji-icon";
 import FavoriteGenreSelector from "@/app/components/favorite-genre-selector";
+import MovieRegionSettings from "@/app/components/movie-region-settings";
 import { usePopFile } from "@/app/components/popfile-provider";
 import {
   avatarForKey,
@@ -515,6 +516,7 @@ export default function ProfileEditor() {
           {isSaving ? "Saving..." : "Save PopFile"}
         </button>
       </form>
+      <MovieRegionSettings />
 
       {profile ? (
         <Link

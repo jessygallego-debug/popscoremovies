@@ -1,5 +1,7 @@
 import AddToWatchlistButton from "@/app/components/add-to-watchlist-button";
 import type { Metadata } from "next";
+import { cookies, headers } from "next/headers";
+import { MOVIE_REGION_COOKIE, resolveMovieRegion } from "@/lib/movie-region";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import MoviePosterImage from "@/app/components/movie-poster-image";
@@ -98,7 +100,9 @@ export default async function GenrePage({
     notFound();
   }
 
-  const movies = await getMovies("", 80, genre.id);
+  const [requestHeaders, cookieStore] = await Promise.all([headers(), cookies()]);
+  const region = resolveMovieRegion(requestHeaders, cookieStore.get(MOVIE_REGION_COOKIE)?.value);
+  const movies = await getMovies("", 80, genre.id, region);
 
   return (
     <main className="min-h-screen bg-black bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.12),transparent_34%),linear-gradient(180deg,#020617_0%,#000_58%,#020617_100%)] text-white">

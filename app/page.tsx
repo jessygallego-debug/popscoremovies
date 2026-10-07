@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { cookies, headers } from "next/headers";
+import { MOVIE_REGION_COOKIE, resolveMovieRegion } from "@/lib/movie-region";
 import Link from "next/link";
 import { Suspense } from "react";
 import EmojiIcon from "@/app/components/emoji-icon";
@@ -260,10 +262,12 @@ export default async function Home({
     (genre) => genre.id === params.genre
   );
   const homeMovieLimit = query || activeGenre ? 160 : 100;
+  const [requestHeaders, cookieStore] = await Promise.all([headers(), cookies()]);
+  const movieRegion = resolveMovieRegion(requestHeaders, cookieStore.get(MOVIE_REGION_COOKIE)?.value);
   const siteStats = getSiteEngagementTotals();
   const collectionId = params.collection?.trim() ?? "";
   const collection = collectionId ? await getMovieCollection(collectionId).catch(() => null) : null;
-  const movies = collectionId ? collection?.parts ?? [] : await getMovies(query, homeMovieLimit, activeGenre?.id);
+  const movies = collectionId ? collection?.parts ?? [] : await getMovies(query, homeMovieLimit, activeGenre?.id, movieRegion);
   const displayMovies = collectionId ? movies : movies.filter(hasMovieArtwork);
   const hasMissingToken = !isTmdbConfigured();
   const currentPageParams = new URLSearchParams();
