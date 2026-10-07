@@ -37,10 +37,25 @@ function serviceName(name: string) {
   const key = cleaned.toLowerCase().replace(/\+/g, "plus").replace(/[^a-z0-9]/g, "");
   return aliases[key] ?? cleaned;
 }
+const PURCHASE_STOREFRONTS = new Set([
+  "amazonvideo", "appletvstore", "itunes", "googleplaymovies",
+  "googleplaymoviesandtv", "googleplay", "youtube", "microsoftstore",
+  "fandango", "fandangoathome", "vudu",
+  "rakutentv", "chili", "cineplex", "cinemastore", "skystore",
+  "telstratv", "telstratvboxoffice", "fetchtv",
+]);
+
+function isPurchaseStorefront(name: string) {
+  const normalized = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return PURCHASE_STOREFRONTS.has(normalized) || /store$/i.test(name.trim());
+}
+
 // Keep all country-specific IDs so one selection searches every delivery channel.
 export function groupStreamingProviders(providers: StreamingProvider[]) {
   const groups = new Map<string, StreamingProvider>();
   for (const provider of providers) {
+    // Storefronts sell/rent individual titles and are not subscription catalogs.
+    if (isPurchaseStorefront(provider.provider_name)) continue;
     const name = serviceName(provider.provider_name);
     const key = name.toLowerCase();
     const existing = groups.get(key);

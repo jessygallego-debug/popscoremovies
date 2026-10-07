@@ -34,6 +34,24 @@ test("groups spelling, plan and channel variants without losing IDs", () => {
   const names = ["Acorn TV", "AcornTV Amazon Channel", "A&E", "A&E Crime Central", "AMC", "AMC Plus", "AMC+ Amazon Channel", "Amazon Video", "Amazon Prime Video", "Apple TV", "Apple TV Store", "Discovery +", "Discovery+ Amazon Channel", "ALLBLK", "ALLBLK Amazon channel with ads", "The Roku Channel"];
   const groups = groupStreamingProviders(names.map((provider_name, index) => ({ provider_id: index + 1, provider_name })));
   assert.deepEqual(groups.map(group => group.provider_name), ["A&E", "Acorn TV", "ALLBLK", "AMC", "Apple TV", "Discovery+", "Prime Video", "The Roku Channel"]);
-  assert.equal(groups.flatMap(group => group.provider_ids).length, names.length);
+  assert.equal(groups.flatMap(group => group.provider_ids).length, names.length - 2);
   assert.deepEqual(groupStreamingProviders(groups), groups);
+});
+
+
+test("storefronts cannot become subscription providers", () => {
+ const groups = groupStreamingProviders([
+   { provider_id: 350, provider_name: "Apple TV" },
+   { provider_id: 2, provider_name: "Apple TV Store" },
+   { provider_id: 9, provider_name: "Amazon Prime Video" },
+   { provider_id: 10, provider_name: "Amazon Video" },
+ ]);
+ assert.deepEqual(groups.find(group => group.provider_name === "Apple TV").provider_ids, [350]);
+ assert.deepEqual(groups.find(group => group.provider_name === "Prime Video").provider_ids, [9]);
+});
+
+test("purchase storefronts are absent from the service picker", () => {
+ const names = ["Google Play Movies", "YouTube", "Fandango At Home", "Microsoft Store", "Rakuten TV", "Sky Store", "Amazon Video", "Apple TV Store", "Apple TV", "Amazon Prime Video", "YouTube Premium"];
+ const groups = groupStreamingProviders(names.map((provider_name, index) => ({ provider_id: index + 1, provider_name })));
+ assert.deepEqual(groups.map(group => group.provider_name), ["Apple TV", "Prime Video", "YouTube Premium"]);
 });

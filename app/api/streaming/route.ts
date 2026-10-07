@@ -38,7 +38,14 @@ export async function GET(request: Request) {
       with_watch_monetization_types: "flatrate", include_adult: "false", sort_by: "popularity.desc", language: "en-US", page });
     if (genre) params.set("with_genres", genre);
 
-    return Response.json(await getStreamingMovies(params));
+    const result = await getStreamingMovies(params);
+    const availability = await Promise.all(result.movies.map(async movie => ({
+      movie, providers: await getStreamingSubscriptionIds(movie.id, region),
+    })));
+    return Response.json({
+      ...result,
+      movies: availability.filter(item => item.providers.some(id => expandedIds.includes(id))).map(item => item.movie),
+    });
   } catch {
     return Response.json({ error: "Streaming availability is temporarily unavailable. Please try again." }, { status: 503 });
   }
