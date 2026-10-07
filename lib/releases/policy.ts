@@ -41,17 +41,15 @@ const priority: Record<string, number> = {
   supplemental: 2,
   detection: 1,
 };
-export function relevanceScore(movie: ReleaseMovie, date: string) {
-  const recentDays = movie.metadata.theatrical_date
-    ? (Date.parse(date) - Date.parse(movie.metadata.theatrical_date)) / 86400000
-    : Infinity;
+export function relevanceScore(movie: ReleaseMovie) {
+  // Compress the different-sized inputs so dollars and large vote counts do not
+  // swamp popularity. Popularity has the strongest coefficient, then votes,
+  // then box office. These are scoring coefficients, not percentage weights.
   return (
     Math.round(
-      (Math.log1p(Math.max(0, movie.popularity)) * 25 +
+      (Math.log1p(Math.max(0, movie.popularity)) * 50 +
         Math.log1p(Math.max(0, movie.vote_count)) * 20 +
-        Math.log1p(Math.max(0, movie.metadata.revenue ?? 0)) * 2 +
-        (movie.metadata.franchise ? 15 : 0) +
-        (recentDays >= 0 && recentDays <= 180 ? 20 : 0)) *
+        Math.log1p(Math.max(0, movie.metadata.revenue ?? 0)) * 2) *
         100,
     ) / 100
   );

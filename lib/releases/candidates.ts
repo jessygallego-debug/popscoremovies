@@ -51,7 +51,7 @@ export async function releaseCandidateReport(monthKey: string) {
       const approved = event.evidence.some((e) =>
         overrides.some((o) => o.event_id === e.id && o.action === "approve"),
       );
-      const score = relevanceScore(movie, event.announced_release_date!);
+      const score = relevanceScore(movie);
       return [
         {
           eventId: event.id,
@@ -86,24 +86,11 @@ export async function releaseCandidateReport(monthKey: string) {
         },
       ];
     });
-  // Approval boosts preference but never bypasses confidence, freshness, or exact-date requirements.
+  // Approval can make a verified title eligible, but does not affect its rank.
   const eligible = candidates
     .filter((c) => c.eligible)
-    .sort(
-      (a, b) =>
-        Number(b.approved) - Number(a.approved) ||
-        b.rankingScore - a.rankingScore,
-    );
-  const selected = selectMonthlyPicks(
-    eligible.map((c) => ({
-      ...c,
-      rankingScore: c.rankingScore + (c.approved ? 10000 : 0),
-    })),
-  ).map((c) => ({
-    ...c,
-    rankingScore:
-      c.rankingScore >= 10000 ? c.rankingScore - 10000 : c.rankingScore,
-  }));
+    .sort((a, b) => b.rankingScore - a.rankingScore);
+  const selected = selectMonthlyPicks(eligible);
   return {
     monthKey,
     candidates,

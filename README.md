@@ -105,8 +105,10 @@ The release feed is queried with `month=YYYY-MM&region=US` and must return:
 Unknown, stale, malformed, or incorrectly categorized entries are excluded. The
 campaign does not infer future subscription dates from TMDB watch-provider data.
 TMDB is used to verify movie identity and poster data. With the automated collector,
-popularity, vote count, theatrical prominence and franchise information determine
-ranking. Each section selects up to five trustworthy notable movies. Automatic delivery
+only popularity, vote count, and box-office revenue determine ranking, with
+popularity weighted most strongly, then vote count, then revenue. Franchise,
+release recency, and admin approval do not add ranking bonuses.
+Each section selects up to five trustworthy notable movies. Automatic delivery
 requires at least two per section by default; insufficient coverage skips delivery. Streaming
 picks prefer a maximum of two per service, filling from the most popular
 remaining movies when there are too few alternatives. The same movie may appear

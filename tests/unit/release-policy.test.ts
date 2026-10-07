@@ -139,9 +139,27 @@ test("engagement outweighs a high average with few votes", () => {
   assert.ok(
     relevanceScore(
       { ...movie, vote_average: 7.5, vote_count: 50000 },
-      "2026-10-06",
-    ) > relevanceScore(movie, "2026-10-06"),
+    ) > relevanceScore(movie),
   );
+});
+test("ranking uses only popularity, rating count, and box office", () => {
+  const movie: ReleaseMovie = {
+    tmdb_id: 1, title: "Movie", poster_path: "/p", popularity: 80,
+    vote_count: 800, vote_average: 7, metadata: { revenue: 100000000 },
+  };
+  const score = relevanceScore(movie);
+  assert.equal(relevanceScore({ ...movie, vote_average: 10, metadata: { ...movie.metadata, franchise: true, theatrical_date: "2026-10-01" } }), score);
+  assert.equal(relevanceScore({ ...movie, metadata: { ...movie.metadata, theatrical_date: "1990-01-01" } }), score);
+  for (const changed of [
+    { ...movie, popularity: 160 },
+    { ...movie, vote_count: 1600 },
+    { ...movie, metadata: { revenue: 200000000 } },
+  ]) assert.ok(relevanceScore(changed) > score);
+  const popularityBoost = relevanceScore({ ...movie, popularity: 160 }) - score;
+  const votesBoost = relevanceScore({ ...movie, vote_count: 1600 }) - score;
+  const revenueBoost = relevanceScore({ ...movie, metadata: { revenue: 200000000 } }) - score;
+  assert.ok(popularityBoost > votesBoost && votesBoost > revenueBoost);
+  assert.equal(relevanceScore({ ...movie, popularity: 0, vote_count: 0, metadata: {} }), 0);
 });
 test("subscription notes require explicit names; store names remain distinct", () => {
   assert.equal(subscriptionNote("Peacock"), "peacock");
