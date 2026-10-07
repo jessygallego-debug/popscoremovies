@@ -70,6 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes,
+    { url: absoluteUrl("/streaming"), changeFrequency: "daily" as const, priority: 0.7 },
     ...genreRoutes,
     ...movieRoutes,
     ...discussionRoutes,

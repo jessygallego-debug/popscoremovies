@@ -14,6 +14,7 @@ const navItems = [
   { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/discover", label: "Movie Match" },
+  { href: "/streaming", label: "Streaming" },
 ];
 
 function SiteLogo() {

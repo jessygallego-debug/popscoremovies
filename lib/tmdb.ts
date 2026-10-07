@@ -110,6 +110,8 @@ type TmdbWatchProviderResponseKey =
   | "rent";
 
 type TmdbFetchOptions = {
+  strict?: boolean;
+  signal?: AbortSignal;
   revalidate?: number;
 };
 
@@ -375,6 +377,7 @@ async function tmdbFetch<T>(
   const token = getToken();
 
   if (!token) {
+    if (options.strict) throw new Error("TMDB is not configured.");
     return null;
   }
 
@@ -385,9 +388,11 @@ async function tmdbFetch<T>(
       "Accept-Encoding": "identity",
     },
     next: { revalidate: options.revalidate ?? TMDB_DEFAULT_CACHE_SECONDS },
+    signal: options.signal,
   });
 
   if (!response.ok) {
+    if (options.strict) throw new Error("Movie lookup temporarily unavailable. Retry later.");
     return null;
   }
 
@@ -1002,6 +1007,23 @@ export async function getMovieImageFallbacks(
     backdropPath: bestImagePath(images?.backdrops, excludePaths),
     posterPath: bestImagePath(images?.posters, excludePaths),
   };
+}
+
+export async function getStreamingProviders(region: string) {
+  const data = await tmdbFetch<{ results: TmdbWatchProvider[] }>(
+    `/watch/providers/movie?watch_region=${encodeURIComponent(region)}&language=en-US`,
+    { strict: true, signal: AbortSignal.timeout(15000), revalidate: 43200 }
+  );
+  if (!data) throw new Error("Streaming services unavailable.");
+  return data.results.sort((a, b) => (a.display_priority ?? 999) - (b.display_priority ?? 999));
+}
+
+export async function getStreamingMovies(params: URLSearchParams) {
+  const data = await tmdbFetch<TmdbListResponse>(`/discover/movie?${params}`, {
+    strict: true, signal: AbortSignal.timeout(15000), revalidate: 3600,
+  });
+  if (!data) throw new Error("Streaming movies unavailable.");
+  return { movies: (data.results ?? []).filter(movie => !movie.adult), totalPages: Math.min(data.total_pages ?? 1, 500) };
 }
 
 export function isTmdbConfigured() {
