@@ -5,20 +5,38 @@ export type StreamingProvider = {
 };
 
 function serviceName(name: string) {
-  const cleaned = name
-    .replace(/\s+(?:Amazon|Apple TV|Roku(?: Premium)?)\s+Channels?$/i, "")
-    .replace(/\s*\((?:Amazon|Apple TV|Roku)\)\s*$/i, "")
-    .replace(/\s*\((?:standard|basic)?\s*with ads\)\s*$/i, "")
-    .replace(/\s+(?:standard|basic)?\s*with ads\s*$/i, "")
-    .trim();
+  let cleaned = name.trim();
+  // Some provider names put an ad-plan suffix after the channel suffix.
+  for (let pass = 0; pass < 3; pass++) {
+    cleaned = cleaned
+      .replace(/\s*\((?:standard|basic)?\s*with ads\)\s*$/i, "")
+      .replace(/\s+(?:standard|basic)?\s*with ads\s*$/i, "")
+      .replace(/\s*\((?:Amazon|Apple TV|Roku)\)\s*$/i, "")
+      .replace(/^(.+?)\s+(?:Amazon|Amzon|Apple TV|Roku(?: Premium)?)\s+Channels?$/i,
+        (original, prefix: string) => prefix.toLowerCase() === "the" ? original : prefix)
+      .trim();
+  }
   const aliases: Record<string, string> = {
-    "paramount plus": "Paramount+", "paramount+": "Paramount+",
-    "apple tv+": "Apple TV", "apple tv plus": "Apple TV",
-    "amazon prime video": "Prime Video", "prime video": "Prime Video",
+    acorntv: "Acorn TV", ae: "A&E", aecrimecentral: "A&E",
+    amc: "AMC", amcplus: "AMC",
+    amazonvideo: "Prime Video", amazonprimevideo: "Prime Video",
+    amazonprimevideofree: "Prime Video", primevideo: "Prime Video",
+    appletv: "Apple TV", appletvplus: "Apple TV", appletvstore: "Apple TV",
+    paramountplus: "Paramount+", paramountplusessential: "Paramount+",
+    paramountpluspremium: "Paramount+",
+    broadwayhd: "BroadwayHD", curiositystream: "Curiosity Stream",
+    discoveryplus: "Discovery+", mgmplus: "MGM+",
+    peacock: "Peacock", peacockpremium: "Peacock", peacockpremiumplus: "Peacock",
+    netflix: "Netflix", netflixkids: "Netflix",
+    plex: "Plex", plexchannel: "Plex", mhzchoice: "MHz Choice", mzchoice: "MHz Choice",
+    pureflix: "Pure Flix", greatamericanpureflix: "Pure Flix",
+    shoutfactory: "Shout! Factory TV", shoutfactorytv: "Shout! Factory TV",
+    vix: "ViX", vixpremium: "ViX",
+    youtube: "YouTube", youtubefree: "YouTube",
   };
-  return aliases[cleaned.toLowerCase()] ?? cleaned;
+  const key = cleaned.toLowerCase().replace(/\+/g, "plus").replace(/[^a-z0-9]/g, "");
+  return aliases[key] ?? cleaned;
 }
-
 // Keep all country-specific IDs so one selection searches every delivery channel.
 export function groupStreamingProviders(providers: StreamingProvider[]) {
   const groups = new Map<string, StreamingProvider>();

@@ -124,18 +124,27 @@ export default function StreamingBrowser() {
         <legend className="text-xl font-bold">Choose Your Streaming Services</legend>
         <p className="mt-2 text-sm text-slate-300">Select one or more. Movies included with any selected subscription will appear below.</p>
         {providerError ? <p role="alert" className="mt-4 text-amber-300">{providerError}</p> : providerCountry !== country ? <p role="status" className="mt-4 text-slate-300">Loading services…</p> : <>
-          <label className="mt-4 block max-w-md text-sm font-bold">Find a service
-            <input type="search" className={selectClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Search streaming services" />
-          </label>
-          <div className="mt-4 flex max-h-64 flex-wrap gap-2 overflow-y-auto">
-            {providers.filter(provider => provider.provider_name.toLowerCase().includes(search.toLowerCase())).map(provider => {
-              const id = String(provider.provider_id);
-              return <button type="button" key={id} aria-pressed={services.includes(id)} onClick={() => toggleService(id)}
-                className={`rounded-xl border px-4 py-3 text-sm font-bold transition ${services.includes(id) ? "border-yellow-400 bg-yellow-400/15 text-yellow-300" : "border-slate-700 bg-slate-950 text-slate-200 hover:border-yellow-400/60"}`}>{provider.provider_name}</button>;
-            })}
-          </div>
-          {!providers.some(provider => provider.provider_name.toLowerCase().includes(search.toLowerCase())) && <p className="mt-3 text-sm text-slate-400">No services found.</p>}
-          {services.length > 0 && <button type="button" onClick={() => { setServices([]); setPage(1); }} className="mt-4 text-sm font-bold text-yellow-300">Clear selected services ({services.length})</button>}
+          <details className="relative mt-4 max-w-xl" onKeyDown={event => { if (event.key === "Escape") { event.currentTarget.open = false; event.currentTarget.querySelector("summary")?.focus(); } }}>
+            <summary className="cursor-pointer rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 font-bold text-yellow-300">
+              Streaming platforms {services.length ? `(${services.length} selected)` : "— select services"}
+            </summary>
+            <div className="absolute left-0 right-0 z-30 mt-2 rounded-xl border border-slate-700 bg-slate-900 p-3 shadow-2xl">
+              <label className="block text-sm font-bold">Find a service
+                <input type="search" className={selectClass} value={search} onChange={event => setSearch(event.target.value)} placeholder="Search streaming services" />
+              </label>
+              <div className="mt-3 max-h-64 overflow-y-auto">
+                {providers.filter(provider => provider.provider_name.toLowerCase().includes(search.toLowerCase())).map(provider => {
+                  const id = String(provider.provider_id);
+                  return <label key={id} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-bold text-slate-200 hover:bg-slate-800">
+                    <input type="checkbox" checked={services.includes(id)} onChange={() => toggleService(id)} className="h-4 w-4 accent-yellow-400" />
+                    {provider.provider_name}
+                  </label>;
+                })}
+                {!providers.some(provider => provider.provider_name.toLowerCase().includes(search.toLowerCase())) && <p className="px-3 py-3 text-sm text-slate-400">No services found.</p>}
+              </div>
+            </div>
+          </details>
+          {services.length > 0 && <button type="button" onClick={() => { setServices([]); setPage(1); }} className="mt-4 text-sm font-bold text-yellow-300">Clear Service Selection ({services.length})</button>}
         </>}
       </fieldset>
     </div>

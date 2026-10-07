@@ -10,9 +10,11 @@ test("streaming remembers selections and combines services with filters", async 
   });
   await page.goto("/streaming");
   await page.getByLabel("Country", { exact: true }).selectOption("CA");
-  await page.getByRole("button", { name: "Netflix", exact: true }).click();
-  await page.getByRole("button", { name: "Prime Video", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Netflix", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.locator("summary").click();
+  await page.getByRole("checkbox", { name: "Netflix", exact: true }).click();
+  await page.getByRole("checkbox", { name: "Prime Video", exact: true }).click();
+  await expect(page.getByRole("checkbox", { name: "Netflix", exact: true })).toBeChecked();
+  await page.locator("details").press("Escape");
   const request = page.waitForRequest(req => {
     const params = new URL(req.url()).searchParams;
     return req.url().includes("/api/streaming?") && params.get("services") === "8,9" && params.get("genre") === "28" && params.get("query") === "Batman";
@@ -24,11 +26,13 @@ test("streaming remembers selections and combines services with filters", async 
   await request;
   await expect(page.getByText(/No subscription movies match/)).toBeVisible();
   await page.reload();
+  await page.locator("summary").click();
   await expect(page.getByLabel("Country", { exact: true })).toHaveValue("CA");
-  await expect(page.getByRole("button", { name: "Netflix", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("button", { name: "Prime Video", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("checkbox", { name: "Netflix", exact: true })).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Prime Video", exact: true })).toBeChecked();
   await page.getByLabel("Country", { exact: true }).selectOption("GB");
-  await expect(page.getByRole("button", { name: "Netflix", exact: true })).toHaveAttribute("aria-pressed", "false");
+  await page.locator("summary").click();
+  await expect(page.getByRole("checkbox", { name: "Netflix", exact: true })).not.toBeChecked();
 });
 
 test("streaming recovers from provider errors", async ({ page }) => {
@@ -40,7 +44,8 @@ test("streaming recovers from provider errors", async ({ page }) => {
   await expect(page.getByRole("alert").first()).toContainText("temporarily unavailable");
   failed = false;
   await page.getByRole("button", { name: "Try again" }).click();
-  await expect(page.getByRole("button", { name: "Netflix", exact: true })).toBeVisible();
+  await page.locator("summary").click();
+  await expect(page.getByRole("checkbox", { name: "Netflix", exact: true })).toBeVisible();
 });
 
 
@@ -54,7 +59,9 @@ test("streaming renders movie cards and paginates on mobile", async ({ page }) =
     return route.fulfill({ json: { movies: [{ id: params.get("page") === "2" ? 2 : 1, title, overview: "", poster_path: null, backdrop_path: null, popularity: 1, vote_average: 0, release_date: "2020-01-01", genre_ids: [28] }], totalPages: 2 } });
   });
   await page.goto("/streaming");
-  await page.getByRole("button", { name: "Netflix", exact: true }).click();
+  await page.locator("summary").click();
+  await page.getByRole("checkbox", { name: "Netflix", exact: true }).click();
+  await page.locator("details").press("Escape");
   await expect(page.getByRole("link", { name: "Rate First Movie", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page.getByRole("link", { name: "Rate Second Movie", exact: true })).toBeVisible();
@@ -75,7 +82,28 @@ test("streaming groups channel versions and restores an old channel selection", 
     ] } : { movies: [], totalPages: 1 } });
   });
   await page.goto("/streaming");
-  await expect(page.getByRole("button", { name: "Paramount+", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("button", { name: /Amazon Channel|Apple TV Channel/ })).toHaveCount(0);
+  await page.locator("summary").click();
+  await expect(page.getByRole("checkbox", { name: "Paramount+", exact: true })).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: /Amazon Channel|Apple TV Channel/ })).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("popscore.streaming.v1")!).services)).toEqual(["1"]);
+});
+
+
+
+test("clearing dropdown selections remains cleared after reload", async ({ page }) => {
+  await page.route("**/api/streaming?*", route => route.fulfill({ json:
+    new URL(route.request().url()).searchParams.get("mode") === "providers"
+      ? { providers: [{ provider_id: 8, provider_name: "Netflix" }] }
+      : { movies: [], totalPages: 1 }
+  }));
+  await page.goto("/streaming");
+  await page.locator("summary").click();
+  await page.getByRole("checkbox", { name: "Netflix", exact: true }).check();
+  await page.locator("details").press("Escape");
+  await page.getByRole("button", { name: /Clear Service Selection/ }).click();
+  await page.reload();
+  await page.locator("summary").click();
+  await expect(page.getByRole("checkbox", { name: "Netflix", exact: true })).not.toBeChecked();
+  await expect(page.getByText("Streaming availability provided by JustWatch via TMDB.")).toHaveCount(0);
+  await expect(page.getByText(/Catalogs vary by country/)).toBeVisible();
 });
