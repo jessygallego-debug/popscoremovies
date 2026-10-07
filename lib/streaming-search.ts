@@ -7,9 +7,13 @@ export async function searchStreamingCatalog(
   movieProviders: (movieId: number) => Promise<number[]>,
 ) {
   const first = await searchPage(query, 1);
-  const pages = first.total_pages ?? 1;
-  if (pages > 10) throw new Error("Please use a more specific movie title.");
-  const rest = await Promise.all(Array.from({ length: Math.max(0, pages - 1) }, (_, i) => searchPage(query, i + 2)));
+  const availablePages = first.total_pages ?? 1;
+  const pages = Math.min(availablePages, 50);
+
+  const rest: SearchPage[] = [];
+  for (let start = 2; start <= pages; start += 5) {
+    rest.push(...await Promise.all(Array.from({ length: Math.min(5, pages - start + 1) }, (_, i) => searchPage(query, start + i))));
+  }
   const candidates = [...new Map([first, ...rest].flatMap(result => result.results ?? [])
     .filter(movie => !movie.adult && (!genre || movie.genre_ids?.includes(Number(genre))))
     .map(movie => [movie.id, movie])).values()];
@@ -22,5 +26,5 @@ export async function searchStreamingCatalog(
     matches.push(...batch.filter((movie): movie is MovieSummary => movie !== null));
   }
   matches.sort((a, b) => b.popularity - a.popularity || a.id - b.id);
-  return { movies: matches.slice((page - 1) * 20, page * 20), totalPages: Math.ceil(matches.length / 20) };
+  return { movies: matches.slice((page - 1) * 20, page * 20), totalPages: Math.ceil(matches.length / 20), searchLimited: availablePages > pages };
 }

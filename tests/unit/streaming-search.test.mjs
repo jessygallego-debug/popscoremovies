@@ -11,12 +11,28 @@ test("catalog search includes later search pages, filters subscriptions and genr
  assert.equal(result.totalPages, 1);
 });
 
-test("catalog search paginates matched titles and rejects queries too broad to complete", async () => {
+test("catalog search paginates matched titles", async () => {
  const result = await searchStreamingCatalog("Movie", [1], "", 2,
   async () => ({ total_pages: 1, results: Array.from({ length: 25 }, (_, i) => movie(i + 1, 25 - i)) }),
   async () => [1]);
  assert.equal(result.movies.length, 5);
  assert.equal(result.movies[0].id, 21);
  assert.equal(result.totalPages, 2);
- await assert.rejects(searchStreamingCatalog("a", [1], "", 1, async () => ({ total_pages: 11 }), async () => [1]), /more specific/);
+
+});
+
+
+test("broad partial-title searches find subscription titles beyond the old limit", async () => {
+ const result = await searchStreamingCatalog("demon", [350], "", 1,
+  async (_, page) => ({ total_pages: 14, results: page === 12 ? [{ ...movie(100, 99), title: "Demon Slayer" }] : [] }),
+  async () => [350]);
+ assert.equal(result.movies[0].title, "Demon Slayer");
+ assert.equal(result.searchLimited, false);
+});
+
+test("extremely broad queries return available matches and flag the search limit", async () => {
+ const result = await searchStreamingCatalog("movie", [1], "", 1,
+  async (_, page) => ({ total_pages: 500, results: page === 1 ? [movie(1, 100)] : [] }), async () => [1]);
+ assert.equal(result.movies.length, 1);
+ assert.equal(result.searchLimited, true);
 });
