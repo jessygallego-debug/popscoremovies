@@ -18,13 +18,18 @@ export async function searchStreamingCatalog(
     .filter(movie => !movie.adult && (!genre || movie.genre_ids?.includes(Number(genre))))
     .map(movie => [movie.id, movie])).values()];
   const matches: MovieSummary[] = [];
+  let failedChecks = 0;
   for (let i = 0; i < candidates.length; i += 10) {
-    const batch = await Promise.all(candidates.slice(i, i + 10).map(async movie => {
+    const batch = await Promise.allSettled(candidates.slice(i, i + 10).map(async movie => {
       const ids = await movieProviders(movie.id);
       return ids.some(id => providerIds.includes(id)) ? movie : null;
     }));
-    matches.push(...batch.filter((movie): movie is MovieSummary => movie !== null));
+    for (const result of batch) {
+      if (result.status === "rejected") failedChecks++;
+      else if (result.value) matches.push(result.value);
+    }
   }
+  if (candidates.length && failedChecks === candidates.length) throw new Error("Streaming availability unavailable.");
   matches.sort((a, b) => b.popularity - a.popularity || a.id - b.id);
-  return { movies: matches.slice((page - 1) * 20, page * 20), totalPages: Math.ceil(matches.length / 20), searchLimited: availablePages > pages };
+  return { movies: matches.slice((page - 1) * 20, page * 20), totalPages: Math.ceil(matches.length / 20), searchLimited: availablePages > pages, availabilityIncomplete: failedChecks > 0 };
 }

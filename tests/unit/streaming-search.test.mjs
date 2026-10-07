@@ -36,3 +36,17 @@ test("extremely broad queries return available matches and flag the search limit
  assert.equal(result.movies.length, 1);
  assert.equal(result.searchLimited, true);
 });
+
+test("multiple services use OR matching and a failed movie lookup does not discard verified matches", async () => {
+ const result = await searchStreamingCatalog("demon", [8, 9], "", 1,
+  async () => ({ total_pages: 1, results: [movie(1, 100), movie(2, 90), movie(3, 80), movie(4, 70)] }),
+  async id => { if (id === 3) throw new Error("Upstream unavailable"); return id === 1 ? [8] : id === 2 ? [9] : [350]; });
+ assert.deepEqual(result.movies.map(movie => movie.id), [1, 2]);
+ assert.equal(result.availabilityIncomplete, true);
+});
+
+test("a total availability outage remains an error rather than false empty results", async () => {
+ await assert.rejects(searchStreamingCatalog("demon", [8, 9], "", 1,
+  async () => ({ results: [movie(1, 100)] }),
+  async () => { throw new Error("Unavailable"); }), /availability unavailable/);
+});

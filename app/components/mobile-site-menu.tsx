@@ -12,7 +12,7 @@ const mobileNavItems = [
   { href: "/community", label: "Community" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/discover", label: "Movie Match" },
-  { href: "/streaming", label: "Streaming" },
+  { href: "/streaming", label: "Now Streaming" },
   { href: "/faq", label: "FAQ" },
 ];
 

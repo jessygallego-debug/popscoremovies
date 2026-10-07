@@ -25,6 +25,7 @@ export default function StreamingBrowser() {
   const [movies, setMovies] = useState<MovieSummary[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [searchLimited, setSearchLimited] = useState(false);
+  const [availabilityIncomplete, setAvailabilityIncomplete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [providerError, setProviderError] = useState("");
   const [error, setError] = useState("");
@@ -78,6 +79,7 @@ export default function StreamingBrowser() {
     setMovies([]);
     setTotalPages(0);
     setSearchLimited(false);
+    setAvailabilityIncomplete(false);
     setError("");
     if (!ready || providerCountry !== country || !serviceKey) { setLoading(false); return; }
     const controller = new AbortController();
@@ -91,6 +93,7 @@ export default function StreamingBrowser() {
         setMovies(data.movies);
         setTotalPages(data.totalPages);
         setSearchLimited(Boolean(data.searchLimited));
+        setAvailabilityIncomplete(Boolean(data.availabilityIncomplete));
       }).catch(err => { if (!controller.signal.aborted) setError(err.message); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -170,6 +173,7 @@ export default function StreamingBrowser() {
         : !services.length ? <p role="status" className="text-slate-300">Choose your services to see what’s streaming.</p>
         : providerCountry === country && !movies.length ? <p role="status" className="text-slate-300">No subscription movies match these selections. Try another service, genre, or movie title.</p>
         : <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"><MovieGrid movies={movies} returnTo="/streaming" /></div>}
+      {!loading && !error && availabilityIncomplete && <p role="status" className="mt-4 text-sm text-amber-300">Some movie availability could not be checked. Showing verified matches; try again for complete results.</p>}
       {!loading && !error && searchLimited && <p className="mt-4 text-sm text-slate-400">Showing matches from the first 1,000 movie search results. Add another word to narrow your search.</p>}
       {!loading && !error && totalPages > 1 && <nav aria-label="Streaming movie pages" className="mt-6 flex items-center justify-center gap-4">
         <button type="button" disabled={page === 1} onClick={() => setPage(value => value - 1)} className="rounded-xl border border-slate-700 px-4 py-3 disabled:opacity-40">Previous</button>

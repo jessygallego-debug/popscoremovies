@@ -111,6 +111,7 @@ type TmdbWatchProviderResponseKey =
 
 type TmdbFetchOptions = {
   strict?: boolean;
+  allowNotFound?: boolean;
   signal?: AbortSignal;
   revalidate?: number;
 };
@@ -392,7 +393,7 @@ async function tmdbFetch<T>(
   });
 
   if (!response.ok) {
-    if (options.strict) throw new Error("Movie lookup temporarily unavailable. Retry later.");
+    if (options.strict && !(options.allowNotFound && response.status === 404)) throw new Error("Movie lookup temporarily unavailable. Retry later.");
     return null;
   }
 
@@ -1086,7 +1087,7 @@ export async function getStreamingSearchPage(query: string, page: number) {
 }
 
 export async function getStreamingSubscriptionIds(movieId: number, region: string) {
-  const result = await tmdbFetch<TmdbMovieWatchProvidersResponse>(`/movie/${movieId}/watch/providers`, { strict: true, signal: AbortSignal.timeout(15000), revalidate: 43200 });
-  if (!result) throw new Error("Streaming availability unavailable.");
+  const result = await tmdbFetch<TmdbMovieWatchProvidersResponse>(`/movie/${movieId}/watch/providers`, { strict: true, allowNotFound: true, signal: AbortSignal.timeout(15000), revalidate: 43200 });
+  if (!result) return []; // Removed movies have no verified subscription availability.
   return (result.results?.[region]?.flatrate ?? []).map(provider => provider.provider_id);
 }
