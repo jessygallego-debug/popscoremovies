@@ -109,9 +109,10 @@ export async function createRatingShareCanvas(data: RatingShareImageData) {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas unavailable");
   const tier = getPopScoreTitle(data.popscore);
-  const [poster, bucket] = await Promise.all([
+  const [poster, bucket, wordmark] = await Promise.all([
     getPosterForDownload(data.movieId, data.posterPath).then(src => src ? loadImage(src).catch(() => null) : null),
     loadImage(tier.iconSrc),
+    loadImage("/branding/popscore-wordmark.svg"),
   ]);
   ctx.fillStyle = "#090b0f";
   ctx.fillRect(0, 0, 1080, 1920);
@@ -120,22 +121,19 @@ export async function createRatingShareCanvas(data: RatingShareImageData) {
   glow.addColorStop(1, "rgba(250,204,21,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, 1080, 1920);
-  ctx.font = "900 58px Arial, sans-serif";
-  ctx.fillStyle = "#ffffff";
-  ctx.fillText("P", 80, 228);
-  const reelX = 83 + ctx.measureText("P").width;
+  // Use the same vector lettering as the header; the reel remains static in exports.
+  const wordmarkScale = 350 / 202;
+  ctx.drawImage(wordmark, 80, 185, 350, 24 * wordmarkScale);
   ctx.save();
-  ctx.translate(reelX, 185);
-  ctx.scale(0.44, 0.44);
+  ctx.translate(80 + 26 * wordmarkScale, 185);
+  ctx.scale(24 * wordmarkScale / 100, 24 * wordmarkScale / 100);
   for (const circle of LOGO_REEL_CIRCLES) {
-    ctx.fillStyle = circle.cutout ? "#090b0f" : "#facc15";
+    ctx.fillStyle = circle.cutout ? "#090b0f" : "#ffc400";
     ctx.beginPath();
     ctx.arc(circle.cx, circle.cy, circle.r, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
-  ctx.fillStyle = "#ffffff";
-  ctx.fillText("PSCORE", reelX + 47, 228);
   ctx.fillStyle = "#a1a1aa";
   ctx.font = "600 23px Arial, sans-serif";
   ctx.letterSpacing = "4px";

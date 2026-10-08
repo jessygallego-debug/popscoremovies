@@ -6,6 +6,7 @@ const read = p => fs.readFileSync(p, 'utf8');
 const compile = source => ts.transpileModule(source.replace(/^import .*;\r?\n/gm, '').replace(/export /g, ''), {compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.None}}).outputText;
 const renderer = compile(read('lib/popscore-presentation.ts')) + compile(read('lib/logo-reel.ts')) + compile(read('lib/rating-share-image.ts'));
 const assets = Object.fromEntries(['extra-buttery-v2.png','buttery.png','fresh-popcorn.png','salty.png','burnt.png'].map(name => ['/rating-icons/'+name, 'data:image/png;base64,'+fs.readFileSync('public/rating-icons/'+name).toString('base64')]));
+assets['/branding/popscore-wordmark.svg'] = 'data:image/svg+xml;base64,' + fs.readFileSync('public/branding/popscore-wordmark.svg').toString('base64');
 const browser = await chromium.launch({headless:true});
 try {
  const page = await browser.newPage();
