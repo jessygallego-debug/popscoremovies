@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import { cookies, headers } from "next/headers";
 import { MOVIE_REGION_COOKIE, resolveMovieRegion } from "@/lib/movie-region";
 import Link from "next/link";
@@ -37,6 +38,8 @@ const TMDB_GENRE_LABELS = new Map(
     (genre) => [Number(genre.id), genre.name]
   )
 );
+
+const heroFont = localFont({ src: "../public/fonts/manrope-extrabold.ttf", weight: "800", display: "swap", fallback: ["Arial"], adjustFontFallback: "Arial" });
 
 const whyPopScoreCards = [
   {
@@ -342,12 +345,12 @@ export default async function Home({
 
         <section className="grid gap-8 py-10 lg:grid-cols-[minmax(390px,0.82fr)_minmax(520px,1fr)] lg:items-center lg:gap-12 lg:py-14">
           <div className="max-w-[680px]">
-            <h1 className="text-5xl font-black leading-[0.94] text-white sm:text-6xl xl:text-7xl">
+            <h1 className={`${heroFont.className} text-5xl font-extrabold leading-[0.94] tracking-[-0.035em] text-white sm:text-6xl xl:text-7xl`}>
               Rate Movies
               <br />
               <span className="relative inline-block text-yellow-400">
                 Differently
-                <span className="absolute -bottom-2 left-0 h-3 w-full rounded-[50%] border-b-4 border-yellow-400/75 shadow-[0_12px_24px_rgba(250,204,21,0.42)]" />
+                <span aria-hidden="true" className="absolute -bottom-2 left-0 h-[3px] w-3/4 rounded-full bg-yellow-400" />
               </span>
             </h1>
             <p className="mt-6 max-w-[620px] text-base font-semibold leading-7 text-slate-300 sm:text-lg">

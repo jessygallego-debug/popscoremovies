@@ -26,13 +26,13 @@ function SiteLogo() {
     >
       <div className="flex items-center gap-1.5 sm:gap-3">
         <span
-          className="relative block h-8 w-[21px] shrink-0 sm:h-9 sm:w-6"
+          className="relative block h-9 w-6 shrink-0 sm:h-9 sm:w-6"
         >
             <Image
               src="/branding/popscore-popcorn-bucket.webp"
               alt=""
               fill
-              sizes="(min-width: 640px) 24px, 21px"
+              sizes="24px"
               className="object-contain transition group-hover:scale-105"
               preload
             />
