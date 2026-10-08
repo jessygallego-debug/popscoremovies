@@ -24,27 +24,23 @@ function SiteLogo() {
       aria-label="Go to PopScore Movies home"
       className="group min-w-0 shrink-0 transition hover:opacity-90"
     >
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
         <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-yellow-400/25 bg-yellow-400/10 shadow-lg shadow-yellow-400/10 sm:h-10 sm:w-10"
+          className="relative block h-8 w-[21px] shrink-0 sm:h-9 sm:w-6"
         >
-          <span className="relative block h-7 w-7 sm:h-8 sm:w-8">
             <Image
-              src="/rating-icons/extra-buttery-v2.png"
-              alt="PopScore movie rating and recommendation site"
+              src="/branding/popscore-popcorn-bucket.webp"
+              alt=""
               fill
-              sizes="(min-width: 640px) 32px, 28px"
+              sizes="(min-width: 640px) 24px, 21px"
               className="object-contain transition group-hover:scale-105"
-              priority
+              preload
             />
-          </span>
         </span>
-        <span>
-          <span className="flex items-center text-[26px] font-black leading-none tracking-wide sm:text-[32px]">
-            <span className="text-white">P</span>
+        <span aria-hidden="true" className="relative block h-[1em] w-[6.417em] text-[20px] leading-none text-[#FFC400] min-[375px]:text-[28px] min-[390px]:text-[30px] sm:text-[38px]">
+          <Image src="/branding/popscore-wordmark.svg" alt="" fill unoptimized className="object-contain" />
+          <span className="absolute left-[0.81em] top-[0.11em] flex">
             <AnimatedLogoReel />
-            <span className="text-white">P</span>
-            <span className="text-yellow-400">SCORE</span>
           </span>
         </span>
       </div>
