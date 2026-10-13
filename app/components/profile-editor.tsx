@@ -72,7 +72,8 @@ function ratingText(count: number) {
 export default function ProfileEditor() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setCachedProfile } = usePopFile();
+  const { setCachedProfile, refreshProfile } = usePopFile();
+  const isRegistration = searchParams.get("mode") === "signup";
   const returnTo = getSafeReturnPath(searchParams.get("returnTo"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -224,11 +225,12 @@ export default function ProfileEditor() {
   if (!user) {
     return (
       <section className="mx-auto max-w-xl rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-black/30">
-        <h1 className="text-3xl font-black text-white">Create Your PopFile</h1>
+        <h1 className="text-3xl font-black text-white">{isRegistration ? "Create Your PopFile" : "Sign In to PopScore"}</h1>
         <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
           Sign in with your email and password. New here? Create an account,
           then choose your username, avatar, and favorite genre.
         </p>
+        <p className="mt-3 text-sm text-slate-300">{isRegistration ? "Already have an account? " : "New to PopScore? "}<Link href={`/profile/edit?mode=${isRegistration ? "signin" : "signup"}&returnTo=${encodeURIComponent(returnTo)}`} className="font-bold text-yellow-300 underline">{isRegistration ? "Sign In" : "Join Free"}</Link></p>
         <form
           className="mt-6 space-y-4"
           onSubmit={(event) => {
@@ -245,8 +247,7 @@ export default function ProfileEditor() {
 
                 return getProfileByUserId(nextUser.id).then((nextProfile) => {
                   if (nextProfile) {
-                    router.push(returnTo);
-                    return;
+                    return refreshProfile().then(() => router.push(returnTo));
                   }
 
                   window.location.reload();

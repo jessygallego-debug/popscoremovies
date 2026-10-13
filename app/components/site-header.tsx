@@ -1,4 +1,3 @@
-import EmojiIcon from "@/app/components/emoji-icon";
 import MovieSearch from "@/app/components/movie-search";
 import Image from "next/image";
 import Link from "next/link";
@@ -50,7 +49,7 @@ function SiteLogo() {
 
 export default function SiteHeader({ showSearch = false }: { showSearch?: boolean }) {
   return (
-    <header className="relative z-[2000] flex items-center justify-between gap-5 border-b border-white/10 pb-5">
+    <header className="relative z-[2000] flex flex-wrap items-center justify-between gap-5 border-b border-white/10 pb-5 md:flex-nowrap">
       <SiteLogo />
       <nav className={`hidden items-center text-sm font-black text-slate-200 md:flex ${showSearch ? "gap-4 xl:gap-5" : "gap-8"}`}>
         {navItems.map((item) => (
@@ -77,14 +76,7 @@ export default function SiteHeader({ showSearch = false }: { showSearch?: boolea
           <NotificationBell />
         </Suspense>
         <Suspense
-          fallback={
-            <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
-                <EmojiIcon emoji="🍿" size={22} />
-              </span>
-              My PopFile
-            </div>
-          }
+          fallback={<span role="status" aria-label="Loading account" className="h-11 w-40 rounded-full bg-white/5" />}
         >
           <ProfileMenu />
         </Suspense>
@@ -105,6 +97,7 @@ export default function SiteHeader({ showSearch = false }: { showSearch?: boolea
           <MobileSiteMenu />
         </Suspense>
       </div>
+      <Suspense fallback={<span className="ml-auto h-11 w-20 rounded-full bg-white/5 md:hidden" />}><ProfileMenu mobile /></Suspense>
     </header>
   );
 }

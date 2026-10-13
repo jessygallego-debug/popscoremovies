@@ -21,7 +21,7 @@ export default function MobileSiteMenu() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
-  const { isLoading: isProfileLoading, profile, signOut } = usePopFile();
+  const { isLoading: isProfileLoading, profile, user, signOut } = usePopFile();
   const currentPath = `${pathname}${
     searchParams.toString() ? `?${searchParams.toString()}` : ""
   }`;
@@ -89,16 +89,9 @@ export default function MobileSiteMenu() {
           </div>
           <div className="mt-2 border-t border-white/10 pt-2">
             {isProfileLoading ? (
-              <button
-                type="button"
-                aria-busy="true"
-                className="flex w-full cursor-wait items-center justify-center gap-2 rounded-2xl border border-yellow-400/45 bg-yellow-400 px-4 py-3 text-sm font-black text-black opacity-80 shadow-lg shadow-yellow-400/20"
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-black/15 bg-black/10 text-base">
-                  <EmojiIcon emoji="🍿" size={20} />
-                </span>
-                My PopFile
-              </button>
+              <span role="status" aria-label="Loading account" className="block h-11 w-full animate-pulse rounded-2xl bg-white/5" />
+            ) : !user ? (
+              <Link href={popFileHref + "&mode=signin"} onClick={() => setIsOpen(false)} className="flex min-h-11 items-center justify-center rounded-2xl px-4 py-3 text-sm font-black text-white hover:bg-yellow-400/10">Sign In</Link>
             ) : (
               <Link
                 href={popFileHref}

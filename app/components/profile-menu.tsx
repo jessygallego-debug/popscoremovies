@@ -15,12 +15,12 @@ const menuItems = [
   { href: "stats", label: "Stats" },
 ];
 
-export default function ProfileMenu() {
+export default function ProfileMenu({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const menuRef = useRef<HTMLDetailsElement>(null);
-  const { isLoading: isProfileLoading, profile, signOut } = usePopFile();
+  const { isLoading: isProfileLoading, profile, user, signOut } = usePopFile();
   const currentPath = `${pathname}${
     searchParams.toString() ? `?${searchParams.toString()}` : ""
   }`;
@@ -59,33 +59,17 @@ export default function ProfileMenu() {
   }, []);
 
   if (isProfileLoading) {
-    return (
-      <button
-        type="button"
-        aria-busy="true"
-        className="inline-flex shrink-0 cursor-wait items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 opacity-80 shadow-lg shadow-yellow-400/10"
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
-          <EmojiIcon emoji="🍿" size={22} />
-        </span>
-        My PopFile
-      </button>
-    );
+    return <span role="status" aria-label="Loading account" className={mobile ? "ml-auto block h-11 w-full max-w-20 animate-pulse rounded-full bg-white/5 md:hidden" : "block h-11 w-40 animate-pulse rounded-full bg-white/5"} />;
   }
 
-  if (!profile) {
-    return (
-      <Link
-        href={signInHref}
-        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-black text-yellow-300 shadow-lg shadow-yellow-400/10 transition hover:border-yellow-300 hover:bg-yellow-400 hover:text-black hover:shadow-yellow-400/30"
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/30 bg-black/40">
-          <EmojiIcon emoji="🍿" size={22} />
-        </span>
-        My PopFile
-      </Link>
-    );
+  if (!user) {
+    return <div className={mobile ? "flex w-full justify-end md:hidden" : "flex items-center gap-3"}>
+      {!mobile && <Link href={signInHref + "&mode=signin"} className="rounded px-1 py-2 text-sm font-bold text-white focus-visible:outline-2 focus-visible:outline-yellow-400">Sign In</Link>}
+      <Link href={signInHref + "&mode=signup"} className="inline-flex min-h-11 items-center justify-center rounded-full bg-yellow-400 px-4 text-sm font-black text-black transition hover:bg-yellow-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400">Join Free</Link>
+    </div>;
   }
+  if (mobile) return null;
+  if (!profile) return <Link href={signInHref} className="rounded-full border border-yellow-400/40 px-4 py-2 text-sm font-black text-yellow-300">My PopFile</Link>;
 
   const profilePath = `/profile/${profile.username}`;
   const avatar = avatarForKey(profile.avatar_key);
